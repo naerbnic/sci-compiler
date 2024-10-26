@@ -1,0 +1,35 @@
+srcDir = .
+
+cpp		= wpp386
+#cppOpts	=	/3s /j /w1 /s /zp4
+cppOpts	=	/j /w1 /zp4 /bt=NT
+
+asm		= ml
+asmOpts	= /c /Cp /Zm /Zp4
+
+.BEFORE
+	# check to see if a make is already in progress
+	@set include=$(include)
+
+.ERROR
+	del $(%vcsid)._
+	@echo 
+
+.AFTER
+	@del $(%vcsid)._
+
+.EXTENSIONS: 
+.EXTENSIONS: .obd .obj .asm .cpp .exe
+
+.asm : $(srcDir)
+.asm.obj:
+	$(asm) $(asmOpts) $(debugAsmOpts) $[@
+
+.cpp: $(srcDir)
+.cpp.obj: .AUTODEPEND
+	$(cpp) $(cppOpts) /d3s $(debugOpt) $[@ 
+#/oe /ot /ox $[@
+
+.cpp.obd: .AUTODEPEND
+	$(cpp) $(cppOpts) /d2 $(debugOpt) $[@ /fo$[&.obd
+

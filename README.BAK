@@ -1,0 +1,17 @@
+SC 4.100 
+	
+ Reverted back to previous version of compiler. The current compiler
+ works with &rest in the revised way('92), while the changed compiler
+ worked with &rest in the original way('87).
+
+ For clarification on &rest:
+
+	if call (func 1 2 3 4 5)
+ 	
+	(procedure (func a b c)
+		(func2 a b &rest c)	 ;; will pass 1 2 4 5 3 to func2
+	
+		(func2 a b (&rest c)) ;; will pass 1 2 3 4 5 to func2
+	)
+
+
