@@ -1041,7 +1041,9 @@ MakeObject(Object* theObj)
 	ANTable* props = New ANTable("properties");
 	ANOfsProp* pDict = 0;
 	ANOfsProp* mDict = 0;
-	for (Selector* sp = theObj->selectors; sp; sp = sp->next)
+
+	Selector* sp = new Selector;
+	for (sp = theObj->selectors; sp; sp = sp->next)
 		if (IsProperty(sp)) {
 			switch (sp->tag) {
 				case T_PROP:

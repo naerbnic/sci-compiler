@@ -9,10 +9,10 @@
 #endif
 
 // Possible hash table sizes for symbol tables.
-const ST_LARGE		= 253;
-const ST_MEDIUM	= 89;
-const ST_SMALL		= 19;
-const ST_MINI		= 5;
+const int ST_LARGE		= 253;
+const int ST_MEDIUM	= 89;
+const int ST_SMALL		= 19;
+const int ST_MINI		= 5;
 
 class SymTbl {
 // The SymTbl class is a collection of Symbols.  It is implemented as a hash

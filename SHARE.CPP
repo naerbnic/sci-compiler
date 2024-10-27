@@ -21,7 +21,7 @@
 Bool	abortIfLocked;
 Bool	dontLock;
 
-const LOCKMODE	= O_CREAT | O_EXCL | O_RDONLY;
+const int LOCKMODE	= O_CREAT | O_EXCL | O_RDONLY;
 
 static int	haveLock;
 static char	lockFile[] = "$$$sc.lck";

@@ -152,7 +152,8 @@ MakeBreak(
 	// Walk through the list of loops until we get to the proper
 	// level to break to.  If the requested break level is greater
 	// than the nesting level of the loops, go to the outermost loop.
-	for (Loop* lp = loopList; level > 0; --level)
+	Loop* lp;
+	for (lp = loopList; level > 0; --level)
 		if (lp->next)
 			lp = lp->next;
 
@@ -174,7 +175,8 @@ MakeBreakIf(
 	// Walk through the list of loops until we get to the proper
 	// level to break to.  If the requested break level is greater
 	// than the nesting level of the loops, go to the outermost loop.
-	for (Loop* lp = loopList; level > 0; --level)
+	Loop* lp;
+	for (lp = loopList; level > 0; --level)
 		if (lp->next)
 			lp = lp->next;
 
@@ -193,7 +195,8 @@ MakeContinue(
 	// Walk through the list of loops until we get to the proper
 	// level to continue at.  If the requested continue level is greater
 	// than the nesting level of the loops, go to the outermost loop.
-	for (Loop* lp = loopList; level > 0; --level)
+	Loop* lp;
+	for (lp = loopList; level > 0; --level)
 		if (lp->next)
 			lp = lp->next;
 
@@ -218,7 +221,8 @@ MakeContIf(
 	// Walk through the list of loops until we get to the proper
 	// level to continue at.  If the requested continue level is greater
 	// than the nesting level of the loops, go to the outermost loop.
-	for (Loop* lp = loopList; level > 0; --level)
+	Loop* lp;
+	for (lp = loopList; level > 0; --level)
 		if (lp->next)
 			lp = lp->next;
 

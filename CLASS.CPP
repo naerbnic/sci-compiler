@@ -291,7 +291,8 @@ Class::Class(
 {
 	//	add this class to the end of the super's children
 
-	for (Class** p = &theSuper->subClasses; *p; p = &(*p)->nextSibling)
+	Class** p;
+	for (p = &theSuper->subClasses; *p; p = &(*p)->nextSibling)
 		;
 	*p = this;
 }

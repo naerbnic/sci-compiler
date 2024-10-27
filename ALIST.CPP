@@ -24,7 +24,9 @@ AList::nextOp(
 {
 	assert(start != NULL);
 
-	for (ANOpCode *nn = (ANOpCode *) start->next;
+	ANOpCode *nn;
+
+	for (nn = (ANOpCode *) start->next;
 		  nn && nn->op == OP_LABEL;
 		  nn = (ANOpCode *) nn->next)
 		;

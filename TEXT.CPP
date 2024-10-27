@@ -86,7 +86,8 @@ TextList::search(char* str) const
 	// space, 0 otherwise.
 
 	uword hashVal = hash(str);
-	for (Text* tp = head;
+	Text* tp;
+	for (tp = head;
 		  tp && (tp->hashVal != hashVal || strcmp(str, tp->str));
 		  tp = tp->next)
 		;

@@ -4,3 +4,10 @@ The Sierra Creative Interpreter (SCI) Script Compiler is now available as an ope
 
 Brought to you and maintained by Daniel Arnold, also known as Dhel.
 
+## Compiling
+Install Open Watcom 2.0
+https://github.com/open-watcom/open-watcom-v2
+
+The default directory for Open Watcom is C:\WATCOM in Windows. If this is different on your system, edit build.bat to set the directory. 
+
+Run build.bat.

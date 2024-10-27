@@ -433,7 +433,8 @@ GetPreprocessorToken()
 	};
 
 	//	find first nonwhite
-	for (char* cp = is->ptr; *cp && (*cp == ' ' || *cp == '\t'); cp++)
+	char* cp;
+	for (cp = is->ptr; *cp && (*cp == ' ' || *cp == '\t'); cp++)
 		;
 
 	//	has to start with #

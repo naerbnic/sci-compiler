@@ -17,9 +17,9 @@
 int		maxSelector;
 Bool		showSelectors;
 
-const MAXSELECTOR			= 8192;
-const BITS_PER_ENTRY		= 16;
-const SEL_TBL_SIZE		= MAXSELECTOR / BITS_PER_ENTRY;
+const int MAXSELECTOR			= 8192;
+const int BITS_PER_ENTRY		= 16;
+const int SEL_TBL_SIZE		= MAXSELECTOR / BITS_PER_ENTRY;
 
 static void	ClaimSelectorNum(UInt16 n);
 static UInt16	selTbl[SEL_TBL_SIZE];
@@ -54,7 +54,8 @@ Object::findSelector(Symbol* sym)
 	//	symbol 'sym'.
 
 	int val = sym->val;
-	for (Selector *sn = selectors; sn && val != sn->sym->val; sn = sn->next)
+	Selector *sn;
+	for (sn = selectors; sn && val != sn->sym->val; sn = sn->next)
 		;
 
 	return sn;
@@ -191,7 +192,8 @@ NewSelectorNum()
 	// number is allocated.
 
 	// Scan for the first entry with a free bit.
-	for (UInt16* stp = selTbl;
+	UInt16* stp;
+	for (stp = selTbl;
 		  stp < &selTbl[SEL_TBL_SIZE] && *stp == (UInt16) -1;
 		  ++stp)
 			;

@@ -469,7 +469,8 @@ Message(
 		Object* curReceiver = receiver;
 
 		// Collect the arguments of the message.
-		for (int nArgs = 0; Expression(pn, OPTIONAL); nArgs++)
+		int nArgs;
+		for (nArgs = 0; Expression(pn, OPTIONAL); nArgs++)
 			;
 
 		// Make sure we're not sending multiple arguments to a property

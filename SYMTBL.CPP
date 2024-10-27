@@ -145,8 +145,8 @@ SymTbl::hash(
 	strptr str)
 {
 	// Compute the hash value of the string 'str'.
-
-	for (long value = 0 ; *str; value += *str++)
+	long value;
+	for (value = 0 ; *str; value += *str++)
 		;
 
 	return (int) (value % (long) hashSize);
@@ -299,7 +299,8 @@ SymTbls::deactivate(
 
 	else {
 		// See if the table is already in the inactive list.
-		for (SymTbl* tp = inactiveList; tp && tp != tbl; tp = tp->next)
+		SymTbl* tp;
+		for (tp = inactiveList; tp && tp != tbl; tp = tp->next)
 			;
 
 		// If the table is not in the inactive list, add it.
@@ -321,7 +322,8 @@ SymTbls::unlink(
 
 	else {
 		// Search for the symbol table preceeding this one in the list.
-		for (SymTbl* tp = activeList; tp && tp->next != tbl; tp = tp->next)
+		SymTbl* tp;
+		for (tp = activeList; tp && tp->next != tbl; tp = tp->next)
 			;
 
 		// Link around this table.

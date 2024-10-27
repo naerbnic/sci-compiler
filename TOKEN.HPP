@@ -35,7 +35,7 @@ Bool			IsNumber();
 #define	symType	tokSym.type
 #define	symVal	tokSym.val
 
-const MaxTokenLen	= 2048;
+const int MaxTokenLen	= 2048;
 
 extern int		nestedCondCompile;
 extern int		selectorIsVar;

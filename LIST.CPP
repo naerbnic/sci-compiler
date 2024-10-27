@@ -154,7 +154,8 @@ List::contains(
 	if (!ln)
 		return False;
 
-	for (LNode *node = head; node && node != ln; node = node->next)
+	LNode *node;
+	for (node = head; node && node != ln; node = node->next)
 		;
 
 	return node == ln;

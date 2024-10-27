@@ -278,7 +278,7 @@ FreeIncludePath()
 }
 
 static InputSource*	saveIs;
-static InputString	curLineInput;
+static InputString*	curLineInput;
 
 void
 SetInputToCurrentLine()
@@ -286,8 +286,8 @@ SetInputToCurrentLine()
 	//	set the current input line as the input source
 
 	saveIs = is;
-	curLineInput = InputString(inputLine);
-	is = &curLineInput;
+	curLineInput = new InputString(inputLine);
+	is = curLineInput;
 }
 
 void

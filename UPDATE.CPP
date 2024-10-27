@@ -193,7 +193,8 @@ WriteClassDefs()
 		// Write out any New properties or properties which differ in
 		// value from the superclass.
 		fprintf(fp, "\t(properties\n");
-		for (Selector* tp = cp->selectors; tp; tp = tp->next) {
+		Selector* tp;
+		for (tp = cp->selectors; tp; tp = tp->next) {
 			if (IsProperty(tp) && sp->selectorDiffers(tp))
 				fprintf(fp, "\t\t%s %d\n", tp->sym->name, tp->val);
 		}
