@@ -3,7 +3,6 @@
 
 #include "input.hpp"
 
-#include <dos.h>
 #include <stdlib.h>
 
 #include "error.hpp"
@@ -47,7 +46,7 @@ InputSource& InputSource::operator=(InputSource& s) {
   return *this;
 }
 
-InputFile::InputFile(FILE* fp, char* name)
+InputFile::InputFile(FILE* fp, const char* name)
     :
 
       InputSource(newStr(name)),
@@ -60,7 +59,7 @@ InputFile::~InputFile() {
   fclose(file);
 }
 
-bool InputFile::incrementPastNewLine(char*& ip) {
+bool InputFile::incrementPastNewLine(const char*& ip) {
   if (GetNewLine()) {
     ip = is->ptr;
     return True;
@@ -70,7 +69,7 @@ bool InputFile::incrementPastNewLine(char*& ip) {
 
 bool InputFile::endInputLine() { return GetNewLine(); }
 
-InputString::InputString(char* str)
+InputString::InputString(const char* str)
     :
 
       InputSource(curFile, curLine) {
@@ -87,7 +86,7 @@ InputString& InputString::operator=(InputString& s) {
 
 bool InputString::endInputLine() { return CloseInputSource(); }
 
-bool InputString::incrementPastNewLine(char*& ip) {
+bool InputString::incrementPastNewLine(const char*& ip) {
   ++ip;
   return True;
 }
@@ -107,11 +106,12 @@ InputSource* OpenFileAsInput(strptr fileName, bool required) {
     file = fopen(newName, "r");
   }
 
-  if (!file)
+  if (!file) {
     if (required)
       Panic("Can't open %s", fileName);
     else
       return 0;
+  }
 
   // SLN - following code serves no purpose, removed
   //	if (!*newName)
@@ -135,7 +135,7 @@ bool CloseInputSource() {
 
   InputSource* ois;
 
-  if (ois = is) {
+  if ((ois = is)) {
     InputSource* next = is->next;
     delete ois;
     is = next;
@@ -159,7 +159,7 @@ bool GetNewInputLine() {
 #if defined(PLAYGRAMMER)
     fgetpos(is->file, &is->lineStart);
 #endif
-    if (is->ptr = fgets(inputLine, sizeof inputLine, ((InputFile*)is)->file))
+    if ((is->ptr = fgets(inputLine, sizeof inputLine, ((InputFile*)is)->file)))
       break;
     CloseInputSource();
   }
@@ -174,7 +174,7 @@ bool GetNewInputLine() {
 
 void SetIncludePath() {
   strptr t;
-  strptr p;
+  char* p;
   char path[128];
   StrList* sn;
   StrList* last;

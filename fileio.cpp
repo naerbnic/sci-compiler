@@ -14,7 +14,7 @@
 // This function builds a path name from the provided variables and stores it in
 // dest.
 //
-void MakeName(char *dest, char *dir, char *name, char *ext) {
+void MakeName(char *dest, char *dir, const char *name, const char *ext) {
   *dest = 0;
 
   // let's put the directory

@@ -45,7 +45,8 @@ inline S Min(S a, T b) {
 
 //	Each implementation should define its own AssertFail().
 //	Normally, it will simply call the msgMgr, but we give it its own
-//function 	so anyone can use assert() without having to drag MSG.HPP around.
+// function 	so anyone can use assert() without having to drag MSG.HPP
+// around.
 int AssertFail(char* file, int line, char* expression);
 
 #ifdef DEBUG
@@ -53,5 +54,9 @@ int AssertFail(char* file, int line, char* expression);
 #else
 #define assert(expr)
 #endif
+
+// Sufficient MAX_PATH for all platforms
+
+#define _MAX_PATH 1024
 
 #endif

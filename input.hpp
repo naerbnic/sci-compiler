@@ -1,12 +1,12 @@
 //	input.hpp		sc
 //		definitions for input source structure
 
-#if !defined(INPUT_HPP)
+#ifndef INPUT_HPP
 #define INPUT_HPP
 
-#if !defined(__STDIO_H)
-#include "stdio.h"
-#endif
+#include <cstdio>
+
+#include "sc.hpp"
 
 struct InputSource {
   InputSource();
@@ -15,7 +15,7 @@ struct InputSource {
 
   InputSource& operator=(InputSource&);
 
-  virtual bool incrementPastNewLine(char*&) = 0;
+  virtual bool incrementPastNewLine(const char*&) = 0;
   virtual bool endInputLine() = 0;
 
   InputSource* next;
@@ -25,11 +25,11 @@ struct InputSource {
 };
 
 struct InputFile : InputSource {
-  InputFile(FILE*, char* name);
+  InputFile(FILE*, const char* name);
   ~InputFile();
 
-  bool incrementPastNewLine(char*&);
-  bool endInputLine();
+  bool incrementPastNewLine(const char*&) override;
+  bool endInputLine() override;
 
   FILE* file;
   strptr fullFileName;
@@ -38,11 +38,11 @@ struct InputFile : InputSource {
 
 struct InputString : InputSource {
   InputString();
-  InputString(char* str);
+  InputString(const char* str);
 
   InputString& operator=(InputString&);
 
-  bool incrementPastNewLine(char*&);
+  bool incrementPastNewLine(const char*&);
   bool endInputLine();
 };
 

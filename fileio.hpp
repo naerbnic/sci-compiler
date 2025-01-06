@@ -13,7 +13,7 @@
 // This function builds a path name from the provided variables and stores it in
 // dest.
 //
-void MakeName(char *dest, char *dir, char *name, char *ext);
+void MakeName(char *dest, char *dir, const char *name, const char *ext);
 
 //
 // This function looks at the passed string and returns a pointer to the string
