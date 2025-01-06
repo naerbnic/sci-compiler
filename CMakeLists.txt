@@ -1,9 +1,15 @@
 ﻿# CMakeList.txt : CMake project for Script Compiler, include source and define
 # project specific logic here.
 #
-cmake_minimum_required (VERSION 3.8)
+cmake_minimum_required (VERSION 3.12)
+
+if (POLICY CMP0025)
+    cmake_policy(SET CMP0025 NEW)
+endif ()
 
 project ("Script Compiler")
+
+set(CMAKE_CXX_STANDARD 17)
 
 # Add source to this project's executable.
 add_executable (sc
