@@ -79,7 +79,7 @@ void GetRest(bool error) {
   //	messages.
 
   strptr ip;
-  strptr sp;
+  char* sp;
   int pLevel;
   bool truncate;
 
@@ -138,7 +138,7 @@ bool NextToken() {
 
   strptr ip;  // pointer to input line
   ubyte c;    // the character
-  strptr sp;
+  char* sp;
 
   if (haveUnGet) {
     haveUnGet = False;
@@ -341,6 +341,10 @@ notCompiling:
         }
         --level;
         break;
+
+      default:
+        // If not recognized, continue to next token
+        break;
     }
   }
 
@@ -366,6 +370,10 @@ gettingEndif:
         }
         --level;
         break;
+
+      default:
+        // If not recognized, continue to next token
+        break;
     }
   }
 }
@@ -375,7 +383,7 @@ static pt GetPreprocessorToken() {
   //	definition of 'token'
 
   struct {
-    char* text;
+    const char* text;
     pt token;
   } tokens[] = {"#ifdef",    PT_IFDEF,  //	put longer before shorter
                 "#ifndef",   PT_IFNDEF,   "#if",    PT_IF,
@@ -384,7 +392,7 @@ static pt GetPreprocessorToken() {
                 "#else",     PT_ELSE,     "#endif", PT_ENDIF};
 
   //	find first nonwhite
-  char* cp;
+  const char* cp;
   for (cp = is->ptr; *cp && (*cp == ' ' || *cp == '\t'); cp++);
 
   //	has to start with #
@@ -408,7 +416,7 @@ static pt GetPreprocessorToken() {
 }
 
 static void ReadNumber(strptr ip) {
-  strptr sp;
+  char* sp;
   int c;
   int base;
   int sign;
@@ -468,7 +476,7 @@ static void ReadNumber(strptr ip) {
 static void ReadString(strptr ip) {
   char c;
   char open;
-  strptr sp;
+  char* sp;
   strptr np;
   bool truncated;
   uint32_t n;
@@ -579,7 +587,7 @@ static uint32_t altKey[] = {
 };
 
 static void ReadKey(strptr ip) {
-  strptr sp;
+  char* sp;
 
   symType = S_NUM;
 

@@ -12,7 +12,7 @@ void GetToken();
 bool NextToken();
 bool NewToken();
 void UnGetTok();
-void GetRest(bool error = False);
+void GetRest(bool error = false);
 bool GetNewLine();
 
 //	toktypes.cpp
