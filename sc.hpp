@@ -6,6 +6,8 @@
 
 #include <unistd.h>
 
+#include <cstdint>
+
 // Modes for opening files.
 #ifdef _WIN32
 #define OMODE (int)(O_BINARY | O_CREAT | O_RDWR | O_TRUNC)

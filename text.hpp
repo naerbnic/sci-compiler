@@ -4,6 +4,8 @@
 #ifndef TEXT_HPP
 #define TEXT_HPP
 
+#include "sc.hpp"
+
 struct Text {
   // Node for the message/string list.
 
@@ -26,10 +28,10 @@ class TextList {
   size_t size;  // Size of text in list
 
  protected:
-  Text* add(char*);
-  Text* search(char*) const;
+  Text* add(const char*);
+  Text* search(const char*) const;
 
-  static uword hash(char*);
+  static uword hash(const char*);
 };
 
 struct StrList {

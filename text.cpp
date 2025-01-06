@@ -33,7 +33,7 @@ uint32_t TextList::find(const char* str) {
   return text->num;
 }
 
-uword TextList::hash(char* tp) {
+uword TextList::hash(const char* tp) {
   uword hashVal;
 
   for (hashVal = 0; *tp; ++tp) hashVal += *tp;
@@ -41,7 +41,7 @@ uword TextList::hash(char* tp) {
   return hashVal;
 }
 
-Text* TextList::add(char* str) {
+Text* TextList::add(const char* str) {
   // Add a string to text space
 
   Text* np;
@@ -66,7 +66,7 @@ Text* TextList::add(char* str) {
   return np;
 }
 
-Text* TextList::search(char* str) const {
+Text* TextList::search(const char* str) const {
   // Return the offset in string space of 'str' if it is already in string
   // space, 0 otherwise.
 
