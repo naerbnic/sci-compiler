@@ -1,12 +1,12 @@
 // object.hpp
 // 	definitions for objects & classes
 
-#if !defined(OBJECT_HPP)
+#ifndef OBJECT_HPP
 #define OBJECT_HPP
 
-#if defined(PLAYGRAMMER) && !defined(__STDIO_H)
-#include <stdio.h>
-#endif
+#include <cstdint>
+
+#include "sc.hpp"
 
 class ANode;
 class Symbol;

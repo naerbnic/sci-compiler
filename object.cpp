@@ -354,6 +354,9 @@ static void Declaration(Object* obj, int type) {
         case S_STRING:
           sn->tag = T_TEXT;
           break;
+        default:
+          Fatal("Invalid property type: %s, %d", symStr, type);
+          break;
       }
     }
   }
