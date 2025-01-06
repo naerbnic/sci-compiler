@@ -1,9 +1,11 @@
 //	optimize.hpp
 
-#if !defined(OPTIMIZE_HPP)
+#ifndef OPTIMIZE_HPP
 #define OPTIMIZE_HPP
 
-class Alist;
+#include <cstdint>
+
+class AList;
 
 uint32_t OptimizeProc(AList* al);
 
