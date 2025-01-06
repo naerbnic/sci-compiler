@@ -10,31 +10,32 @@
 
 // Symbol types
 enum sym_t {
-  S_END = 128,  // end of input
-  S_KEYWORD,    // keyword
-  S_DEFINE,     // definition
-  S_IDENT,      // unknown identifier
-  S_LABEL,      // label
-  S_GLOBAL,     // global variable
-  S_LOCAL,      // local variable
-  S_TMP,        // temporary variable
-  S_PARM,       // parameter
-  S_PROC,       // procedure
-  S_EXTERN,     // external procedure/object
-  S_ASSIGN,     // assignment operator
-  S_NARY,       // nary arithmetic operator
-  S_BINARY,     // binary operator
-  S_UNARY,      // unary arithmetic operator
-  S_COMP,       // comparison operator
-  S_NUM,        // number
-  S_STRING,     // string
-  S_CLASS,      // class
-  S_OBJ,        // object
-  S_SELECT,     // selector
-  S_LPROP,      // property referenced as local var
-  S_REST,       // &rest keyword
-  S_PROP,       // property
-  S_METH        // method
+  S_END = 128,            // end of input
+  S_KEYWORD,              // keyword
+  S_DEFINE,               // definition
+  S_IDENT,                // unknown identifier
+  S_LABEL,                // label
+  S_GLOBAL,               // global variable
+  S_LOCAL,                // local variable
+  S_TMP,                  // temporary variable
+  S_PARM,                 // parameter
+  S_PROC,                 // procedure
+  S_EXTERN,               // external procedure/object
+  S_ASSIGN,               // assignment operator
+  S_NARY,                 // nary arithmetic operator
+  S_BINARY,               // binary operator
+  S_UNARY,                // unary arithmetic operator
+  S_COMP,                 // comparison operator
+  S_NUM,                  // number
+  S_STRING,               // string
+  S_CLASS,                // class
+  S_OBJ,                  // object
+  S_SELECT,               // selector
+  S_LPROP,                // property referenced as local var
+  S_REST,                 // &rest keyword
+  S_PROP,                 // property
+  S_METH,                 // method
+  S_OPEN_P = '(',  // open parenthesis
 };
 
 #define S_MSGEND ((sym_t)',')
@@ -135,8 +136,8 @@ class Symbol {
   Symbol(const char* str = 0, sym_t = (sym_t)0);
   ~Symbol();
 
-  strptr name;   // pointer to the symbol name
-  sym_t type;    // symbol type
+  strptr name;       // pointer to the symbol name
+  sym_t type;        // symbol type
   uint32_t lineNum;  //	where symbol was first defined
 
   union {
@@ -160,7 +161,7 @@ class Symbol {
   Symbol* next;         // pointer to next symbol in list
 };
 
-#define OPEN_P ((sym_t)'(')
+#define OPEN_P S_OPEN_P
 #define OPEN_B ((sym_t)'{')
 #define CLOSE_P ((sym_t)')')
 #define CLOSE_B ((sym_t)'}')

@@ -363,7 +363,7 @@ static bool Send(PNode* theNode, Symbol* theSym) {
 
   PNode* pn;
   PNode* dn;
-  char* objName;
+  const char* objName;
 
   pn = theNode->addChild(new PNode(PN_SEND));
 
@@ -498,9 +498,9 @@ static bool Repeat(PNode* theNode) {
 
 static bool For(PNode* theNode) {
   // for ::=	'for' open expression* close	;initialization
-  //			expression ;conditional 			open expression* close
-  //;re-initialization 			expression*					;loop
-  //body
+  //			expression ;conditional 			open
+  // expression* close ;re-initialization 			expression*
+  //;loop body
 
   PNode* pn;
 
@@ -1110,6 +1110,9 @@ pn_t PNType(sym_t st) {
       return PN_PARM;
     case S_PROP:
       return PN_PROP;
+    default:
+      Fatal("Bad symbol type in PNType().");
+      break;
   }
 
   // Should never be reached.
