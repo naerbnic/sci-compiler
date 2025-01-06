@@ -93,6 +93,9 @@ static PNode* _CallDef(sym_t theType) {
         Severe("%s is not a method for class %s", symStr, curObj->sym->name);
         return 0;
       }
+    default:
+      Fatal("Invalid symbol type in _CallDef: %d", theType);
+      break;
   }
 
   theNode = new PNode(theType == S_SELECT ? PN_METHOD : PN_PROC);
