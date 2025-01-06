@@ -21,7 +21,7 @@ void TextList::init() {
   size = 0;
 }
 
-uint TextList::find(char* str) {
+uint32_t TextList::find(char* str) {
   // The value of a string is its offset in string space.
 
   Text* text;

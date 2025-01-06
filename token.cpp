@@ -471,7 +471,7 @@ static void ReadString(strptr ip) {
   strptr sp;
   strptr np;
   bool truncated;
-  uint n;
+  uint32_t n;
 
   truncated = False;
   sp = symStr;
@@ -540,11 +540,11 @@ static void ReadString(strptr ip) {
 
           c = (char)_tolower(c);
           np = strchr(hexDigits, c);
-          n = (uint)(np - hexDigits) * 16;
+          n = (uint32_t)(np - hexDigits) * 16;
           c = *ip++;
           c = (char)_tolower(c);
           np = strchr(hexDigits, c);
-          n += (uint)(np - hexDigits);
+          n += (uint32_t)(np - hexDigits);
           if (!truncated) *sp++ = (char)n;
         }
 
@@ -572,7 +572,7 @@ static void ReadString(strptr ip) {
     EarlyEnd();
 }
 
-static uint altKey[] = {
+static uint32_t altKey[] = {
     30, 48, 46, 32, 18, 33, 34, 35, 23,  // a - i
     36, 37, 38, 50, 49, 24, 25, 16, 19,  // j - r
     31, 20, 22, 47, 17, 45, 21, 44       // s - z

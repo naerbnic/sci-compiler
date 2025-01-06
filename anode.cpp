@@ -101,7 +101,7 @@ void ANDispatch::emit(OutputFile* out) {
 
   if (sc->heapList->contains(target)) sc->hunkList->addFixup(offset);
 
-  out->WriteWord((uint)(target && sym ? target->offset : 0));
+  out->WriteWord((uint32_t)(target && sym ? target->offset : 0));
 }
 
 void ANDispatch::backpatch(ANode* dest) {
@@ -245,7 +245,7 @@ void ANProp::emit(OutputFile* out) { out->WriteWord(value()); }
 
 strptr ANIntProp::desc() { return "prop"; }
 
-uint ANIntProp::value() { return val; }
+uint32_t ANIntProp::value() { return val; }
 
 ANTextProp::ANTextProp(Symbol* sp, int v) : ANProp(sp, v) {
   sc->heapList->incFixups();
@@ -258,23 +258,23 @@ void ANTextProp::emit(OutputFile* out) {
 
 strptr ANTextProp::desc() { return "text"; }
 
-uint ANTextProp::value() { return val + textStart; }
+uint32_t ANTextProp::value() { return val + textStart; }
 
 strptr ANOfsProp::desc() { return "ofs"; }
 
-uint ANOfsProp::value() { return target->offset; }
+uint32_t ANOfsProp::value() { return target->offset; }
 
 ANMethod::ANMethod(Symbol* sp, ANMethCode* mp) : ANProp(sp, 0), method(mp) {}
 
 strptr ANMethod::desc() { return "local"; }
 
-uint ANMethod::value() { return method->offset; }
+uint32_t ANMethod::value() { return method->offset; }
 
 ///////////////////////////////////////////////////
 // Class ANOpCode
 ///////////////////////////////////////////////////
 
-ANOpCode::ANOpCode(uint o) : op(o) {}
+ANOpCode::ANOpCode(uint32_t o) : op(o) {}
 
 size_t ANOpCode::size() { return 1; }
 
@@ -286,7 +286,7 @@ void ANOpCode::emit(OutputFile* out) { out->WriteOp(op); }
 // Class ANLabel
 ///////////////////////////////////////////////////
 
-uint ANLabel::nextLabel = 0;
+uint32_t ANLabel::nextLabel = 0;
 
 ANLabel::ANLabel() : ANOpCode(OP_LABEL), number(nextLabel++) {}
 
@@ -300,7 +300,7 @@ void ANLabel::emit(OutputFile*) {}
 // Class ANOpUnsign
 ///////////////////////////////////////////////////
 
-ANOpUnsign::ANOpUnsign(uint o, uint v) {
+ANOpUnsign::ANOpUnsign(uint32_t o, uint32_t v) {
   value = v;
 #if defined(OPTIMIZE_TRANSFERS)
   op = o | (value < 256 ? OP_BYTE : 0);
@@ -335,9 +335,9 @@ void ANOpUnsign::emit(OutputFile* out) {
 // Class ANOpSign
 ///////////////////////////////////////////////////
 
-ANOpSign::ANOpSign(uint o, int v) {
+ANOpSign::ANOpSign(uint32_t o, int v) {
   value = v;
-  op = o | ((uint)abs(value) < 128 ? OP_BYTE : 0);
+  op = o | ((uint32_t)abs(value) < 128 ? OP_BYTE : 0);
   sym = 0;
 }
 
@@ -363,7 +363,7 @@ void ANOpSign::emit(OutputFile* out) {
 // Class ANOpExtern
 ///////////////////////////////////////////////////
 
-ANOpExtern::ANOpExtern(Symbol* s, uint m, uint e)
+ANOpExtern::ANOpExtern(Symbol* s, uint32_t m, uint32_t e)
     : sym(s), module(m), entry(e) {
   switch (module) {
     case KERNEL:
@@ -474,7 +474,7 @@ void ANCall::emit(OutputFile* out) {
 // Class ANBranch
 ///////////////////////////////////////////////////
 
-ANBranch::ANBranch(uint o) { op = o; }
+ANBranch::ANBranch(uint32_t o) { op = o; }
 
 size_t ANBranch::size() {
   if (!shrink)
@@ -513,7 +513,7 @@ void ANBranch::emit(OutputFile* out) {
 // Class ANVarAccess
 ///////////////////////////////////////////////////
 
-ANVarAccess::ANVarAccess(uint o, uint a) : addr(a) {
+ANVarAccess::ANVarAccess(uint32_t o, uint32_t a) : addr(a) {
   op = addr < 256 ? o | OP_BYTE : o;
 }
 
@@ -539,7 +539,7 @@ void ANVarAccess::emit(OutputFile* out) {
 // Class ANOpOfs
 ///////////////////////////////////////////////////
 
-ANOpOfs::ANOpOfs(uint o) : ANOpCode(op_lofsa), ofs(o) {
+ANOpOfs::ANOpOfs(uint32_t o) : ANOpCode(op_lofsa), ofs(o) {
   sc->hunkList->incFixups();
 }
 
@@ -587,7 +587,7 @@ void ANObjID::emit(OutputFile* out) {
 // Class ANEffctAddr
 ///////////////////////////////////////////////////
 
-ANEffctAddr::ANEffctAddr(uint o, uint a, uint t)
+ANEffctAddr::ANEffctAddr(uint32_t o, uint32_t a, uint32_t t)
     : ANVarAccess(o, a), eaType(t) {}
 
 size_t ANEffctAddr::size() { return op & OP_BYTE ? 3 : 5; }
@@ -613,7 +613,7 @@ void ANEffctAddr::emit(OutputFile* out) {
 // Class ANSend
 ///////////////////////////////////////////////////
 
-ANSend::ANSend(uint o) : ANOpCode(o) {}
+ANSend::ANSend(uint32_t o) : ANOpCode(o) {}
 
 size_t ANSend::size() { return 3; }
 
@@ -631,7 +631,7 @@ void ANSend::emit(OutputFile* out) {
 // Class ANSuper
 ///////////////////////////////////////////////////
 
-ANSuper::ANSuper(Symbol* s, uint c) : ANSend(op_super), sym(s), classNum(c) {
+ANSuper::ANSuper(Symbol* s, uint32_t c) : ANSend(op_super), sym(s), classNum(c) {
   if (classNum < 256) op |= OP_BYTE;
 }
 

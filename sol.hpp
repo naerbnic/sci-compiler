@@ -17,7 +17,7 @@
 //	abbreviations
 typedef unsigned char uchar;
 typedef unsigned short ushort;
-typedef unsigned int uint;
+typedef unsigned int uint32_t;
 typedef unsigned long ulong;
 
 //	data types for interfacing to the SCI language, in which all values

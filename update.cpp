@@ -222,7 +222,7 @@ static void WriteSelectorVocab() {
   Symbol* sp;
   SCIUWord* tbl;
   size_t ofs;
-  uint tblLen;
+  uint32_t tblLen;
   int i;
   char fileName[_MAX_PATH + 1];
   char* resName;

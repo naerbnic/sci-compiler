@@ -19,7 +19,7 @@ struct Text {
 class TextList {
  public:
   void init();
-  uint find(char*);
+  uint32_t find(char*);
 
   Text* head;   // Pointer to start of text list
   Text* tail;   // Pointer to end of text list

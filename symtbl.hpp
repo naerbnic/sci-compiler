@@ -76,7 +76,7 @@ class SymTbl {
   Symbol* curSym;  // current Symbol in firstSym()/nextSym()
   int curIndex;    // current hash table index in firstSym()/nextSym()
 
-  uint hash(strptr str);
+  uint32_t hash(strptr str);
   // Return the hash value of the string for this table
 
   friend class SymTbls;

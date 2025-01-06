@@ -348,7 +348,7 @@ Symbol* FindPublic(int n) {
 
   Public* pp;
 
-  for (pp = publicList; pp && pp->entry != (uint)n; pp = pp->next);
+  for (pp = publicList; pp && pp->entry != (uint32_t)n; pp = pp->next);
 
   return pp ? pp->sym : 0;
 }

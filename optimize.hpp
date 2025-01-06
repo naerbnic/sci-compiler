@@ -5,6 +5,6 @@
 
 class Alist;
 
-uint OptimizeProc(AList* al);
+uint32_t OptimizeProc(AList* al);
 
 #endif

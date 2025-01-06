@@ -119,7 +119,7 @@ bool Expression(PNode* theNode, bool required) {
 
       case S_CLASS:
         pn = theNode->addChild(New PNode(PN_CLASS));
-        if ((uint)symType == OBJ_SUPER) {
+        if ((uint32_t)symType == OBJ_SUPER) {
           pn->sym = classes[curObj->super]->sym;
           pn->val = classes[curObj->super]->num;
         } else {

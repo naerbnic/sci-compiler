@@ -1,12 +1,13 @@
 //	alist.hpp
 // 	definitions for assembly
 
-#if !defined(ALIST_HPP)
+#ifndef ALIST_HPP
 #define ALIST_HPP
 
-#if !defined(LIST_HPP)
+#include <cstddef>
+#include <cstdint>
+
 #include "list.hpp"
-#endif
 
 class ANOpCode;
 class ANode;
@@ -19,11 +20,11 @@ struct AList : List {
   // Return a pointer to the next opcode node after 'start' in
   // the list or NULL if there are none.
 
-  ANOpCode* findOp(uint op);
+  ANOpCode* findOp(uint32_t op);
   // Return a pointer to the next opcode node if it is opcode
   // 'op', NULL if it isn't.
 
-  bool removeOp(uint op);
+  bool removeOp(uint32_t op);
   // If next opcode in the list is 'op', remove it.
 
   size_t size();
@@ -59,7 +60,7 @@ class FixupList : public AList {
   void emit(OutputFile*);
   size_t setOffset(size_t ofs);
 
-  void incFixups(uint inc = 1) { numFixups += inc; }
+  void incFixups(uint32_t inc = 1) { numFixups += inc; }
   // Increment the number of elements needing fixup.  This is
   // called each time we generate an ANode requiring fixup.
 
@@ -78,10 +79,10 @@ class FixupList : public AList {
   // Add the offset to the fixup table.
 
  protected:
-  uint numFixups;  // number of locations needing fixup in this AList
-  size_t* fixups;  // pointer to storage for fixup values
-  uint fixIndex;   // index for adding fixups
-  size_t fixOfs;   // offset of start of fixups
+  uint32_t numFixups;  // number of locations needing fixup in this AList
+  size_t* fixups;      // pointer to storage for fixup values
+  uint32_t fixIndex;   // index for adding fixups
+  size_t fixOfs;       // offset of start of fixups
 };
 
 struct CodeList : FixupList {

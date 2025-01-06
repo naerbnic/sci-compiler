@@ -42,7 +42,7 @@ struct Public {
   Public* next;
   Symbol* sym;  // pointer to the relevant symbol
   int script;   // script number
-  uint entry;   // index in dispatch table
+  uint32_t entry;   // index in dispatch table
 };
 
 void Define();

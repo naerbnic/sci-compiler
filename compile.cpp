@@ -212,7 +212,7 @@ static void MakeAccess(PNode* pn, ubyte theCode) {
   // Set the bits indicating the type of variable to be accessed, then
   // put out the opcode to access it.
   if (theCode == op_lea) {
-    uint accType;
+    uint32_t accType;
     switch (varType) {
       case PN_GLOBAL:
         accType = OP_GLOBAL;
@@ -295,7 +295,7 @@ static void MakeCall(PNode* pn) {
   ANOpUnsign* an = New ANOpUnsign(op_pushi, 0);
 
   // Compile the arguments.
-  uint numArgs = MakeArgs(pn->child);
+  uint32_t numArgs = MakeArgs(pn->child);
 
   // Put the number of arguments in its asmNode.
   an->value = numArgs;
@@ -381,7 +381,7 @@ static int MakeMessage(PNode* theMsg) {
 
   // Push the number of arguments on the stack (we don't know the
   // number yet).
-  ANOpUnsign* an = New ANOpUnsign(op_pushi, (uint)-1);
+  ANOpUnsign* an = New ANOpUnsign(op_pushi, (uint32_t)-1);
 
   // Compile the arguments to the message and fix up the number
   // of arguments to the message.
@@ -586,7 +586,7 @@ static void MakeComp(PNode* pn) {
   // known, we stop evaluating the expression.
 
   // Get the comparison operator.
-  uint op = pn->val;
+  uint32_t op = pn->val;
 
   if (op == N_OR)
     // Handle special case of '||'.

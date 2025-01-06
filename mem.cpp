@@ -20,7 +20,7 @@ bool writeMemSizes;
 class MemBlk;
 
 struct MemList {
-  MemList(size_t s, uint n);
+  MemList(size_t s, uint32_t n);
   virtual ~MemList() {}
 
   void* operator new(size_t size);
@@ -31,12 +31,12 @@ struct MemList {
 
   void display();
   bool check();
-  uint blksFree();
-  uint numAllocated();
+  uint32_t blksFree();
+  uint32_t numAllocated();
 
   MemBlk* head;
   size_t size;   // size of memory allocation units
-  uint numBlks;  // number of memory allocation units per MemBlk
+  uint32_t numBlks;  // number of memory allocation units per MemBlk
 };
 
 struct EMSMemList : MemList {
@@ -51,9 +51,9 @@ struct EMSMemList : MemList {
 EMSBlock* EMSMemList::ems;
 
 struct MemBlk {
-  MemBlk(MemList* bp, size_t s, uint n);
+  MemBlk(MemList* bp, size_t s, uint32_t n);
   MemBlk();
-  void init(MemList* bp, size_t s, uint n);
+  void init(MemList* bp, size_t s, uint32_t n);
 
   virtual ~MemBlk();
 
@@ -71,11 +71,11 @@ struct MemBlk {
   char* start;
   char* end;
   char* head;
-  uint numFree;
+  uint32_t numFree;
 };
 
 struct EMSMemBlk : MemBlk {
-  EMSMemBlk(EMSMemList* bp, size_t s, uint n);
+  EMSMemBlk(EMSMemList* bp, size_t s, uint32_t n);
   ~EMSMemBlk();
 
   bool put(MemList* list, void* mem);
@@ -175,7 +175,7 @@ void operator delete(void* mp) {
 // Class MemList
 ///////////////////////////////////////////////////
 
-MemList::MemList(size_t s, uint n)
+MemList::MemList(size_t s, uint32_t n)
     :
 
       size(s),
@@ -216,15 +216,15 @@ bool MemList::check() {
   return True;
 }
 
-uint MemList::blksFree() {
-  uint numFree = 0;
+uint32_t MemList::blksFree() {
+  uint32_t numFree = 0;
   for (MemBlk* mp = head; !NullP(mp); mp = mp->next) numFree += mp->numFree;
 
   return numFree;
 }
 
-uint MemList::numAllocated() {
-  uint num = 0;
+uint32_t MemList::numAllocated() {
+  uint32_t num = 0;
   for (MemBlk* mp = head; !NullP(mp); mp = mp->next) ++num;
 
   return num;
@@ -236,7 +236,7 @@ uint MemList::numAllocated() {
 
 MemBlk::MemBlk() : start(0), end(0), next(0), prev(0), head(0), numFree(0) {}
 
-MemBlk::MemBlk(MemList* bp, size_t s, uint n)
+MemBlk::MemBlk(MemList* bp, size_t s, uint32_t n)
     :
 
       start(0),
@@ -249,7 +249,7 @@ MemBlk::MemBlk(MemList* bp, size_t s, uint n)
   init(bp, s, n);
 }
 
-void MemBlk::init(MemList* bp, size_t s, uint n) {
+void MemBlk::init(MemList* bp, size_t s, uint32_t n) {
   assert(bp);
 
   head = Normalize(head);
@@ -350,7 +350,7 @@ void* EMSMemList::get() {
 // Class EMSMemBlk
 ///////////////////////////////////////////////////
 
-EMSMemBlk::EMSMemBlk(EMSMemList* bp, size_t s, uint n) {
+EMSMemBlk::EMSMemBlk(EMSMemList* bp, size_t s, uint32_t n) {
   //	give us EMS as our memory, if there is any
 
   if (!(head = (char*)EMSMemList::ems->base)) return;
@@ -406,7 +406,7 @@ void MemDisplay() {
 
   for (int i = 0; i < MemListList::nLists; ++i) {
     MemList* ml = lists[i];
-    uint numAlloc = ml->numAllocated();
+    uint32_t numAlloc = ml->numAllocated();
     ulong bytesFree = ml->blksFree() * ml->size;
     ulong numBytes = ml->numBlks * ml->size * numAlloc;
     printf("\t%6lu bytes in %2d %3dx%2d byte blocks: %6lu bytes free\n",

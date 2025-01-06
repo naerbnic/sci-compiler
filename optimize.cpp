@@ -20,16 +20,16 @@ enum {
 #define indexed(op) ((op) & OP_INDEX)
 #define toStack(op) ((op) & OP_STACK)
 
-uint OptimizeProc(AList* al) {
-  uint accType = UNKNOWN;
+uint32_t OptimizeProc(AList* al) {
+  uint32_t accType = UNKNOWN;
   int accVal = 0;
   int stackVal;
-  uint stackType = UNKNOWN;
-  uint nOptimizations = 0;
+  uint32_t stackType = UNKNOWN;
+  uint32_t nOptimizations = 0;
 
   for (ANOpSign* an = (ANOpSign*)al->first(); an; an = (ANOpSign*)al->next()) {
     bool byteOp = an->op & OP_BYTE;
-    uint op = an->op & ~OP_BYTE;
+    uint32_t op = an->op & ~OP_BYTE;
 
     switch (op) {
       case op_bnot:
@@ -174,7 +174,7 @@ uint OptimizeProc(AList* al) {
 
           // If the first op-code following the label is not a jump or
           // a branch of the same sense, no more optimization is possible.
-          uint opType = tmp->op & ~OP_BYTE;
+          uint32_t opType = tmp->op & ~OP_BYTE;
           if (opType != op_jmp && opType != (an->op & ~OP_BYTE)) break;
 
           // We're pointing to another jump.  Make its label ou

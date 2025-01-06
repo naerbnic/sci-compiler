@@ -216,7 +216,7 @@ Symbol* GetSelector(Symbol* obj) {
   receiver = 0;
   if (!IsVar() && obj && (obj->type == S_OBJ || obj->type == S_CLASS) &&
       obj->obj) {
-    switch ((uint)obj->val) {
+    switch ((uint32_t)obj->val) {
       case OBJ_SELF:
         receiver = curObj;
         break;

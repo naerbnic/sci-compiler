@@ -220,7 +220,7 @@ struct ANProp : ANode
   ANProp(Symbol* sp, int v);
 
   virtual char* desc() = 0;  // return descriptive string
-  virtual uint value() = 0;  // return value of selector
+  virtual uint32_t value() = 0;  // return value of selector
 
   size_t size();
   void list();
@@ -236,7 +236,7 @@ struct ANIntProp : ANProp
   ANIntProp(Symbol* sp, int v) : ANProp(sp, v) {}
 
   char* desc();  // return descriptive string
-  uint value();  // return value of selector
+  uint32_t value();  // return value of selector
 };
 
 struct ANTextProp : ANProp
@@ -246,7 +246,7 @@ struct ANTextProp : ANProp
 
   void emit(OutputFile*);
   char* desc();  // return descriptive string
-  uint value();  // return value of selector
+  uint32_t value();  // return value of selector
 };
 
 struct ANOfsProp : ANProp
@@ -255,7 +255,7 @@ struct ANOfsProp : ANProp
   ANOfsProp(Symbol* sp) : ANProp(sp, 0) {}
 
   char* desc();
-  uint value();
+  uint32_t value();
 
   ANode* target;
 };
@@ -266,7 +266,7 @@ struct ANMethod : ANProp
   ANMethod(Symbol* sp, ANMethCode* mp);
 
   char* desc();  // return descriptive string
-  uint value();  // return value of selector
+  uint32_t value();  // return value of selector
 
   ANMethCode* method;
 };
@@ -277,13 +277,13 @@ struct ANOpCode : ANode
 // the opcode.
 {
   ANOpCode() {}
-  ANOpCode(uint o);
+  ANOpCode(uint32_t o);
 
   size_t size();
   void list();
   void emit(OutputFile*);
 
-  uint op;  // type of operator
+  uint32_t op;  // type of operator
 };
 
 class ANLabel : public ANOpCode
@@ -304,25 +304,25 @@ class ANLabel : public ANOpCode
   void list();
   void emit(OutputFile*);
 
-  uint number;  // label number
+  uint32_t number;  // label number
 
   static void reset() { nextLabel = 0; }
 
  private:
-  static uint nextLabel;  // label number of next label
+  static uint32_t nextLabel;  // label number of next label
 };
 
 struct ANOpUnsign : ANOpCode
 // The ANOpUnsign class is an ANOpcode which takes an unsigned integer
 // as the argument to the opcode.
 {
-  ANOpUnsign(uint o, uint v);
+  ANOpUnsign(uint32_t o, uint32_t v);
 
   size_t size();
   void list();
   void emit(OutputFile*);
 
-  uint value;
+  uint32_t value;
   Symbol* sym;
 };
 
@@ -330,7 +330,7 @@ struct ANOpSign : ANOpCode
 // The ANOpSign class is an ANOpcode which takes a signed integer as the
 // argument to the opcode.
 {
-  ANOpSign(uint o, int v);
+  ANOpSign(uint32_t o, int v);
 
   size_t size();
   void list();
@@ -343,15 +343,15 @@ struct ANOpSign : ANOpCode
 struct ANOpExtern : ANOpCode
 // The ANOpExtern class describes a call to an external proceedure.
 {
-  ANOpExtern(Symbol* s, uint m, uint e);
+  ANOpExtern(Symbol* s, uint32_t m, uint32_t e);
 
   size_t size();
   void list();
   void emit(OutputFile*);
 
-  uint module;   // module # of destination
-  uint entry;    // entry # of destination
-  uint numArgs;  // number of arguments
+  uint32_t module;   // module # of destination
+  uint32_t entry;    // entry # of destination
+  uint32_t numArgs;  // number of arguments
   Symbol* sym;
 };
 
@@ -365,7 +365,7 @@ struct ANCall : ANOpCode,
   void list();
   void emit(OutputFile*);
 
-  uint numArgs;  // number of arguments
+  uint32_t numArgs;  // number of arguments
 };
 
 struct ANBranch : ANOpCode,
@@ -374,7 +374,7 @@ struct ANBranch : ANOpCode,
 // of the ANReference portion is the ANode (actually the ANLabel) to which
 // to branch.
 {
-  ANBranch(uint o);
+  ANBranch(uint32_t o);
 
   size_t size();
   void list();
@@ -387,13 +387,13 @@ struct ANVarAccess : ANOpCode
 // the 'addr' property the offset of the variable in the appropriate
 // variable block (global, local, or temporary).
 {
-  ANVarAccess(uint o, uint a);
+  ANVarAccess(uint32_t o, uint32_t a);
 
   size_t size();
   void list();
   void emit(OutputFile*);
 
-  uint addr;    // variable address
+  uint32_t addr;    // variable address
   Symbol* sym;  // symbol of variable name
 };
 
@@ -401,7 +401,7 @@ struct ANOpOfs : ANOpCode
 // The ANOpOfs class gives the offset of a text string in
 // its block of the object code.
 {
-  ANOpOfs(uint o);
+  ANOpOfs(uint32_t o);
 
   size_t size();
   void list();
@@ -429,38 +429,38 @@ struct ANEffctAddr : ANVarAccess
 // a variable.  The type of variable is determined by the value of
 // the property 'eaType'.
 {
-  ANEffctAddr(uint o, uint a, uint t);
+  ANEffctAddr(uint32_t o, uint32_t a, uint32_t t);
 
   size_t size();
   void list();
   void emit(OutputFile*);
 
-  uint eaType;  // type of access
+  uint32_t eaType;  // type of access
 };
 
 struct ANSend : ANOpCode
 // The ANSend class represents a send to an object.
 {
-  ANSend(uint o);
+  ANSend(uint32_t o);
 
   size_t size();
   void list();
   void emit(OutputFile*);
 
-  uint numArgs;
+  uint32_t numArgs;
 };
 
 struct ANSuper : ANSend
 // The ANSuper class represents a send to the superclass whose number is
 // 'classNum'.
 {
-  ANSuper(Symbol* s, uint c);
+  ANSuper(Symbol* s, uint32_t c);
 
   size_t size();
   void list();
   void emit(OutputFile*);
 
-  uint classNum;
+  uint32_t classNum;
   Symbol* sym;
 };
 

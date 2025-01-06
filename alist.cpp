@@ -28,7 +28,7 @@ ANOpCode* AList::nextOp(ANode* start) {
   return nn;
 }
 
-ANOpCode* AList::findOp(uint op) {
+ANOpCode* AList::findOp(uint32_t op) {
   ANOpCode* nn = (ANOpCode*)cur->next;
 
   if (nn)
@@ -37,7 +37,7 @@ ANOpCode* AList::findOp(uint op) {
     return 0;
 }
 
-bool AList::removeOp(uint op) {
+bool AList::removeOp(uint32_t op) {
   ANode* an = findOp(op);
   if (an) del(an);
 

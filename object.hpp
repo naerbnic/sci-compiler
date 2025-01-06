@@ -22,7 +22,7 @@ struct Selector {
     int ofs;    // Offset of property in template
     ANode* an;  // Pointer to code for a local method
   };
-  uint tag;
+  uint32_t tag;
 };
 
 class Class;

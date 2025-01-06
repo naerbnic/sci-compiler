@@ -52,7 +52,7 @@ Symbol* SymTbl::install(strptr name, sym_t type) {
 
 Symbol* SymTbl::add(Symbol* sp) {
   // Get the hash value for the symbol in this hash table.
-  uint hashVal = hash(sp->name);
+  uint32_t hashVal = hash(sp->name);
 
   // Link the symbol in at the beginning of the appropriate hash list
   sp->next = hashTable[hashVal];
@@ -118,7 +118,7 @@ bool SymTbl::del(strptr name) {
   return (bool)sp;
 }
 
-uint SymTbl::hash(strptr str) {
+uint32_t SymTbl::hash(strptr str) {
   // Compute the hash value of the string 'str'.
   long value;
   for (value = 0; *str; value += *str++);

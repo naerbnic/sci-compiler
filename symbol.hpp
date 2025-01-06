@@ -133,7 +133,7 @@ class Symbol {
 
   strptr name;   // pointer to the symbol name
   sym_t type;    // symbol type
-  uint lineNum;  //	where symbol was first defined
+  uint32_t lineNum;  //	where symbol was first defined
 
   union {
     // Pointer to symbol definition in the AList (or the reference chain,
