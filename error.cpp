@@ -6,6 +6,9 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+#include <exception>
+#include <string>
+
 // This may need to be define bound if used on a non-unix system.
 #include <unistd.h>
 
@@ -22,37 +25,70 @@ int warnings;
 
 static void beep();
 
-static char buf[MaxTokenLen + 100];
+namespace {
+std::string vstringf(const char* fmt, va_list args) {
+  va_list args2;
+  va_copy(args2, args);
+
+  int size = vsnprintf(nullptr, 0, fmt, args2);
+  va_end(args2);
+  if (size < 0) {
+    throw std::runtime_error("vsnprintf failed");
+  }
+
+  std::string result;
+
+  if (size > 0) {
+    result.resize(size);
+    vsnprintf(&result[0], size + 1, fmt, args);
+  }
+
+  return result;
+}
+
+std::string stringf(const char* fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  std::string result = vstringf(fmt, args);
+  va_end(args);
+  return result;
+}
+
+void InnerOutput(strptr str) {
+  printf("%s", str);
+  fflush(stdout);
+
+  if (!isatty(fileno(stdout)) && isatty(fileno(stderr))) {
+    fprintf(stderr, "%s", str);
+  }
+}
+
+}  // namespace
 
 void output(strptr fmt, ...) {
   va_list args;
 
   va_start(args, fmt);
-  vprintf(fmt, args);
-  fflush(stdout);
+  auto str = vstringf(fmt, args);
   va_end(args);
 
-  if (!isatty(fileno(stdout)) && isatty(fileno(stderr))) {
-    va_start(args, fmt);
-    vfprintf(stderr, fmt, args);
-    va_end(args);
-  }
+  InnerOutput(str.c_str());
 }
 
 void Info(strptr parms, ...) {
   va_list argPtr;
 
-  sprintf(buf, "Info: %s, line %d\n\t", curFile, curLine);
-  output(buf);
-  Listing(buf);
+  std::string buf = stringf("Info: %s, line %d\n\t", curFile, curLine);
+  InnerOutput(buf.c_str());
+  Listing(buf.c_str());
 
   va_start(argPtr, parms);
-  vsprintf(buf, parms, argPtr);
+  buf = vstringf(parms, argPtr);
   va_end(argPtr);
-  output(buf);
-  Listing(buf);
+  InnerOutput(buf.c_str());
+  Listing(buf.c_str());
 
-  output("\n");
+  InnerOutput("\n");
   Listing("\n");
 }
 
@@ -61,17 +97,17 @@ void Warning(strptr parms, ...) {
 
   ++warnings;
 
-  sprintf(buf, "Warning: %s, line %d\n\t", curFile, curLine);
-  output(buf);
-  Listing(buf);
+  std::string buf = stringf("Warning: %s, line %d\n\t", curFile, curLine);
+  InnerOutput(buf.c_str());
+  Listing(buf.c_str());
 
   va_start(argPtr, parms);
-  vsprintf(buf, parms, argPtr);
+  buf = vstringf(parms, argPtr);
   va_end(argPtr);
-  output(buf);
-  Listing(buf);
+  InnerOutput(buf.c_str());
+  Listing(buf.c_str());
 
-  output("\n");
+  InnerOutput("\n");
   Listing("\n");
 
   // Beep on first error/warning.
@@ -84,17 +120,17 @@ void Error(strptr parms, ...) {
 
   ++errors;
 
-  sprintf(buf, "Error: %s, line %d\n\t", curFile, curLine);
-  output(buf);
-  Listing(buf);
+  std::string buf = stringf("Error: %s, line %d\n\t", curFile, curLine);
+  InnerOutput(buf.c_str());
+  Listing(buf.c_str());
 
   va_start(argPtr, parms);
-  vsprintf(buf, parms, argPtr);
+  buf = vstringf(parms, argPtr);
   va_end(argPtr);
-  output(buf);
-  Listing(buf);
+  InnerOutput(buf.c_str());
+  Listing(buf.c_str());
 
-  output("\n");
+  InnerOutput("\n");
   Listing("\n");
 
   if (!CloseP(symType))
@@ -112,17 +148,17 @@ void Severe(strptr parms, ...) {
 
   ++errors;
 
-  sprintf(buf, "Error: %s, line %d\n\t", curFile, curLine);
-  output(buf);
-  Listing(buf);
+  auto buf = stringf("Error: %s, line %d\n\t", curFile, curLine);
+  InnerOutput(buf.c_str());
+  Listing(buf.c_str());
 
   va_start(argPtr, parms);
-  vsprintf(buf, parms, argPtr);
+  buf = vstringf(parms, argPtr);
   va_end(argPtr);
-  output(buf);
-  Listing(buf);
+  InnerOutput(buf.c_str());
+  Listing(buf.c_str());
 
-  output("\n");
+  InnerOutput("\n");
   Listing("\n");
 
   if (!CloseP(symType))
@@ -138,15 +174,17 @@ void Severe(strptr parms, ...) {
 void Fatal(strptr parms, ...) {
   va_list argPtr;
 
-  output("Fatal: %s, line %d\n\t", curFile, curLine);
+  std::string buf = stringf("Fatal: %s, line %d\n\t", curFile, curLine);
+  InnerOutput(buf.c_str());
+  Listing(buf.c_str());
   va_start(argPtr, parms);
-  vsprintf(buf, parms, argPtr);
-  output(buf);
+  buf = vstringf(parms, argPtr);
   va_end(argPtr);
-  output("\n");
-
-  Listing("Fatal: %s, line %d\n\t", curFile, curLine);
-  Listing(parms);
+  InnerOutput(buf.c_str());
+  // Previous implementation printed the format string, not the formatted
+  // string.
+  Listing(buf.c_str());
+  InnerOutput("\n");
   Listing("\n");
 
   beep();
@@ -157,15 +195,16 @@ void Fatal(strptr parms, ...) {
 }
 
 void Panic(strptr parms, ...) {
+  constexpr size_t bufSize = 200;
   va_list argPtr;
-  char buf[200];
+  char buf[bufSize];
 
-  output("Fatal: ");
+  InnerOutput("Fatal: ");
   va_start(argPtr, parms);
-  vsprintf(buf, parms, argPtr);
-  output(buf);
+  vsnprintf(buf, bufSize, parms, argPtr);
+  InnerOutput(buf);
   va_end(argPtr);
-  output("\n");
+  InnerOutput("\n");
 
   beep();
 
