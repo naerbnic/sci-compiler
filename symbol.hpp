@@ -10,32 +10,33 @@
 
 // Symbol types
 enum sym_t {
-  S_END = 128,            // end of input
-  S_KEYWORD,              // keyword
-  S_DEFINE,               // definition
-  S_IDENT,                // unknown identifier
-  S_LABEL,                // label
-  S_GLOBAL,               // global variable
-  S_LOCAL,                // local variable
-  S_TMP,                  // temporary variable
-  S_PARM,                 // parameter
-  S_PROC,                 // procedure
-  S_EXTERN,               // external procedure/object
-  S_ASSIGN,               // assignment operator
-  S_NARY,                 // nary arithmetic operator
-  S_BINARY,               // binary operator
-  S_UNARY,                // unary arithmetic operator
-  S_COMP,                 // comparison operator
-  S_NUM,                  // number
-  S_STRING,               // string
-  S_CLASS,                // class
-  S_OBJ,                  // object
-  S_SELECT,               // selector
-  S_LPROP,                // property referenced as local var
-  S_REST,                 // &rest keyword
-  S_PROP,                 // property
-  S_METH,                 // method
-  S_OPEN_P = '(',  // open parenthesis
+  S_END = 128,           // end of input
+  S_KEYWORD,             // keyword
+  S_DEFINE,              // definition
+  S_IDENT,               // unknown identifier
+  S_LABEL,               // label
+  S_GLOBAL,              // global variable
+  S_LOCAL,               // local variable
+  S_TMP,                 // temporary variable
+  S_PARM,                // parameter
+  S_PROC,                // procedure
+  S_EXTERN,              // external procedure/object
+  S_ASSIGN,              // assignment operator
+  S_NARY,                // nary arithmetic operator
+  S_BINARY,              // binary operator
+  S_UNARY,               // unary arithmetic operator
+  S_COMP,                // comparison operator
+  S_NUM,                 // number
+  S_STRING,              // string
+  S_CLASS,               // class
+  S_OBJ,                 // object
+  S_SELECT,              // selector
+  S_LPROP,               // property referenced as local var
+  S_REST,                // &rest keyword
+  S_PROP,                // property
+  S_METH,                // method
+  S_OPEN_P = '(',        // open parenthesis
+  S_OPEN_BRACKET = '[',  // open bracket
 };
 
 #define S_MSGEND ((sym_t)',')

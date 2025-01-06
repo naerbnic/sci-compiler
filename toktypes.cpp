@@ -114,7 +114,7 @@ bool GetNumberOrString(strptr errStr) {
   return GetNumberOrStringToken(errStr, True);
 }
 
-static bool GetNumberOrStringToken(char* errStr, bool stringOK) {
+static bool GetNumberOrStringToken(strptr errStr, bool stringOK) {
   // Get a number (or a string) from the input.
 
   // Get a parse node.
@@ -137,6 +137,9 @@ static bool GetNumberOrStringToken(char* errStr, bool stringOK) {
       break;
     case PN_STRING:
       symType = S_STRING;
+      break;
+    default:
+      Fatal("Unexpected literal type");
       break;
   }
 
@@ -209,7 +212,7 @@ bool IsVar() {
     case S_TMP:
     case S_PARM:
     case S_PROP:
-    case '[':
+    case S_OPEN_BRACKET:
       return True;
 
     case S_SELECT:

@@ -211,7 +211,7 @@ void Local() {
   values = new Var[maxVars];
 
   for (GetToken(); !CloseP(symType); GetToken()) {
-    if (symType == (sym_t)'[') {
+    if (symType == S_OPEN_BRACKET) {
       if (GetIdent()) {
         theSym = syms.installLocal(symStr, S_LOCAL);
         theSym->val = size;

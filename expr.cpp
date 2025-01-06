@@ -806,7 +806,7 @@ static bool Variable(PNode* theNode) {
   Symbol* theSym;
 
   theSym = LookupTok();
-  if (symType == (sym_t)'[') return Array(theNode);
+  if (symType == S_OPEN_BRACKET) return Array(theNode);
 
   if (!IsVar()) {
     Severe("Variable name expected: %s.", symStr);

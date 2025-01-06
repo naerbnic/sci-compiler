@@ -126,7 +126,7 @@ static int ParameterList() {
       // A parameter or tmp variable definition.
       NewParm(parmOfs++, parmType);
 
-    else if (symType == (sym_t)'[') {
+    else if (symType == S_OPEN_BRACKET) {
       // An array parameter or tmp variable.
       if (!GetIdent()) break;
       NewParm(parmOfs, parmType);
