@@ -44,4 +44,6 @@ update.cpp
 sc.cpp
 )
 
+set_target_properties(sc PROPERTIES COMPILE_WARNING_AS_ERROR ON)
+
 # TODO: Add tests and install targets if needed.
