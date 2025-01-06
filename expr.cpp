@@ -48,7 +48,7 @@ bool ExprList(PNode* theNode, bool required) {
   PNode* pn;
   int numExpr;
 
-  pn = New PNode(PN_ELIST);
+  pn = new PNode(PN_ELIST);
 
   // Get the expressions making up the list.  Even if an expression
   // list is required, only the first expression is required.
@@ -86,12 +86,12 @@ bool Expression(PNode* theNode, bool required) {
   } else {
     switch (symType) {
       case S_NUM:
-        theNode->addChild(New PNode(PN_NUM))->val = symVal;
+        theNode->addChild(new PNode(PN_NUM))->val = symVal;
         isExpr = True;
         break;
 
       case S_REST:
-        theNode->addChild(New PNode(PN_REST))->val = symVal;
+        theNode->addChild(new PNode(PN_REST))->val = symVal;
         isExpr = True;
         break;
 
@@ -113,12 +113,12 @@ bool Expression(PNode* theNode, bool required) {
       case S_OBJ:
         // This needs to stay right here, as the handling of
         // S_IDENT falls through to it.
-        theNode->addChild(New PNode(PN_OBJ))->sym = theSym;
+        theNode->addChild(new PNode(PN_OBJ))->sym = theSym;
         isExpr = True;
         break;
 
       case S_CLASS:
-        pn = theNode->addChild(New PNode(PN_CLASS));
+        pn = theNode->addChild(new PNode(PN_CLASS));
         if ((uint32_t)symType == OBJ_SUPER) {
           pn->sym = classes[curObj->super]->sym;
           pn->val = classes[curObj->super]->num;
@@ -130,7 +130,7 @@ bool Expression(PNode* theNode, bool required) {
         break;
 
       case S_STRING:
-        theNode->addChild(New PNode(PN_STRING))->val = text.find(symStr);
+        theNode->addChild(new PNode(PN_STRING))->val = text.find(symStr);
         isExpr = True;
         break;
 
@@ -314,7 +314,7 @@ static bool Return(PNode* theNode) {
   PNode* pn;
 
   // Add a return node, then look for an optional return expression.
-  pn = theNode->addChild(New PNode(PN_RETURN));
+  pn = theNode->addChild(new PNode(PN_RETURN));
   Expression(pn, OPTIONAL);
 
   return True;
@@ -326,7 +326,7 @@ static bool Assignment(PNode* theNode) {
   bool retVal = False;
   PNode* pn;
 
-  pn = New PNode(PN_ASSIGN);
+  pn = new PNode(PN_ASSIGN);
   pn->val = symVal;
 
   // Get the variable
@@ -347,7 +347,7 @@ static bool Call(PNode* theNode, Symbol* theSym) {
 
   PNode* pn;
 
-  pn = New PNode((pn_t)(theSym->type == S_EXTERN ? PN_EXTERN : PN_CALL));
+  pn = new PNode((pn_t)(theSym->type == S_EXTERN ? PN_EXTERN : PN_CALL));
   pn->val = theSym->val;
   pn->sym = theSym;
 
@@ -365,12 +365,12 @@ static bool Send(PNode* theNode, Symbol* theSym) {
   PNode* dn;
   char* objName;
 
-  pn = theNode->addChild(New PNode(PN_SEND));
+  pn = theNode->addChild(new PNode(PN_SEND));
 
   // Add a node giving the type and value which determines
   // the destination of the send.
   if (symType == S_CLASS && symVal == (int)OBJ_SUPER) {
-    dn = pn->addChild(New PNode(PN_SUPER));
+    dn = pn->addChild(new PNode(PN_SUPER));
     dn->sym = classes[curObj->super]->sym;
     dn->val = classes[curObj->super]->num;
     objName = "super";
@@ -418,14 +418,14 @@ static bool Message(PNode* theNode, Symbol* theSym) {
     retVal = False;
   else {
     // Add the message node to the send.
-    pn = theNode->addChild(New PNode(PN_MSG));
+    pn = theNode->addChild(new PNode(PN_MSG));
 
     // Add the selector node.
     if (msgSel->type != S_SELECT) {
       UnGetTok();
       Expression(pn, REQUIRED);
     } else {
-      node = pn->addChild(New PNode(PN_SELECT));
+      node = pn->addChild(new PNode(PN_SELECT));
       node->val = msgSel->val;
       node->sym = msgSel;
     }
@@ -460,7 +460,7 @@ static bool While(PNode* theNode) {
 
   PNode* pn;
 
-  pn = New PNode(PN_WHILE);
+  pn = new PNode(PN_WHILE);
 
   // Get the conditional expression which drives the loop
   if (!Expression(pn, REQUIRED)) {
@@ -484,7 +484,7 @@ static bool Repeat(PNode* theNode) {
 
   PNode* pn;
 
-  pn = theNode->addChild(New PNode(PN_REPEAT));
+  pn = theNode->addChild(new PNode(PN_REPEAT));
 
   // Increment the loop nesting count, then get the statements to be
   // executed in the loop.  Set the loop nesting count back down when
@@ -504,7 +504,7 @@ static bool For(PNode* theNode) {
 
   PNode* pn;
 
-  pn = New PNode(PN_FOR);
+  pn = new PNode(PN_FOR);
 
   // Get the initialization for the loop
   if (!OpenBlock()) {
@@ -547,7 +547,7 @@ static bool Break(PNode* theNode) {
 
   PNode* pn;
 
-  pn = theNode->addChild(New PNode(PN_BREAK));
+  pn = theNode->addChild(new PNode(PN_BREAK));
 
   GetToken();
   if (symType == S_NUM)
@@ -568,7 +568,7 @@ static bool BreakIf(PNode* theNode) {
 
   PNode* pn;
 
-  pn = New PNode(PN_BREAKIF);
+  pn = new PNode(PN_BREAKIF);
 
   // Get the conditional expression.
   if (!Expression(pn, REQUIRED)) {
@@ -598,7 +598,7 @@ static bool Continue(PNode* theNode) {
 
   PNode* pn;
 
-  pn = theNode->addChild(New PNode(PN_CONT));
+  pn = theNode->addChild(new PNode(PN_CONT));
 
   GetToken();
   if (symType == S_NUM)
@@ -619,7 +619,7 @@ static bool ContIf(PNode* theNode) {
 
   PNode* pn;
 
-  pn = New PNode(PN_CONTIF);
+  pn = new PNode(PN_CONTIF);
 
   // Get the conditional expression.
   if (!Expression(pn, REQUIRED)) {
@@ -650,7 +650,7 @@ static bool If(PNode* theNode) {
 
   PNode* pn;
 
-  pn = New PNode(PN_IF);
+  pn = new PNode(PN_IF);
 
   // Get the condition
   if (!Expression(pn, REQUIRED)) {
@@ -684,14 +684,14 @@ static bool Cond(PNode* theNode) {
 
   PNode* pn;
 
-  pn = New PNode(PN_COND);
+  pn = new PNode(PN_COND);
 
   GetToken();
   while (OpenP(symType)) {
     // Get the expression which serves as the condition
     GetToken();
     if (Keyword() == K_ELSE)
-      pn->addChild(New PNode(PN_ELSE));
+      pn->addChild(new PNode(PN_ELSE));
     else {
       UnGetTok();
       if (!Expression(pn, REQUIRED)) {
@@ -719,7 +719,7 @@ static bool Switch(PNode* theNode) {
 
   PNode* pn;
 
-  pn = New PNode(PN_SWITCH);
+  pn = new PNode(PN_SWITCH);
 
   // Get the expression to be switched on
   if (!Expression(pn, REQUIRED)) {
@@ -732,7 +732,7 @@ static bool Switch(PNode* theNode) {
     // Get the expression to compare to the switch expression
     GetToken();
     if (Keyword() == K_ELSE)
-      pn->addChild(New PNode(PN_ELSE));
+      pn->addChild(new PNode(PN_ELSE));
     else {
       UnGetTok();
       if (!Expression(pn, REQUIRED)) {
@@ -759,7 +759,7 @@ static bool SwitchTo(PNode* theNode) {
   PNode* pn;
   int switchToVal = 0;
 
-  pn = New PNode(PN_SWITCHTO);
+  pn = new PNode(PN_SWITCHTO);
 
   // Get the expression to be switched on
   if (!Expression(pn, REQUIRED)) {
@@ -768,7 +768,7 @@ static bool SwitchTo(PNode* theNode) {
   }
 
   while (OpenBlock()) {
-    pn->addChild(New PNode(PN_NUM))->val = switchToVal++;
+    pn->addChild(new PNode(PN_NUM))->val = switchToVal++;
     ExprList(pn, OPTIONAL);
     CloseBlock();
   }
@@ -786,7 +786,7 @@ static bool IncDec(PNode* theNode) {
   PNode* pn;
 
   // Get the type of operation.
-  pn = New PNode(PN_INCDEC);
+  pn = new PNode(PN_INCDEC);
   pn->val = symVal;
 
   // Get the argument
@@ -812,7 +812,7 @@ static bool Variable(PNode* theNode) {
     Severe("Variable name expected: %s.", symStr);
     return False;
   }
-  pn = theNode->addChild(New PNode(PNType(symType)));
+  pn = theNode->addChild(new PNode(PNType(symType)));
   pn->val = symVal;
   pn->sym = theSym;
 
@@ -830,8 +830,8 @@ static bool Array(PNode* theNode) {
     return False;
   }
 
-  pn = New PNode(PN_INDEX);
-  node = pn->addChild(New PNode(PNType(symType)));
+  pn = new PNode(PN_INDEX);
+  node = pn->addChild(new PNode(PNType(symType)));
   node->val = symVal;
   node->sym = &tokSym;
 
@@ -858,7 +858,7 @@ static bool Rest(PNode* theNode) {
     Severe("Variable name expected: %s.", symStr);
     return False;
   }
-  theNode->addChild(New PNode(PN_REST))->val = symVal;
+  theNode->addChild(new PNode(PN_REST))->val = symVal;
   return True;
 }
 
@@ -874,9 +874,9 @@ static bool NaryExpr(PNode* theNode) {
   bool logicExpr = symVal == N_AND || symVal == N_OR;
 
   if (logicExpr)
-    pn = New PNode(PN_COMP);
+    pn = new PNode(PN_COMP);
   else
-    pn = New PNode(PN_NARY);
+    pn = new PNode(PN_NARY);
   pn->val = symVal;
 
   // Get the first and second arguments
@@ -961,7 +961,7 @@ static bool BinaryExpr(PNode* theNode) {
   int val2;
   int opType;
 
-  pn = New PNode(PN_BINARY);
+  pn = new PNode(PN_BINARY);
   opType = pn->val = symVal;
 
   // Get the first argument.
@@ -1035,7 +1035,7 @@ static bool UnaryExpr(PNode* theNode) {
   PNode* pn;
   PNode* theArg;
 
-  pn = New PNode(PN_UNARY);
+  pn = new PNode(PN_UNARY);
   pn->val = symVal;
 
   // Get the argument
@@ -1071,7 +1071,7 @@ static bool CompExpr(PNode* theNode) {
 
   PNode* pn;
 
-  pn = New PNode(PN_COMP);
+  pn = new PNode(PN_COMP);
   pn->val = symVal;
 
   // Get the first and second arguments.

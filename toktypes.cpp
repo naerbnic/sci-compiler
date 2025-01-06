@@ -118,7 +118,7 @@ static bool GetNumberOrStringToken(char* errStr, bool stringOK) {
   // Get a number (or a string) from the input.
 
   // Get a parse node.
-  PNode* pn = New PNode(PN_EXPR);
+  PNode* pn = new PNode(PN_EXPR);
 
   // Get an expression.
   Expression(pn, REQUIRED);

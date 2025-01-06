@@ -52,7 +52,7 @@ void Compile(PNode* pn) {
 
   if (includeDebugInfo && pn->type != PN_PROC && pn->type != PN_METHOD &&
       pn->lineNum > lastLineNum) {
-    New ANLineNum(pn->lineNum);
+    new ANLineNum(pn->lineNum);
     lastLineNum = pn->lineNum;
   }
 
@@ -202,7 +202,7 @@ static void MakeAccess(PNode* pn, ubyte theCode) {
   if (indexed) {
     child = pn->child;
     if (theCode == (OP_LDST | OP_STORE))
-      New ANOpCode(op_push);  // push the value to store on the stack
+      new ANOpCode(op_push);  // push the value to store on the stack
     Compile(child->next);     // compile index value
     if (theCode != op_lea) theCode |= OP_INDEX;  // set the indexing bit
     theAddr = child->val;
@@ -233,7 +233,7 @@ static void MakeAccess(PNode* pn, ubyte theCode) {
     }
 
     if (indexed) accType |= OP_INDEX;
-    an = New ANEffctAddr(theCode, theAddr, accType);
+    an = new ANEffctAddr(theCode, theAddr, accType);
 
   } else {
     if (varType == PN_PROP) {
@@ -270,7 +270,7 @@ static void MakeAccess(PNode* pn, ubyte theCode) {
     }
 
     if (theAddr < 256) theCode |= OP_BYTE;
-    an = New ANVarAccess(theCode, theAddr);
+    an = new ANVarAccess(theCode, theAddr);
   }
 
   // Put a pointer to the referenced symbol in the assembly node,
@@ -287,16 +287,16 @@ static void MakeAccess(PNode* pn, ubyte theCode) {
   }
 }
 
-static void MakeImmediate(int val) { New ANOpSign(op_loadi, val); }
+static void MakeImmediate(int val) { new ANOpSign(op_loadi, val); }
 
-static void MakeString(PNode* pn) { New ANOpOfs(pn->val); }
+static void MakeString(PNode* pn) { new ANOpOfs(pn->val); }
 
 static void MakeCall(PNode* pn) {
   // Compile a call to a procedure, the kernel, etc.
 
   // Push the number of arguments on the stack (we don't know the
   // number yet).
-  ANOpUnsign* an = New ANOpUnsign(op_pushi, 0);
+  ANOpUnsign* an = new ANOpUnsign(op_pushi, 0);
 
   // Compile the arguments.
   uint32_t numArgs = MakeArgs(pn->child);
@@ -307,7 +307,7 @@ static void MakeCall(PNode* pn) {
   // Compile the call.
   Symbol* sym = pn->sym;
   if (pn->type == PN_CALL) {
-    ANCall* call = New ANCall(sym);
+    ANCall* call = new ANCall(sym);
 
     // If the destination procedure has not yet been defined, add
     // this node to the list of those waiting for its definition.
@@ -320,7 +320,7 @@ static void MakeCall(PNode* pn) {
 
   } else {
     Public* pub = sym->ext;
-    ANOpExtern* extCall = New ANOpExtern(sym, pub->script, pub->entry);
+    ANOpExtern* extCall = new ANOpExtern(sym, pub->script, pub->entry);
     extCall->numArgs = 2 * numArgs;
   }
 }
@@ -328,7 +328,7 @@ static void MakeCall(PNode* pn) {
 static void MakeClassID(PNode* pn) {
   // Compile a class ID.
 
-  ANOpUnsign* an = New ANOpUnsign(op_class, pn->sym->obj->num);
+  ANOpUnsign* an = new ANOpUnsign(op_class, pn->sym->obj->num);
   an->sym = pn->sym;
 }
 
@@ -336,11 +336,11 @@ static void MakeObjID(PNode* pn) {
   // Compile an object ID.
 
   if (pn->sym->val == (int)OBJ_SELF)
-    New ANOpCode(op_selfID);
+    new ANOpCode(op_selfID);
 
   else {
     Symbol* sym = pn->sym;
-    ANObjID* an = New ANObjID(sym);
+    ANObjID* an = new ANObjID(sym);
 
     // If the object is not defined yet, add this node to the list
     // of those waiting for the definition.
@@ -365,12 +365,12 @@ static void MakeSend(PNode* pn) {
   // Add the appropriate send.
   ANSend* an;
   if (on->type == PN_OBJ && on->val == (int)OBJ_SELF)
-    an = New ANSend(op_self);
+    an = new ANSend(op_self);
   else if (on->type == PN_SUPER)
-    an = New ANSuper(on->sym, on->val);
+    an = new ANSuper(on->sym, on->val);
   else {
     Compile(on);  // compile the object/class id
-    an = New ANSend(op_send);
+    an = new ANSend(op_send);
   }
 
   an->numArgs = 2 * numArgs;
@@ -381,11 +381,11 @@ static int MakeMessage(PNode* theMsg) {
 
   // Compile the selector.
   Compile(theMsg);
-  New ANOpCode(op_push);
+  new ANOpCode(op_push);
 
   // Push the number of arguments on the stack (we don't know the
   // number yet).
-  ANOpUnsign* an = New ANOpUnsign(op_pushi, (uint32_t)-1);
+  ANOpUnsign* an = new ANOpUnsign(op_pushi, (uint32_t)-1);
 
   // Compile the arguments to the message and fix up the number
   // of arguments to the message.
@@ -402,10 +402,10 @@ static int MakeArgs(PNode* theArg) {
 
   for (; theArg; theArg = theArg->next) {
     if (theArg->type == PN_REST)
-      New ANOpUnsign(op_rest | OP_BYTE, theArg->val);
+      new ANOpUnsign(op_rest | OP_BYTE, theArg->val);
     else {
       Compile(theArg);
-      New ANOpCode(op_push);
+      new ANOpCode(op_push);
       ++numArgs;
     }
   }
@@ -432,7 +432,7 @@ static void MakeUnary(PNode* pn) {
       theCode = op_bnot;
       break;
   }
-  New ANOpCode(theCode);
+  new ANOpCode(theCode);
 }
 
 static void MakeBinary(PNode* pn) {
@@ -440,7 +440,7 @@ static void MakeBinary(PNode* pn) {
 
   // Compile the arguments, putting the first on the stack.
   Compile(pn->child);
-  New ANOpCode(op_push);
+  new ANOpCode(op_push);
   Compile(pn->child->next);
 
   // Put out the opcode.
@@ -462,7 +462,7 @@ static void MakeBinary(PNode* pn) {
       theCode = op_mod;
       break;
   }
-  New ANOpCode(theCode);
+  new ANOpCode(theCode);
 }
 
 static void MakeNary(PNode* pn) {
@@ -471,7 +471,7 @@ static void MakeNary(PNode* pn) {
   // Compile the first argument and push its value on the stack.
   PNode* theArg = pn->child;
   Compile(theArg);
-  New ANOpCode(op_push);
+  new ANOpCode(op_push);
 
   for (theArg = theArg->next; theArg;) {
     // Compile the next argument.
@@ -496,14 +496,14 @@ static void MakeNary(PNode* pn) {
         theCode = op_xor;
         break;
     }
-    New ANOpCode(theCode);
+    new ANOpCode(theCode);
 
     // Point to the next argument.  If there is one, push the current
     // result on the stack for combining with the next argument.  If
     // there is no next argument, we're done -- leave the result
     // in the register.
     theArg = theArg->next;
-    if (theArg) New ANOpCode(op_push);
+    if (theArg) new ANOpCode(op_push);
   }
 }
 
@@ -512,7 +512,7 @@ static void MakeAssign(PNode* pn) {
   // target variable on the stack for the operation.
   if (pn->val != A_EQ) {
     MakeAccess(pn->child, OP_LDST | OP_LOAD);
-    New ANOpCode(op_push);
+    new ANOpCode(op_push);
   }
 
   // Compile the value to be assigned.
@@ -550,7 +550,7 @@ static void MakeAssign(PNode* pn) {
         theCode = op_or;
         break;
     }
-    New ANOpCode(theCode);
+    new ANOpCode(theCode);
   }
 
   MakeAccess(pn->child, OP_LDST | OP_STORE);
@@ -563,7 +563,7 @@ static void MakeReturn(PNode* pn) {
   if (pn->child) Compile(pn->child);
 
   // Put out the return opcode.
-  New ANOpCode(op_ret);
+  new ANOpCode(op_ret);
 }
 
 void MakeBranch(ubyte theCode, ANode* bn, Symbol* dest) {
@@ -571,7 +571,7 @@ void MakeBranch(ubyte theCode, ANode* bn, Symbol* dest) {
   // destination is 'bn'.  If the the destination is not yet defined,
   // 'dest' will point to a the symbol of the destination.
 
-  ANBranch* an = New ANBranch(theCode);
+  ANBranch* an = new ANBranch(theCode);
 
   // If the target of the branch has already been defined, point to
   // it.  Otherwise, add this node the the list of those waiting for
@@ -607,7 +607,7 @@ static void MakeComp(PNode* pn) {
 
     // Compile the first two operands and do the test.
     Compile(node);
-    New ANOpCode(op_push);
+    new ANOpCode(op_push);
     node = node->next;
     Compile(node);
     MakeCompOp(op);
@@ -621,7 +621,7 @@ static void MakeComp(PNode* pn) {
 
       // Push the previous accumulator value on the stack in
       // order to continue the comparison.
-      New ANOpCode(op_pprev);
+      new ANOpCode(op_pprev);
 
       // Compile the next argument and test it.
       Compile(node);
@@ -714,7 +714,7 @@ static void MakeCompOp(int op) {
       break;
   }
 
-  New ANOpCode(theCode);
+  new ANOpCode(theCode);
 }
 
 static void MakeIf(PNode* pn) {
@@ -818,7 +818,7 @@ static void MakeSwitch(PNode* pn) {
   // the stack.
   PNode* node = pn->child;
   Compile(node);
-  New ANOpCode(op_push);
+  new ANOpCode(op_push);
 
   node = node->next;
   while (node) {
@@ -829,13 +829,13 @@ static void MakeSwitch(PNode* pn) {
       if (elseSeen) Error("Else must come at end of switch statement");
 
       // Duplicate the switch value.
-      New ANOpCode(op_dup);
+      new ANOpCode(op_dup);
 
       // Compile the test value.
       Compile(node);
 
       // Test for equality.
-      New ANOpCode(op_eq);
+      new ANOpCode(op_eq);
 
       //	if we're at the end, just fall through
       if (!node->next)
@@ -875,7 +875,7 @@ static void MakeSwitch(PNode* pn) {
   MakeLabel(&done);
 
   // Take the switch value off the stack.
-  New ANOpCode(op_toss);
+  new ANOpCode(op_toss);
 }
 
 static void MakeIncDec(PNode* pn) {
@@ -899,8 +899,8 @@ static void MakeProc(PNode* pn) {
 
   // Make a procedure node and point to the symbol for the procedure
   // (for listing purposes).
-  ANCodeBlk* an = pn->type == PN_PROC ? (ANCodeBlk*)New ANProcCode(pn->sym)
-                                      : (ANCodeBlk*)New ANMethCode(pn->sym);
+  ANCodeBlk* an = pn->type == PN_PROC ? (ANCodeBlk*)new ANProcCode(pn->sym)
+                                      : (ANCodeBlk*)new ANMethCode(pn->sym);
   an->sym->type = (sym_t)(pn->type == PN_PROC ? S_PROC : S_SELECT);
 
   // If any nodes already compiled have this procedure as a target,
@@ -913,23 +913,23 @@ static void MakeProc(PNode* pn) {
   //	procedures and methods get special treatment:  the line number
   //	and file name are set here
   if (includeDebugInfo) {
-    New ANLineNum(pn->lineNum);
+    new ANLineNum(pn->lineNum);
     lastLineNum = pn->lineNum;
-    //		New ANFileName(curSourceFile->fileName);
+    //		new ANFileName(curSourceFile->fileName);
   }
 
   // If there are to be any temporary variables, add a link node to
   // create them.
-  if (pn->val) New ANOpUnsign(op_link, pn->val);
+  if (pn->val) new ANOpUnsign(op_link, pn->val);
 
   // Compile code for the procedure followed by a return.
   if (pn->child) Compile(pn->child);
 
   if (includeDebugInfo) {
     assert(curSourceFile);
-    New ANLineNum(curSourceFile->lineNum);
+    new ANLineNum(curSourceFile->lineNum);
   }
-  New ANOpCode(op_ret);
+  new ANOpCode(op_ret);
 
   an->finish();
 }
@@ -944,7 +944,7 @@ void MakeDispatch(int maxEntry) {
   // creating asmNodes for a table of their offsets.
   numDispTblEntries->value = maxEntry + 1;
   for (int i = 0; i <= maxEntry; ++i) {
-    ANDispatch* an = New ANDispatch;
+    ANDispatch* an = new ANDispatch;
     if (an->sym = FindPublic(i))
       // Add this to the backpatch list of the symbol.
       an->addBackpatch(an->sym);
@@ -958,11 +958,11 @@ void MakeObject(Object* theObj) {
   curList = sc->heapList;
 
   // Create the object ID node.
-  ANObject* obj = New ANObject(theObj->sym, theObj->num);
+  ANObject* obj = new ANObject(theObj->sym, theObj->num);
   theObj->an = obj;
 
   // Create the table of properties.
-  ANTable* props = New ANTable("properties");
+  ANTable* props = new ANTable("properties");
   ANOfsProp* pDict = 0;
   ANOfsProp* mDict = 0;
 
@@ -971,19 +971,19 @@ void MakeObject(Object* theObj) {
     if (IsProperty(sp)) {
       switch (sp->tag) {
         case T_PROP:
-          New ANIntProp(sp->sym, sp->val);
+          new ANIntProp(sp->sym, sp->val);
           break;
 
         case T_TEXT:
-          New ANTextProp(sp->sym, sp->val);
+          new ANTextProp(sp->sym, sp->val);
           break;
 
         case T_PROPDICT:
-          pDict = New ANOfsProp(sp->sym);
+          pDict = new ANOfsProp(sp->sym);
           break;
 
         case T_METHDICT:
-          mDict = New ANOfsProp(sp->sym);
+          mDict = new ANOfsProp(sp->sym);
           break;
       }
     }
@@ -997,23 +997,23 @@ void MakeObject(Object* theObj) {
 
   // The rest of the object goes into hunk, as it never changes.
   curList = sc->hunkList;
-  New ANObject(theObj->sym, theObj->num, codeStart);
+  new ANObject(theObj->sym, theObj->num, codeStart);
 
   // If this a class, add the property dictionary.
-  ANObjTable* propDict = New ANObjTable("property dictionary");
+  ANObjTable* propDict = new ANObjTable("property dictionary");
   if (theObj->num != OBJECTNUM) {
     for (sp = theObj->selectors; sp; sp = sp->next)
-      if (IsProperty(sp)) New ANWord(sp->sym->val);
+      if (IsProperty(sp)) new ANWord(sp->sym->val);
   }
   propDict->finish();
   if (pDict) pDict->target = propDict;
 
-  ANObjTable* methDict = New ANObjTable("method dictionary");
-  ANWord* numMeth = New ANWord((short)0);
+  ANObjTable* methDict = new ANObjTable("method dictionary");
+  ANWord* numMeth = new ANWord((short)0);
   for (sp = theObj->selectors; sp; sp = sp->next)
     if (sp->tag == T_LOCAL) {
-      New ANWord(sp->sym->val);
-      New ANMethod(sp->sym, (ANMethCode*)sp->an);
+      new ANWord(sp->sym->val);
+      new ANMethod(sp->sym, (ANMethCode*)sp->an);
       sp->sym->loc = 0;
       ++numMeth->value;
     }
@@ -1026,14 +1026,14 @@ void MakeObject(Object* theObj) {
 void MakeText() {
   // Add text strings to the assembled code.
 
-  New ANWord(sc->heapList);  // terminate the object portion of the heap with a
+  new ANWord(sc->heapList);  // terminate the object portion of the heap with a
                              //	null word
-  for (Text* tp = text.head; tp; tp = tp->next) New ANText(tp);
+  for (Text* tp = text.head; tp; tp = tp->next) new ANText(tp);
 }
 
 void MakeLabel(Symbol* dest) {
   if (dest->ref) {
-    dest->ref->backpatch(New ANLabel);
+    dest->ref->backpatch(new ANLabel);
     dest->ref = 0;
   }
 }

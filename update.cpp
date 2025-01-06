@@ -64,7 +64,7 @@ void WriteClassTbl() {
   };
 
   // Allocate storage for the class table.
-  ClassTblEntry* classTbl = New ClassTblEntry[maxClassNum + 1];
+  ClassTblEntry* classTbl = new ClassTblEntry[maxClassNum + 1];
 
   // Now walk through the class symbol table, entering the script
   // number of each class in its proper place in the table.
@@ -169,7 +169,7 @@ static void WriteClassDefs() {
     // Get a pointer to the class' super-class.
     Class* sp = FindClass(cp->findSelector("-super-")->val);
 
-    // Write out any New properties or properties which differ in
+    // Write out any new properties or properties which differ in
     // value from the superclass.
     fprintf(fp, "\t(properties\n");
     Selector* tp;
@@ -179,7 +179,7 @@ static void WriteClassDefs() {
     }
     fprintf(fp, "\t)\n\n");
 
-    // Write out any New methods or methods which have been redefined.
+    // Write out any new methods or methods which have been redefined.
     fprintf(fp, "\t(methods\n");
     for (tp = cp->selectors; tp; tp = tp->next)
       if (IsMethod(tp) && sp->selectorDiffers(tp))
@@ -234,7 +234,7 @@ static void WriteSelectorVocab() {
   // allocate the table, and initialize it to point to the byte following
   // the table so that un-implemented selector values will have a string.
   tblLen = sizeof(SCIUWord) * (maxSelector + 2);
-  tbl = New SCIUWord[tblLen / sizeof *tbl];
+  tbl = new SCIUWord[tblLen / sizeof *tbl];
   ofs = tblLen;
   *tbl = SCIUWord(maxSelector);
   for (i = 1; i <= maxSelector + 1; ++i) tbl[i] = SCIUWord(ofs);

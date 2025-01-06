@@ -43,9 +43,6 @@ inline S Min(S a, T b) {
 //	calculate the number of elements in an array whose size is known
 #define NEls(array) (sizeof(array) / sizeof *(array))
 
-//	checks for success, and aborts if fails
-#define New new
-
 //	Each implementation should define its own AssertFail().
 //	Normally, it will simply call the msgMgr, but we give it its own
 //function 	so anyone can use assert() without having to drag MSG.HPP around.

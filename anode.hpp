@@ -342,13 +342,13 @@ struct ANOpSign : ANOpCode
 struct ANOpExtern : ANOpCode
 // The ANOpExtern class describes a call to an external proceedure.
 {
-  ANOpExtern(Symbol* s, uint32_t m, uint32_t e);
+  ANOpExtern(Symbol* s, int32_t m, uint32_t e);
 
   size_t size();
   void list();
   void emit(OutputFile*);
 
-  uint32_t module;   // module # of destination
+  int32_t module;   // module # of destination
   uint32_t entry;    // entry # of destination
   uint32_t numArgs;  // number of arguments
   Symbol* sym;

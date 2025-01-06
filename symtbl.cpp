@@ -17,7 +17,7 @@ SymTbl::SymTbl(int size, bool keep)
 
       hashSize(size),
       keep(keep) {
-  hashTable = New Symbol* [size];
+  hashTable = new Symbol* [size];
   memset(hashTable, 0, size * sizeof(Symbol*));
 }
 
@@ -47,7 +47,7 @@ Symbol* SymTbl::install(strptr name, sym_t type) {
   // Install the identifier with name 'name' in the symbol table 'symTbl'
   // with type 'type'.
 
-  return add(New Symbol(name, type));
+  return add(new Symbol(name, type));
 }
 
 Symbol* SymTbl::add(Symbol* sp) {
@@ -161,9 +161,9 @@ SymTbls::SymTbls()
 }
 
 SymTbl* SymTbls::add(int size, bool keep) {
-  // Add a New symbol table to the front of the active list
+  // Add a new symbol table to the front of the active list
 
-  SymTbl* sp = New SymTbl(size, keep);
+  SymTbl* sp = new SymTbl(size, keep);
   sp->next = activeList;
   activeList = sp;
   return sp;

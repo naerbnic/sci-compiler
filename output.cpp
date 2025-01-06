@@ -77,7 +77,7 @@ static void MakeObjFileName(char* dest, MemType type) {
 }
 
 static OutputFile* OpenObjFile(MemType type, const char* name) {
-  OutputFile* out = New OutputFile(name);
+  OutputFile* out = new OutputFile(name);
 
   // Put out the header information.
   ubyte header[2];

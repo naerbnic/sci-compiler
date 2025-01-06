@@ -29,7 +29,7 @@ static void DefClassItems(Class* theClass, int what);
 void InstallObjects() {
   // Install 'RootObj' as the root of the class system.
   Symbol* sym = syms.installClass("RootObj");
-  Class* rootClass = New Class;
+  Class* rootClass = new Class;
   sym->obj = rootClass;
   rootClass->sym = sym;
   rootClass->script = KERNEL;
@@ -112,7 +112,7 @@ void DefineClass() {
 
   Class* super = FindClass(superNum);
   if (!super) Fatal("Can't find superclass for %s\n", sym->name);
-  Class* theClass = New Class(super);
+  Class* theClass = new Class(super);
   sym->obj = theClass;
   theClass->super = superNum;
   theClass->script = scriptNum;

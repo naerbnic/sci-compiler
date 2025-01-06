@@ -109,8 +109,8 @@ Arg switches[] = {'a',
 #if !defined(WINDOWS)
 
 Compiler::Compiler() {
-  hunkList = New CodeList;
-  heapList = New FixupList;
+  hunkList = new CodeList;
+  heapList = new FixupList;
 }
 
 Compiler::~Compiler() {
@@ -127,7 +127,7 @@ int main(int argc, strptr *argv) {
   int outLen;
   char fileName[_MAX_PATH + 1];
 
-  sc = New Compiler;
+  sc = new Compiler;
   atexit(deleteCompiler);
 
   output(banner);

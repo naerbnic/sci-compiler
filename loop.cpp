@@ -33,7 +33,7 @@ Loop::Loop(LoopType t, Symbol* c, Symbol* e)
       cont(c),
       end(e),
       next(loopList),
-      start(New ANLabel) {
+      start(new ANLabel) {
   // Add this loop to the loop list.
   loopList = this;
 }

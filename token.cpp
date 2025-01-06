@@ -56,7 +56,7 @@ void GetToken() {
 }
 
 bool NewToken() {
-  // Get a New token and handle replacement if the token is a define or enum.
+  // Get a new token and handle replacement if the token is a define or enum.
 
   Symbol* theSym;
 
@@ -229,7 +229,7 @@ bool NextToken() {
 }
 
 bool GetNewLine() {
-  //	Read a New line from the input source, skipping over lines as
+  //	Read a new line from the input source, skipping over lines as
   //	indicated by preprocessor directives (#if, #else, etc.)
   //
   //	This is complicated by the fact that we don't want to use normal

@@ -26,7 +26,7 @@ void Object::dupSelectors(Class* super) {
   // duplicate super's selectors
 
   for (Selector* sn = super->selectors; sn; sn = sn->next) {
-    Selector* tn = New Selector;
+    Selector* tn = new Selector;
     *tn = *sn;
     if (tn->tag == T_LOCAL) tn->tag = T_METHOD;  // No longer a local method.
 
@@ -80,7 +80,7 @@ Selector* Class::addSelector(Symbol* sym, int what) {
 
   if (!sym) return 0;
 
-  Selector* sn = New Selector(sym);
+  Selector* sn = new Selector(sym);
 
   if (!selectors)
     // This is the first selector in the class.
@@ -148,7 +148,7 @@ Symbol* InstallSelector(strptr name, int value) {
   // Allocate this selector number.
   ClaimSelectorNum(value);
 
-  // Since this is a New selector, we'll need to rewrite the file 'selector'.
+  // Since this is a new selector, we'll need to rewrite the file 'selector'.
   selectorAdded = True;
 
   // Install the selector in the selector symbol table.
@@ -159,7 +159,7 @@ Symbol* InstallSelector(strptr name, int value) {
 }
 
 int NewSelectorNum() {
-  // Allocate a New selector number and return it.  selTbl is an array of bits,
+  // Allocate a new selector number and return it.  selTbl is an array of bits,
   // corresponding to the selector numbers.  If a bit is set, its corresponding
   // number is allocated.
 

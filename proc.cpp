@@ -95,7 +95,7 @@ static PNode* _CallDef(sym_t theType) {
       }
   }
 
-  theNode = New PNode(theType == S_SELECT ? PN_METHOD : PN_PROC);
+  theNode = new PNode(theType == S_SELECT ? PN_METHOD : PN_PROC);
   theNode->sym = theProc;
   theNode->val = ParameterList();  // number of temporary variables
 

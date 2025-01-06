@@ -104,7 +104,7 @@ Boolean GetClassSource(char* className, char* dest) {
 
   fsetpos(dfp, &c->srcStart);
   size_t size = size_t(c->srcEnd - c->srcStart) + 1;
-  char* buf = New char[size + 1];
+  char* buf = new char[size + 1];
   fread(buf, size, 1, dfp);
   buf[size] = '\0';
   strcpy(dest, buf);

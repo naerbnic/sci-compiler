@@ -118,7 +118,7 @@ InputSource* OpenFileAsInput(strptr fileName, bool required) {
   //		strcpy(newName, fileName);
   //	fullyQualify(newName);
 
-  theFile = New InputFile(file, fileName);
+  theFile = new InputFile(file, fileName);
 
 #if defined(PLAYGRAMMER)
   theFile->fullFileName = newStr(newName);
@@ -149,10 +149,10 @@ bool CloseInputSource() {
   return (bool)is;
 }
 
-void SetStringInput(strptr str) { SetInputSource(New InputString(str)); }
+void SetStringInput(strptr str) { SetInputSource(new InputString(str)); }
 
 bool GetNewInputLine() {
-  // Read a New line in from the current input file.  If we're at end of
+  // Read a new line in from the current input file.  If we're at end of
   // file, close the file, shifting input to the next source in the queue.
 
   while (is) {
@@ -196,7 +196,7 @@ void SetIncludePath() {
 
     // Now allocate a node to keep this path on in the includePath chain
     // and link it into the list.
-    sn = New StrList;
+    sn = new StrList;
     if (!last)
       last = includePath = sn;
     else {
@@ -243,7 +243,7 @@ void RestoreInput() {
 }
 
 static void SetInputSource(InputSource* nis) {
-  // Link a New input source (pointed to by 'nis') in at the head of the input
+  // Link a new input source (pointed to by 'nis') in at the head of the input
   // source queue.
 
   nis->next = is;

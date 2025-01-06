@@ -127,7 +127,7 @@ void Global() {
   }
 
   // Clear the variable array.
-  values = New Var[maxVars];
+  values = new Var[maxVars];
 
   // If there are previously defined globals, copy them into the
   // variable array and free the space which they occupy.
@@ -166,7 +166,7 @@ void Global() {
   globalVars.type = VAR_GLOBAL;
   globalVars.size = size;
   n = sizeof(Var) * size;
-  globalVars.values = (Var*)(size ? memcpy(New Var[size], values, n) : 0);
+  globalVars.values = (Var*)(size ? memcpy(new Var[size], values, n) : 0);
 
   delete[] values;
   UnGetTok();
@@ -197,7 +197,7 @@ void Local() {
   }
 
   size = 0;
-  values = New Var[maxVars];
+  values = new Var[maxVars];
 
   for (GetToken(); !CloseP(symType); GetToken()) {
     if (symType == (sym_t)'[') {
@@ -238,7 +238,7 @@ void Local() {
   localVars.type = VAR_LOCAL;
   localVars.size = size;
   n = sizeof(Var) * size;
-  localVars.values = (Var*)(size ? memcpy(New Var[size], values, n) : 0);
+  localVars.values = (Var*)(size ? memcpy(new Var[size], values, n) : 0);
 
   delete[] values;
   UnGetTok();
@@ -276,7 +276,7 @@ void Extern() {
       // externals list.
       if (!syms.lookup((strptr)(theSym = (Symbol*)symStr)))
         theSym = syms.installLocal(symStr, S_EXTERN);
-      theEntry = New Public(theSym);
+      theEntry = new Public(theSym);
       theSym->ext = theEntry;
 
       // Get the script and entry numbers of the symbol.
@@ -325,7 +325,7 @@ void DoPublic() {
     // publics list.
     if (!(theSym = syms.lookup(symStr)) || theSym->type == S_EXTERN)
       theSym = syms.installModule(symStr, (sym_t)(!theSym ? S_OBJ : S_IDENT));
-    theEntry = New Public(theSym);
+    theEntry = new Public(theSym);
     theEntry->next = publicList;
     publicList = theEntry;
 

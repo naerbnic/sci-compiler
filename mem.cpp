@@ -245,7 +245,7 @@ MemBlk::MemBlk(MemList* bp, size_t s, uint32_t n)
       prev(0),
       head(0),
       numFree(0) {
-  head = New char[s * n];
+  head = new char[s * n];
   init(bp, s, n);
 }
 

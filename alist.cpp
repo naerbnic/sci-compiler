@@ -91,7 +91,7 @@ void FixupList::clear() {
 
   // All fixup lists have a word node at the start which is the offset
   // to the fixup table.
-  New ANWord(this, 0);
+  new ANWord(this, 0);
 }
 
 size_t FixupList::setOffset(size_t ofs) {

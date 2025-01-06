@@ -47,7 +47,7 @@ Text* TextList::add(char* str) {
   Text* np;
 
   // Allocate the text node and link it into the list.
-  np = New Text;
+  np = new Text;
   if (!tail)
     head = tail = np;
   else {

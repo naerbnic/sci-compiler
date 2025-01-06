@@ -148,7 +148,7 @@ void DoClass() {
     theClass->dupSelectors(super);
 
   else {
-    theClass = New Class(super);
+    theClass = new Class(super);
     theClass->num = classNum =
         classNum == OBJECTNUM ? GetClassNumber(theClass) : classNum;
     theClass->sym = sym;
@@ -201,7 +201,7 @@ void Instance() {
   Class* super = (Class*)sym->obj;
 
   // Create the object as an instance of the class.
-  Object* obj = New Object(super);
+  Object* obj = new Object(super);
   obj->num = OBJECTNUM;
   obj->sym = objSym;
   objSym->obj = obj;
@@ -328,7 +328,7 @@ static void Declaration(Object* obj, int type) {
       if (obj->num != OBJECTNUM)
         sn = ((Class*)obj)->addSelector(sym, type);
       else {
-        // Can't define New properties or methods in an instance.
+        // Can't define new properties or methods in an instance.
         Error("Can't declare property or method in instance.");
         GetToken();
         if (!IsNumber()) UnGetTok();

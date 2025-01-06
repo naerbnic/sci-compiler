@@ -57,7 +57,7 @@ void ANReference::backpatch(ANode* dest) {
 // Class ANode
 ///////////////////////////////////////////////////
 
-// The flag addNodesToList is set during the optimization phase so that New
+// The flag addNodesToList is set during the optimization phase so that new
 // nodes to replace old ones are not automatically added to the current list.
 
 ANode::ANode(AList* list) : offset(0) {
@@ -372,7 +372,7 @@ void ANOpSign::emit(OutputFile* out) {
 // Class ANOpExtern
 ///////////////////////////////////////////////////
 
-ANOpExtern::ANOpExtern(Symbol* s, uint32_t m, uint32_t e)
+ANOpExtern::ANOpExtern(Symbol* s, int32_t m, uint32_t e)
     : sym(s), module(m), entry(e) {
   switch (module) {
     case KERNEL:
