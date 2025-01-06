@@ -1112,4 +1112,3 @@ ANLineNum::size()
 {
 	return 1 + sizeof(SCIWord);
 }
-

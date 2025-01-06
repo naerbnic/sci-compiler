@@ -227,4 +227,3 @@ CodeList::optimize()
 	} while (oldLen != curLen);
 }
 
-

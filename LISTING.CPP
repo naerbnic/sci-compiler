@@ -376,4 +376,3 @@ ListSourceLine(int num)
 	}
 	ListingNoCRLF("%s", buf);
 }
-

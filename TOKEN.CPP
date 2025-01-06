@@ -693,4 +693,3 @@ ReadKey(
 	is->ptr = ip;
 	SetTokenEnd();
 }
-

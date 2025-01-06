@@ -88,4 +88,3 @@ const char* GetMemTypeStr(MemType);
 MemType GetMemTypeFromStr(const char* str);
 
 #endif
-

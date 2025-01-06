@@ -44,4 +44,3 @@ struct StrList {
 extern TextList	text;
 
 #endif
-

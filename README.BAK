@@ -14,4 +14,3 @@ SC 4.100
 		(func2 a b (&rest c)) ;; will pass 1 2 3 4 5 to func2
 	)
 
-

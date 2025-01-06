@@ -51,7 +51,6 @@ typedef unsigned int		UInt32;
 extern "C" char** _argv;
 
 //	heap checking assertion
-#include <malloc.h>
 #define HEAPCHK	assert(_heapchk() <= _HEAPEMPTY);
 
 //	file functions
@@ -77,4 +76,3 @@ struct  ftime   {
 };
 
 #endif
-

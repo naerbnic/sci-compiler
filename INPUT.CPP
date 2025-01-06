@@ -352,4 +352,3 @@ SetTokenEnd()
 	endToken = GetParsePos() - 1;
 }
 
-

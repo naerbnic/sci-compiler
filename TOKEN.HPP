@@ -43,4 +43,3 @@ extern char		symStr[];
 extern Symbol	tokSym;
 
 #endif
-

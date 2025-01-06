@@ -226,4 +226,3 @@ AssertFail(char* file, int line, char* expression)
 	// assert() macro under BC++.  However, WATCOM knows it's senseless.
 	return 0;
 }
-

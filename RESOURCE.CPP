@@ -25,4 +25,3 @@ ResNameMake(MemType type, int num)
 
 	return buf;
 }
-

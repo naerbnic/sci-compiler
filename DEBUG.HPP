@@ -13,4 +13,3 @@ Boolean	GetClassSource(char* className, char* dest);
 #endif
 
 #endif
-

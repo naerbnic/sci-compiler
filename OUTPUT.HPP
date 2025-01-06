@@ -26,4 +26,3 @@ void OpenObjFiles(OutputFile** heapOut, OutputFile** hunkOut);
 extern Bool	highByteFirst;
 
 #endif
-

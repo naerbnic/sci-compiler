@@ -331,4 +331,3 @@ SymTbls::unlink(
 			tp->next = tbl->next;
 	}
 }
-

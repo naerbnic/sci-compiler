@@ -116,4 +116,3 @@ OpenObjFile(MemType type, const char* name)
 
 	return out;
 }
-

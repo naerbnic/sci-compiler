@@ -1214,4 +1214,3 @@ PNType(
 	Fatal("Bad symbol type in PNType().");
 	return (pn_t) 0;
 }
-
