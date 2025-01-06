@@ -1,7 +1,9 @@
 // compile.hpp
 
-#if !defined(COMPILE_HPP)
+#ifndef COMPILE_HPP
 #define COMPILE_HPP
+
+#include <cstdint>
 
 class PNode;
 class ANode;
@@ -11,7 +13,7 @@ class Object;
 //	compile.cpp
 void CompileCode(PNode* pn);
 void Compile(PNode* pn);
-void MakeBranch(ubyte type, ANode*, Symbol* target);
+void MakeBranch(uint8_t type, ANode*, Symbol* target);
 void MakeDispatch(int maxNum);
 void MakeObject(Object* theObj);
 void MakeText();

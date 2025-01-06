@@ -2,7 +2,6 @@
 // 	code to deal with classes.
 
 #include <fcntl.h>
-#include <io.h>
 #include <stdio.h>
 #include <sys/stat.h>
 
@@ -39,31 +38,34 @@ void InstallObjects() {
   // Install the root class' selectors in the symbol table and add them
   // to the root class.
   InstallSelector("-objID-", SEL_OBJID);
-  if (sym = syms.lookup("-objID-"))
+  if ((sym = syms.lookup("-objID-")))
     rootClass->addSelector(sym, T_PROP)->val = 0x1234;
 
   InstallSelector("-size-", SEL_SIZE);
-  if (sym = syms.lookup("-size-")) rootClass->addSelector(sym, T_PROP);
+  if ((sym = syms.lookup("-size-"))) rootClass->addSelector(sym, T_PROP);
 
   InstallSelector("-propDict-", SEL_PROPDICT);
-  if (sym = syms.lookup("-propDict-")) rootClass->addSelector(sym, T_PROPDICT);
+  if ((sym = syms.lookup("-propDict-"))) {
+    rootClass->addSelector(sym, T_PROPDICT);
+  }
 
   InstallSelector("-methDict-", SEL_METHDICT);
-  if (sym = syms.lookup("-methDict-")) rootClass->addSelector(sym, T_METHDICT);
+  if ((sym = syms.lookup("-methDict-")))
+    rootClass->addSelector(sym, T_METHDICT);
 
   InstallSelector("-classScript-", SEL_CLASS_SCRIPT);
-  if (sym = syms.lookup("-classScript-"))
+  if ((sym = syms.lookup("-classScript-")))
     rootClass->addSelector(sym, T_PROP)->val = 0;
 
   InstallSelector("-script-", SEL_SCRIPT);
-  if (sym = syms.lookup("-script-")) rootClass->addSelector(sym, T_PROP);
+  if ((sym = syms.lookup("-script-"))) rootClass->addSelector(sym, T_PROP);
 
   InstallSelector("-super-", SEL_SUPER);
-  if (sym = syms.lookup("-super-"))
+  if ((sym = syms.lookup("-super-")))
     rootClass->addSelector(sym, T_PROP)->val = -1;
 
   InstallSelector("-info-", SEL_INFO);
-  if (sym = syms.lookup("-info-"))
+  if ((sym = syms.lookup("-info-")))
     rootClass->addSelector(sym, T_PROP)->val = CLASSBIT;
 
   // Install 'self' and 'super' as objects.

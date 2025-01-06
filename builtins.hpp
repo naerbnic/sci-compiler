@@ -1,7 +1,7 @@
 //	builtins.hpp
 
-#if !defined(BUILTINS_HPP)
-#define BUILTLINS_HPP
+#ifndef BUILTINS_HPP
+#define BUILTINS_HPP
 
 void InstallBuiltIns();
 

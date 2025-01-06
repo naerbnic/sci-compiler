@@ -1,7 +1,9 @@
 //	error.hpp
 
-#if !defined(ERROR_HPP)
+#ifndef ERROR_HPP
 #define ERROR_HPP
+
+#include "sc.hpp"
 
 void EarlyEnd();
 void Error(strptr parms, ...);

@@ -181,6 +181,10 @@ void Compile(PNode* pn) {
     case PN_CONTIF:
       MakeContIf(pn);
       break;
+
+    // Do nothing for unhandled node types.
+    default:
+      break;
   }
 }
 
