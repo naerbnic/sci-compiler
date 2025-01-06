@@ -4,8 +4,14 @@
 #ifndef SC_HPP
 #define SC_HPP
 
+#include <unistd.h>
+
 // Modes for opening files.
+#ifdef _WIN32
 #define OMODE (int)(O_BINARY | O_CREAT | O_RDWR | O_TRUNC)
+#else
+#define OMODE (int)(O_CREAT | O_RDWR | O_TRUNC)
+#endif
 #define PMODE (int)(S_IREAD | S_IWRITE)
 
 #define REQUIRED 1

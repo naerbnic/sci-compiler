@@ -4,10 +4,10 @@
 #include "output.hpp"
 
 #include <fcntl.h>
-#include <io.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include "error.hpp"
 #include "jeff.hpp"
@@ -34,7 +34,7 @@ int OutputFile::Write(const char* str) {
   return length + sizeof(SCIWord);
 }
 
-void OutputFile::WriteWord(SCIWord w) {
+void OutputFile::WriteWord(int16_t w) {
   // write a word in proper byte order
   //	NOTE:  this code assumes knowledge of the size of SCIWord
 

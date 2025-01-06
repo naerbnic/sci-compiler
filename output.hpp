@@ -4,6 +4,9 @@
 #ifndef OUTPUT_HPP
 #define OUTPUT_HPP
 
+#include <cstddef>
+#include <cstdint>
+
 class OutputFile {
  public:
   OutputFile(const char* fileName);
@@ -12,7 +15,7 @@ class OutputFile {
   void SeekTo(long offset);
   void WriteByte(uint8_t);
   void WriteOp(uint8_t op) { WriteByte(op); }
-  void WriteWord(uint16_t);
+  void WriteWord(int16_t);
   void Write(const void*, size_t);
   int Write(const char*);
 
