@@ -57,7 +57,7 @@ void trimstr(char *str) {
 }
 
 // this function mimics strdup
-char *newStr(char *str) {
+char *newStr(const char *str) {
   if (str) return strdup(str);
 
   return NULL;

@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <sstream>
+
 #include "anode.hpp"
 #include "compile.hpp"
 #include "error.hpp"
@@ -25,6 +27,16 @@ static int InitialValue(VarList& theVars, Var* vp, int arraySize);
 static Public* publicList = NULL;
 static int publicMax = -1;
 static char tooManyVars[] = "Too many variables. Max is %d.\n";
+
+namespace {
+
+char* newStrFromInt(int val) {
+  std::stringstream stream;
+  stream << val;
+  return newStr(stream.str().c_str());
+}
+
+}  // namespace
 
 void VarList::kill() {
   delete[] values;
@@ -57,8 +69,8 @@ void Define() {
     GetRest();
 
     if (!newSym) {
-      strptr newString = strdup(symStr);
-      strptr oldString = strdup(sym->str);
+      char* newString = strdup(symStr);
+      char* oldString = strdup(sym->str);
 
       // trim the two strings
       trimstr(newString);
@@ -82,8 +94,6 @@ void Define() {
 void Enum() {
   //	enum ::=	'enum' ([number] (symbol | (= symbol expr))+
 
-  char theNum[6];
-
   int val = 0;
   for (NextToken(); !CloseP(symType); NextToken()) {
     //	initializer constant?
@@ -101,7 +111,7 @@ void Enum() {
         GetNumber("Constant expression required");
         val = symVal;
       }
-      theSym->str = newStr(itoa(val, theNum, 10));
+      theSym->str = newStrFromInt(val);
       ++val;
     }
   }
@@ -113,7 +123,8 @@ void Global() {
   // Handle a global definition.
   //
   //	global-decl ::= 	'global' glob-def+		;define a global
-  //variable 	glob-def 	::=	(symbol number) | 							open definition close
+  // variable 	glob-def 	::=	(symbol number) |
+  // open definition close
 
   Symbol* theSym;
   int size;

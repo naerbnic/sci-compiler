@@ -3,9 +3,11 @@
 
 #include "error.hpp"
 
-#include <io.h>
 #include <stdarg.h>
 #include <stdlib.h>
+
+// This may need to be define bound if used on a non-unix system.
+#include <unistd.h>
 
 #include "input.hpp"
 #include "listing.hpp"
