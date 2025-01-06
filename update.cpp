@@ -57,11 +57,12 @@ void WriteClassTbl() {
   // number in which the class resides.
 
   static ubyte resID[2] = {MemResVocab, 0};
-
-  _Packed struct ClassTblEntry {
+#pragma pack(push, 1)
+  struct ClassTblEntry {
     SCIUWord objID;
     SCIUWord scriptNum;
   };
+#pragma pack(pop)
 
   // Allocate storage for the class table.
   ClassTblEntry* classTbl = new ClassTblEntry[maxClassNum + 1];
@@ -101,7 +102,7 @@ void WritePropOffsets() {
   Selector* sel;
   Symbol* theSym;
   char fileName[_MAX_PATH + 1];
-  char* name;
+  const char* name;
 
   theFile = OpenFileAsInput("offsets.txt", True);
 
@@ -225,7 +226,7 @@ static void WriteSelectorVocab() {
   uint32_t tblLen;
   int i;
   char fileName[_MAX_PATH + 1];
-  char* resName;
+  const char* resName;
 
   resName = ResNameMake(MemResVocab, SELECTOR_VOCAB);
   MakeName(fileName, outDir, resName, resName);
