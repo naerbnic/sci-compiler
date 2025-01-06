@@ -34,6 +34,9 @@ Symbol::~Symbol() {
     case S_OBJ:
       delete obj;
       break;
+
+    default:
+      break;
   }
 
   delete[] name;

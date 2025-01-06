@@ -3,7 +3,6 @@
 // 	network-compatible
 
 #include <fcntl.h>
-#include <io.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
