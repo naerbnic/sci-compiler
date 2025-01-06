@@ -74,7 +74,7 @@ void ANode::emit(OutputFile*) {}
 
 void ANode::list() {}
 
-Bool ANode::optimize() { return False; }
+bool ANode::optimize() { return False; }
 
 ///////////////////////////////////////////////////
 // Class ANDispatch
@@ -211,7 +211,7 @@ size_t ANCodeBlk::setOffset(size_t ofs) {
 
 void ANCodeBlk::finish() { curList = oldList; }
 
-Bool ANCodeBlk::optimize() { return OptimizeProc(&code); }
+bool ANCodeBlk::optimize() { return OptimizeProc(&code); }
 
 ///////////////////////////////////////////////////
 // Class ANProcCode

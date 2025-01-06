@@ -6,7 +6,7 @@
 void MemDisplay();
 void WriteMemSizes();
 
-extern Bool noUseEMS;
-extern Bool writeMemSizes;
+extern bool noUseEMS;
+extern bool writeMemSizes;
 
 #endif

@@ -47,7 +47,7 @@ class SymTbl {
   // of the table.
 
  private:
-  SymTbl(int size = ST_MEDIUM, Bool retain = False);
+  SymTbl(int size = ST_MEDIUM, bool retain = False);
   ~SymTbl();
 
   Symbol* install(strptr name, sym_t type);
@@ -58,11 +58,11 @@ class SymTbl {
   // Remove the Symbol with name 'name' from this table.  Return
   // a pointer to the Symbol.
 
-  Bool del(strptr name);
+  bool del(strptr name);
   // Remove and delete a Symbol with name 'name' from the table.
   // Return True if it was found and deleted, False otherwise.
 
-  void retain(Bool keepIt = True) { keep = keepIt; }
+  void retain(bool keepIt = True) { keep = keepIt; }
   // Set the 'keep' property to the value of 'keepIt'
 
   void clearAsmPtrs();
@@ -72,7 +72,7 @@ class SymTbl {
   SymTbl* next;        // pointer to next symbol table
   int hashSize;        // size of hash table
   Symbol** hashTable;  // pointer to the hash table
-  Bool keep;       // should this table be kept for listings when out of scope?
+  bool keep;       // should this table be kept for listings when out of scope?
   Symbol* curSym;  // current Symbol in firstSym()/nextSym()
   int curIndex;    // current hash table index in firstSym()/nextSym()
 
@@ -86,7 +86,7 @@ class SymTbls {
  public:
   SymTbls();
 
-  SymTbl* add(int size = ST_MEDIUM, Bool retain = False);
+  SymTbl* add(int size = ST_MEDIUM, bool retain = False);
   //	add a New symbol table and link it into the list
 
   void clearAsmPtrs();
@@ -96,7 +96,7 @@ class SymTbls {
   // Delete it if not necessary for the listing, add it to
   // 'inactiveList' otherwise.
 
-  Bool del(strptr name);
+  bool del(strptr name);
   // Delete the symbol with name 'name' from the SymTbls in activeList
   // Return True if the symbol was present, False otherwise.
 

@@ -19,7 +19,7 @@
 #include "output.hpp"
 #include "resource.hpp"
 
-Bool	highByteFirst;
+bool	highByteFirst;
 
 OutputFile::OutputFile(const char* fileName) : 
 	fileName(fileName)

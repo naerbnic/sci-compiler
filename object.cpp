@@ -21,7 +21,7 @@
 Object* curObj;
 Object* receiver;
 Symbol* nameSymbol;
-Bool noAutoName;
+bool noAutoName;
 
 static void Declaration(Object*, int);
 static void InstanceBody(Object*);

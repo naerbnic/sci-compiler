@@ -82,20 +82,20 @@ struct PNode {
 };
 
 //	parse.cpp
-Bool Parse();
+bool Parse();
 void Include();
-Bool OpenBlock();
-Bool CloseBlock();
+bool OpenBlock();
+bool CloseBlock();
 
 //	expr.cpp
-Bool ExprList(PNode*, Bool);
-Bool Expression(PNode*, Bool);
+bool ExprList(PNode*, bool);
+bool Expression(PNode*, bool);
 
 //	proc.cpp
 void Procedure();
 PNode* CallDef(sym_t);
 
-extern Bool inParmList;
+extern bool inParmList;
 extern jmp_buf recoverBuf;
 
 #endif

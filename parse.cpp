@@ -27,7 +27,7 @@ PNode::PNode(pn_t t)
       type(t),
       lineNum(curSourceFile ? curSourceFile->lineNum : 0) {}
 
-Bool Parse() {
+bool Parse() {
   InitAsm();
 
   syms.clearAsmPtrs();
@@ -136,12 +136,12 @@ void Include() {
   }
 }
 
-Bool OpenBlock() {
+bool OpenBlock() {
   GetToken();
   return OpenP(symType);
 }
 
-Bool CloseBlock() {
+bool CloseBlock() {
   GetToken();
   if (symType == CLOSE_P)
     return True;

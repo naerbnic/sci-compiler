@@ -15,8 +15,8 @@ struct InputSource {
 
   InputSource& operator=(InputSource&);
 
-  virtual Bool incrementPastNewLine(char*&) = 0;
-  virtual Bool endInputLine() = 0;
+  virtual bool incrementPastNewLine(char*&) = 0;
+  virtual bool endInputLine() = 0;
 
   InputSource* next;
   strptr fileName;
@@ -28,8 +28,8 @@ struct InputFile : InputSource {
   InputFile(FILE*, char* name);
   ~InputFile();
 
-  Bool incrementPastNewLine(char*&);
-  Bool endInputLine();
+  bool incrementPastNewLine(char*&);
+  bool endInputLine();
 
   FILE* file;
   strptr fullFileName;
@@ -42,14 +42,14 @@ struct InputString : InputSource {
 
   InputString& operator=(InputString&);
 
-  Bool incrementPastNewLine(char*&);
-  Bool endInputLine();
+  bool incrementPastNewLine(char*&);
+  bool endInputLine();
 };
 
-Bool CloseInputSource();
+bool CloseInputSource();
 void FreeIncludePath();
-Bool GetNewInputLine();
-InputSource* OpenFileAsInput(strptr, Bool);
+bool GetNewInputLine();
+InputSource* OpenFileAsInput(strptr, bool);
 void SetIncludePath();
 void SetStringInput(strptr);
 void SetInputToCurrentLine();

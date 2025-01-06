@@ -6,7 +6,7 @@
 void Lock();
 void Unlock();
 
-extern Bool abortIfLocked;
-extern Bool dontLock;
+extern bool abortIfLocked;
+extern bool dontLock;
 
 #endif

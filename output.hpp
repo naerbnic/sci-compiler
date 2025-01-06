@@ -23,6 +23,6 @@ class OutputFile {
 
 void OpenObjFiles(OutputFile** heapOut, OutputFile** hunkOut);
 
-extern Bool highByteFirst;
+extern bool highByteFirst;
 
 #endif

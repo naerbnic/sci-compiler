@@ -15,7 +15,7 @@
 #include "sc.hpp"
 #include "sol.hpp"
 
-Bool listCode;
+bool listCode;
 
 static FILE* listFile;
 static char listName[_MAX_PATH + 1];
@@ -28,7 +28,7 @@ static int sourceLineNum;
 
 struct OpStr {
   char* str;
-  UInt16 info;
+  uint16_t info;
 } static theOpCodes[] = {
     "bnot",  JUST_OP,           "add",      JUST_OP,
     "sub",   JUST_OP,           "mul",      JUST_OP,
@@ -136,8 +136,8 @@ void ListOp(int theOp) {
   char* sp;
   char* op;
   char opStr[10];
-  Bool hasArgs;
-  Bool addSize;
+  bool hasArgs;
+  bool addSize;
 
   if (!listCode || !listFile) return;
 

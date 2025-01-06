@@ -31,10 +31,10 @@
 #include "token.hpp"
 #include "update.hpp"
 
-Bool includeDebugInfo;
+bool includeDebugInfo;
 Compiler *sc;
 int script;
-Bool verbose;
+bool verbose;
 
 static int totalErrors;
 

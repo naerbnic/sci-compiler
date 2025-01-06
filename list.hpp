@@ -1,7 +1,7 @@
 //	list.hpp		sc
 // 	definition of a list class
 
-#if !defined(LIST_HPP)
+#ifndef LIST_HPP
 #define LIST_HPP
 
 struct LNode {
@@ -44,7 +44,7 @@ class List {
   LNode* replaceWith(LNode* ln, LNode* nn);
   // Replace node ln with node nn, return a pointer to node nn.
 
-  Bool contains(LNode* ln);
+  bool contains(LNode* ln);
   // Return True if the list contains node ln, False otherwise.
 
   LNode* first();

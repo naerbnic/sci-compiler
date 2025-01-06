@@ -46,7 +46,7 @@ void Define() {
     }
 
     Symbol* sym = syms.lookup(symStr);
-    Bool newSym = sym == 0;
+    bool newSym = sym == 0;
     if (newSym)
       sym = syms.installLocal(symStr, S_DEFINE);
     else if (sym->type != S_DEFINE)

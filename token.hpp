@@ -9,27 +9,27 @@
 
 //	token.cpp
 void GetToken();
-Bool NextToken();
-Bool NewToken();
+bool NextToken();
+bool NewToken();
 void UnGetTok();
-void GetRest(Bool error = False);
-Bool GetNewLine();
+void GetRest(bool error = False);
+bool GetNewLine();
 
 //	toktypes.cpp
 Symbol* LookupTok();
-Bool GetSymbol();
-Bool GetNumber(strptr);
-Bool GetNumberOrString(strptr);
-Bool GetString(strptr);
-Bool GetIdent();
-Bool GetDefineSymbol();
-Bool IsIdent();
+bool GetSymbol();
+bool GetNumber(strptr);
+bool GetNumberOrString(strptr);
+bool GetString(strptr);
+bool GetIdent();
+bool GetDefineSymbol();
+bool IsIdent();
 keyword_t Keyword();
 void GetKeyword(keyword_t);
-Bool IsVar();
-Bool IsProc();
-Bool IsObj();
-Bool IsNumber();
+bool IsVar();
+bool IsProc();
+bool IsObj();
+bool IsNumber();
 
 #define symObj tokSym.obj
 #define symType tokSym.type

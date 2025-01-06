@@ -13,7 +13,7 @@
 int selectorIsVar;
 
 static Symbol* Immediate();
-static Bool GetNumberOrStringToken(strptr errStr, Bool stringOK);
+static bool GetNumberOrStringToken(strptr errStr, bool stringOK);
 
 Symbol* LookupTok() {
   // Get a token.  If it is an identifier, look it up in the current
@@ -58,7 +58,7 @@ Symbol* LookupTok() {
   return theSym;
 }
 
-Bool GetSymbol() {
+bool GetSymbol() {
   // Get a token that is in the symbol table.
 
   Symbol* theSym;
@@ -73,14 +73,14 @@ Bool GetSymbol() {
   return True;
 }
 
-Bool GetIdent() {
+bool GetIdent() {
   // Get an identifier.
 
   GetToken();
   return IsIdent();
 }
 
-Bool GetDefineSymbol() {
+bool GetDefineSymbol() {
   //	gets a symbol that was previously defined
 
   NextToken();
@@ -97,7 +97,7 @@ Bool GetDefineSymbol() {
   return True;
 }
 
-Bool IsIdent() {
+bool IsIdent() {
   if (symType != S_IDENT) {
     Severe("Identifier required: %s", symStr);
     return False;
@@ -108,13 +108,13 @@ Bool IsIdent() {
   return True;
 }
 
-Bool GetNumber(strptr errStr) { return GetNumberOrStringToken(errStr, False); }
+bool GetNumber(strptr errStr) { return GetNumberOrStringToken(errStr, False); }
 
-Bool GetNumberOrString(strptr errStr) {
+bool GetNumberOrString(strptr errStr) {
   return GetNumberOrStringToken(errStr, True);
 }
 
-static Bool GetNumberOrStringToken(char* errStr, Bool stringOK) {
+static bool GetNumberOrStringToken(char* errStr, bool stringOK) {
   // Get a number (or a string) from the input.
 
   // Get a parse node.
@@ -147,7 +147,7 @@ static Bool GetNumberOrStringToken(char* errStr, Bool stringOK) {
   return True;
 }
 
-Bool GetString(char* errStr) {
+bool GetString(char* errStr) {
   // Get a string from the input.
 
   GetToken();
@@ -198,7 +198,7 @@ void GetKeyword(keyword_t which) {
   }
 }
 
-Bool IsVar() {
+bool IsVar() {
   // return whether the current symbol is a variable
 
   Selector* sn;
@@ -221,19 +221,19 @@ Bool IsVar() {
   }
 }
 
-Bool IsProc() {
+bool IsProc() {
   // If the current symbol is a procedure of some type, return the type.
   // Otherwise return False.
 
   return symType == S_PROC || symType == S_EXTERN;
 }
 
-Bool IsObj() {
+bool IsObj() {
   return symType == S_OBJ || symType == S_CLASS || symType == S_IDENT ||
          symType == OPEN_P || IsVar();
 }
 
-Bool IsNumber() { return symType == S_NUM || symType == S_STRING; }
+bool IsNumber() { return symType == S_NUM || symType == S_STRING; }
 
 static Symbol* Immediate() {
   Symbol* theSym;

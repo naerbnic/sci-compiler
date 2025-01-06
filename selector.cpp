@@ -13,14 +13,14 @@
 #include "update.hpp"
 
 int maxSelector;
-Bool showSelectors;
+bool showSelectors;
 
 const int MAXSELECTOR = 8192;
 const int BITS_PER_ENTRY = 16;
 const int SEL_TBL_SIZE = MAXSELECTOR / BITS_PER_ENTRY;
 
-static void ClaimSelectorNum(UInt16 n);
-static UInt16 selTbl[SEL_TBL_SIZE];
+static void ClaimSelectorNum(uint16_t n);
+static uint16_t selTbl[SEL_TBL_SIZE];
 
 void Object::dupSelectors(Class* super) {
   // duplicate super's selectors
@@ -164,15 +164,15 @@ int NewSelectorNum() {
   // number is allocated.
 
   // Scan for the first entry with a free bit.
-  UInt16* stp;
-  for (stp = selTbl; stp < &selTbl[SEL_TBL_SIZE] && *stp == (UInt16)-1; ++stp);
+  uint16_t* stp;
+  for (stp = selTbl; stp < &selTbl[SEL_TBL_SIZE] && *stp == (uint16_t)-1; ++stp);
 
   // Check for no more selector numbers available.
   if (stp >= &selTbl[SEL_TBL_SIZE]) Fatal("Out of selector numbers!");
 
   // Find the specific selector number that is free.
-  UInt16 n = UInt16((stp - &selTbl[0]) * BITS_PER_ENTRY);
-  for (UInt16 mask = 0x8000; mask & *stp; mask >>= 1, ++n);
+  uint16_t n = uint16_t((stp - &selTbl[0]) * BITS_PER_ENTRY);
+  for (uint16_t mask = 0x8000; mask & *stp; mask >>= 1, ++n);
 
   return n;
 }
@@ -242,12 +242,12 @@ Symbol* GetSelector(Symbol* obj) {
   return msgSel;
 }
 
-static void ClaimSelectorNum(UInt16 n) {
+static void ClaimSelectorNum(uint16_t n) {
   // Claim selector number n.
 
   if (n > MAXSELECTOR) Fatal("Attempt to claim illegal selector!");
 
-  selTbl[n / BITS_PER_ENTRY] |= UInt16(0x8000 >> (n % BITS_PER_ENTRY));
+  selTbl[n / BITS_PER_ENTRY] |= uint16_t(0x8000 >> (n % BITS_PER_ENTRY));
 
   if (n > maxSelector) maxSelector = n;
 }

@@ -4,6 +4,8 @@
 #ifndef COMPILER_HPP
 #define COMPILER_HPP
 
+#include <cstdint>
+
 //	turn off WATCOM's "assignment found in boolean" warning: 'if (a = b())'
 #pragma warning 391 9
 
@@ -37,15 +39,8 @@
 #pragma intrinsic(memcpy);
 #pragma intrinsic(memcmp);
 
-// Boolean
-typedef int Bool;
-
 //	data types for external data (files or OS data structures)
 //	each contain the number of bits indicated
-typedef short Int16;
-typedef unsigned short UInt16;
-typedef int Int32;
-typedef unsigned int UInt32;
 
 //	this should be in a WATCOM header file, but it's not, so...
 extern "C" char** _argv;

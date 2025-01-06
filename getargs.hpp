@@ -10,6 +10,8 @@
 #ifndef _GETARGS_HPP_
 #define _GETARGS_HPP_
 
+#include <cstdint>
+
 // enumerate all of the argument types
 enum {
   GA_BOOL,  // boolean value

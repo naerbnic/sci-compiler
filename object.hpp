@@ -59,7 +59,7 @@ struct Class : Object {
   Class(Class* theClass);
 
   Selector* addSelector(Symbol* sym, int what);
-  Bool selectorDiffers(Selector* tp);
+  bool selectorDiffers(Selector* tp);
 
   Class* subClasses;
   Class* nextSibling;
@@ -127,8 +127,8 @@ extern Object* curObj;
 extern int maxClassNum;
 extern int maxSelector;
 extern Symbol* nameSymbol;
-extern Bool noAutoName;
+extern bool noAutoName;
 extern Object* receiver;
-extern Bool showSelectors;
+extern bool showSelectors;
 
 #endif

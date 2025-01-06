@@ -21,7 +21,7 @@ Symbol tokSym;
 
 static char binDigits[] = "01";
 static char decDigits[] = "0123456789";
-static Bool haveUnGet;
+static bool haveUnGet;
 static char hexDigits[] = "0123456789abcdef";
 static sym_t lastType;
 static int lastVal;
@@ -55,7 +55,7 @@ void GetToken() {
   lastVal = symVal;
 }
 
-Bool NewToken() {
+bool NewToken() {
   // Get a New token and handle replacement if the token is a define or enum.
 
   Symbol* theSym;
@@ -73,7 +73,7 @@ Bool NewToken() {
 
 void UnGetTok() { haveUnGet = True; }
 
-void GetRest(Bool error) {
+void GetRest(bool error) {
   // Copy the rest of the parenthesized expression into 'symStr'.
   //	If just seeking until next closing paren, don't display further
   //	messages.
@@ -81,7 +81,7 @@ void GetRest(Bool error) {
   strptr ip;
   strptr sp;
   int pLevel;
-  Bool truncate;
+  bool truncate;
 
   if (error && !is) return;
 
@@ -132,7 +132,7 @@ void GetRest(Bool error) {
   }
 }
 
-Bool NextToken() {
+bool NextToken() {
   // Return the next token.  If we're at the end of the current input source,
   // close it and get input from the previous source in the queue.
 
@@ -228,7 +228,7 @@ Bool NextToken() {
   return True;
 }
 
-Bool GetNewLine() {
+bool GetNewLine() {
   //	Read a New line from the input source, skipping over lines as
   //	indicated by preprocessor directives (#if, #else, etc.)
   //
@@ -470,7 +470,7 @@ static void ReadString(strptr ip) {
   char open;
   strptr sp;
   strptr np;
-  Bool truncated;
+  bool truncated;
   uint n;
 
   truncated = False;

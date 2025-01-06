@@ -10,7 +10,7 @@
 #include "sc.hpp"
 #include "sol.hpp"
 
-Bool writeMemSizes;
+bool writeMemSizes;
 
 //	if we're running under Windows, trust it to manage our memory
 #if !defined(WINDOWS) && !defined(__386__)
@@ -27,10 +27,10 @@ struct MemList {
   void operator delete(void* ptr);
 
   virtual void* get();
-  virtual Bool put(void* mem);
+  virtual bool put(void* mem);
 
   void display();
-  Bool check();
+  bool check();
   uint blksFree();
   uint numAllocated();
 
@@ -60,11 +60,11 @@ struct MemBlk {
   void* operator new(size_t s);
   void operator delete(void*);
 
-  virtual Bool put(MemList* list, void* mem);
+  virtual bool put(MemList* list, void* mem);
 
   void* get();
   void display();
-  Bool check();
+  bool check();
 
   MemBlk* next;
   MemBlk* prev;
@@ -78,7 +78,7 @@ struct EMSMemBlk : MemBlk {
   EMSMemBlk(EMSMemList* bp, size_t s, uint n);
   ~EMSMemBlk();
 
-  Bool put(MemList* list, void* mem);
+  bool put(MemList* list, void* mem);
 };
 
 #define Normalize(p) \
@@ -100,7 +100,7 @@ class MemListList {
  public:
   enum { nLists = 7 };
 
-  Bool active;
+  bool active;
 
   MemListList() {
     lists[0] = new MemList(8, 128);
@@ -197,7 +197,7 @@ void* MemList::get() {
   return get();
 }
 
-Bool MemList::put(void* p) {
+bool MemList::put(void* p) {
   for (MemBlk* mp = head; mp; mp = mp->next)
     if (mp->put(this, p)) return True;
 
@@ -209,7 +209,7 @@ void MemList::display() {
   for (MemBlk* mp = head; !NullP(mp); mp = mp->next) mp->display();
 }
 
-Bool MemList::check() {
+bool MemList::check() {
   for (MemBlk* mp = head; !NullP(mp); mp = mp->next)
     if (mp->numFree > numBlks || !mp->check()) return False;
 
@@ -296,7 +296,7 @@ void* MemBlk::get() {
   return mp;
 }
 
-Bool MemBlk::put(MemList* list, void* mp) {
+bool MemBlk::put(MemList* list, void* mp) {
   if (LessEqP(start, mp) && LessP(mp, end)) {
     *(void**)mp = head;
     head = (char*)mp;
@@ -322,7 +322,7 @@ void MemBlk::display() {
   printf("\tMemBlk from %p to %p, %d free blocks\n", start, end, numFree);
 }
 
-Bool MemBlk::check() { return FP_SEG(start) < FP_SEG(end); }
+bool MemBlk::check() { return FP_SEG(start) < FP_SEG(end); }
 
 ///////////////////////////////////////////////////
 // Class EMSMemList
@@ -364,7 +364,7 @@ EMSMemBlk::~EMSMemBlk() {
   start = 0;
 }
 
-Bool EMSMemBlk::put(MemList*, void* mp) {
+bool EMSMemBlk::put(MemList*, void* mp) {
   //	don't give back the memory when the block has been totally freed
 
   if (LessEqP(start, mp) && LessP(mp, end)) {

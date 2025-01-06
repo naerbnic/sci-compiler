@@ -24,7 +24,7 @@ static void MakeObjID(PNode*);
 static void MakeSend(PNode*);
 static int MakeMessage(PNode*);
 static void MakeProc(PNode*);
-static Bool MakeArgs(PNode*);
+static bool MakeArgs(PNode*);
 static void MakeUnary(PNode*);
 static void MakeBinary(PNode*);
 static void MakeNary(PNode*);
@@ -34,7 +34,7 @@ static void MakeComp(PNode*);
 static void MakeAnd(PNode*);
 static void MakeOr(PNode*);
 static void MakeIncDec(PNode*);
-static void MakeCompOp(Bool);
+static void MakeCompOp(bool);
 static void MakeIf(PNode*);
 static void MakeCond(PNode*);
 static void MakeSwitch(PNode*);
@@ -194,7 +194,7 @@ static void MakeAccess(PNode* pn, ubyte theCode) {
   pn_t varType;
 
   // Check for indexing and compile the index if necessary.
-  Bool indexed = pn->type == PN_INDEX;
+  bool indexed = pn->type == PN_INDEX;
   if (indexed) {
     child = pn->child;
     if (theCode == (OP_LDST | OP_STORE))
@@ -750,7 +750,7 @@ static void MakeCond(PNode* pn) {
 
   Symbol done;
   Symbol next;
-  Bool elseSeen = False;
+  bool elseSeen = False;
 
   PNode* node = pn->child;
   while (node) {
@@ -808,7 +808,7 @@ static void MakeSwitch(PNode* pn) {
 
   Symbol done;
   Symbol next;
-  Bool elseSeen = False;
+  bool elseSeen = False;
 
   // Compile the expression to be switched on and put the value on
   // the stack.

@@ -10,8 +10,8 @@
 #include "sol.hpp"
 
 AList* curList;
-Bool shrink;
-Bool noOptimize;
+bool shrink;
+bool noOptimize;
 
 ///////////////////////////////////////////////////
 // Class AList
@@ -37,7 +37,7 @@ ANOpCode* AList::findOp(uint op) {
     return 0;
 }
 
-Bool AList::removeOp(uint op) {
+bool AList::removeOp(uint op) {
   ANode* an = findOp(op);
   if (an) del(an);
 

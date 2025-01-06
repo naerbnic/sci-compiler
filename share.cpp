@@ -15,8 +15,8 @@
 #include "sc.hpp"
 #include "sol.hpp"
 
-Bool abortIfLocked;
-Bool dontLock;
+bool abortIfLocked;
+bool dontLock;
 
 const int LOCKMODE = O_CREAT | O_EXCL | O_RDONLY;
 

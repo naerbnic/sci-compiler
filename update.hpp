@@ -7,9 +7,9 @@ void UpdateDataBase();
 void WriteClassTbl();
 void WritePropOffsets();
 
-extern Bool classAdded;
+extern bool classAdded;
 extern char outDir[];
-extern Bool selectorAdded;
-extern Bool writeOffsets;
+extern bool selectorAdded;
+extern bool writeOffsets;
 
 #endif

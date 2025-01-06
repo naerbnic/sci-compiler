@@ -29,10 +29,10 @@ struct Compiler {
   CodeList* hunkList;
 } extern* sc;
 
-extern Bool includeDebugInfo;
+extern bool includeDebugInfo;
 extern char outDir[];
 extern char progName[];
 extern int script;
-extern Bool verbose;
+extern bool verbose;
 
 #endif

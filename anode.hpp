@@ -79,7 +79,7 @@ struct ANode : LNode {
   virtual void emit(OutputFile*);
   // Emits the object code for the node to the output file.
 
-  virtual Bool optimize();
+  virtual bool optimize();
   // Applies some optimizations to the node.  This is not
   // really implemented for each node type yet -- most
   // optimization is done in OptimizeProc() in optimize.cpp.
@@ -184,7 +184,7 @@ struct ANCodeBlk : ANode
   void emit(OutputFile*);
   size_t setOffset(size_t ofs);
   void finish();
-  Bool optimize();
+  bool optimize();
 
   Symbol* sym;
   AList code;

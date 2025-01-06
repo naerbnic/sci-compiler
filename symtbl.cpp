@@ -12,7 +12,7 @@
 
 SymTbls syms;
 
-SymTbl::SymTbl(int size, Bool keep)
+SymTbl::SymTbl(int size, bool keep)
     :
 
       hashSize(size),
@@ -108,14 +108,14 @@ Symbol* SymTbl::remove(strptr name) {
   return 0;
 }
 
-Bool SymTbl::del(strptr name) {
+bool SymTbl::del(strptr name) {
   // Delete the symbol with name pointed to by 'name' from this table and
   // return True if successful, False otherwise.
 
   Symbol* sp = remove(name);
   delete sp;
 
-  return (Bool)sp;
+  return (bool)sp;
 }
 
 uint SymTbl::hash(strptr str) {
@@ -160,7 +160,7 @@ SymTbls::SymTbls()
   globalSymTbl = add(ST_LARGE, True);
 }
 
-SymTbl* SymTbls::add(int size, Bool keep) {
+SymTbl* SymTbls::add(int size, bool keep) {
   // Add a New symbol table to the front of the active list
 
   SymTbl* sp = New SymTbl(size, keep);
@@ -209,7 +209,7 @@ void SymTbls::delFreeTbls() {
   inactiveList = 0;
 }
 
-Bool SymTbls::del(strptr name) {
+bool SymTbls::del(strptr name) {
   // Search the active symbol tables for the symbol whose name
   // is pointed to by 'name'.  If it is found, delete the symbol
   // and return True, else return False.

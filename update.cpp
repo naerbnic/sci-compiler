@@ -19,10 +19,10 @@
 #include "token.hpp"
 #include "vocab.hpp"
 
-Bool classAdded;
-Bool selectorAdded;
+bool classAdded;
+bool selectorAdded;
 char outDir[_MAX_PATH + 1];
-Bool writeOffsets;
+bool writeOffsets;
 
 static ubyte resHdr[] = {MemResVocab, 0};
 

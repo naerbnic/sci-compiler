@@ -7,7 +7,7 @@ void OpenListFile(const char* sourceFileName);
 void CloseListFile();
 void DeleteListFile();
 void Listing(char*, ...);
-void ListOp(Bool);
+void ListOp(bool);
 void ListArg(char*, ...);
 void ListAsCode(char*, ...);
 void ListWord(uword);
@@ -17,6 +17,6 @@ void ListText(char*);
 void ListingNoCRLF(strptr parms, ...);
 void ListSourceLine(int num);
 
-extern Bool listCode;
+extern bool listCode;
 
 #endif

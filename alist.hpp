@@ -23,7 +23,7 @@ struct AList : List {
   // Return a pointer to the next opcode node if it is opcode
   // 'op', NULL if it isn't.
 
-  Bool removeOp(uint op);
+  bool removeOp(uint op);
   // If next opcode in the list is 'op', remove it.
 
   size_t size();
@@ -91,9 +91,9 @@ struct CodeList : FixupList {
   void optimize();
 };
 
-extern Bool addNodesToList;
+extern bool addNodesToList;
 extern AList* curList;
-extern Bool noOptimize;
-extern Bool shrink;
+extern bool noOptimize;
+extern bool shrink;
 
 #endif

@@ -9,7 +9,7 @@
 #include "symtbl.hpp"
 #include "token.hpp"
 
-Bool inParmList;
+bool inParmList;
 
 static PNode* _CallDef(sym_t theType);
 static int ParameterList();

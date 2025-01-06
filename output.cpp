@@ -16,7 +16,7 @@
 #include "sc.hpp"
 #include "sol.hpp"
 
-Bool highByteFirst;
+bool highByteFirst;
 
 OutputFile::OutputFile(const char* fileName) : fileName(fileName) {
   if ((fd = open(fileName, OMODE, PMODE)) == -1)

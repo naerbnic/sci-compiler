@@ -102,7 +102,7 @@ LNode* List::replaceWith(LNode* ln, LNode* nn) {
   return nn;
 }
 
-Bool List::contains(LNode* ln) {
+bool List::contains(LNode* ln) {
   if (!ln) return False;
 
   LNode* node;

@@ -22,12 +22,12 @@ typedef unsigned long ulong;
 
 //	data types for interfacing to the SCI language, in which all values
 //	are 16 bits
-typedef Int16 SCIWord;
-typedef UInt16 SCIUWord;
+typedef int16_t SCIWord;
+typedef uint16_t SCIUWord;
 
 #if !defined(_TV_VERSION) && !defined(__TCOLLECT_H)
-const Bool True = 1;
-const Bool False = 0;
+const bool True = 1;
+const bool False = 0;
 #endif
 
 template <class T, class S>

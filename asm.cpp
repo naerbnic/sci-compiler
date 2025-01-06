@@ -14,7 +14,7 @@
 #include "symbol.hpp"
 #include "text.hpp"
 
-Bool addNodesToList;
+bool addNodesToList;
 ANTable* dispTbl;
 int lastLineNum;
 ANWord* numDispTblEntries;

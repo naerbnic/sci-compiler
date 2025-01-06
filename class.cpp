@@ -265,7 +265,7 @@ Class::Class(Class* theSuper)
   *p = this;
 }
 
-Bool Class::selectorDiffers(Selector* tp) {
+bool Class::selectorDiffers(Selector* tp) {
   // Return true if either the selector referred to by 'tp' is not in
   // this class or if its value differs.
 

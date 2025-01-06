@@ -15,34 +15,34 @@ extern int curLine;
 
 static int loopNest;
 
-static Bool _Expression(PNode*);
-static Bool Return(PNode*);
-static Bool Call(PNode*, Symbol*);
-static Bool Send(PNode*, Symbol*);
-static Bool Message(PNode*, Symbol*);
-static Bool While(PNode*);
-static Bool Repeat(PNode*);
-static Bool For(PNode*);
-static Bool Break(PNode*);
-static Bool BreakIf(PNode*);
-static Bool Continue(PNode*);
-static Bool ContIf(PNode*);
-static Bool If(PNode*);
-static Bool Cond(PNode*);
-static Bool Switch(PNode*);
-static Bool SwitchTo(PNode*);
-static Bool IncDec(PNode*);
-static Bool Variable(PNode*);
-static Bool Array(PNode*);
-static Bool NaryExpr(PNode*);
-static Bool BinaryExpr(PNode*);
-static Bool UnaryExpr(PNode*);
-static Bool CompExpr(PNode*);
-static Bool Assignment(PNode*);
-static Bool Rest(PNode*);
+static bool _Expression(PNode*);
+static bool Return(PNode*);
+static bool Call(PNode*, Symbol*);
+static bool Send(PNode*, Symbol*);
+static bool Message(PNode*, Symbol*);
+static bool While(PNode*);
+static bool Repeat(PNode*);
+static bool For(PNode*);
+static bool Break(PNode*);
+static bool BreakIf(PNode*);
+static bool Continue(PNode*);
+static bool ContIf(PNode*);
+static bool If(PNode*);
+static bool Cond(PNode*);
+static bool Switch(PNode*);
+static bool SwitchTo(PNode*);
+static bool IncDec(PNode*);
+static bool Variable(PNode*);
+static bool Array(PNode*);
+static bool NaryExpr(PNode*);
+static bool BinaryExpr(PNode*);
+static bool UnaryExpr(PNode*);
+static bool CompExpr(PNode*);
+static bool Assignment(PNode*);
+static bool Rest(PNode*);
 static pn_t PNType(sym_t);
 
-Bool ExprList(PNode* theNode, Bool required) {
+bool ExprList(PNode* theNode, bool required) {
   // expression-list ::= expression*
 
   PNode* pn;
@@ -64,7 +64,7 @@ Bool ExprList(PNode* theNode, Bool required) {
   return !required;
 }
 
-Bool Expression(PNode* theNode, Bool required) {
+bool Expression(PNode* theNode, bool required) {
   // expression ::=	number |
   //				method |
   //				variable |
@@ -73,7 +73,7 @@ Bool Expression(PNode* theNode, Bool required) {
   //				label |
   //				open _expression close
 
-  Bool isExpr;
+  bool isExpr;
   Symbol* theSym;
   PNode* pn;
 
@@ -151,7 +151,7 @@ Bool Expression(PNode* theNode, Bool required) {
   return isExpr;
 }
 
-static Bool _Expression(PNode* theNode) {
+static bool _Expression(PNode* theNode) {
   // _expression ::=	call |
   //				send |
   //				nary-expr |
@@ -175,9 +175,9 @@ static Bool _Expression(PNode* theNode) {
   //				definition |
   //				jump
 
-  Bool retVal;
+  bool retVal;
   Symbol* theSym;
-  Bool oldSelectVar;
+  bool oldSelectVar;
 
   oldSelectVar = selectorIsVar;
   selectorIsVar = True;
@@ -310,7 +310,7 @@ static Bool _Expression(PNode* theNode) {
   return retVal;
 }
 
-static Bool Return(PNode* theNode) {
+static bool Return(PNode* theNode) {
   PNode* pn;
 
   // Add a return node, then look for an optional return expression.
@@ -320,10 +320,10 @@ static Bool Return(PNode* theNode) {
   return True;
 }
 
-static Bool Assignment(PNode* theNode) {
+static bool Assignment(PNode* theNode) {
   // assignment ::= assign-op variable expression
 
-  Bool retVal = False;
+  bool retVal = False;
   PNode* pn;
 
   pn = New PNode(PN_ASSIGN);
@@ -342,7 +342,7 @@ static Bool Assignment(PNode* theNode) {
   return retVal;
 }
 
-static Bool Call(PNode* theNode, Symbol* theSym) {
+static bool Call(PNode* theNode, Symbol* theSym) {
   // call ::= procedure-symbol expression*
 
   PNode* pn;
@@ -358,7 +358,7 @@ static Bool Call(PNode* theNode, Symbol* theSym) {
   return True;
 }
 
-static Bool Send(PNode* theNode, Symbol* theSym) {
+static bool Send(PNode* theNode, Symbol* theSym) {
   // send ::= (object | variable) message+
 
   PNode* pn;
@@ -400,10 +400,10 @@ static Bool Send(PNode* theNode, Symbol* theSym) {
   return True;
 }
 
-static Bool Message(PNode* theNode, Symbol* theSym) {
+static bool Message(PNode* theNode, Symbol* theSym) {
   Symbol* msgSel;
-  Bool oldSelectVar;
-  Bool retVal;
+  bool oldSelectVar;
+  bool retVal;
   PNode* pn;
   PNode* node;
 
@@ -455,7 +455,7 @@ static Bool Message(PNode* theNode, Symbol* theSym) {
   return retVal;
 }
 
-static Bool While(PNode* theNode) {
+static bool While(PNode* theNode) {
   // while ::= 'while' expression expression*
 
   PNode* pn;
@@ -479,7 +479,7 @@ static Bool While(PNode* theNode) {
   return True;
 }
 
-static Bool Repeat(PNode* theNode) {
+static bool Repeat(PNode* theNode) {
   // repeat ::= 'repeat' expression+
 
   PNode* pn;
@@ -496,7 +496,7 @@ static Bool Repeat(PNode* theNode) {
   return True;
 }
 
-static Bool For(PNode* theNode) {
+static bool For(PNode* theNode) {
   // for ::=	'for' open expression* close	;initialization
   //			expression ;conditional 			open expression* close
   //;re-initialization 			expression*					;loop
@@ -542,7 +542,7 @@ static Bool For(PNode* theNode) {
   return True;
 }
 
-static Bool Break(PNode* theNode) {
+static bool Break(PNode* theNode) {
   // break ::= 'break' [number]
 
   PNode* pn;
@@ -563,7 +563,7 @@ static Bool Break(PNode* theNode) {
   return True;
 }
 
-static Bool BreakIf(PNode* theNode) {
+static bool BreakIf(PNode* theNode) {
   // break ::= 'breakif' expression [number]
 
   PNode* pn;
@@ -593,7 +593,7 @@ static Bool BreakIf(PNode* theNode) {
   return True;
 }
 
-static Bool Continue(PNode* theNode) {
+static bool Continue(PNode* theNode) {
   // continue ::= 'continue' [number]
 
   PNode* pn;
@@ -614,7 +614,7 @@ static Bool Continue(PNode* theNode) {
   return True;
 }
 
-static Bool ContIf(PNode* theNode) {
+static bool ContIf(PNode* theNode) {
   // contif ::= 'contif'expression [number]
 
   PNode* pn;
@@ -644,7 +644,7 @@ static Bool ContIf(PNode* theNode) {
   return True;
 }
 
-static Bool If(PNode* theNode) {
+static bool If(PNode* theNode) {
   // if ::=	'if' expression expression+
   //		['else' expression+]
 
@@ -678,7 +678,7 @@ static Bool If(PNode* theNode) {
   return True;
 }
 
-static Bool Cond(PNode* theNode) {
+static bool Cond(PNode* theNode) {
   // cond := 'cond' ( open expression expression+ close )+
   //		 [open 'else' expression+ close]
 
@@ -713,7 +713,7 @@ static Bool Cond(PNode* theNode) {
   return True;
 }
 
-static Bool Switch(PNode* theNode) {
+static bool Switch(PNode* theNode) {
   // switch :=	'switch' expression open expression expression+ close
   //			[open 'else' expression+ close]
 
@@ -752,7 +752,7 @@ static Bool Switch(PNode* theNode) {
   return True;
 }
 
-static Bool SwitchTo(PNode* theNode) {
+static bool SwitchTo(PNode* theNode) {
   // switch :=	'switch' expression open expression expression+ close
   //			[open 'else' expression+ close]
 
@@ -780,7 +780,7 @@ static Bool SwitchTo(PNode* theNode) {
   return True;
 }
 
-static Bool IncDec(PNode* theNode) {
+static bool IncDec(PNode* theNode) {
   //	inc-dec ::=	('++' | '--') variable
 
   PNode* pn;
@@ -799,7 +799,7 @@ static Bool IncDec(PNode* theNode) {
   }
 }
 
-static Bool Variable(PNode* theNode) {
+static bool Variable(PNode* theNode) {
   // variable ::= var-symbol | ('[' var-symbol expression ']')
 
   PNode* pn;
@@ -819,7 +819,7 @@ static Bool Variable(PNode* theNode) {
   return True;
 }
 
-static Bool Array(PNode* theNode) {
+static bool Array(PNode* theNode) {
   PNode* pn;
   PNode* node;
 
@@ -852,7 +852,7 @@ static Bool Array(PNode* theNode) {
   return True;
 }
 
-static Bool Rest(PNode* theNode) {
+static bool Rest(PNode* theNode) {
   LookupTok();
   if (!IsVar() || symType != S_PARM) {
     Severe("Variable name expected: %s.", symStr);
@@ -862,7 +862,7 @@ static Bool Rest(PNode* theNode) {
   return True;
 }
 
-static Bool NaryExpr(PNode* theNode) {
+static bool NaryExpr(PNode* theNode) {
   //	nary-expr ::=	nary-op expression expression+
   //	nary-op ::=	'+' | '*' | '^' | '|' | '&' | 'and' | 'or'
 
@@ -871,7 +871,7 @@ static Bool NaryExpr(PNode* theNode) {
   PNode* cur;
   PNode* prev;
   int val;
-  Bool logicExpr = symVal == N_AND || symVal == N_OR;
+  bool logicExpr = symVal == N_AND || symVal == N_OR;
 
   if (logicExpr)
     pn = New PNode(PN_COMP);
@@ -950,7 +950,7 @@ static Bool NaryExpr(PNode* theNode) {
   return True;
 }
 
-static Bool BinaryExpr(PNode* theNode) {
+static bool BinaryExpr(PNode* theNode) {
   //	binary-expr ::=	binary-op expression expression
   //	binary-op ::=		'-' | '/' | '<<' | '>>' | '^' | '&' | '|' | '%'
 
@@ -1028,7 +1028,7 @@ static Bool BinaryExpr(PNode* theNode) {
   return True;
 }
 
-static Bool UnaryExpr(PNode* theNode) {
+static bool UnaryExpr(PNode* theNode) {
   //	unary-expr ::=		unary-op expression
   //	unary-op ::=		'~' | '!'
 
@@ -1065,7 +1065,7 @@ static Bool UnaryExpr(PNode* theNode) {
   return True;
 }
 
-static Bool CompExpr(PNode* theNode) {
+static bool CompExpr(PNode* theNode) {
   //	comp-expr ::=	comp-op expression expression+
   //	comp-op ::=	'>' | '>=' | '<' | '<=' | '==' | '!='
 

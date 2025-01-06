@@ -148,7 +148,7 @@ const uchar op_pushSelf = 0x7C;
 const uchar op_fileName = 0x7D;
 const uchar op_lineNum = 0x7E;
 
-const UInt16 OP_LABEL = 0x7000;
+const uint16_t OP_LABEL = 0x7000;
 
 void GetSourceLineNum();
 void GetSourceModuleFileName();

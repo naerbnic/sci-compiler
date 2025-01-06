@@ -28,7 +28,7 @@ uint OptimizeProc(AList* al) {
   uint nOptimizations = 0;
 
   for (ANOpSign* an = (ANOpSign*)al->first(); an; an = (ANOpSign*)al->next()) {
-    Bool byteOp = an->op & OP_BYTE;
+    bool byteOp = an->op & OP_BYTE;
     uint op = an->op & ~OP_BYTE;
 
     switch (op) {

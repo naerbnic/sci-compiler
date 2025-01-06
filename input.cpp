@@ -60,7 +60,7 @@ InputFile::~InputFile() {
   fclose(file);
 }
 
-Bool InputFile::incrementPastNewLine(char*& ip) {
+bool InputFile::incrementPastNewLine(char*& ip) {
   if (GetNewLine()) {
     ip = is->ptr;
     return True;
@@ -68,7 +68,7 @@ Bool InputFile::incrementPastNewLine(char*& ip) {
   return False;
 }
 
-Bool InputFile::endInputLine() { return GetNewLine(); }
+bool InputFile::endInputLine() { return GetNewLine(); }
 
 InputString::InputString(char* str)
     :
@@ -85,14 +85,14 @@ InputString& InputString::operator=(InputString& s) {
   return *this;
 }
 
-Bool InputString::endInputLine() { return CloseInputSource(); }
+bool InputString::endInputLine() { return CloseInputSource(); }
 
-Bool InputString::incrementPastNewLine(char*& ip) {
+bool InputString::incrementPastNewLine(char*& ip) {
   ++ip;
   return True;
 }
 
-InputSource* OpenFileAsInput(strptr fileName, Bool required) {
+InputSource* OpenFileAsInput(strptr fileName, bool required) {
   FILE* file;
   InputSource* theFile;
   char newName[_MAX_PATH + 1];
@@ -129,7 +129,7 @@ InputSource* OpenFileAsInput(strptr fileName, Bool required) {
   return theFile;
 }
 
-Bool CloseInputSource() {
+bool CloseInputSource() {
   // Close the current input source.  If the source is a file, this involves
   // closing the file.  Remove the source from the chain and free its memory.
 
@@ -146,12 +146,12 @@ Bool CloseInputSource() {
     curLine = is->lineNum;
   }
 
-  return (Bool)is;
+  return (bool)is;
 }
 
 void SetStringInput(strptr str) { SetInputSource(New InputString(str)); }
 
-Bool GetNewInputLine() {
+bool GetNewInputLine() {
   // Read a New line in from the current input file.  If we're at end of
   // file, close the file, shifting input to the next source in the queue.
 
@@ -169,7 +169,7 @@ Bool GetNewInputLine() {
     ++curLine;
   }
 
-  return (Bool)is;
+  return (bool)is;
 }
 
 void SetIncludePath() {
