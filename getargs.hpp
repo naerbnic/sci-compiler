@@ -24,7 +24,7 @@ typedef struct
 {
     char switchVal;
     int type;
-    int *value;
+    intptr_t *value;
     char *desc;
 } Arg;
 

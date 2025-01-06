@@ -9,8 +9,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "new.hpp"
-
 //	establish compiler-dependent types and other information
 #include "compiler.hpp"
 
