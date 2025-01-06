@@ -5,6 +5,6 @@
 
 #include "memtype.hpp"
 
-char* ResNameMake(MemType type, int num);
+const char* ResNameMake(MemType type, int num);
 
 #endif

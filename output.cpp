@@ -71,7 +71,7 @@ void OpenObjFiles(OutputFile** heapOut, OutputFile** hunkOut) {
 }
 
 static void MakeObjFileName(char* dest, MemType type) {
-  char* resName = ResNameMake(type, script);
+  const char* resName = ResNameMake(type, script);
   MakeName(dest, outDir, resName, resName);
   unlink(dest);
 }
