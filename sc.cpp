@@ -254,7 +254,8 @@ static void CompileFile(strptr fileName) {
   // Delete any free symbol tables.
   syms.delFreeTbls();
 
-#if !defined(WINDOWS) && !defined(__386__)
+  // This was used to handle custom memory management. Disabled.
+#if 0  // !defined(WINDOWS) && !defined(__386__)
   if (writeMemSizes) MemDisplay();
   HEAPCHK
 #endif

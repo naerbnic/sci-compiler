@@ -3,7 +3,6 @@
 
 #include "mem.hpp"
 
-#include <dos.h>
 #include <stdio.h>
 
 #include "error.hpp"
@@ -12,8 +11,10 @@
 
 bool writeMemSizes;
 
+// Modern C++ allocators are reliable, so we don't need a custom memory manager.
+// Original comment:
 //	if we're running under Windows, trust it to manage our memory
-#if !defined(WINDOWS) && !defined(__386__)
+#if 0  // !defined(WINDOWS) && !defined(__386__)
 
 #include "emsblock.hpp"
 
@@ -35,7 +36,7 @@ struct MemList {
   uint32_t numAllocated();
 
   MemBlk* head;
-  size_t size;   // size of memory allocation units
+  size_t size;       // size of memory allocation units
   uint32_t numBlks;  // number of memory allocation units per MemBlk
 };
 
