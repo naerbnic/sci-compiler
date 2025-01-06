@@ -1,20 +1,20 @@
 // listing.hpp
 
-#if !defined(LISTING_HPP)
+#ifndef LISTING_HPP
 #define LISTING_HPP
 
 void OpenListFile(const char* sourceFileName);
 void CloseListFile();
 void DeleteListFile();
-void Listing(char*, ...);
+void Listing(const char*, ...);
 void ListOp(bool);
-void ListArg(char*, ...);
-void ListAsCode(char*, ...);
-void ListWord(uword);
-void ListByte(ubyte);
+void ListArg(const char*, ...);
+void ListAsCode(const char*, ...);
+void ListWord(uint16_t);
+void ListByte(uint8_t);
 void ListOffset();
-void ListText(char*);
-void ListingNoCRLF(strptr parms, ...);
+void ListText(const char*);
+void ListingNoCRLF(const char* parms, ...);
 void ListSourceLine(int num);
 
 extern bool listCode;

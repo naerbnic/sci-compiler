@@ -108,7 +108,7 @@ void CloseListFile() {
 
 void DeleteListFile() { unlink(listName); }
 
-void Listing(char* parms, ...) {
+void Listing(const char* parms, ...) {
   va_list argPtr;
 
   if (!listCode || !listFile) return;
@@ -119,7 +119,7 @@ void Listing(char* parms, ...) {
   va_end(argPtr);
 }
 
-void ListingNoCRLF(char* parms, ...) {
+void ListingNoCRLF(const char* parms, ...) {
   va_list argPtr;
 
   if (!listCode || !listFile) return;
@@ -208,7 +208,7 @@ void ListOp(int theOp) {
     Listing("%s", op);
 }
 
-void ListArg(char* parms, ...) {
+void ListArg(const char* parms, ...) {
   va_list argPtr;
   char argStr[80];
 
@@ -223,7 +223,7 @@ void ListArg(char* parms, ...) {
   va_end(argPtr);
 }
 
-void ListAsCode(char* parms, ...) {
+void ListAsCode(const char* parms, ...) {
   va_list argPtr;
   char buf[1024];
 
@@ -237,13 +237,13 @@ void ListAsCode(char* parms, ...) {
   va_end(argPtr);
 }
 
-void ListWord(uword w) {
+void ListWord(uint16_t w) {
   if (!listCode || !listFile) return;
 
   ListAsCode("word\t$%x", (SCIUWord)w);
 }
 
-void ListByte(ubyte b) {
+void ListByte(uint8_t b) {
   if (!listCode || !listFile) return;
 
   ListAsCode("byte\t$%x", b);

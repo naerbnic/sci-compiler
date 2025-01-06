@@ -1,8 +1,10 @@
 // symbol.hpp
 //		definitions for symbols
 
-#if !defined(SYMBOL_HPP)
+#ifndef SYMBOL_HPP
 #define SYMBOL_HPP
+
+#include "sc.hpp"
 
 // Symbol types
 enum sym_t {

@@ -10,9 +10,9 @@ class OutputFile {
   ~OutputFile();
 
   void SeekTo(long offset);
-  void WriteByte(ubyte);
-  void WriteOp(ubyte op) { WriteByte(op); }
-  void WriteWord(SCIWord);
+  void WriteByte(uint8_t);
+  void WriteOp(uint8_t op) { WriteByte(op); }
+  void WriteWord(uint16_t);
   void Write(const void*, size_t);
   int Write(const char*);
 

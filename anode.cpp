@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <algorithm>
+
 #include "asm.hpp"
 #include "define.hpp"
 #include "error.hpp"
@@ -25,6 +27,13 @@ size_t curOfs;
 int textStart;
 
 #define OPTIMIZE_TRANSFERS
+
+static bool canOptimizeTransfer(size_t a, size_t b) {
+  size_t larger = std::max(a, b);
+  size_t smaller = std::min(a, b);
+
+  return (larger - smaller) < 128;
+}
 
 ///////////////////////////////////////////////////
 // Class ANReference
@@ -436,7 +445,7 @@ size_t ANCall::size() {
   else if (!sym->loc || target->offset == UNDEFINED)
     return 5;
 #if defined(OPTIMIZE_TRANSFERS)
-  else if (abs(target->offset - (offset + 5)) < 128) {
+  else if (canOptimizeTransfer(target->offset, offset + 5)) {
     op |= OP_BYTE;
     return 4;
   }
@@ -482,7 +491,7 @@ size_t ANBranch::size() {
   else if (!target || target->offset == UNDEFINED)
     return 3;
 #if defined(OPTIMIZE_TRANSFERS)
-  else if (abs(target->offset - (offset + 4)) < 128) {
+  else if (canOptimizeTransfer(target->offset, offset + 4)) {
     op |= OP_BYTE;
     return 2;
   }
@@ -631,7 +640,8 @@ void ANSend::emit(OutputFile* out) {
 // Class ANSuper
 ///////////////////////////////////////////////////
 
-ANSuper::ANSuper(Symbol* s, uint32_t c) : ANSend(op_super), sym(s), classNum(c) {
+ANSuper::ANSuper(Symbol* s, uint32_t c)
+    : ANSend(op_super), sym(s), classNum(c) {
   if (classNum < 256) op |= OP_BYTE;
 }
 
