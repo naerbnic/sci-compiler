@@ -7,7 +7,6 @@ project ("Script Compiler")
 
 # Add source to this project's executable.
 add_executable (sc
-new.cpp
 getargs.cpp
 string.cpp
 fileio.cpp
