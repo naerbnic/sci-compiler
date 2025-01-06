@@ -47,7 +47,7 @@ class SymTbl {
   // of the table.
 
  private:
-  SymTbl(int size = ST_MEDIUM, bool retain = False);
+  SymTbl(int size = ST_MEDIUM, bool retain = false);
   ~SymTbl();
 
   Symbol* install(strptr name, sym_t type);
@@ -62,7 +62,7 @@ class SymTbl {
   // Remove and delete a Symbol with name 'name' from the table.
   // Return True if it was found and deleted, False otherwise.
 
-  void retain(bool keepIt = True) { keep = keepIt; }
+  void retain(bool keepIt = true) { keep = keepIt; }
   // Set the 'keep' property to the value of 'keepIt'
 
   void clearAsmPtrs();
@@ -86,7 +86,7 @@ class SymTbls {
  public:
   SymTbls();
 
-  SymTbl* add(int size = ST_MEDIUM, bool retain = False);
+  SymTbl* add(int size = ST_MEDIUM, bool retain = false);
   //	add a New symbol table and link it into the list
 
   void clearAsmPtrs();
