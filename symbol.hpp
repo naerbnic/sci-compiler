@@ -4,6 +4,8 @@
 #ifndef SYMBOL_HPP
 #define SYMBOL_HPP
 
+#include <cstdint>
+
 #include "sc.hpp"
 
 // Symbol types

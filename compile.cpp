@@ -24,7 +24,7 @@ static void MakeObjID(PNode*);
 static void MakeSend(PNode*);
 static int MakeMessage(PNode*);
 static void MakeProc(PNode*);
-static bool MakeArgs(PNode*);
+static int MakeArgs(PNode*);
 static void MakeUnary(PNode*);
 static void MakeBinary(PNode*);
 static void MakeNary(PNode*);
@@ -34,7 +34,7 @@ static void MakeComp(PNode*);
 static void MakeAnd(PNode*);
 static void MakeOr(PNode*);
 static void MakeIncDec(PNode*);
-static void MakeCompOp(bool);
+static void MakeCompOp(int);
 static void MakeIf(PNode*);
 static void MakeCond(PNode*);
 static void MakeSwitch(PNode*);
@@ -230,6 +230,9 @@ static void MakeAccess(PNode* pn, ubyte theCode) {
       case PN_PARM:
         accType = OP_PARM;
         break;
+      default:
+        Fatal("Internal error: bad variable type in MakeAccess()");
+        break;
     }
 
     if (indexed) accType |= OP_INDEX;
@@ -265,6 +268,9 @@ static void MakeAccess(PNode* pn, ubyte theCode) {
           break;
         case PN_PARM:
           theCode |= OP_PARM;
+          break;
+        default:
+          Fatal("Internal error: bad variable type in MakeAccess()");
           break;
       }
     }
@@ -615,7 +621,7 @@ static void MakeComp(PNode* pn) {
     // If there are no more operands, we're done.  Otherwise we've got
     // to bail out of the test if it is already false or continue if it
     // is true so far.
-    while (node = node->next) {
+    while ((node = node->next)) {
       // Early out if false.
       MakeBranch(op_bnt, 0, &earlyOut);
 
@@ -945,7 +951,7 @@ void MakeDispatch(int maxEntry) {
   numDispTblEntries->value = maxEntry + 1;
   for (int i = 0; i <= maxEntry; ++i) {
     ANDispatch* an = new ANDispatch;
-    if (an->sym = FindPublic(i))
+    if ((an->sym = FindPublic(i)))
       // Add this to the backpatch list of the symbol.
       an->addBackpatch(an->sym);
   }
