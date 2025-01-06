@@ -1,197 +1,171 @@
 //	proc.cpp		sc
 
+#include "compile.hpp"
+#include "error.hpp"
+#include "object.hpp"
+#include "parse.hpp"
+#include "sc.hpp"
 #include "sol.hpp"
+#include "symtbl.hpp"
+#include "token.hpp"
 
-#include	"sc.hpp"
+Bool inParmList;
 
-#include	"compile.hpp"
-#include	"error.hpp"
-#include	"object.hpp"
-#include	"parse.hpp"
-#include	"token.hpp"
-#include	"symtbl.hpp"
+static PNode* _CallDef(sym_t theType);
+static int ParameterList();
+static void NewParm(int n, sym_t type);
+static void AddRest(int ofs);
 
-Bool	  	inParmList;
+void Procedure() {
+  // 	procedure ::= 'procedure' call-def [expression+]
+  //	OR
+  //		procedure ::= procedure procedure-name+
 
-static PNode*	_CallDef(sym_t theType);
-static int		ParameterList();
-static void		NewParm(int n, sym_t type);
-static void		AddRest(int ofs);
+  PNode* theNode;
+  Symbol* theSym;
+  SymTbl* theSymTbl;
 
-void
-Procedure()
-{
-	// 	procedure ::= 'procedure' call-def [expression+]
-	//	OR
-	//		procedure ::= procedure procedure-name+
+  GetToken();
+  UnGetTok();
+  if (symType == OPEN_P) {
+    // Then a procedure definition.
+    theSymTbl = syms.add(ST_MINI);
 
-	PNode*	theNode;
-	Symbol*	theSym;
-	SymTbl*	theSymTbl;
+    theNode = CallDef(S_PROC);
+    if (theNode) {
+      ExprList(theNode, OPTIONAL);
+      CompileCode(theNode);
+    }
 
-	GetToken();
-	UnGetTok();
-	if (symType == OPEN_P) {
-		// Then a procedure definition.
-		theSymTbl = syms.add(ST_MINI);
+    syms.deactivate(theSymTbl);
 
-		theNode = CallDef(S_PROC);
-		if (theNode) {
-			ExprList(theNode, OPTIONAL);
-			CompileCode(theNode);
-		}
-
-		syms.deactivate(theSymTbl);
-
-	} else {
-		// A procedure declaration.
-		for (GetToken(); !CloseP(symType); GetToken()) {
-			if (symType == S_IDENT)
-				theSym = syms.installLocal(symStr, S_PROC);
-			theSym->val = UNDEFINED;
-		}
-		UnGetTok();
-	}
+  } else {
+    // A procedure declaration.
+    for (GetToken(); !CloseP(symType); GetToken()) {
+      if (symType == S_IDENT) theSym = syms.installLocal(symStr, S_PROC);
+      theSym->val = UNDEFINED;
+    }
+    UnGetTok();
+  }
 }
 
-PNode	*
-CallDef(
-	sym_t theType)
-{
-	// call-def ::= open _call-def close
+PNode* CallDef(sym_t theType) {
+  // call-def ::= open _call-def close
 
-	PNode*	theNode;
+  PNode* theNode;
 
-	if (!OpenBlock()) {
-		UnGetTok();
-		Error("expected opening parenthesis or brace.");
-		return 0;
-	}
+  if (!OpenBlock()) {
+    UnGetTok();
+    Error("expected opening parenthesis or brace.");
+    return 0;
+  }
 
-	theNode = _CallDef(theType);
-	CloseBlock();
+  theNode = _CallDef(theType);
+  CloseBlock();
 
-	return theNode;
+  return theNode;
 }
 
-static PNode*
-_CallDef(
-	sym_t theType)
-{
-	// _call-def ::= symbol [variable+] [&tmp variable+]
+static PNode* _CallDef(sym_t theType) {
+  // _call-def ::= symbol [variable+] [&tmp variable+]
 
-	Symbol*		theProc;
-	PNode	*		theNode;
-	Selector*	sn;
+  Symbol* theProc;
+  PNode* theNode;
+  Selector* sn;
 
-	GetToken();
-	theProc = syms.lookup(symStr);
-	switch (theType) {
-		case S_PROC:
-			if (!theProc)
-				theProc = syms.installModule(symStr, theType);
+  GetToken();
+  theProc = syms.lookup(symStr);
+  switch (theType) {
+    case S_PROC:
+      if (!theProc)
+        theProc = syms.installModule(symStr, theType);
 
-			else if (theProc->type != S_PROC || theProc->val != UNDEFINED) {
-				Severe("%s is already defined.", symStr);
-				return 0;
-			}
+      else if (theProc->type != S_PROC || theProc->val != UNDEFINED) {
+        Severe("%s is already defined.", symStr);
+        return 0;
+      }
 
-			theProc->val = DEFINED;
-			break;
+      theProc->val = DEFINED;
+      break;
 
-		case S_SELECT:
-			if (!theProc ||
-				 !(sn = curObj->findSelector(theProc)) ||
-				 IsProperty(sn)) {
-				Severe("%s is not a method for class %s", symStr,curObj->sym->name);
-				return 0;
-			}
-	}
+    case S_SELECT:
+      if (!theProc || !(sn = curObj->findSelector(theProc)) || IsProperty(sn)) {
+        Severe("%s is not a method for class %s", symStr, curObj->sym->name);
+        return 0;
+      }
+  }
 
-	theNode = New PNode(theType == S_SELECT ? PN_METHOD : PN_PROC);
-	theNode->sym = theProc;
-	theNode->val = ParameterList();	// number of temporary variables
+  theNode = New PNode(theType == S_SELECT ? PN_METHOD : PN_PROC);
+  theNode->sym = theProc;
+  theNode->val = ParameterList();  // number of temporary variables
 
-	return theNode;
+  return theNode;
 }
 
-static int
-ParameterList()
-{
-	// parameter-list ::= [variable+] [&tmp variable+]
+static int ParameterList() {
+  // parameter-list ::= [variable+] [&tmp variable+]
 
-	int	parmOfs;
-	sym_t	parmType;
+  int parmOfs;
+  sym_t parmType;
 
-	parmOfs = 1;
-	parmType = S_PARM;
+  parmOfs = 1;
+  parmType = S_PARM;
 
-	inParmList = True;
-	for (LookupTok(); !CloseP(symType); LookupTok()) {
-		if (symType == S_KEYWORD && symVal == K_TMP) {
-			// Now defining temporaries -- set 'rest of argument' value.
-			AddRest(parmOfs);
-			parmOfs = 0;
-			parmType = S_TMP;
+  inParmList = True;
+  for (LookupTok(); !CloseP(symType); LookupTok()) {
+    if (symType == S_KEYWORD && symVal == K_TMP) {
+      // Now defining temporaries -- set 'rest of argument' value.
+      AddRest(parmOfs);
+      parmOfs = 0;
+      parmType = S_TMP;
 
-		} else if (symType == S_IDENT)
-			// A parameter or tmp variable definition.
-			NewParm(parmOfs++, parmType);
+    } else if (symType == S_IDENT)
+      // A parameter or tmp variable definition.
+      NewParm(parmOfs++, parmType);
 
-		else if (symType == (sym_t) '[') {
-			// An array parameter or tmp variable.
-			if (!GetIdent())
-				break;
-			NewParm(parmOfs, parmType);
-			if (!GetNumber("array size"))
-				return 0;
-			parmOfs += symVal;
-			GetToken();
-			if (symType != (sym_t) ']') {
-				Error("expecting closing ']': %s.", symStr);
-				UnGetTok();
-			}
+    else if (symType == (sym_t)'[') {
+      // An array parameter or tmp variable.
+      if (!GetIdent()) break;
+      NewParm(parmOfs, parmType);
+      if (!GetNumber("array size")) return 0;
+      parmOfs += symVal;
+      GetToken();
+      if (symType != (sym_t)']') {
+        Error("expecting closing ']': %s.", symStr);
+        UnGetTok();
+      }
 
-		} else if (symType == S_SELECT) {
-			if (curObj && curObj->findSelector(&tokSym))
-				Error("%s is a selector for current object.", symStr);
-			else 
-				syms.installLocal(symStr, parmType)->val = parmOfs++;
+    } else if (symType == S_SELECT) {
+      if (curObj && curObj->findSelector(&tokSym))
+        Error("%s is a selector for current object.", symStr);
+      else
+        syms.installLocal(symStr, parmType)->val = parmOfs++;
 
-		} else
-			Error("Non-identifier in parameter list: %s", symStr);
-	}
-	
-	if (parmType == S_PARM)
-		AddRest(parmOfs);
+    } else
+      Error("Non-identifier in parameter list: %s", symStr);
+  }
 
-	inParmList = False;
+  if (parmType == S_PARM) AddRest(parmOfs);
 
-	UnGetTok();
+  inParmList = False;
 
-	// Return the number of temporary variables.
-	return parmType == S_PARM ? 0 : parmOfs;
+  UnGetTok();
+
+  // Return the number of temporary variables.
+  return parmType == S_PARM ? 0 : parmOfs;
 }
 
-static void
-NewParm(
-	int	n,
-	sym_t	type)
-{
-	Symbol*	theSym;
+static void NewParm(int n, sym_t type) {
+  Symbol* theSym;
 
-	if (syms.lookup(symStr))
-		Warning("Redefinition of '%s'.", symStr);
-	theSym = syms.installLocal(symStr, type);
-	theSym->val = n;
+  if (syms.lookup(symStr)) Warning("Redefinition of '%s'.", symStr);
+  theSym = syms.installLocal(symStr, type);
+  theSym->val = n;
 }
 
-static void
-AddRest(
-	int	ofs)
-{
-	Symbol*	theSym;
+static void AddRest(int ofs) {
+  Symbol* theSym;
 
-	theSym = syms.installLocal("&rest", S_REST);
-	theSym->val = ofs;
+  theSym = syms.installLocal("&rest", S_REST);
+  theSym->val = ofs;
 }

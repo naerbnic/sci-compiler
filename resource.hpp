@@ -3,9 +3,8 @@
 #ifndef RESOURCE_H
 #define RESOURCE_H
 
-#include	"memtype.hpp"
+#include "memtype.hpp"
 
-char*	ResNameMake(MemType type, int num);
+char* ResNameMake(MemType type, int num);
 
 #endif
-

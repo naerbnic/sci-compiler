@@ -3,6 +3,6 @@
 #if !defined(BUILTINS_HPP)
 #define BUILTLINS_HPP
 
-void	InstallBuiltIns();
+void InstallBuiltIns();
 
 #endif

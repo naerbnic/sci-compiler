@@ -1,102 +1,96 @@
 //	asm.cpp
 // 	assemble an object code list
 
+#include "asm.hpp"
+
+#include "anode.hpp"
+#include "define.hpp"
+#include "input.hpp"
+#include "listing.hpp"
+#include "object.hpp"
+#include "output.hpp"
+#include "sc.hpp"
 #include "sol.hpp"
+#include "symbol.hpp"
+#include "text.hpp"
 
-#include	"sc.hpp"
+Bool addNodesToList;
+ANTable* dispTbl;
+int lastLineNum;
+ANWord* numDispTblEntries;
 
-#include	"anode.hpp"
-#include	"asm.hpp"
-#include	"define.hpp"
-#include	"input.hpp"
-#include	"listing.hpp"
-#include	"object.hpp"
-#include	"output.hpp"
-#include	"symbol.hpp"
-#include	"text.hpp"
+void InitAsm() {
+  // Initialize the assembly list: dispose of any old list, then add nodes
+  // for the number of local variables.
 
-Bool			addNodesToList;
-ANTable*		dispTbl;
-int			lastLineNum;
-ANWord*		numDispTblEntries;
+  localVars.kill();
 
-void
-InitAsm()
-{
-	// Initialize the assembly list: dispose of any old list, then add nodes
-	// for the number of local variables.
+  addNodesToList = True;
+  textStart = 0;
 
-	localVars.kill();
+  sc->heapList->clear();
+  sc->hunkList->clear();
 
-	addNodesToList = True;
-	textStart = 0;
+  //	setup the debugging info
+  lastLineNum = 0;
 
-	sc->heapList->clear();
-	sc->hunkList->clear();
+  // space for addr of heap component of resource
+  New ANWord(sc->hunkList);
 
-	//	setup the debugging info
-	lastLineNum = 0;
+  // space to indicate whether script has far text (dummy)
+  New ANWord(sc->hunkList);
 
-	// space for addr of heap component of resource
-	New ANWord(sc->hunkList);
+  numDispTblEntries = New ANWord;
+  dispTbl = New ANTable("dispatch table");
+  dispTbl->finish();
 
-	// space to indicate whether script has far text (dummy)
-	New ANWord(sc->hunkList);
-
-	numDispTblEntries = New ANWord;
-	dispTbl = New ANTable("dispatch table");
-	dispTbl->finish();
-
-	codeStart = 0;
-	curList = sc->hunkList;
+  codeStart = 0;
+  curList = sc->hunkList;
 }
 
-void
-Assemble()
-{
-	// Assemble the list pointed to by asmHead.
+void Assemble() {
+  // Assemble the list pointed to by asmHead.
 
-	New ANVars(script ? localVars : globalVars);
+  New ANVars(script ? localVars : globalVars);
 
-	// Set the offsets in the object list.
-	sc->heapList->setOffset(0);
+  // Set the offsets in the object list.
+  sc->heapList->setOffset(0);
 
-	// Optimize the code, setting all the offsets.
-	addNodesToList = False;
-	sc->hunkList->optimize();
-	addNodesToList = True;
+  // Optimize the code, setting all the offsets.
+  addNodesToList = False;
+  sc->hunkList->optimize();
+  addNodesToList = True;
 
-	// Reset the offsets in the object list to get the current code
-	// offsets.
-	sc->heapList->setOffset(0);
+  // Reset the offsets in the object list to get the current code
+  // offsets.
+  sc->heapList->setOffset(0);
 
-	OutputFile* heapOut;
-	OutputFile* hunkOut;
-	OpenObjFiles(&heapOut, &hunkOut);
+  OutputFile* heapOut;
+  OutputFile* hunkOut;
+  OpenObjFiles(&heapOut, &hunkOut);
 
-	char infoFileName[1024];
-	sprintf ( infoFileName, "%d.inf", (unsigned short)script );
-	FILE *infoFile = fopen ( infoFileName, "wb" );
-	fprintf ( infoFile, "%s\n", curSourceFile->fileName );
-	fclose ( infoFile );
+  char infoFileName[1024];
+  sprintf(infoFileName, "%d.inf", (unsigned short)script);
+  FILE* infoFile = fopen(infoFileName, "wb");
+  fprintf(infoFile, "%s\n", curSourceFile->fileName);
+  fclose(infoFile);
 
-	// Now generate object code.
-	Listing("----------------------\n"
-			  "-------- Heap --------\n"
-			  "----------------------\n"
-	);
-	sc->heapList->emit(heapOut);
-	Listing("\n\n\n\n"
-			  "----------------------\n"
-			  "-------- Hunk --------\n"
-			  "----------------------\n"
-	);
-	sc->hunkList->emit(hunkOut);
+  // Now generate object code.
+  Listing(
+      "----------------------\n"
+      "-------- Heap --------\n"
+      "----------------------\n");
+  sc->heapList->emit(heapOut);
+  Listing(
+      "\n\n\n\n"
+      "----------------------\n"
+      "-------- Hunk --------\n"
+      "----------------------\n");
+  sc->hunkList->emit(hunkOut);
 
-	delete heapOut;
-	delete hunkOut;
+  delete heapOut;
+  delete hunkOut;
 
-	sc->heapList->clear();
-	sc->hunkList->clear();
+  sc->heapList->clear();
+  sc->hunkList->clear();
 }
-

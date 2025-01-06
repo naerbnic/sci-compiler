@@ -1,39 +1,40 @@
 //	symbol.cpp	sc
 // 	symbol class routines for sc
 
+#include "sc.hpp"
 #include "sol.hpp"
+#include "string.hpp"
 
-#include	"sc.hpp"
+// #include "char.hpp"
+#include "define.hpp"
+#include "input.hpp"
+#include "object.hpp"
+#include "symbol.hpp"
 
-#include	"string.hpp"
+Symbol::Symbol(const char* name, sym_t type)
+    :
 
-//#include "char.hpp"
-#include	"define.hpp"
-#include	"input.hpp"
-#include	"object.hpp"
-#include	"symbol.hpp"
+      type(type),
+      name(newStr((char*)name)),
+      next(0),
+      an(0),
+      str(0),
+      lineNum(curLine) {}
 
-Symbol::Symbol(const char* name, sym_t type) :
+Symbol::~Symbol() {
+  switch (type) {
+    case S_DEFINE:
+      delete[] str;
+      break;
 
-	type(type), name(newStr((char *)name)), next(0), an(0), str(0), lineNum(curLine)
-{
-}
+    case S_EXTERN:
+      delete ext;
+      break;
 
-Symbol::~Symbol()
-{
-	switch (type) {
-		case S_DEFINE:
-			delete[] str;
-			break;
+    case S_OBJ:
+      delete obj;
+      break;
+  }
 
-		case S_EXTERN:
-			delete ext;
-			break;
-
-		case S_OBJ:
-			delete obj;
-			break;
-		}
-
-	delete[] name;
+  delete[] name;
 }

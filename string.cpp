@@ -6,62 +6,59 @@
 // author: Stephen Nichols
 //
 
-#include <string.h>
-#include <ctype.h>
 #include "string.hpp"
 
-// this function trims all of the whitespace from the passed string, both front and back
-void trimstr ( char *str )
-{
-    char *endPtr = &str[strlen(str)];
-    char *frontPtr = str;
+#include <ctype.h>
+#include <string.h>
 
-	// the string is empty, return
-	if ( endPtr == str )
-		return;
+// this function trims all of the whitespace from the passed string, both front
+// and back
+void trimstr(char *str) {
+  char *endPtr = &str[strlen(str)];
+  char *frontPtr = str;
 
-	// skip past the null
-	endPtr--;
+  // the string is empty, return
+  if (endPtr == str) return;
 
-    // scan from the end of the string
-    while ( isspace ( *endPtr ) ) {
-        *endPtr = 0;
-        endPtr--;
+  // skip past the null
+  endPtr--;
 
-        // the entire string is whitespace!
-        if ( endPtr == str ) {
-            *str = 0;
-            return;
-        }
+  // scan from the end of the string
+  while (isspace(*endPtr)) {
+    *endPtr = 0;
+    endPtr--;
+
+    // the entire string is whitespace!
+    if (endPtr == str) {
+      *str = 0;
+      return;
     }
+  }
 
-	// adjust endPtr to point to the null
-	endPtr++;
+  // adjust endPtr to point to the null
+  endPtr++;
 
-    // scan from the front of the string
-    while ( isspace ( *frontPtr ) ) {
-        frontPtr++;
+  // scan from the front of the string
+  while (isspace(*frontPtr)) {
+    frontPtr++;
 
-        // we've consumed the whole string!  (should never happen)
-        if ( frontPtr == endPtr ) 
-            break;
-    }
+    // we've consumed the whole string!  (should never happen)
+    if (frontPtr == endPtr) break;
+  }
 
-    // move the whole string down
-	if ( str != frontPtr ) {
-		int length = (int)(endPtr - frontPtr);
-	    memmove ( str, frontPtr, length );
+  // move the whole string down
+  if (str != frontPtr) {
+    int length = (int)(endPtr - frontPtr);
+    memmove(str, frontPtr, length);
 
-		// terminate the string
-		str[length] = 0;
-	}
+    // terminate the string
+    str[length] = 0;
+  }
 }
 
 // this function mimics strdup
-char *newStr ( char *str )
-{
-    if ( str )
-        return strdup ( str );
+char *newStr(char *str) {
+  if (str) return strdup(str);
 
-    return NULL;
+  return NULL;
 }

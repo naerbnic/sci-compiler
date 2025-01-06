@@ -8,17 +8,17 @@
 #include "alist.hpp"
 #endif
 
-void	InitAsm();
-void	Assemble();
+void InitAsm();
+void Assemble();
 
-void	Optimize();
-void	ShowOptimize();
+void Optimize();
+void ShowOptimize();
 
 class ANTable;
 class ANWord;
 
-extern int			lastLineNum;
-extern ANTable*	dispTbl;
-extern ANWord*		numDispTblEntries;
+extern int lastLineNum;
+extern ANTable* dispTbl;
+extern ANWord* numDispTblEntries;
 
 #endif

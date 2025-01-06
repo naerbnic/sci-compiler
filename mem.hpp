@@ -3,10 +3,10 @@
 #if !defined(MEM_HPP)
 #define MEM_HPP
 
-void	MemDisplay();
-void	WriteMemSizes();
+void MemDisplay();
+void WriteMemSizes();
 
-extern Bool	noUseEMS;
-extern Bool	writeMemSizes;
+extern Bool noUseEMS;
+extern Bool writeMemSizes;
 
 #endif

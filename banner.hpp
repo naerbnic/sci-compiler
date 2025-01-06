@@ -3,6 +3,6 @@
 #if !defined(BANNER_HPP)
 #define BANNER_HPP
 
-extern char	banner[];
+extern char banner[];
 
 #endif

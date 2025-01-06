@@ -6,9 +6,9 @@
 
 #if defined(PLAYGRAMMER)
 
-Boolean	ReadDebugFile();
-void		WriteDebugFile();
-Boolean	GetClassSource(char* className, char* dest);
+Boolean ReadDebugFile();
+void WriteDebugFile();
+Boolean GetClassSource(char* className, char* dest);
 
 #endif
 
