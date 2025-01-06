@@ -3,6 +3,8 @@
 #ifndef LISTING_HPP
 #define LISTING_HPP
 
+#include <cstdint>
+
 void OpenListFile(const char* sourceFileName);
 void CloseListFile();
 void DeleteListFile();

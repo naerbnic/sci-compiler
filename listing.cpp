@@ -3,10 +3,10 @@
 
 #include "listing.hpp"
 
-#include <io.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "anode.hpp"
 #include "error.hpp"
@@ -14,6 +14,7 @@
 #include "opcodes.hpp"
 #include "sc.hpp"
 #include "sol.hpp"
+#include "string.hpp"
 
 bool listCode;
 
@@ -27,7 +28,7 @@ static int sourceLineNum;
 #define OP_SIZE 2  // Operator takes a size
 
 struct OpStr {
-  char* str;
+  const char* str;
   uint16_t info;
 } static theOpCodes[] = {
     "bnot",  JUST_OP,           "add",      JUST_OP,
@@ -134,7 +135,7 @@ void ListingNoCRLF(const char* parms, ...) {
 void ListOp(int theOp) {
   OpStr* oPtr;
   char* sp;
-  char* op;
+  const char* op;
   char opStr[10];
   bool hasArgs;
   bool addSize;
@@ -210,31 +211,27 @@ void ListOp(int theOp) {
 
 void ListArg(const char* parms, ...) {
   va_list argPtr;
-  char argStr[80];
 
   if (!listCode || !listFile) return;
 
   va_start(argPtr, parms);
-  argStr[0] = '\t';
-  vsprintf(&argStr[1], parms, argPtr);
-
-  Listing(argStr);
-
+  auto argStr = vstringf(parms, argPtr);
   va_end(argPtr);
+
+  Listing("\t%s", argStr.c_str());
 }
 
 void ListAsCode(const char* parms, ...) {
   va_list argPtr;
-  char buf[1024];
 
   if (!listCode || !listFile) return;
 
   ListOffset();
 
   va_start(argPtr, parms);
-  vsprintf(buf, parms, argPtr);
-  Listing(buf);
+  auto buf = vstringf(parms, argPtr);
   va_end(argPtr);
+  Listing(buf.c_str());
 }
 
 void ListWord(uint16_t w) {

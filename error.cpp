@@ -17,6 +17,7 @@
 #include "sc.hpp"
 #include "share.hpp"
 #include "sol.hpp"
+#include "string.hpp"
 #include "symbol.hpp"
 #include "token.hpp"
 
@@ -26,33 +27,6 @@ int warnings;
 static void beep();
 
 namespace {
-std::string vstringf(const char* fmt, va_list args) {
-  va_list args2;
-  va_copy(args2, args);
-
-  int size = vsnprintf(nullptr, 0, fmt, args2);
-  va_end(args2);
-  if (size < 0) {
-    throw std::runtime_error("vsnprintf failed");
-  }
-
-  std::string result;
-
-  if (size > 0) {
-    result.resize(size);
-    vsnprintf(&result[0], size + 1, fmt, args);
-  }
-
-  return result;
-}
-
-std::string stringf(const char* fmt, ...) {
-  va_list args;
-  va_start(args, fmt);
-  std::string result = vstringf(fmt, args);
-  va_end(args);
-  return result;
-}
 
 void InnerOutput(strptr str) {
   printf("%s", str);
