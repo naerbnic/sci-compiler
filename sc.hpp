@@ -27,7 +27,7 @@ typedef unsigned char ubyte;
 typedef unsigned short uword;
 
 class FixupList;
-class CodeList;
+struct CodeList;
 
 struct Compiler {
   Compiler();

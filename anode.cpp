@@ -24,7 +24,7 @@
 
 ANCodeBlk* codeStart;
 size_t curOfs;
-int textStart;
+uint32_t textStart;
 
 #define OPTIMIZE_TRANSFERS
 
@@ -373,7 +373,7 @@ void ANOpSign::emit(OutputFile* out) {
 ///////////////////////////////////////////////////
 
 ANOpExtern::ANOpExtern(Symbol* s, int32_t m, uint32_t e)
-    : sym(s), module(m), entry(e) {
+    : module(m), entry(e), sym(s) {
   switch (module) {
     case KERNEL:
       op = op_callk | (entry < 256 ? OP_BYTE : 0);
@@ -641,7 +641,7 @@ void ANSend::emit(OutputFile* out) {
 ///////////////////////////////////////////////////
 
 ANSuper::ANSuper(Symbol* s, uint32_t c)
-    : ANSend(op_super), sym(s), classNum(c) {
+    : ANSend(op_super), classNum(c), sym(s) {
   if (classNum < 256) op |= OP_BYTE;
 }
 

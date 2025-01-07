@@ -9,8 +9,8 @@
 
 #include "list.hpp"
 
-class ANOpCode;
-class ANode;
+struct ANOpCode;
+struct ANode;
 class OutputFile;
 
 struct AList : List {
@@ -79,7 +79,7 @@ class FixupList : public AList {
   // Add the offset to the fixup table.
 
  protected:
-  uint32_t numFixups;  // number of locations needing fixup in this AList
+  int32_t numFixups;  // number of locations needing fixup in this AList
   size_t* fixups;      // pointer to storage for fixup values
   uint32_t fixIndex;   // index for adding fixups
   size_t fixOfs;       // offset of start of fixups

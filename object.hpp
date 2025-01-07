@@ -8,12 +8,12 @@
 
 #include "sc.hpp"
 
-class ANode;
+struct ANode;
 class Symbol;
 
 // Structure of a node in a class or object template.
 struct Selector {
-  Selector(Symbol* s = 0) : next(0), sym(s), val(0), tag(0), an(0) {}
+  Selector(Symbol* s = 0) : next(0), sym(s), val(0), an(0), tag(0) {}
 
   Selector* next;  // Pointer to next node
   Symbol* sym;     // Pointer to symbol for this entry
@@ -25,7 +25,7 @@ struct Selector {
   uint32_t tag;
 };
 
-class Class;
+struct Class;
 
 struct Object {
   Object();

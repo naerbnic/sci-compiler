@@ -276,6 +276,6 @@ bool Class::selectorDiffers(Selector* tp) {
   if (num == -1) return True;
 
   stp = findSelector(tp->sym);
-  return !stp || IsMethod(tp) && tp->tag == T_LOCAL ||
-         tp->tag == T_PROP && tp->val != stp->val;
+  return !stp || (IsMethod(tp) && tp->tag == T_LOCAL) ||
+         (tp->tag == T_PROP && tp->val != stp->val);
 }

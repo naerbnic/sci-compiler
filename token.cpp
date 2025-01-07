@@ -385,11 +385,11 @@ static pt GetPreprocessorToken() {
   struct {
     const char* text;
     pt token;
-  } tokens[] = {"#ifdef",    PT_IFDEF,  //	put longer before shorter
-                "#ifndef",   PT_IFNDEF,   "#if",    PT_IF,
-                "#elifdef",  PT_ELIFDEF,  //		"               "
-                "#elifndef", PT_ELIFNDEF, "#elif",  PT_ELIF,
-                "#else",     PT_ELSE,     "#endif", PT_ENDIF};
+  } tokens[] = {{"#ifdef", PT_IFDEF},  //	put longer before shorter
+                {"#ifndef", PT_IFNDEF},     {"#if", PT_IF},
+                {"#elifdef", PT_ELIFDEF},  //		"               "
+                {"#elifndef", PT_ELIFNDEF}, {"#elif", PT_ELIF},
+                {"#else", PT_ELSE},         {"#endif", PT_ENDIF}};
 
   //	find first nonwhite
   const char* cp;
@@ -399,7 +399,7 @@ static pt GetPreprocessorToken() {
   if (!*cp || *cp != '#') return PT_NONE;
 
   //	see if it matches any of the tokens
-  for (int i = 0; i < sizeof tokens / sizeof *tokens; i++) {
+  for (size_t i = 0; i < sizeof tokens / sizeof *tokens; i++) {
     int len = strlen(tokens[i].text);
     if (!strncmp(cp, tokens[i].text, len)) {
       //	make sure that the full token matches

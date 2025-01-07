@@ -71,7 +71,7 @@ void Assemble() {
   OutputFile* hunkOut;
   OpenObjFiles(&heapOut, &hunkOut);
 
-  const size_t MAX_INFO_FILE_NAME = 1024;
+  const ssize_t MAX_INFO_FILE_NAME = 1024;
 
   char infoFileName[MAX_INFO_FILE_NAME];
   if (snprintf(infoFileName, 1024, "%d.inf", (unsigned short)script) >=

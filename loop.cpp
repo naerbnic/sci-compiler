@@ -27,13 +27,7 @@ struct Loop {
 Loop* loopList;
 
 Loop::Loop(LoopType t, Symbol* c, Symbol* e)
-    :
-
-      type(t),
-      cont(c),
-      end(e),
-      next(loopList),
-      start(new ANLabel) {
+    : next(loopList), type(t), start(new ANLabel), cont(c), end(e) {
   // Add this loop to the loop list.
   loopList = this;
 }

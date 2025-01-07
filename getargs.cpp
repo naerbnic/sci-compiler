@@ -56,19 +56,23 @@ void ShowUsage(void) {
   for (int i = 0; i < gSwitchCount; i++) {
     Arg *arg = &switches[i];
 
-    auto const overloads = Overloads{
-        [&](bool *value) { printf("\t-%c\t%s\n", arg->switchVal, arg->desc); },
-        [&](int *value) {
-          printf("\t-%c\t%s <default is %d>\n", arg->switchVal, arg->desc,
-                 *value);
-        },
-        [&](const char **value) {
-          printf("\t-%c\t%s <default is \"%s\">\n", arg->switchVal, arg->desc,
-                 *value);
-        },
-        [&](ga_proc_t value) {
-          printf("\t-%c\t%s\n", arg->switchVal, arg->desc);
-        }};
+    auto const overloads =
+        Overloads{[&](bool *value) {
+                    (void)value;
+                    printf("\t-%c\t%s\n", arg->switchVal, arg->desc);
+                  },
+                  [&](int *value) {
+                    printf("\t-%c\t%s <default is %d>\n", arg->switchVal,
+                           arg->desc, *value);
+                  },
+                  [&](const char **value) {
+                    printf("\t-%c\t%s <default is \"%s\">\n", arg->switchVal,
+                           arg->desc, *value);
+                  },
+                  [&](ga_proc_t value) {
+                    (void)value;
+                    printf("\t-%c\t%s\n", arg->switchVal, arg->desc);
+                  }};
     std::visit(overloads, arg->value);
   };
 

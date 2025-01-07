@@ -239,7 +239,7 @@ bool IsObj() {
 bool IsNumber() { return symType == S_NUM || symType == S_STRING; }
 
 static Symbol* Immediate() {
-  Symbol* theSym;
+  Symbol* theSym = nullptr;
 
   GetToken();
   if (symType == S_IDENT) {

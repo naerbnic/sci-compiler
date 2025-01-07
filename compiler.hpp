@@ -6,6 +6,11 @@
 
 #include <cstdint>
 
+// These appear to be old pragmas for the WATCOM compiler. I don't know exactly
+// what all of them do, but I don't want to lose context if bugs arise due to
+// compiler-specific behavior.
+#if 0
+
 //	turn off WATCOM's "assignment found in boolean" warning: 'if (a = b())'
 #pragma warning 391 9
 
@@ -38,6 +43,8 @@
 #pragma intrinsic(memset);
 #pragma intrinsic(memcpy);
 #pragma intrinsic(memcmp);
+
+#endif
 
 //	data types for external data (files or OS data structures)
 //	each contain the number of bits indicated

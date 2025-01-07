@@ -5,7 +5,7 @@
 
 #include <cstdint>
 
-class AList;
+struct AList;
 
 uint32_t OptimizeProc(AList* al);
 

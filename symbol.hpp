@@ -125,10 +125,10 @@ enum op_t {
   C_ULE      // u<=
 };
 
-class ANode;
-class ANReference;
-class Object;
-class Public;
+struct ANode;
+struct ANReference;
+struct Object;
+struct Public;
 
 class Symbol {
   // The Symbol class is where information about identifiers resides.  Symbols

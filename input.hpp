@@ -62,7 +62,7 @@ fpos_t GetParsePos();
 fpos_t GetTokenEnd();
 void SetTokenEnd();
 
-class StrList;
+struct StrList;
 
 extern char curFile[];
 extern int curLine;

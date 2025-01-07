@@ -145,7 +145,7 @@ void Severe(strptr parms, ...) {
   if (warnings + errors == 1) beep();
 }
 
-void Fatal(strptr parms, ...) {
+[[noreturn]] void Fatal(strptr parms, ...) {
   va_list argPtr;
 
   std::string buf = stringf("Fatal: %s, line %d\n\t", curFile, curLine);
@@ -168,7 +168,7 @@ void Fatal(strptr parms, ...) {
   exit(3);
 }
 
-void Panic(strptr parms, ...) {
+[[noreturn]] void Panic(strptr parms, ...) {
   constexpr size_t bufSize = 200;
   va_list argPtr;
   char buf[bufSize];

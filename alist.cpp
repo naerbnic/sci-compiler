@@ -78,7 +78,7 @@ void AList::optimize() {
 // Class FixupList
 ///////////////////////////////////////////////////
 
-FixupList::FixupList() : fixups(0), numFixups(0), fixIndex(0) {}
+FixupList::FixupList() : numFixups(0), fixups(0), fixIndex(0) {}
 
 FixupList::~FixupList() { clear(); }
 

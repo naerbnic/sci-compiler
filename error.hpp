@@ -7,12 +7,12 @@
 
 void EarlyEnd();
 void Error(strptr parms, ...);
-void Fatal(strptr parms, ...);
+[[noreturn]] void Fatal(strptr parms, ...);
 void Info(strptr parms, ...);
 void output(strptr fmt, ...);
 void Severe(strptr parms, ...);
 void Warning(strptr parms, ...);
-void Panic(strptr parms, ...);
+[[noreturn]] void Panic(strptr parms, ...);
 
 extern int errors;
 extern int warnings;

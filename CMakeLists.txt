@@ -9,7 +9,7 @@ endif ()
 
 project ("Script Compiler")
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 # Add source to this project's executable.
 add_executable (sc
@@ -51,5 +51,11 @@ sc.cpp
 )
 
 set_target_properties(sc PROPERTIES COMPILE_WARNING_AS_ERROR ON)
+
+if(MSVC)
+  target_compile_options(sc PRIVATE /W4 /WX)
+else()
+  target_compile_options(sc PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
 
 # TODO: Add tests and install targets if needed.

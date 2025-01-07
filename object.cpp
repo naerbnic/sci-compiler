@@ -336,8 +336,8 @@ static void Declaration(Object* obj, int type) {
       }
     }
 
-    if (sym->type != S_SELECT || type == T_PROP && !IsProperty(sn) ||
-        type == T_METHOD && IsProperty(sn)) {
+    if (sym->type != S_SELECT || (type == T_PROP && !IsProperty(sn)) ||
+        (type == T_METHOD && IsProperty(sn))) {
       Error("Not a %s: %s.", type == T_PROP ? "property" : "method", symStr);
       GetToken();
       if (IsNumber()) UnGetTok();

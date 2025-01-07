@@ -5,10 +5,10 @@
 
 #include <cstdint>
 
-class PNode;
-class ANode;
+struct PNode;
+struct ANode;
 class Symbol;
-class Object;
+struct Object;
 
 //	compile.cpp
 void CompileCode(PNode* pn);

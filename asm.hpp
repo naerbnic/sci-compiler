@@ -14,8 +14,8 @@ void Assemble();
 void Optimize();
 void ShowOptimize();
 
-class ANTable;
-class ANWord;
+struct ANTable;
+struct ANWord;
 
 extern int lastLineNum;
 extern ANTable* dispTbl;

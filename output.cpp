@@ -48,8 +48,8 @@ void OutputFile::WriteWord(int16_t w) {
 void OutputFile::WriteByte(ubyte b) { Write(&b, sizeof b); }
 
 void OutputFile::Write(const void* mp, size_t len) {
-  //	cast to void* is necessary for WATCOM
-  if (write(fd, (void*)mp, len) != len) Panic("Error writing %s", fileName);
+  if (write(fd, mp, len) != static_cast<ssize_t>(len))
+    Panic("Error writing %s", fileName);
 }
 
 //////////////////////////////////////////////////////////////////////////////

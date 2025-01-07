@@ -224,7 +224,6 @@ static void WriteSelectorVocab() {
   SCIUWord* tbl;
   size_t ofs;
   uint32_t tblLen;
-  int i;
   char fileName[_MAX_PATH + 1];
   const char* resName;
 
@@ -238,7 +237,7 @@ static void WriteSelectorVocab() {
   tbl = new SCIUWord[tblLen / sizeof *tbl];
   ofs = tblLen;
   *tbl = SCIUWord(maxSelector);
-  for (i = 1; i <= maxSelector + 1; ++i) tbl[i] = SCIUWord(ofs);
+  for (int i = 1; i <= maxSelector + 1; ++i) tbl[i] = SCIUWord(ofs);
 
   OutputFile out(fileName);
 
@@ -260,7 +259,7 @@ static void WriteSelectorVocab() {
 
   // Seek back to the table's position in the file and write it out.
   out.SeekTo(sizeof resHdr);
-  for (i = 0; i < tblLen / sizeof *tbl; i++) out.WriteWord(tbl[i]);
+  for (size_t i = 0; i < tblLen / sizeof *tbl; i++) out.WriteWord(tbl[i]);
 
   delete[] tbl;
 }
