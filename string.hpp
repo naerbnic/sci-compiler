@@ -26,4 +26,6 @@ std::string vstringf(const char *fmt, va_list args);
 // Equivalent of sprintf, but that returns a std::string instead.
 std::string stringf(const char *fmt, ...);
 
+void strlwr(char *str);
+
 #endif

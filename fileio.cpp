@@ -14,7 +14,7 @@
 // This function builds a path name from the provided variables and stores it in
 // dest.
 //
-void MakeName(char *dest, char *dir, const char *name, const char *ext) {
+void MakeName(char *dest, const char *dir, const char *name, const char *ext) {
   *dest = 0;
 
   // let's put the directory
@@ -44,7 +44,7 @@ void MakeName(char *dest, char *dir, const char *name, const char *ext) {
 // if an extension is found.  Otherwise, it returns a pointer to the end of the
 // string.
 //
-char *_ExtPtr(char *str) {
+const char *_ExtPtr(const char *str) {
   if (strchr(str, '.')) return str;
 
   return &str[strlen(str)];

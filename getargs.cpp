@@ -16,13 +16,6 @@
 
 #include "string.hpp"
 
-static void strlwr(char *str) {
-  while (*str) {
-    *str = tolower(*str);
-    str++;
-  }
-}
-
 namespace {
 
 // helper type for the visitor

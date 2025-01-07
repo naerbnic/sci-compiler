@@ -64,6 +64,7 @@ char *newStr(const char *str) {
 
   return NULL;
 }
+
 std::string vstringf(const char *fmt, va_list args) {
   va_list args2;
   va_copy(args2, args);
@@ -90,4 +91,11 @@ std::string stringf(const char *fmt, ...) {
   std::string result = vstringf(fmt, args);
   va_end(args);
   return result;
+}
+
+void strlwr(char *str) {
+  while (*str) {
+    *str = tolower(*str);
+    str++;
+  }
 }

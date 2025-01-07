@@ -45,64 +45,49 @@ static void InstallCommandLineDefine(char *);
 static strptr outDirPtr;
 char usageStr[] = "file_spec [-switches]";
 Arg switches[] = {'a',
-                  GA_BOOL,
-                  (int *)&abortIfLocked,
+                  &abortIfLocked,
                   "abort compile if database locked",
                   'd',
-                  GA_BOOL,
-                  (int *)&includeDebugInfo,
+                  &includeDebugInfo,
                   "include debug info",
                   'D',
-                  GA_PROC,
-                  (int *)InstallCommandLineDefine,
+                  InstallCommandLineDefine,
                   "command line define (e.g. -DMAC or -DMAC=1)",
                   'g',
-                  GA_INT,
-                  (int *)&maxVars,
+                  &maxVars,
                   "maximum number of global or local variables",
                   'l',
-                  GA_BOOL,
-                  (int *)&listCode,
+                  &listCode,
                   "generate a code listing",
                   'm',
-                  GA_BOOL,
-                  (int *)&writeMemSizes,
+                  &writeMemSizes,
                   "write memory allocation statistics",
                   'n',
-                  GA_BOOL,
-                  (int *)&noAutoName,
+                  &noAutoName,
                   "no auto-naming of objects",
                   'o',
-                  GA_STR,
-                  (int *)&outDirPtr,
+                  &outDirPtr,
                   "set output directory",
                   'O',
-                  GA_BOOL,
-                  (int *)&writeOffsets,
+                  &writeOffsets,
                   "output the 'offsets' file",
                   's',
-                  GA_BOOL,
-                  (int *)&showSelectors,
+                  &showSelectors,
                   "show forward-referenced selectors",
                   'u',
-                  GA_BOOL,
-                  (int *)&dontLock,
+                  &dontLock,
                   "don't lock class database",
                   'v',
-                  GA_BOOL,
-                  (int *)&verbose,
+                  &verbose,
                   "verbose output",
                   'w',
-                  GA_BOOL,
-                  (int *)&highByteFirst,
+                  &highByteFirst,
                   "output words high-byte first (for M68000)",
                   'z',
-                  GA_BOOL,
-                  (int *)&noOptimize,
+                  &noOptimize,
                   "turn off optimization",
                   0,
-                  0,
-                  0,
+                  ArgValue(),
                   0};
 
 #if !defined(WINDOWS)
@@ -119,9 +104,9 @@ Compiler::~Compiler() {
 
 static void deleteCompiler() { delete sc; }
 
-int main(int argc, strptr *argv) {
-  strptr *ap;
-  strptr op;
+int main(int argc, char **argv) {
+  char **ap;
+  char *op;
   strptr extPtr;
   int outLen;
   char fileName[_MAX_PATH + 1];
@@ -204,7 +189,7 @@ int main(int argc, strptr *argv) {
 
 static void CompileFile(strptr fileName) {
   char sourceFileName[_MAX_PATH + 1];
-  char *extPtr;
+  const char *extPtr;
 
   // Do some initialization.
   script = -1;
