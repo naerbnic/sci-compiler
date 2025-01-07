@@ -3,7 +3,6 @@
 
 #include "sc.hpp"
 
-#include <io.h>
 #include <stdlib.h>
 
 #include "asm.hpp"
