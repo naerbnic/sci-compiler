@@ -23,6 +23,21 @@ static void strlwr(char *str) {
   }
 }
 
+namespace {
+
+// helper type for the visitor
+//
+// From https://en.cppreference.com/w/cpp/utility/variant/visit
+template <class... Ts>
+struct Overloads : Ts... {
+  using Ts::operator()...;
+};
+// explicit deduction guide (not needed as of C++20)
+template <class... Ts>
+Overloads(Ts...) -> Overloads<Ts...>;
+
+}  // namespace
+
 // define the GA_PROC type
 typedef void (*ga_proc_t)(char *str);
 
@@ -48,23 +63,21 @@ void ShowUsage(void) {
   for (int i = 0; i < gSwitchCount; i++) {
     Arg *arg = &switches[i];
 
-    switch (arg->type) {
-      case GA_BOOL:
-      case GA_PROC:
-        printf("\t-%c\t%s\n", arg->switchVal, arg->desc);
-        break;
-
-      case GA_STR:
-        printf("\t-%c\t%s <default is \"%s\">\n", arg->switchVal, arg->desc,
-               (char *)*arg->value);
-        break;
-
-      case GA_INT:
-        printf("\t-%c\t%s <default is %ld>\n", arg->switchVal, arg->desc,
-               *arg->value);
-        break;
-    }
-  }
+    auto const overloads = Overloads{
+        [&](bool *value) { printf("\t-%c\t%s\n", arg->switchVal, arg->desc); },
+        [&](int *value) {
+          printf("\t-%c\t%s <default is %d>\n", arg->switchVal, arg->desc,
+                 *value);
+        },
+        [&](const char **value) {
+          printf("\t-%c\t%s <default is \"%s\">\n", arg->switchVal, arg->desc,
+                 *value);
+        },
+        [&](ga_proc_t value) {
+          printf("\t-%c\t%s\n", arg->switchVal, arg->desc);
+        }};
+    std::visit(overloads, arg->value);
+  };
 
   exit(1);
 }
@@ -114,62 +127,59 @@ int getargs(int argc, char **argv) {
         if (argStr[1] == arg->switchVal) {
           valid = 1;
 
-          switch (arg->type) {
-            case GA_BOOL: {
-              // if there is any more string left, this is not valid
-              if (argStr[2] != 0) return 1;
+          auto overloads = Overloads{
+              [&](bool *value) {
+                // if there is any more string left, this
+                // is not valid
+                if (argStr[2] != 0) return false;
 
-              // set this argument
-              *arg->value = 1;
-            }
+                // set this argument
+                *value = true;
+                return true;
+              },
+              [&](int *value) {
+                // if the rest of the string is not numeric, this is not valid
+                char *ptr = &argStr[2];
+                int count = 0;
 
-            break;
+                // count the digits
+                while (*ptr && isdigit(*ptr)) {
+                  ptr++;
+                  count++;
+                }
 
-            case GA_INT: {
-              // if the rest of the string is not numeric, this is not valid
-              char *ptr = &argStr[2];
-              int count = 0;
+                // this must be a non-digit
+                if (*ptr) return false;
 
-              // count the digits
-              while (*ptr && isdigit(*ptr)) {
-                ptr++;
-                count++;
-              }
+                // there were no digits!
+                if (count == 0) return false;
 
-              // this must be a non-digit
-              if (*ptr) return 1;
+                // set the argument
+                *value = atoi(&argStr[2]);
+                return true;
+              },
+              [&](const char **value) {
+                // there must be at least one more character
+                if (argStr[2] == 0) return false;
 
-              // there were no digits!
-              if (count == 0) return 1;
+                *value = newStr(&argStr[2]);
+                return true;
+              },
+              [&](ga_proc_t value) {
+                // there must be at least one more character
+                if (argStr[2] == 0) return false;
 
-              // set the argument
-              *arg->value = atoi(&argStr[2]);
-            }
+                char *str = newStr(&argStr[2]);
 
-            break;
+                value(str);
 
-            case GA_STR: {
-              // there must be at least one more character
-              if (argStr[2] == 0) return 1;
+                free(str);
+                return true;
+              },
+          };
 
-              *((char **)arg->value) = newStr(&argStr[2]);
-            }
-
-            break;
-
-            case GA_PROC: {
-              // there must be at least one more character
-              if (argStr[2] == 0) return 1;
-
-              char *str = newStr(&argStr[2]);
-
-              ga_proc_t proc = (ga_proc_t)arg->value;
-              proc(str);
-
-              free(str);
-            }
-
-            break;
+          if (!std::visit(overloads, arg->value)) {
+            return 1;
           }
 
           break;

@@ -11,6 +11,7 @@
 #define _GETARGS_HPP_
 
 #include <cstdint>
+#include <variant>
 
 // enumerate all of the argument types
 enum {
@@ -21,11 +22,14 @@ enum {
   GA_MAX
 };
 
+using ga_proc_t = void (*)(char *str);
+
+using ArgValue = std::variant<bool *, int *, const char **, ga_proc_t>;
+
 // define the Arg structure
 typedef struct {
   char switchVal;
-  int type;
-  intptr_t *value;
+  ArgValue value;
   const char *desc;
 } Arg;
 
