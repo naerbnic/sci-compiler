@@ -150,7 +150,7 @@ static bool GetNumberOrStringToken(strptr errStr, bool stringOK) {
   return True;
 }
 
-bool GetString(char* errStr) {
+bool GetString(const char* errStr) {
   // Get a string from the input.
 
   GetToken();

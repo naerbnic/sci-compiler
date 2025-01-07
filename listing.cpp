@@ -132,7 +132,7 @@ void ListingNoCRLF(const char* parms, ...) {
   va_end(argPtr);
 }
 
-void ListOp(int theOp) {
+void ListOp(bool theOp) {
   OpStr* oPtr;
   char* sp;
   const char* op;
@@ -246,7 +246,7 @@ void ListByte(uint8_t b) {
   ListAsCode("byte\t$%x", b);
 }
 
-void ListText(char* s) {
+void ListText(const char* s) {
   char* l;
   char line[81];
 
