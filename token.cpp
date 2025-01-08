@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "chartype.h"
+#include "chartype.hpp"
 #include "error.hpp"
 #include "input.hpp"
 #include "sc.hpp"
