@@ -11,7 +11,9 @@
 #define _GETARGS_HPP_
 
 #include <cstdint>
+#include <string_view>
 #include <variant>
+#include <vector>
 
 using ga_proc_t = void (*)(char *str);
 
@@ -21,14 +23,14 @@ using ArgValue = std::variant<bool *, int *, const char **, ga_proc_t>;
 typedef struct {
   char switchVal;
   ArgValue value;
-  const char *desc;
+  const char* desc;
 } Arg;
 
 // declate the usageStr extern
 extern char usageStr[];
 
 // declate the switches array extern
-extern Arg switches[];
+extern std::vector<Arg> switches;
 
 // this function prints the usage information
 void ShowUsage(void);

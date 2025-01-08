@@ -56,12 +56,17 @@ sc.cpp
 )
 
 set_target_properties(sc PROPERTIES COMPILE_WARNING_AS_ERROR ON)
-target_link_libraries(sc absl::strings)
+target_link_libraries(sc absl::strings absl::str_format)
 
 if(MSVC)
   target_compile_options(sc PRIVATE /W4 /WX)
 else()
-  target_compile_options(sc PRIVATE -Wall -Wextra -Wpedantic -Werror)
+  target_compile_options(sc PRIVATE
+    -Wall
+    -Wpedantic
+    # Disable gcc-compat, as ABSL uses it with appropriately flagged code
+    -Wno-gcc-compat
+    -Werror)
 endif()
 
 # TODO: Add tests and install targets if needed.

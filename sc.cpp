@@ -5,6 +5,8 @@
 
 #include <stdlib.h>
 
+#include <vector>
+
 #include "asm.hpp"
 #include "banner.hpp"
 #include "builtins.hpp"
@@ -44,22 +46,22 @@ static void InstallCommandLineDefine(char *);
 //	used by getargs
 static strptr outDirPtr;
 char usageStr[] = "file_spec [-switches]";
-Arg switches[] = {
-  {'a', &abortIfLocked, "abort compile if database locked"},
-  {'d', &includeDebugInfo, "include debug info"},
-  {'D', InstallCommandLineDefine, "command line define (e.g. -DMAC or -DMAC=1)"},
-  {'g', &maxVars, "maximum number of global or local variables"},
-  {'l', &listCode, "generate a code listing"},
-  {'m', &writeMemSizes, "write memory allocation statistics"},
-  {'n', &noAutoName, "no auto-naming of objects"},
-  {'o', &outDirPtr, "set output directory"},
-  {'O', &writeOffsets, "output the 'offsets' file"},
-  {'s', &showSelectors, "show forward-referenced selectors"},
-  {'u', &dontLock, "don't lock class database"},
-  {'v', &verbose, "verbose output"},
-  {'w', &highByteFirst, "output words high-byte first (for M68000)"},
-  {'z', &noOptimize, "turn off optimization"},
-  {0, ArgValue(), 0}
+std::vector<Arg> switches = {
+    {'a', &abortIfLocked, "abort compile if database locked"},
+    {'d', &includeDebugInfo, "include debug info"},
+    {'D', InstallCommandLineDefine,
+     "command line define (e.g. -DMAC or -DMAC=1)"},
+    {'g', &maxVars, "maximum number of global or local variables"},
+    {'l', &listCode, "generate a code listing"},
+    {'m', &writeMemSizes, "write memory allocation statistics"},
+    {'n', &noAutoName, "no auto-naming of objects"},
+    {'o', &outDirPtr, "set output directory"},
+    {'O', &writeOffsets, "output the 'offsets' file"},
+    {'s', &showSelectors, "show forward-referenced selectors"},
+    {'u', &dontLock, "don't lock class database"},
+    {'v', &verbose, "verbose output"},
+    {'w', &highByteFirst, "output words high-byte first (for M68000)"},
+    {'z', &noOptimize, "turn off optimization"},
 };
 
 #if !defined(WINDOWS)

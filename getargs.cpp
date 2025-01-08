@@ -9,10 +9,10 @@
 
 #include "getargs.hpp"
 
+#include <absl/strings/str_format.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "string.hpp"
 
@@ -37,10 +37,6 @@ typedef void (*ga_proc_t)(char *str);
 // this tracks if the arguments have been parsed
 int gArgsInitted = 0;
 
-// this is set to the total number of valid Arg structures that are contained in
-// the switches array
-int gSwitchCount = 0;
-
 // this is the name of the program
 char *gProgName = NULL;
 
@@ -50,30 +46,28 @@ void ShowUsage(void) {
   if (!gArgsInitted) return;
 
   // print the usage string
-  printf("usage: %s %s\n", gProgName, usageStr);
+  absl::PrintF("usage: %s %s\n", gProgName, usageStr);
 
   // print each switch option
-  for (int i = 0; i < gSwitchCount; i++) {
-    Arg *arg = &switches[i];
-
+  for (auto const &arg : switches) {
     auto const overloads =
         Overloads{[&](bool *value) {
                     (void)value;
-                    printf("\t-%c\t%s\n", arg->switchVal, arg->desc);
+                    absl::PrintF("\t-%c\t%s\n", arg.switchVal, arg.desc);
                   },
                   [&](int *value) {
-                    printf("\t-%c\t%s <default is %d>\n", arg->switchVal,
-                           arg->desc, *value);
+                    absl::PrintF("\t-%c\t%s <default is %d>\n", arg.switchVal,
+                                 arg.desc, *value);
                   },
                   [&](const char **value) {
-                    printf("\t-%c\t%s <default is \"%s\">\n", arg->switchVal,
-                           arg->desc, *value);
+                    absl::PrintF("\t-%c\t%s <default is \"%s\">\n",
+                                 arg.switchVal, arg.desc, *value);
                   },
                   [&](ga_proc_t value) {
                     (void)value;
-                    printf("\t-%c\t%s\n", arg->switchVal, arg->desc);
+                    absl::PrintF("\t-%c\t%s\n", arg.switchVal, arg.desc);
                   }};
-    std::visit(overloads, arg->value);
+    std::visit(overloads, arg.value);
   };
 
   exit(1);
@@ -97,14 +91,6 @@ int getargs(int argc, char **argv) {
 
   if (slashPtr) *slashPtr = 0;
 
-  // figure out how many valid switches there are
-  Arg *arg = &switches[gSwitchCount];
-
-  while (arg->desc) {
-    gSwitchCount++;
-    arg = &switches[gSwitchCount];
-  }
-
   // set the initted variable
   gArgsInitted = 1;
 
@@ -117,11 +103,9 @@ int getargs(int argc, char **argv) {
       int valid = 0;
 
       // check each switch option
-      for (int j = 0; j < gSwitchCount; j++) {
-        arg = &switches[j];
-
+      for (auto const &arg : switches) {
         // the switch matches, it might be
-        if (argStr[1] == arg->switchVal) {
+        if (argStr[1] == arg.switchVal) {
           valid = 1;
 
           auto overloads = Overloads{
@@ -175,7 +159,7 @@ int getargs(int argc, char **argv) {
               },
           };
 
-          if (!std::visit(overloads, arg->value)) {
+          if (!std::visit(overloads, arg.value)) {
             return 1;
           }
 
