@@ -1,3 +1,6 @@
 [submodule "third_party/abseil-cpp"]
 	path = third_party/abseil-cpp
 	url = https://github.com/abseil/abseil-cpp.git
+[submodule "test_data/sci-scripts"]
+	path = test_data/sci-scripts
+	url = https://github.com/sluicebox/sci-scripts.git
