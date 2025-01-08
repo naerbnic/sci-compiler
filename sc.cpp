@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 
+#include <string_view>
 #include <vector>
 
 #include "asm.hpp"
@@ -45,7 +46,7 @@ static void InstallCommandLineDefine(char *);
 
 //	used by getargs
 static strptr outDirPtr;
-char usageStr[] = "file_spec [-switches]";
+const std::string_view usageStr = "file_spec [-switches]";
 std::vector<Arg> switches = {
     {'a', &abortIfLocked, "abort compile if database locked"},
     {'d', &includeDebugInfo, "include debug info"},

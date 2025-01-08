@@ -23,11 +23,11 @@ using ArgValue = std::variant<bool *, int *, const char **, ga_proc_t>;
 typedef struct {
   char switchVal;
   ArgValue value;
-  const char* desc;
+  std::string_view desc;
 } Arg;
 
 // declate the usageStr extern
-extern char usageStr[];
+extern const std::string_view usageStr;
 
 // declate the switches array extern
 extern std::vector<Arg> switches;
