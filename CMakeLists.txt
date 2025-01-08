@@ -13,7 +13,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 option(ABSL_PROPAGATE_CXX_STD
   "Use CMake C++ standard meta features (e.g. cxx_std_14) that propagate to targets that link to Abseil"
-  OFF)  # TODO: Default to ON for CMake 3.8 and greater.
+  ON) 
 add_subdirectory(third_party/abseil-cpp)
 
 # Add source to this project's executable.
