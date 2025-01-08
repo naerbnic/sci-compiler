@@ -11,6 +11,11 @@ project ("Script Compiler")
 
 set(CMAKE_CXX_STANDARD 20)
 
+option(ABSL_PROPAGATE_CXX_STD
+  "Use CMake C++ standard meta features (e.g. cxx_std_14) that propagate to targets that link to Abseil"
+  OFF)  # TODO: Default to ON for CMake 3.8 and greater.
+add_subdirectory(third_party/abseil-cpp)
+
 # Add source to this project's executable.
 add_executable (sc
 getargs.cpp
@@ -51,6 +56,7 @@ sc.cpp
 )
 
 set_target_properties(sc PROPERTIES COMPILE_WARNING_AS_ERROR ON)
+target_link_libraries(sc absl::strings)
 
 if(MSVC)
   target_compile_options(sc PRIVATE /W4 /WX)
