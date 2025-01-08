@@ -329,7 +329,7 @@ void ANOpUnsign::list() {
   if (!sym)
     ListArg("$%-4x", (SCIUWord)value);
   else
-    ListArg("$%-4x\t(%s)", (SCIUWord)value, sym->name ? sym->name : "");
+    ListArg("$%-4x\t(%s)", (SCIUWord)value, sym->name);
 }
 
 void ANOpUnsign::emit(OutputFile* out) {
@@ -357,7 +357,7 @@ void ANOpSign::list() {
   if (!sym)
     ListArg("$%-4x", (SCIUWord)value);
   else
-    ListArg("$%-4x\t(%s)", (SCIUWord)value, sym->name ? sym->name : "");
+    ListArg("$%-4x\t(%s)", (SCIUWord)value, sym->name);
 }
 
 void ANOpSign::emit(OutputFile* out) {
@@ -531,7 +531,7 @@ size_t ANVarAccess::size() { return op & OP_BYTE ? 2 : 3; }
 void ANVarAccess::list() {
   ListOp(op);
   if (sym)
-    ListArg("$%-4x\t(%s)", addr, sym->name ? sym->name : "");
+    ListArg("$%-4x\t(%s)", addr, sym->name);
   else
     ListArg("$%-4x", addr);
 }

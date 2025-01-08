@@ -3,6 +3,7 @@
 
 #include "update.hpp"
 
+#include <absl/strings/str_format.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -141,7 +142,7 @@ static void WriteSelector() {
   fprintf(fp, "(selectors\n");
   for (Symbol* sp = syms.selectorSymTbl->firstSym(); sp;
        sp = syms.selectorSymTbl->nextSym())
-    fprintf(fp, "\t%-20s %d\n", sp->name, sp->val);
+    absl::FPrintF(fp, "\t%-20s %d\n", sp->name, sp->val);
 
   fprintf(fp, ")\n");
 
@@ -158,14 +159,14 @@ static void WriteClassDefs() {
     classNum = cp->num;
     if (cp->num == -1) continue;  // This is RootObj, defined by compiler.
 
-    fprintf(fp,
-            "(classdef %s\n"
-            "	script# %d\n"
-            "	class# %d\n"
-            "	super# %d\n"
-            "	file# \"%s\"\n\n",
-            cp->sym->name, (SCIUWord)cp->script, (SCIUWord)cp->num,
-            (SCIUWord)cp->super, cp->file);
+    absl::FPrintF(fp,
+                  "(classdef %s\n"
+                  "	script# %d\n"
+                  "	class# %d\n"
+                  "	super# %d\n"
+                  "	file# \"%s\"\n\n",
+                  cp->sym->name, (SCIUWord)cp->script, (SCIUWord)cp->num,
+                  (SCIUWord)cp->super, cp->file);
 
     // Get a pointer to the class' super-class.
     Class* sp = FindClass(cp->findSelector("-super-")->val);
@@ -176,7 +177,7 @@ static void WriteClassDefs() {
     Selector* tp;
     for (tp = cp->selectors; tp; tp = tp->next) {
       if (IsProperty(tp) && sp->selectorDiffers(tp))
-        fprintf(fp, "\t\t%s %d\n", tp->sym->name, tp->val);
+        absl::FPrintF(fp, "\t\t%s %d\n", tp->sym->name, tp->val);
     }
     fprintf(fp, "\t)\n\n");
 
@@ -184,7 +185,7 @@ static void WriteClassDefs() {
     fprintf(fp, "\t(methods\n");
     for (tp = cp->selectors; tp; tp = tp->next)
       if (IsMethod(tp) && sp->selectorDiffers(tp))
-        fprintf(fp, "\t\t%s\n", tp->sym->name);
+        absl::FPrintF(fp, "\t\t%s\n", tp->sym->name);
     fprintf(fp, "\t)\n");
 
     fprintf(fp, ")\n\n\n");
@@ -208,8 +209,8 @@ static void WriteClasses() {
 
 static void PrintSubClasses(Class* sp, int level, FILE* fp) {
   // Print out this class' information.
-  fprintf(fp, "%.*s%-*s;%s\n", 2 * level, "               ", 20 - 2 * level,
-          sp->sym->name, sp->file);
+  absl::FPrintF(fp, "%.*s%-*s;%s\n", 2 * level, "               ",
+                20 - 2 * level, sp->sym->name, sp->file);
 
   // Print information about this class' subclasses.
   ++level;

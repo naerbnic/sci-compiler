@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
   sc = new Compiler;
   atexit(deleteCompiler);
 
-  output(banner);
+  output("%s", banner);
 
   if (getargs(argc, argv) == 1) ShowUsage();
 

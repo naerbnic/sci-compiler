@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string_view>
 
 class OutputFile {
  public:
@@ -17,7 +18,7 @@ class OutputFile {
   void WriteOp(uint8_t op) { WriteByte(op); }
   void WriteWord(int16_t);
   void Write(const void*, size_t);
-  int Write(const char*);
+  int Write(std::string_view str);
 
  protected:
   int fd;

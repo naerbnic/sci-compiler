@@ -27,10 +27,10 @@ OutputFile::~OutputFile() { close(fd); }
 
 void OutputFile::SeekTo(long offset) { lseek(fd, offset, 0); }
 
-int OutputFile::Write(const char* str) {
-  int length = strlen(str);
+int OutputFile::Write(std::string_view str) {
+  int length = str.length();
   WriteWord(length);
-  Write(str, length);
+  Write(str.data(), length);
   return length + sizeof(SCIWord);
 }
 

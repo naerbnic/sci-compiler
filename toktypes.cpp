@@ -29,7 +29,7 @@ Symbol* LookupTok() {
 
   if (symType == S_IDENT && (theSym = syms.lookup(symStr))) {
     tokSym = *theSym;
-    tokSym.name = 0;
+    tokSym.name = nullptr;
   } else
     theSym = 0;
 

@@ -124,7 +124,7 @@ void DoClass() {
 
     //	make sure the symbol is in the class symbol table
     if (sym->type != S_CLASS) {
-      syms.remove(sym->name);
+      syms.remove(sym->name.c_str());
       sym->type = S_CLASS;
       syms.classSymTbl->add(sym);
     }
@@ -280,7 +280,7 @@ static void InstanceBody(Object* obj) {
   // name of the symbol.
   if (!noAutoName && nameSelector && nameSelector->val == -1) {
     nameSelector->tag = T_TEXT;
-    nameSelector->val = text.find(obj->sym->name);
+    nameSelector->val = text.find(obj->sym->name.c_str());
   }
 
   // The CLASSBIT of the '-info-' property is set for a class.  If this

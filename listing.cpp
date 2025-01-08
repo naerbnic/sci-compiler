@@ -17,8 +17,8 @@
 #include "string.hpp"
 
 bool listCode;
+FILE* listFile;
 
-static FILE* listFile;
 static char listName[_MAX_PATH + 1];
 static FILE* sourceFile;
 static int sourceLineNum;
@@ -138,17 +138,6 @@ void CloseListFile() {
 
 void DeleteListFile() { unlink(listName); }
 
-void Listing(const char* parms, ...) {
-  va_list argPtr;
-
-  if (!listCode || !listFile) return;
-
-  va_start(argPtr, parms);
-  if (vfprintf(listFile, parms, argPtr) == EOF || putc('\n', listFile) == EOF)
-    Panic("Error writing list file");
-  va_end(argPtr);
-}
-
 void ListingNoCRLF(const char* parms, ...) {
   va_list argPtr;
 
@@ -238,31 +227,6 @@ void ListOp(bool theOp) {
     Listing("%s", op);
 }
 
-void ListArg(const char* parms, ...) {
-  va_list argPtr;
-
-  if (!listCode || !listFile) return;
-
-  va_start(argPtr, parms);
-  auto argStr = vstringf(parms, argPtr);
-  va_end(argPtr);
-
-  Listing("\t%s", argStr.c_str());
-}
-
-void ListAsCode(const char* parms, ...) {
-  va_list argPtr;
-
-  if (!listCode || !listFile) return;
-
-  ListOffset();
-
-  va_start(argPtr, parms);
-  auto buf = vstringf(parms, argPtr);
-  va_end(argPtr);
-  Listing(buf.c_str());
-}
-
 void ListWord(uint16_t w) {
   if (!listCode || !listFile) return;
 
@@ -297,7 +261,7 @@ void ListText(const char* s) {
       *l++ = '"';
       *l++ = '\n';
       *l = '\0';
-      Listing(line);
+      Listing("%s", line);
       break;
     }
 
@@ -309,7 +273,7 @@ void ListText(const char* s) {
     }
     *l = '\0';
     ++s;  // point past the space
-    Listing(line);
+    Listing("%s", line);
 
     l = line;
   }

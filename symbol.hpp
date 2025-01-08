@@ -5,6 +5,7 @@
 #define SYMBOL_HPP
 
 #include <cstdint>
+#include <string>
 
 #include "sc.hpp"
 
@@ -134,10 +135,10 @@ class Symbol {
   // The Symbol class is where information about identifiers resides.  Symbols
   // are collected in SymTbls for fast lookup of an identifier.
  public:
-  Symbol(const char* str = 0, sym_t = (sym_t)0);
+  Symbol(const char* str = "", sym_t = (sym_t)0);
   ~Symbol();
 
-  strptr name;       // pointer to the symbol name
+  std::string name;       // pointer to the symbol name
   sym_t type;        // symbol type
   uint32_t lineNum;  //	where symbol was first defined
 

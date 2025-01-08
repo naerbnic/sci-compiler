@@ -6,6 +6,7 @@
 #include <stdlib.h>
 
 #include <sstream>
+#include <string_view>
 
 #include "anode.hpp"
 #include "compile.hpp"
@@ -26,7 +27,8 @@ static int InitialValue(VarList& theVars, Var* vp, int arraySize);
 
 static Public* publicList = NULL;
 static int publicMax = -1;
-static char tooManyVars[] = "Too many variables. Max is %d.\n";
+inline constexpr std::string_view tooManyVars =
+    "Too many variables. Max is %d.\n";
 
 namespace {
 

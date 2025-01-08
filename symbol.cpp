@@ -12,12 +12,7 @@
 #include "symbol.hpp"
 
 Symbol::Symbol(const char* name, sym_t type)
-    : name(newStr((char*)name)),
-      type(type),
-      lineNum(curLine),
-      an(0),
-      str(0),
-      next(0) {}
+    : name(name), type(type), lineNum(curLine), an(0), str(0), next(0) {}
 
 Symbol::~Symbol() {
   switch (type) {
@@ -36,6 +31,4 @@ Symbol::~Symbol() {
     default:
       break;
   }
-
-  delete[] name;
 }

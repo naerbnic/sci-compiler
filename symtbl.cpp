@@ -17,7 +17,7 @@ SymTbl::SymTbl(int size, bool keep)
 
       hashSize(size),
       keep(keep) {
-  hashTable = new Symbol* [size];
+  hashTable = new Symbol*[size];
   memset(hashTable, 0, size * sizeof(Symbol*));
 }
 
@@ -72,7 +72,7 @@ Symbol* SymTbl::lookup(strptr name) {
   Symbol* prev = 0;
   Symbol** start = &hashTable[hash(name)];
   for (Symbol* sp = *start; sp; sp = sp->next) {
-    if (!strcmp(name, sp->name)) {
+    if (name == sp->name) {
       // Move the symbol to the start of the list.
       if (prev) {
         prev->next = sp->next;
@@ -94,7 +94,7 @@ Symbol* SymTbl::remove(strptr name) {
   Symbol* prev = 0;
   Symbol** start = &hashTable[hash(name)];
   for (Symbol* sp = *start; sp; sp = sp->next) {
-    if (!strcmp(name, sp->name)) {
+    if (name == sp->name) {
       // Link around symbol and delete it.
       if (!prev)
         *start = sp->next;
@@ -118,10 +118,12 @@ bool SymTbl::del(strptr name) {
   return (bool)sp;
 }
 
-uint32_t SymTbl::hash(strptr str) {
+uint32_t SymTbl::hash(std::string_view str) {
   // Compute the hash value of the string 'str'.
-  long value;
-  for (value = 0; *str; value += *str++);
+  long value = 0;
+  for (char ch : str) {
+    value += ch;
+  }
 
   return (int)(value % (long)hashSize);
 }

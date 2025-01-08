@@ -1,12 +1,12 @@
 // symtbl.hpp
 //		definitions for symbol tables
 
-#if !defined(SYMTBL_HPP)
+#ifndef SYMTBL_HPP
 #define SYMTBL_HPP
 
-#if !defined(SYMBOL_HPP)
+#include <string_view>
+
 #include "symbol.hpp"
-#endif
 
 // Possible hash table sizes for symbol tables.
 const int ST_LARGE = 253;
@@ -76,7 +76,7 @@ class SymTbl {
   Symbol* curSym;  // current Symbol in firstSym()/nextSym()
   int curIndex;    // current hash table index in firstSym()/nextSym()
 
-  uint32_t hash(strptr str);
+  uint32_t hash(std::string_view str);
   // Return the hash value of the string for this table
 
   friend class SymTbls;
