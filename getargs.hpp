@@ -13,15 +13,6 @@
 #include <cstdint>
 #include <variant>
 
-// enumerate all of the argument types
-enum {
-  GA_BOOL,  // boolean value
-  GA_INT,   // integer value
-  GA_STR,   // string value
-  GA_PROC,  // procedure call
-  GA_MAX
-};
-
 using ga_proc_t = void (*)(char *str);
 
 using ArgValue = std::variant<bool *, int *, const char **, ga_proc_t>;
