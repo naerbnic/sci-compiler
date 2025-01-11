@@ -108,7 +108,7 @@ InputSource* OpenFileAsInput(strptr fileName, bool required) {
 
   if (!file) {
     if (required)
-      Panic("Can't open %s", fileName);
+      Panic("Can't open \"%s\"", fileName);
     else
       return 0;
   }
