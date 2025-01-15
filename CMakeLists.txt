@@ -18,43 +18,44 @@ add_subdirectory(third_party/abseil-cpp)
 
 # Add source to this project's executable.
 add_executable (sc
-getargs.cpp
-string.cpp
-fileio.cpp
-alist.cpp
-anode.cpp
-asm.cpp
-banner.cpp
-builtins.cpp
-chartype.cpp
-class.cpp
-compile.cpp
-define.cpp
-error.cpp
-expr.cpp
-input.cpp
-list.cpp
-listing.cpp
-loop.cpp
-mem.cpp
-object.cpp
-optimize.cpp
-output.cpp
-parse.cpp
-pnode.cpp
-proc.cpp
-resource.cpp
-selector.cpp
-share.cpp
-symbol.cpp
-symtbl.cpp
-text.cpp
-token.cpp
-toktypes.cpp
-update.cpp
-sc.cpp
+src/getargs.cpp
+src/string.cpp
+src/fileio.cpp
+src/alist.cpp
+src/anode.cpp
+src/asm.cpp
+src/banner.cpp
+src/builtins.cpp
+src/chartype.cpp
+src/class.cpp
+src/compile.cpp
+src/define.cpp
+src/error.cpp
+src/expr.cpp
+src/input.cpp
+src/list.cpp
+src/listing.cpp
+src/loop.cpp
+src/mem.cpp
+src/object.cpp
+src/optimize.cpp
+src/output.cpp
+src/parse.cpp
+src/pnode.cpp
+src/proc.cpp
+src/resource.cpp
+src/selector.cpp
+src/share.cpp
+src/symbol.cpp
+src/symtbl.cpp
+src/text.cpp
+src/token.cpp
+src/toktypes.cpp
+src/update.cpp
+src/sc.cpp
 )
 
+target_include_directories(sc PRIVATE src/)
 set_target_properties(sc PROPERTIES COMPILE_WARNING_AS_ERROR ON)
 target_link_libraries(sc absl::strings absl::str_format)
 
