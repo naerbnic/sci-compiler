@@ -14,19 +14,19 @@ void List::clear() {
 }
 
 void List::add(LNode* ln) {
-  ln->next = 0;
-  ln->prev = tail;
-  if (tail) tail->next = ln;
+  ln->next_ = 0;
+  ln->prev_ = tail;
+  if (tail) tail->next_ = ln;
   tail = ln;
   if (!head) head = ln;
 }
 
 void List::addFront(LNode* ln) {
-  if (head) head->prev = ln;
-  ln->next = head;
+  if (head) head->prev_ = ln;
+  ln->next_ = head;
 
   head = ln;
-  ln->prev = 0;
+  ln->prev_ = 0;
 
   if (!tail) tail = ln;
 }
@@ -37,11 +37,11 @@ void List::addAfter(LNode* ln, LNode* nn) {
     return;
   }
 
-  nn->next = ln->next;
-  if (nn->next) nn->next->prev = nn;
+  nn->next_ = ln->next_;
+  if (nn->next_) nn->next_->prev_ = nn;
 
-  nn->prev = ln;
-  ln->next = nn;
+  nn->prev_ = ln;
+  ln->next_ = nn;
 
   if (ln == tail) tail = nn;
 }
@@ -52,27 +52,27 @@ void List::addBefore(LNode* ln, LNode* nn) {
     return;
   }
 
-  nn->next = ln;
-  nn->prev = ln->prev;
+  nn->next_ = ln;
+  nn->prev_ = ln->prev_;
 
-  if (ln->prev) ln->prev->next = nn;
-  ln->prev = nn;
+  if (ln->prev_) ln->prev_->next_ = nn;
+  ln->prev_ = nn;
 
   if (ln == head) head = nn;
 }
 
 void List::remove(LNode* ln) {
-  if (!ln->next)
-    tail = ln->prev;
+  if (!ln->next_)
+    tail = ln->prev_;
   else
-    ln->next->prev = ln->prev;
+    ln->next_->prev_ = ln->prev_;
 
-  if (!ln->prev)
-    head = ln->next;
+  if (!ln->prev_)
+    head = ln->next_;
   else
-    ln->prev->next = ln->next;
+    ln->prev_->next_ = ln->next_;
 
-  if (cur == ln) cur = ln->prev;
+  if (cur == ln) cur = ln->prev_;
   if (!cur) cur = head;
 }
 
@@ -82,18 +82,18 @@ void List::del(LNode* ln) {
 }
 
 LNode* List::replaceWith(LNode* ln, LNode* nn) {
-  nn->next = ln->next;
-  nn->prev = ln->prev;
+  nn->next_ = ln->next_;
+  nn->prev_ = ln->prev_;
 
-  if (!nn->next)
+  if (!nn->next_)
     tail = nn;
   else
-    nn->next->prev = nn;
+    nn->next_->prev_ = nn;
 
-  if (!nn->prev)
+  if (!nn->prev_)
     head = nn;
   else
-    nn->prev->next = nn;
+    nn->prev_->next_ = nn;
 
   if (cur == ln) cur = nn;
 
@@ -106,7 +106,7 @@ bool List::contains(LNode* ln) {
   if (!ln) return False;
 
   LNode* node;
-  for (node = head; node && node != ln; node = node->next);
+  for (node = head; node && node != ln; node = node->next_);
 
   return node == ln;
 }
@@ -117,6 +117,6 @@ LNode* List::first() {
 }
 
 LNode* List::next() {
-  if (cur) cur = cur->next;
+  if (cur) cur = cur->next_;
   return cur;
 }

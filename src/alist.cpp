@@ -22,14 +22,14 @@ ANOpCode* AList::nextOp(ANode* start) {
 
   ANOpCode* nn;
 
-  for (nn = (ANOpCode*)start->next; nn && nn->op == OP_LABEL;
-       nn = (ANOpCode*)nn->next);
+  for (nn = (ANOpCode*)start->next(); nn && nn->op == OP_LABEL;
+       nn = (ANOpCode*)nn->next());
 
   return nn;
 }
 
 ANOpCode* AList::findOp(uint32_t op) {
-  ANOpCode* nn = (ANOpCode*)cur->next;
+  ANOpCode* nn = (ANOpCode*)cur->next();
 
   if (nn)
     return nn->op == op ? nn : 0;

@@ -4,14 +4,22 @@
 #ifndef LIST_HPP
 #define LIST_HPP
 
+class List;
+
 struct LNode {
   // Class LNode is the base class for any class to be linked in a doubly
   // linked list descended from List.
 
+  LNode() : next_(nullptr), prev_(nullptr) {}
   virtual ~LNode() {};
 
-  LNode* next;
-  LNode* prev;
+  LNode* next() { return next_; }
+  LNode* prev() { return prev_; }
+
+ private:
+  friend class List;
+  LNode* next_;
+  LNode* prev_;
 };
 
 class List {

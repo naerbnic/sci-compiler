@@ -61,14 +61,10 @@ void ANReference::backpatch(ANode* dest) {
 // nodes to replace old ones are not automatically added to the current list.
 
 ANode::ANode(AList* list) : offset(0) {
-  next = 0;
-  prev = 0;
   if (addNodesToList && list) list->add(this);
 }
 
 ANode::ANode(AList* list, ANode* before) : offset(0) {
-  next = 0;
-  prev = 0;
   if (addNodesToList && list) list->addBefore(before, this);
 }
 
