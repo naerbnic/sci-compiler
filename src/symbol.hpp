@@ -5,6 +5,8 @@
 #define SYMBOL_HPP
 
 #include <cstdint>
+#include <optional>
+#include <string>
 
 #include "sc.hpp"
 
@@ -138,7 +140,7 @@ class Symbol {
   ~Symbol();
 
  private:
-  strptr name_;  // pointer to the symbol name
+  std::optional<std::string> name_;  // pointer to the symbol name
 
  public:
   sym_t type;        // symbol type
@@ -160,8 +162,8 @@ class Symbol {
     Public* ext;  // pointer to public/external definition
   };
 
-  strptr name() { return name_; }
-  void clearName() { name_ = nullptr; }
+  strptr name() { return name_ ? name_->c_str() : nullptr; }
+  void clearName() { name_ = std::nullopt; }
 
  private:
   friend class SymTbl;  // SymTbl is allowed access to the 'next' pointer

@@ -30,7 +30,6 @@
 #define IsTerm(c) (cType[static_cast<uint8_t>(c)] & C_TERM)
 #define IsIncl(c) (cType[static_cast<uint8_t>(c)] & C_INCL)
 
-#define _tolower(c) ((c) | ('a' - 'A'))
 #define islower(c) ('a' <= (c) && (c) <= 'z')
 #define isupper(c) ('A' <= (c) && (c) <= 'Z')
 #ifdef isalpha
