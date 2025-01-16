@@ -80,7 +80,6 @@ Compiler::~Compiler() {
 static void deleteCompiler() { delete sc; }
 
 int main(int argc, char **argv) {
-  char **ap;
   char *op;
   strptr extPtr;
   int outLen;
@@ -146,8 +145,8 @@ int main(int argc, char **argv) {
   totalErrors += errors;
 
   // Compile the files.
-  for (ap = &argv[1]; *ap; ++ap) {
-    CompileFile(*ap);
+  for (int arg_index = 1; arg_index < argc; ++arg_index) {
+    CompileFile(argv[arg_index]);
   }
 
   // Write out the class table and unlock the class database.

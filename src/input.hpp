@@ -5,6 +5,7 @@
 #define INPUT_HPP
 
 #include <cstdio>
+#include <memory>
 
 #include "sc.hpp"
 
@@ -18,7 +19,7 @@ struct InputSource {
   virtual bool incrementPastNewLine(const char*&) = 0;
   virtual bool endInputLine() = 0;
 
-  InputSource* next;
+  std::shared_ptr<InputSource> next;
   strptr fileName;
   int lineNum;
   strptr ptr;
@@ -49,7 +50,7 @@ struct InputString : InputSource {
 bool CloseInputSource();
 void FreeIncludePath();
 bool GetNewInputLine();
-InputSource* OpenFileAsInput(strptr, bool);
+std::shared_ptr<InputSource> OpenFileAsInput(strptr, bool);
 void SetIncludePath();
 void SetStringInput(strptr);
 void SetInputToCurrentLine();
@@ -66,9 +67,9 @@ struct StrList;
 
 extern char curFile[];
 extern int curLine;
-extern InputSource* curSourceFile;
+extern std::shared_ptr<InputSource> curSourceFile;
 extern StrList* includePath;
-extern InputSource* is;
-extern InputSource* theFile;
+extern std::shared_ptr<InputSource> is;
+extern std::shared_ptr<InputSource> theFile;
 
 #endif

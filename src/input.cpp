@@ -5,6 +5,8 @@
 
 #include <stdlib.h>
 
+#include <memory>
+
 #include "error.hpp"
 #include "fileio.hpp"
 #include "jeff.hpp"
@@ -16,14 +18,14 @@
 
 char curFile[_MAX_PATH + 1];
 int curLine;
-InputSource* curSourceFile;
+std::shared_ptr<InputSource> curSourceFile;
 StrList* includePath;
-InputSource* is;
-InputSource* theFile;
+std::shared_ptr<InputSource> is;
+std::shared_ptr<InputSource> theFile;
 
 static char inputLine[512];
 
-static void SetInputSource(InputSource*);
+static void SetInputSource(const std::shared_ptr<InputSource>& nis);
 
 InputSource::InputSource() : fileName(0), lineNum(0) {
   tokSym.setStr(nullptr);
@@ -91,9 +93,9 @@ bool InputString::incrementPastNewLine(const char*& ip) {
   return True;
 }
 
-InputSource* OpenFileAsInput(strptr fileName, bool required) {
+std::shared_ptr<InputSource> OpenFileAsInput(strptr fileName, bool required) {
   FILE* file;
-  InputSource* theFile;
+  std::shared_ptr<InputSource> theFile;
   char newName[_MAX_PATH + 1];
   StrList* ip;
 
@@ -118,7 +120,7 @@ InputSource* OpenFileAsInput(strptr fileName, bool required) {
   //		strcpy(newName, fileName);
   //	fullyQualify(newName);
 
-  theFile = new InputFile(file, fileName);
+  theFile = std::make_shared<InputFile>(file, fileName);
 
 #if defined(PLAYGRAMMER)
   theFile->fullFileName = newStr(newName);
@@ -133,11 +135,10 @@ bool CloseInputSource() {
   // Close the current input source.  If the source is a file, this involves
   // closing the file.  Remove the source from the chain and free its memory.
 
-  InputSource* ois;
+  std::shared_ptr<InputSource> ois;
 
   if ((ois = is)) {
-    InputSource* next = is->next;
-    delete ois;
+    std::shared_ptr<InputSource> next = is->next;
     is = next;
   }
 
@@ -149,7 +150,9 @@ bool CloseInputSource() {
   return (bool)is;
 }
 
-void SetStringInput(strptr str) { SetInputSource(new InputString(str)); }
+void SetStringInput(strptr str) {
+  SetInputSource(std::make_shared<InputString>(str));
+}
 
 bool GetNewInputLine() {
   // Read a new line in from the current input file.  If we're at end of
@@ -159,7 +162,8 @@ bool GetNewInputLine() {
 #if defined(PLAYGRAMMER)
     fgetpos(is->file, &is->lineStart);
 #endif
-    if ((is->ptr = fgets(inputLine, sizeof inputLine, ((InputFile*)is)->file)))
+    if ((is->ptr =
+             fgets(inputLine, sizeof inputLine, ((InputFile*)is.get())->file)))
       break;
     CloseInputSource();
   }
@@ -224,14 +228,14 @@ void FreeIncludePath() {
   includePath = 0;
 }
 
-static InputSource* saveIs;
-static InputString* curLineInput;
+static std::shared_ptr<InputSource> saveIs;
+static std::shared_ptr<InputString> curLineInput;
 
 void SetInputToCurrentLine() {
   //	set the current input line as the input source
 
   saveIs = is;
-  curLineInput = new InputString(inputLine);
+  curLineInput = std::make_shared<InputString>(inputLine);
   is = curLineInput;
 }
 
@@ -242,7 +246,7 @@ void RestoreInput() {
   }
 }
 
-static void SetInputSource(InputSource* nis) {
+static void SetInputSource(const std::shared_ptr<InputSource>& nis) {
   // Link a new input source (pointed to by 'nis') in at the head of the input
   // source queue.
 
@@ -263,7 +267,8 @@ void SetParseStart() { startParse = startToken; }
 fpos_t GetParseStart() { return startParse; }
 
 fpos_t GetParsePos() {
-  return ((InputFile*)is)->lineStart + (long)(is->ptr - inputLine);
+  return static_cast<InputFile*>(is.get())->lineStart +
+         (long)(is->ptr - inputLine);
 }
 
 fpos_t GetTokenEnd() { return endToken; }
