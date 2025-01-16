@@ -42,8 +42,8 @@ static bool canOptimizeTransfer(size_t a, size_t b) {
 ANReference::ANReference() : target(0), sym(0) {}
 
 void ANReference::addBackpatch(Symbol* sym) {
-  backLink = sym->ref;
-  sym->ref = this;
+  backLink = sym->ref();
+  sym->setRef(this);
 }
 
 void ANReference::backpatch(ANode* dest) {
@@ -438,7 +438,7 @@ ANCall::ANCall(Symbol* s) {
 size_t ANCall::size() {
   if (!shrink)
     return op & OP_BYTE ? 4 : 5;
-  else if (!sym->loc || target->offset == UNDEFINED)
+  else if (!sym->loc() || target->offset == UNDEFINED)
     return 5;
 #if defined(OPTIMIZE_TRANSFERS)
   else if (canOptimizeTransfer(target->offset, offset + 5)) {

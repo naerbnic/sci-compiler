@@ -96,7 +96,8 @@ bool Expression(PNode* theNode, bool required) {
         break;
 
       case S_SELECT:
-        if (theSym) Error("Selector %s used as value without #", theSym->name());
+        if (theSym)
+          Error("Selector %s used as value without #", theSym->name());
         isExpr = False;
         break;
 
@@ -104,7 +105,7 @@ bool Expression(PNode* theNode, bool required) {
         // Assume that all unknown identifiers are objects,
         // and fall through to object handling.
         theSym = syms.installModule(symStr, S_OBJ);
-        theSym->an = NULL;
+        theSym->clearAn();
         theSym->obj = NULL;
         symType = S_OBJ;
 
@@ -380,7 +381,7 @@ static bool Send(PNode* theNode, Symbol* theSym) {
       // If the symbol has not been previously defined, define it as
       // an undefined object in the global symbol table.
       theSym = syms.installModule(symStr, S_OBJ);
-      theSym->an = NULL;
+      theSym->clearAn();
       theSym->obj = NULL;
     }
     UnGetTok();

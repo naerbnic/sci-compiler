@@ -44,7 +44,7 @@ void MakeWhile(PNode* theNode)
   Symbol end;
   Loop lp(LOOP_WHILE, &cont, &end);
 
-  cont.loc = lp.start;
+  cont.setLoc(lp.start);
 
   // Compile the conditional expression controlling the loop,
   // and its corresponding branch.
@@ -70,7 +70,7 @@ void MakeRepeat(PNode* theNode) {
   Symbol end;
   Loop lp(LOOP_REPEAT, &cont, &end);
 
-  cont.loc = lp.start;
+  cont.setLoc(lp.start);
 
   // Compile the loop's statements.
   if (theNode->child) Compile(theNode->child);

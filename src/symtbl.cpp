@@ -17,7 +17,7 @@ SymTbl::SymTbl(int size, bool keep)
 
       hashSize(size),
       keep(keep) {
-  hashTable = new Symbol* [size];
+  hashTable = new Symbol*[size];
   memset(hashTable, 0, size * sizeof(Symbol*));
 }
 
@@ -40,7 +40,7 @@ void SymTbl::clearAsmPtrs() {
   // Make sure that all pointers to assembly nodes (the an element of the
   // structure) are cleared in a symbol table.
 
-  for (Symbol* sym = firstSym(); sym; sym = nextSym()) sym->an = 0;
+  for (Symbol* sym = firstSym(); sym; sym = nextSym()) sym->clearAn();
 }
 
 Symbol* SymTbl::install(strptr name, sym_t type) {

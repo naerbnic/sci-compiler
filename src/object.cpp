@@ -376,7 +376,7 @@ void MethodDef(Object* obj) {
     Selector* sn = obj->findSelector(sym);
     if (sym->type != S_SELECT || IsProperty(sn))
       Error("Not a method: %s", sym->name());
-    else if (sym->an)
+    else if (sym->an())
       Error("Method already defined: %s", sym->name());
     else {
       // Compile the code for this method.
@@ -385,7 +385,7 @@ void MethodDef(Object* obj) {
 
       // Save the pointer to the method code.
       sn->tag = T_LOCAL;
-      sn->an = sym->an;
+      sn->an = sym->an();
     }
   }
 

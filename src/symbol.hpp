@@ -146,14 +146,16 @@ class Symbol {
   sym_t type;        // symbol type
   uint32_t lineNum;  //	where symbol was first defined
 
+ private:
   union {
     // Pointer to symbol definition in the AList (or the reference chain,
     // via 'ref', if the symbol is not yet defined).
-    ANode* an;
-    ANode* loc;
-    ANReference* ref;
+    ANode* an_;
+    ANode* loc_;
+    ANReference* ref_;
   };
 
+ public:
   union {
     // Object to which symbol refers
     int val;      // symbol value
@@ -164,6 +166,13 @@ class Symbol {
 
   strptr name() { return name_ ? name_->c_str() : nullptr; }
   void clearName() { name_ = std::nullopt; }
+
+  ANode* an() { return an_; }
+  void clearAn() { an_ = nullptr; }
+  ANode* loc() { return loc_; }
+  void setLoc(ANode* loc) { loc_ = loc_; }
+  ANReference* ref() { return ref_; }
+  void setRef(ANReference* ref) { ref_ = ref; }
 
  private:
   friend class SymTbl;  // SymTbl is allowed access to the 'next' pointer

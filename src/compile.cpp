@@ -320,7 +320,7 @@ static void MakeCall(PNode* pn) {
     if (sym->type == S_PROC && sym->val == UNDEFINED)
       call->addBackpatch(sym);
     else
-      call->target = sym->loc;
+      call->target = sym->loc();
 
     call->numArgs = 2 * numArgs;
 
@@ -913,8 +913,8 @@ static void MakeProc(PNode* pn) {
   // they will be on a list hanging off the procedure's symbol table
   // entry (in the 'ref' property) (compiled by the first reference to the
   // procedure).  Let all these nodes know where this one is.
-  if (pn->sym->ref) pn->sym->ref->backpatch(an);
-  pn->sym->loc = an;
+  if (pn->sym->ref()) pn->sym->ref()->backpatch(an);
+  pn->sym->setLoc(an);
 
   //	procedures and methods get special treatment:  the line number
   //	and file name are set here
@@ -998,8 +998,8 @@ void MakeObject(Object* theObj) {
   // If any nodes already compiled have this object as a target, they
   // will be on a list hanging off the object's symbol table entry.
   // Let all nodes know where this one is.
-  if (obj->sym->ref) obj->sym->ref->backpatch(props);
-  obj->sym->loc = props;
+  if (obj->sym->ref()) obj->sym->ref()->backpatch(props);
+  obj->sym->setLoc(props);
 
   // The rest of the object goes into hunk, as it never changes.
   curList = sc->hunkList;
@@ -1020,7 +1020,7 @@ void MakeObject(Object* theObj) {
     if (sp->tag == T_LOCAL) {
       new ANWord(sp->sym->val);
       new ANMethod(sp->sym, (ANMethCode*)sp->an);
-      sp->sym->loc = 0;
+      sp->sym->setLoc(nullptr);
       ++numMeth->value;
     }
   methDict->finish();
@@ -1038,8 +1038,8 @@ void MakeText() {
 }
 
 void MakeLabel(Symbol* dest) {
-  if (dest->ref) {
-    dest->ref->backpatch(new ANLabel);
-    dest->ref = 0;
+  if (dest->ref()) {
+    dest->ref()->backpatch(new ANLabel);
+    dest->setRef(nullptr);
   }
 }
