@@ -578,7 +578,7 @@ void ANObjID::list() {
 }
 
 void ANObjID::emit(OutputFile* out) {
-  if (!sym->obj) {
+  if (!sym->obj()) {
     Error("Undefined object from line %u: %s", sym->lineNum, sym->name());
     return;
   }

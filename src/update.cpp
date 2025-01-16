@@ -72,9 +72,9 @@ void WriteClassTbl() {
   int index;
   for (Symbol* sym = syms.classSymTbl->firstSym(); sym;
        sym = syms.classSymTbl->nextSym()) {
-    if (sym->obj->num != -1) {
-      classTbl[sym->obj->num].objID = 0;
-      classTbl[sym->obj->num].scriptNum = SCIUWord(sym->obj->script);
+    if (sym->obj()->num != -1) {
+      classTbl[sym->obj()->num].objID = 0;
+      classTbl[sym->obj()->num].scriptNum = SCIUWord(sym->obj()->script);
     }
   }
 
@@ -120,7 +120,7 @@ void WritePropOffsets() {
       GetToken();
       continue;
     }
-    cp = theSym->obj;
+    cp = theSym->obj();
     if (!LookupTok() || !(sel = cp->findSelector(&tokSym))) {
       Error("Not a selector for class %s: %s", cp->sym->name(), symStr);
       continue;
@@ -141,7 +141,7 @@ static void WriteSelector() {
   fprintf(fp, "(selectors\n");
   for (Symbol* sp = syms.selectorSymTbl->firstSym(); sp;
        sp = syms.selectorSymTbl->nextSym())
-    fprintf(fp, "\t%-20s %d\n", sp->name(), sp->val);
+    fprintf(fp, "\t%-20s %d\n", sp->name(), sp->val());
 
   fprintf(fp, ")\n");
 
@@ -253,7 +253,7 @@ static void WriteSelectorVocab() {
   // offsets into the table.
   for (sp = syms.selectorSymTbl->firstSym(); sp;
        sp = syms.selectorSymTbl->nextSym()) {
-    tbl[sp->val + 1] = SCIUWord(ofs);
+    tbl[sp->val() + 1] = SCIUWord(ofs);
     ofs += out.Write(sp->name());
   }
 

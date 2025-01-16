@@ -96,6 +96,6 @@ void InstallBuiltIns() {
 
   for (BuiltIn* bp = builtIns; bp->name; ++bp) {
     Symbol* sp = syms.installGlobal(bp->name, bp->type);
-    sp->val = bp->val;
+    sp->setVal(bp->val);
   }
 }

@@ -45,9 +45,9 @@ Selector* Object::findSelector(Symbol* sym) {
   // Return a pointer to the selector node which corresponds to the
   //	symbol 'sym'.
 
-  int val = sym->val;
+  int val = sym->val();
   Selector* sn;
-  for (sn = selectors; sn && val != sn->sym->val; sn = sn->next);
+  for (sn = selectors; sn && val != sn->sym->val(); sn = sn->next);
 
   return sn;
 }
@@ -91,7 +91,7 @@ Selector* Class::addSelector(Symbol* sym, int what) {
     selTail = sn;
   }
 
-  switch (sym->val) {
+  switch (sym->val()) {
     case SEL_METHDICT:
       sn->tag = T_METHDICT;
       break;
@@ -132,7 +132,7 @@ void InitSelectors() {
     if (!sym)
       InstallSelector(selStr, symVal);
     else
-      sym->val = symVal;
+      sym->setVal(symVal);
   }
 
   UnGetTok();
@@ -153,7 +153,7 @@ Symbol* InstallSelector(strptr name, int value) {
 
   // Install the selector in the selector symbol table.
   Symbol* sym = syms.installSelector(name);
-  sym->val = value;
+  sym->setVal(value);
 
   return sym;
 }
@@ -216,8 +216,8 @@ Symbol* GetSelector(Symbol* obj) {
   // object is known.
   receiver = 0;
   if (!IsVar() && obj && (obj->type == S_OBJ || obj->type == S_CLASS) &&
-      obj->obj) {
-    switch ((uint32_t)obj->val) {
+      obj->obj()) {
+    switch ((uint32_t)obj->val()) {
       case OBJ_SELF:
         receiver = curObj;
         break;
@@ -231,7 +231,7 @@ Symbol* GetSelector(Symbol* obj) {
         }
         break;
       default:
-        receiver = obj->obj;
+        receiver = obj->obj();
         break;
     }
     if (!receiver->findSelector(&tokSym)) {

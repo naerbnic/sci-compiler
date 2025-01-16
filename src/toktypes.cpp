@@ -50,7 +50,7 @@ Symbol* LookupTok() {
 
       } else if (sn->tag != T_LOCAL && sn->tag != T_METHOD) {
         symType = S_PROP;
-        symVal = sn->ofs;
+        setSymVal(sn->ofs);
       }
     }
   }
@@ -143,7 +143,7 @@ static bool GetNumberOrStringToken(strptr errStr, bool stringOK) {
       break;
   }
 
-  symVal = pn->child->val;
+  setSymVal(pn->child->val);
 
   delete pn;
 
@@ -169,7 +169,7 @@ keyword_t Keyword() {
     return K_UNDEFINED;
   else {
     symType = S_KEYWORD;
-    symVal = theSym->val;
+    setSymVal(theSym->val());
     return (keyword_t)symVal;
   }
 }

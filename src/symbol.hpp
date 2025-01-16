@@ -155,15 +155,15 @@ class Symbol {
     ANReference* ref_;
   };
 
- public:
   union {
     // Object to which symbol refers
-    int val;      // symbol value
-    strptr str;   // pointer to string if a define
-    Object* obj;  // pointer to object/class if this is one
-    Public* ext;  // pointer to public/external definition
+    int val_;      // symbol value
+    strptr str_;   // pointer to string if a define
+    Object* obj_;  // pointer to object/class if this is one
+    Public* ext_;  // pointer to public/external definition
   };
 
+ public:
   strptr name() { return name_ ? name_->c_str() : nullptr; }
   void clearName() { name_ = std::nullopt; }
 
@@ -173,6 +173,15 @@ class Symbol {
   void setLoc(ANode* loc) { loc_ = loc_; }
   ANReference* ref() { return ref_; }
   void setRef(ANReference* ref) { ref_ = ref; }
+
+  int val() { return val_; }
+  void setVal(int val) { val_ = val; }
+  strptr str() { return str_; }
+  void setStr(strptr str) { str_ = str; }
+  Object* obj() { return obj_; }
+  void setObj(Object* obj) { obj_ = obj; }
+  Public* ext() { return ext_; }
+  void setExt(Public* ext) { ext_ = ext; }
 
  private:
   friend class SymTbl;  // SymTbl is allowed access to the 'next' pointer

@@ -70,7 +70,7 @@ void Define() {
 
     if (!newSym) {
       char* newString = strdup(symStr);
-      char* oldString = strdup(sym->str);
+      char* oldString = strdup(sym->str());
 
       // trim the two strings
       trimstr(newString);
@@ -79,7 +79,7 @@ void Define() {
       if (strcmp(newString, oldString)) {
         Warning("Redefinition of %s from %s to %s", sym->name(),
                 (char*)oldString, (char*)newString);
-        delete[] sym->str;
+        delete[] sym->str();
         newSym = True;
       }
 
@@ -87,7 +87,7 @@ void Define() {
       free(oldString);
     }
 
-    if (newSym) sym->str = newStr(symStr);
+    if (newSym) sym->setStr(newStr(symStr));
   }
 }
 
@@ -111,7 +111,7 @@ void Enum() {
         GetNumber("Constant expression required");
         val = symVal;
       }
-      theSym->str = newStrFromInt(val);
+      theSym->setStr(newStrFromInt(val));
       ++val;
     }
   }
@@ -158,7 +158,8 @@ void Global() {
       // Get the variable number and expand the size of the global block
       // if necessary.
       if (!GetNumber("Variable #")) break;
-      offset = theSym->val = symVal;
+      theSym->setVal(symVal);
+      offset = symVal;
       size = Max(offset, size);
 
       // Get the initial value(s) of the variable and expand the size
@@ -214,7 +215,7 @@ void Local() {
     if (symType == S_OPEN_BRACKET) {
       if (GetIdent()) {
         theSym = syms.installLocal(symStr, S_LOCAL);
-        theSym->val = size;
+        theSym->setVal(size);
         if (!GetNumber("Array size")) break;
         arraySize = symVal;
         GetToken();
@@ -235,7 +236,7 @@ void Local() {
 
     else if (IsIdent()) {
       theSym = syms.installLocal(symStr, S_LOCAL);
-      theSym->val = size;
+      theSym->setVal(size);
       n = InitialValue(localVars, values + size, 1);
       size += n;
       if (n == -1 || size > maxVars) {
@@ -288,7 +289,7 @@ void Extern() {
       if (!syms.lookup((strptr)(theSym = (Symbol*)symStr)))
         theSym = syms.installLocal(symStr, S_EXTERN);
       theEntry = new Public(theSym);
-      theSym->ext = theEntry;
+      theSym->setExt(theEntry);
 
       // Get the script and entry numbers of the symbol.
       if (!GetNumber("Script #")) break;

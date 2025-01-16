@@ -30,7 +30,7 @@ void InstallObjects() {
   // Install 'RootObj' as the root of the class system.
   Symbol* sym = syms.installClass("RootObj");
   Class* rootClass = new Class;
-  sym->obj = rootClass;
+  sym->setObj(rootClass);
   rootClass->sym = sym;
   rootClass->script = KERNEL;
   rootClass->num = -1;
@@ -70,9 +70,9 @@ void InstallObjects() {
 
   // Install 'self' and 'super' as objects.
   sym = syms.installGlobal("self", S_OBJ);
-  sym->val = (int)OBJ_SELF;
+  sym->setVal((int)OBJ_SELF);
   sym = syms.installGlobal("super", S_CLASS);
-  sym->val = (int)OBJ_SUPER;
+  sym->setVal((int)OBJ_SUPER);
 }
 
 void DefineClass() {
@@ -113,7 +113,7 @@ void DefineClass() {
   Class* super = FindClass(superNum);
   if (!super) Fatal("Can't find superclass for %s\n", sym->name());
   Class* theClass = new Class(super);
-  sym->obj = theClass;
+  sym->setObj(theClass);
   theClass->super = superNum;
   theClass->script = scriptNum;
   theClass->num = classNum;
@@ -224,7 +224,7 @@ int GetClassNumber(Class* theClass) {
 Class* FindClass(int n) {
   for (Symbol* sp = syms.classSymTbl->firstSym(); sp;
        sp = syms.classSymTbl->nextSym())
-    if (sp->obj && sp->obj->num == n) return (Class*)sp->obj;
+    if (sp->obj() && sp->obj()->num == n) return (Class*)sp->obj();
 
   return 0;
 }
@@ -239,8 +239,8 @@ Class* NextClass(int n) {
   cp = 0;
   m = 0x7fff;
   for (sp = syms.classSymTbl->firstSym(); sp; sp = syms.classSymTbl->nextSym())
-    if (sp->obj->num > n && sp->obj->num < m) {
-      cp = sp->obj;
+    if (sp->obj()->num > n && sp->obj()->num < m) {
+      cp = sp->obj();
       m = cp->num;
     }
 

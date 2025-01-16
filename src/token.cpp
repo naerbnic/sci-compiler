@@ -63,7 +63,7 @@ bool NewToken() {
   if (NextToken()) {
     if (symType == S_IDENT && (theSym = syms.lookup(symStr)) &&
         theSym->type == S_DEFINE) {
-      SetStringInput(theSym->str);
+      SetStringInput(theSym->str());
       NewToken();
     }
     return True;
@@ -143,7 +143,7 @@ bool NextToken() {
   if (haveUnGet) {
     haveUnGet = False;
     symType = lastType;
-    symVal = lastVal;
+    setSymVal(lastVal);
     return True;
   }
 
@@ -256,7 +256,7 @@ compiling:
 
     switch (GetPreprocessorToken()) {
       case PT_IF:
-        if (!GetNumber("Constant expression")) symVal = 0;
+        if (!GetNumber("Constant expression")) setSymVal(0);
         ++nestedCondCompile;
         if (!symVal) goto notCompiling;
         break;
@@ -317,7 +317,7 @@ notCompiling:
 
       case PT_ELIF:
         if (!level) {
-          if (!GetNumber("Constant expression required")) symVal = 0;
+          if (!GetNumber("Constant expression required")) setSymVal(0);
           if (symVal) goto compiling;
         }
         break;
@@ -466,7 +466,7 @@ static void ReadNumber(strptr ip) {
 
   val *= sign;
 
-  symVal = val;
+  setSymVal(val);
 
   *sp = '\0';
   is->ptr = ip;
@@ -601,7 +601,7 @@ static void ReadKey(strptr ip) {
       // A control key.
       ++sp;
       if (isalpha(*sp))
-        symVal = toupper(*sp) - 0x40;
+        setSymVal(toupper(*sp) - 0x40);
       else
         Error("Not a valid control key: %s", symStr);
       break;
@@ -610,7 +610,7 @@ static void ReadKey(strptr ip) {
       // An alt-key.
       ++sp;
       if (isalpha(*sp))
-        symVal = altKey[toupper(*sp) - 'A'] << 8;
+        setSymVal(altKey[toupper(*sp) - 'A'] << 8);
       else
         Error("Not a valid alt key: %s", symStr);
       break;
@@ -618,12 +618,12 @@ static void ReadKey(strptr ip) {
     case '#':
       // A function key.
       ++sp;
-      symVal = (atoi(sp) + 58) << 8;
+      setSymVal((atoi(sp) + 58) << 8);
       break;
 
     default:
       // Just a character...
-      symVal = *sp;
+      setSymVal(*sp);
       break;
   }
 

@@ -106,7 +106,7 @@ bool Expression(PNode* theNode, bool required) {
         // and fall through to object handling.
         theSym = syms.installModule(symStr, S_OBJ);
         theSym->clearAn();
-        theSym->obj = NULL;
+        theSym->setObj(NULL);
         symType = S_OBJ;
 
         //	fall-through
@@ -349,7 +349,7 @@ static bool Call(PNode* theNode, Symbol* theSym) {
   PNode* pn;
 
   pn = new PNode((pn_t)(theSym->type == S_EXTERN ? PN_EXTERN : PN_CALL));
-  pn->val = theSym->val;
+  pn->val = theSym->val();
   pn->sym = theSym;
 
   // Collect the arguments
@@ -382,7 +382,7 @@ static bool Send(PNode* theNode, Symbol* theSym) {
       // an undefined object in the global symbol table.
       theSym = syms.installModule(symStr, S_OBJ);
       theSym->clearAn();
-      theSym->obj = NULL;
+      theSym->setObj(nullptr);
     }
     UnGetTok();
     Expression(pn, REQUIRED);
@@ -427,7 +427,7 @@ static bool Message(PNode* theNode, Symbol* theSym) {
       Expression(pn, REQUIRED);
     } else {
       node = pn->addChild(new PNode(PN_SELECT));
-      node->val = msgSel->val;
+      node->val = msgSel->val();
       node->sym = msgSel;
     }
 

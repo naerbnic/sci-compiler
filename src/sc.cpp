@@ -237,5 +237,5 @@ static void InstallCommandLineDefine(char *str) {
 
   Symbol *sym = syms.installGlobal(token, S_DEFINE);
   token = strtok(0, "");
-  sym->str = newStr(token ? token : "1");
+  sym->setStr(newStr(token ? token : "1"));
 }

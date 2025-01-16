@@ -43,7 +43,7 @@ void Procedure() {
     // A procedure declaration.
     for (GetToken(); !CloseP(symType); GetToken()) {
       if (symType == S_IDENT) theSym = syms.installLocal(symStr, S_PROC);
-      theSym->val = UNDEFINED;
+      theSym->setVal(UNDEFINED);
     }
     UnGetTok();
   }
@@ -80,12 +80,12 @@ static PNode* _CallDef(sym_t theType) {
       if (!theProc)
         theProc = syms.installModule(symStr, theType);
 
-      else if (theProc->type != S_PROC || theProc->val != UNDEFINED) {
+      else if (theProc->type != S_PROC || theProc->val() != UNDEFINED) {
         Severe("%s is already defined.", symStr);
         return 0;
       }
 
-      theProc->val = DEFINED;
+      theProc->setVal(DEFINED);
       break;
 
     case S_SELECT:
@@ -144,7 +144,7 @@ static int ParameterList() {
       if (curObj && curObj->findSelector(&tokSym))
         Error("%s is a selector for current object.", symStr);
       else
-        syms.installLocal(symStr, parmType)->val = parmOfs++;
+        syms.installLocal(symStr, parmType)->setVal(parmOfs++);
 
     } else
       Error("Non-identifier in parameter list: %s", symStr);
@@ -165,12 +165,12 @@ static void NewParm(int n, sym_t type) {
 
   if (syms.lookup(symStr)) Warning("Redefinition of '%s'.", symStr);
   theSym = syms.installLocal(symStr, type);
-  theSym->val = n;
+  theSym->setVal(n);
 }
 
 static void AddRest(int ofs) {
   Symbol* theSym;
 
   theSym = syms.installLocal("&rest", S_REST);
-  theSym->val = ofs;
+  theSym->setVal(ofs);
 }

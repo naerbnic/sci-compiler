@@ -26,7 +26,7 @@ static char inputLine[512];
 static void SetInputSource(InputSource*);
 
 InputSource::InputSource() : fileName(0), lineNum(0) {
-  tokSym.str = 0;
+  tokSym.setStr(nullptr);
   curLine = lineNum;
 }
 
@@ -35,7 +35,7 @@ InputSource::InputSource(char* fileName, int lineNum)
 
       fileName(fileName),
       lineNum(lineNum) {
-  tokSym.str = symStr;
+  tokSym.setStr(symStr);
   curLine = lineNum;
 }
 

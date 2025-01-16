@@ -31,9 +31,10 @@ bool IsProc();
 bool IsObj();
 bool IsNumber();
 
-#define symObj tokSym.obj
+#define symObj tokSym.obj()
 #define symType tokSym.type
-#define symVal tokSym.val
+#define symVal tokSym.val()
+#define setSymVal(x) tokSym.setVal(x)
 
 const int MaxTokenLen = 2048;
 

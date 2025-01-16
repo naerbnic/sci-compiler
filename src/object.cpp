@@ -80,7 +80,7 @@ Object::~Object() {
   delete[] fullFileName;
 #endif
 
-  sym->obj = 0;
+  sym->setObj(nullptr);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -106,7 +106,7 @@ void DoClass() {
     return;
 
   } else {
-    theClass = (Class*)sym->obj;
+    theClass = (Class*)sym->obj();
 
     //	the class is being redefined
     if (theClass) {
@@ -140,7 +140,7 @@ void DoClass() {
     return;
   }
 
-  Class* super = (Class*)superSym->obj;
+  Class* super = (Class*)superSym->obj();
   if (superNum != OBJECTNUM && superNum != super->num)
     Fatal("Can't change superclass of %s", sym->name());
 
@@ -152,7 +152,7 @@ void DoClass() {
     theClass->num = classNum =
         classNum == OBJECTNUM ? GetClassNumber(theClass) : classNum;
     theClass->sym = sym;
-    sym->obj = theClass;
+    sym->setObj(theClass);
     classes[classNum] = theClass;
   }
 
@@ -183,7 +183,7 @@ void Instance() {
     objSym = syms.installLocal(symStr, S_OBJ);
   else if (symType == S_IDENT || symType == S_OBJ) {
     objSym->type = symType = S_OBJ;
-    if (objSym->obj) Error("Duplicate instance name: %s", objSym->name());
+    if (objSym->obj()) Error("Duplicate instance name: %s", objSym->name());
   } else {
     Severe("Redefinition of %s.", symStr);
     return;
@@ -198,13 +198,13 @@ void Instance() {
     Severe("%s is not a class.", symStr);
     return;
   }
-  Class* super = (Class*)sym->obj;
+  Class* super = (Class*)sym->obj();
 
   // Create the object as an instance of the class.
   Object* obj = new Object(super);
   obj->num = OBJECTNUM;
   obj->sym = objSym;
-  objSym->obj = obj;
+  objSym->setObj(obj);
 
   // Set the super-class number for this object.
   Selector* sn = obj->findSelector("-super-");

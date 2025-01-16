@@ -16,21 +16,21 @@ Symbol::Symbol(const char* name, sym_t type)
       type(type),
       lineNum(curLine),
       an_(0),
-      str(0),
+      str_(0),
       next(0) {}
 
 Symbol::~Symbol() {
   switch (type) {
     case S_DEFINE:
-      delete[] str;
+      delete[] str_;
       break;
 
     case S_EXTERN:
-      delete ext;
+      delete ext_;
       break;
 
     case S_OBJ:
-      delete obj;
+      delete obj_;
       break;
 
     default:

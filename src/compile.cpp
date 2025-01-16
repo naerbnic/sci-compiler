@@ -317,7 +317,7 @@ static void MakeCall(PNode* pn) {
 
     // If the destination procedure has not yet been defined, add
     // this node to the list of those waiting for its definition.
-    if (sym->type == S_PROC && sym->val == UNDEFINED)
+    if (sym->type == S_PROC && sym->val() == UNDEFINED)
       call->addBackpatch(sym);
     else
       call->target = sym->loc();
@@ -325,7 +325,7 @@ static void MakeCall(PNode* pn) {
     call->numArgs = 2 * numArgs;
 
   } else {
-    Public* pub = sym->ext;
+    Public* pub = sym->ext();
     ANOpExtern* extCall = new ANOpExtern(sym, pub->script, pub->entry);
     extCall->numArgs = 2 * numArgs;
   }
@@ -334,14 +334,14 @@ static void MakeCall(PNode* pn) {
 static void MakeClassID(PNode* pn) {
   // Compile a class ID.
 
-  ANOpUnsign* an = new ANOpUnsign(op_class, pn->sym->obj->num);
+  ANOpUnsign* an = new ANOpUnsign(op_class, pn->sym->obj()->num);
   an->sym = pn->sym;
 }
 
 static void MakeObjID(PNode* pn) {
   // Compile an object ID.
 
-  if (pn->sym->val == (int)OBJ_SELF)
+  if (pn->sym->val() == (int)OBJ_SELF)
     new ANOpCode(op_selfID);
 
   else {
@@ -350,10 +350,10 @@ static void MakeObjID(PNode* pn) {
 
     // If the object is not defined yet, add this node to the list
     // of those waiting for the definition.
-    if (!sym->obj || sym->obj == curObj)
+    if (!sym->obj() || sym->obj() == curObj)
       an->addBackpatch(sym);
     else
-      an->target = sym->obj->an;
+      an->target = sym->obj()->an;
   }
 }
 
@@ -1009,7 +1009,7 @@ void MakeObject(Object* theObj) {
   ANObjTable* propDict = new ANObjTable("property dictionary");
   if (theObj->num != OBJECTNUM) {
     for (sp = theObj->selectors; sp; sp = sp->next)
-      if (IsProperty(sp)) new ANWord(sp->sym->val);
+      if (IsProperty(sp)) new ANWord(sp->sym->val());
   }
   propDict->finish();
   if (pDict) pDict->target = propDict;
@@ -1018,7 +1018,7 @@ void MakeObject(Object* theObj) {
   ANWord* numMeth = new ANWord((short)0);
   for (sp = theObj->selectors; sp; sp = sp->next)
     if (sp->tag == T_LOCAL) {
-      new ANWord(sp->sym->val);
+      new ANWord(sp->sym->val());
       new ANMethod(sp->sym, (ANMethCode*)sp->an);
       sp->sym->setLoc(nullptr);
       ++numMeth->value;
