@@ -49,12 +49,6 @@ inline S Min(S a, T b) {
 // around.
 int AssertFail(char* file, int line, char* expression);
 
-#ifdef DEBUG
-#define assert(expr) (expr) || AssertFail(__FILE__, __LINE__, #expr)
-#else
-#define assert(expr)
-#endif
-
 // Sufficient MAX_PATH for all platforms
 
 #define _MAX_PATH 1024

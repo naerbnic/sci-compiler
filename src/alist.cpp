@@ -2,6 +2,8 @@
 
 #include "alist.hpp"
 
+#include <cassert>
+
 #include "anode.hpp"
 #include "listing.hpp"
 #include "opcodes.hpp"
