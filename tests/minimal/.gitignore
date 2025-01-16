@@ -1,0 +1,6 @@
+# Ignore results of sc compilation
+/*.hep
+/*.inf
+/*.scr
+/*.voc
+/*.lck
