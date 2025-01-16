@@ -137,7 +137,10 @@ class Symbol {
   Symbol(const char* str = 0, sym_t = (sym_t)0);
   ~Symbol();
 
-  strptr name;       // pointer to the symbol name
+ private:
+  strptr name_;  // pointer to the symbol name
+
+ public:
   sym_t type;        // symbol type
   uint32_t lineNum;  //	where symbol was first defined
 
@@ -156,6 +159,9 @@ class Symbol {
     Object* obj;  // pointer to object/class if this is one
     Public* ext;  // pointer to public/external definition
   };
+
+  strptr name() { return name_; }
+  void clearName() { name_ = nullptr; }
 
  private:
   friend class SymTbl;  // SymTbl is allowed access to the 'next' pointer

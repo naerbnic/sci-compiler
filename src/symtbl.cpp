@@ -52,7 +52,7 @@ Symbol* SymTbl::install(strptr name, sym_t type) {
 
 Symbol* SymTbl::add(Symbol* sp) {
   // Get the hash value for the symbol in this hash table.
-  uint32_t hashVal = hash(sp->name);
+  uint32_t hashVal = hash(sp->name());
 
   // Link the symbol in at the beginning of the appropriate hash list
   sp->next = hashTable[hashVal];
@@ -72,7 +72,7 @@ Symbol* SymTbl::lookup(strptr name) {
   Symbol* prev = 0;
   Symbol** start = &hashTable[hash(name)];
   for (Symbol* sp = *start; sp; sp = sp->next) {
-    if (!strcmp(name, sp->name)) {
+    if (!strcmp(name, sp->name())) {
       // Move the symbol to the start of the list.
       if (prev) {
         prev->next = sp->next;
@@ -94,7 +94,7 @@ Symbol* SymTbl::remove(strptr name) {
   Symbol* prev = 0;
   Symbol** start = &hashTable[hash(name)];
   for (Symbol* sp = *start; sp; sp = sp->next) {
-    if (!strcmp(name, sp->name)) {
+    if (!strcmp(name, sp->name())) {
       // Link around symbol and delete it.
       if (!prev)
         *start = sp->next;

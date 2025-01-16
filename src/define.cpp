@@ -64,7 +64,7 @@ void Define() {
     else if (sym->type != S_DEFINE)
       // This isn't just a re-'define' of the symbol, it's a change
       // in symbol type.
-      Error("Redefinition of %s", sym->name);
+      Error("Redefinition of %s", sym->name());
 
     GetRest();
 
@@ -77,8 +77,8 @@ void Define() {
       trimstr(oldString);
 
       if (strcmp(newString, oldString)) {
-        Warning("Redefinition of %s from %s to %s", sym->name, (char*)oldString,
-                (char*)newString);
+        Warning("Redefinition of %s from %s to %s", sym->name(),
+                (char*)oldString, (char*)newString);
         delete[] sym->str;
         newSym = True;
       }

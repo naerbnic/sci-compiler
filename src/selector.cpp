@@ -165,7 +165,8 @@ int NewSelectorNum() {
 
   // Scan for the first entry with a free bit.
   uint16_t* stp;
-  for (stp = selTbl; stp < &selTbl[SEL_TBL_SIZE] && *stp == (uint16_t)-1; ++stp);
+  for (stp = selTbl; stp < &selTbl[SEL_TBL_SIZE] && *stp == (uint16_t)-1;
+       ++stp);
 
   // Check for no more selector numbers available.
   if (stp >= &selTbl[SEL_TBL_SIZE]) Fatal("Out of selector numbers!");
@@ -234,7 +235,7 @@ Symbol* GetSelector(Symbol* obj) {
         break;
     }
     if (!receiver->findSelector(&tokSym)) {
-      Error("Not a selector for %s: %s", obj->name, tokSym.name);
+      Error("Not a selector for %s: %s", obj->name(), tokSym.name());
       return 0;
     }
   }

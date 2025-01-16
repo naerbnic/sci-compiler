@@ -96,7 +96,7 @@ bool Expression(PNode* theNode, bool required) {
         break;
 
       case S_SELECT:
-        if (theSym) Error("Selector %s used as value without #", theSym->name);
+        if (theSym) Error("Selector %s used as value without #", theSym->name());
         isExpr = False;
         break;
 
@@ -385,7 +385,7 @@ static bool Send(PNode* theNode, Symbol* theSym) {
     }
     UnGetTok();
     Expression(pn, REQUIRED);
-    objName = pn->child->sym ? pn->child->sym->name : "object";
+    objName = pn->child->sym ? pn->child->sym->name() : "object";
   }
 
   // Collect the messages to send to the object.

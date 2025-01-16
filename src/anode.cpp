@@ -89,9 +89,9 @@ void ANDispatch::list() {
   size_t oldOfs = curOfs;
 
   if (target && sym)
-    ListAsCode("dispatch\t$%-4x\t(%s)", target->offset, sym->name);
+    ListAsCode("dispatch\t$%-4x\t(%s)", target->offset, sym->name());
   else if (sym)
-    ListAsCode("dispatch\t----\t(%s)", sym->name);
+    ListAsCode("dispatch\t----\t(%s)", sym->name());
   else
     ListAsCode("dispatch\t----");
 
@@ -191,7 +191,7 @@ void ANText::emit(OutputFile* out) { out->Write(text->str, size()); }
 ANObject::ANObject(Symbol* s, int n, ANode* before)
     : ANode(curList, before), sym(s), num(n) {}
 
-void ANObject::list() { Listing("\nObject: %-20s", sym->name); }
+void ANObject::list() { Listing("\nObject: %-20s", sym->name()); }
 
 ///////////////////////////////////////////////////
 // Class ANCodeBlk
@@ -222,7 +222,7 @@ bool ANCodeBlk::optimize() { return OptimizeProc(&code); }
 // Class ANProcCode
 ///////////////////////////////////////////////////
 
-void ANProcCode::list() { Listing("\n\nProcedure: (%s)\n", sym->name); }
+void ANProcCode::list() { Listing("\n\nProcedure: (%s)\n", sym->name()); }
 
 ///////////////////////////////////////////////////
 // Class ANMethCode
@@ -231,7 +231,7 @@ void ANProcCode::list() { Listing("\n\nProcedure: (%s)\n", sym->name); }
 ANMethCode::ANMethCode(Symbol* s) : ANCodeBlk(s), objSym(curObj->sym) {}
 
 void ANMethCode::list() {
-  Listing("\n\nMethod: (%s %s)\n", objSym->name, sym->name);
+  Listing("\n\nMethod: (%s %s)\n", objSym->name(), sym->name());
 }
 
 ///////////////////////////////////////////////////
@@ -243,7 +243,7 @@ ANProp::ANProp(Symbol* sp, int v) : sym(sp), val(v) {}
 size_t ANProp::size() { return 2; }
 
 void ANProp::list() {
-  ListAsCode("%-6s$%-4x\t(%s)", desc(), (SCIUWord)value(), sym->name);
+  ListAsCode("%-6s$%-4x\t(%s)", desc(), (SCIUWord)value(), sym->name());
 }
 
 void ANProp::emit(OutputFile* out) { out->WriteWord(value()); }
@@ -325,7 +325,7 @@ void ANOpUnsign::list() {
   if (!sym)
     ListArg("$%-4x", (SCIUWord)value);
   else
-    ListArg("$%-4x\t(%s)", (SCIUWord)value, sym->name ? sym->name : "");
+    ListArg("$%-4x\t(%s)", (SCIUWord)value, sym->name() ? sym->name() : "");
 }
 
 void ANOpUnsign::emit(OutputFile* out) {
@@ -353,7 +353,7 @@ void ANOpSign::list() {
   if (!sym)
     ListArg("$%-4x", (SCIUWord)value);
   else
-    ListArg("$%-4x\t(%s)", (SCIUWord)value, sym->name ? sym->name : "");
+    ListArg("$%-4x\t(%s)", (SCIUWord)value, sym->name() ? sym->name() : "");
 }
 
 void ANOpSign::emit(OutputFile* out) {
@@ -400,10 +400,10 @@ void ANOpExtern::list() {
   switch (op & ~OP_BYTE) {
     case op_callk:
     case op_callb:
-      ListArg("$%-4x\t(%s)", (SCIUWord)entry, sym->name);
+      ListArg("$%-4x\t(%s)", (SCIUWord)entry, sym->name());
       break;
     case op_calle:
-      ListArg("$%x/%x\t(%s)", (SCIUWord)module, (SCIUWord)entry, sym->name);
+      ListArg("$%x/%x\t(%s)", (SCIUWord)module, (SCIUWord)entry, sym->name());
   }
   ListWord(numArgs);
 }
@@ -455,13 +455,13 @@ size_t ANCall::size() {
 void ANCall::list() {
   ListOp(op_call);
   ListArg("$%-4x\t(%s)", SCIUWord(target->offset - (offset + size())),
-          sym->name);
+          sym->name());
   ListWord(numArgs);
 }
 
 void ANCall::emit(OutputFile* out) {
   if (!target || target->offset == UNDEFINED) {
-    Error("Undefined procedure: %s", sym->name);
+    Error("Undefined procedure: %s", sym->name());
     return;
   }
 
@@ -527,7 +527,7 @@ size_t ANVarAccess::size() { return op & OP_BYTE ? 2 : 3; }
 void ANVarAccess::list() {
   ListOp(op);
   if (sym)
-    ListArg("$%-4x\t(%s)", addr, sym->name ? sym->name : "");
+    ListArg("$%-4x\t(%s)", addr, sym->name() ? sym->name() : "");
   else
     ListArg("$%-4x", addr);
 }
@@ -574,12 +574,12 @@ size_t ANObjID::size() { return WORDSIZE; }
 
 void ANObjID::list() {
   ListOp(op);
-  ListArg("$%-4x\t(%s)", target->offset, sym->name);
+  ListArg("$%-4x\t(%s)", target->offset, sym->name());
 }
 
 void ANObjID::emit(OutputFile* out) {
   if (!sym->obj) {
-    Error("Undefined object from line %u: %s", sym->lineNum, sym->name);
+    Error("Undefined object from line %u: %s", sym->lineNum, sym->name());
     return;
   }
 
@@ -599,7 +599,7 @@ size_t ANEffctAddr::size() { return op & OP_BYTE ? 3 : 5; }
 
 void ANEffctAddr::list() {
   ListOp(op);
-  ListArg("$%-4x\t(%s)", addr, sym->name);
+  ListArg("$%-4x\t(%s)", addr, sym->name());
 }
 
 void ANEffctAddr::emit(OutputFile* out) {
@@ -645,7 +645,7 @@ size_t ANSuper::size() { return op & OP_BYTE ? 4 : 5; }
 
 void ANSuper::list() {
   ListOp(op);
-  ListArg("$%-4x\t(%s)", classNum, sym->name);
+  ListArg("$%-4x\t(%s)", classNum, sym->name());
   ListWord(numArgs);
 }
 

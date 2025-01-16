@@ -122,7 +122,7 @@ void WritePropOffsets() {
     }
     cp = theSym->obj;
     if (!LookupTok() || !(sel = cp->findSelector(&tokSym))) {
-      Error("Not a selector for class %s: %s", cp->sym->name, symStr);
+      Error("Not a selector for class %s: %s", cp->sym->name(), symStr);
       continue;
     }
 
@@ -141,7 +141,7 @@ static void WriteSelector() {
   fprintf(fp, "(selectors\n");
   for (Symbol* sp = syms.selectorSymTbl->firstSym(); sp;
        sp = syms.selectorSymTbl->nextSym())
-    fprintf(fp, "\t%-20s %d\n", sp->name, sp->val);
+    fprintf(fp, "\t%-20s %d\n", sp->name(), sp->val);
 
   fprintf(fp, ")\n");
 
@@ -164,7 +164,7 @@ static void WriteClassDefs() {
             "	class# %d\n"
             "	super# %d\n"
             "	file# \"%s\"\n\n",
-            cp->sym->name, (SCIUWord)cp->script, (SCIUWord)cp->num,
+            cp->sym->name(), (SCIUWord)cp->script, (SCIUWord)cp->num,
             (SCIUWord)cp->super, cp->file);
 
     // Get a pointer to the class' super-class.
@@ -176,7 +176,7 @@ static void WriteClassDefs() {
     Selector* tp;
     for (tp = cp->selectors; tp; tp = tp->next) {
       if (IsProperty(tp) && sp->selectorDiffers(tp))
-        fprintf(fp, "\t\t%s %d\n", tp->sym->name, tp->val);
+        fprintf(fp, "\t\t%s %d\n", tp->sym->name(), tp->val);
     }
     fprintf(fp, "\t)\n\n");
 
@@ -184,7 +184,7 @@ static void WriteClassDefs() {
     fprintf(fp, "\t(methods\n");
     for (tp = cp->selectors; tp; tp = tp->next)
       if (IsMethod(tp) && sp->selectorDiffers(tp))
-        fprintf(fp, "\t\t%s\n", tp->sym->name);
+        fprintf(fp, "\t\t%s\n", tp->sym->name());
     fprintf(fp, "\t)\n");
 
     fprintf(fp, ")\n\n\n");
@@ -209,7 +209,7 @@ static void WriteClasses() {
 static void PrintSubClasses(Class* sp, int level, FILE* fp) {
   // Print out this class' information.
   fprintf(fp, "%.*s%-*s;%s\n", 2 * level, "               ", 20 - 2 * level,
-          sp->sym->name, sp->file);
+          sp->sym->name(), sp->file);
 
   // Print information about this class' subclasses.
   ++level;
@@ -254,7 +254,7 @@ static void WriteSelectorVocab() {
   for (sp = syms.selectorSymTbl->firstSym(); sp;
        sp = syms.selectorSymTbl->nextSym()) {
     tbl[sp->val + 1] = SCIUWord(ofs);
-    ofs += out.Write(sp->name);
+    ofs += out.Write(sp->name());
   }
 
   // Seek back to the table's position in the file and write it out.

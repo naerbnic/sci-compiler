@@ -29,7 +29,7 @@ Symbol* LookupTok() {
 
   if (symType == S_IDENT && (theSym = syms.lookup(symStr))) {
     tokSym = *theSym;
-    tokSym.name = 0;
+    tokSym.clearName();
   } else
     theSym = 0;
 
@@ -44,7 +44,7 @@ Symbol* LookupTok() {
       //	selector list).
       if (!(sn = curObj->findSelector(theSym))) {
         if (!inParmList) {
-          Error("Not a selector for current class/object: %s", theSym->name);
+          Error("Not a selector for current class/object: %s", theSym->name());
           theSym = 0;
         }
 

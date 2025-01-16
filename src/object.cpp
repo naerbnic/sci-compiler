@@ -124,7 +124,7 @@ void DoClass() {
 
     //	make sure the symbol is in the class symbol table
     if (sym->type != S_CLASS) {
-      syms.remove(sym->name);
+      syms.remove(sym->name());
       sym->type = S_CLASS;
       syms.classSymTbl->add(sym);
     }
@@ -142,7 +142,7 @@ void DoClass() {
 
   Class* super = (Class*)superSym->obj;
   if (superNum != OBJECTNUM && superNum != super->num)
-    Fatal("Can't change superclass of %s", sym->name);
+    Fatal("Can't change superclass of %s", sym->name());
 
   if (superNum != OBJECTNUM)
     theClass->dupSelectors(super);
@@ -183,7 +183,7 @@ void Instance() {
     objSym = syms.installLocal(symStr, S_OBJ);
   else if (symType == S_IDENT || symType == S_OBJ) {
     objSym->type = symType = S_OBJ;
-    if (objSym->obj) Error("Duplicate instance name: %s", objSym->name);
+    if (objSym->obj) Error("Duplicate instance name: %s", objSym->name());
   } else {
     Severe("Redefinition of %s.", symStr);
     return;
@@ -280,7 +280,7 @@ static void InstanceBody(Object* obj) {
   // name of the symbol.
   if (!noAutoName && nameSelector && nameSelector->val == -1) {
     nameSelector->tag = T_TEXT;
-    nameSelector->val = text.find(obj->sym->name);
+    nameSelector->val = text.find(obj->sym->name());
   }
 
   // The CLASSBIT of the '-info-' property is set for a class.  If this
@@ -375,9 +375,9 @@ void MethodDef(Object* obj) {
 
     Selector* sn = obj->findSelector(sym);
     if (sym->type != S_SELECT || IsProperty(sn))
-      Error("Not a method: %s", sym->name);
+      Error("Not a method: %s", sym->name());
     else if (sym->an)
-      Error("Method already defined: %s", sym->name);
+      Error("Method already defined: %s", sym->name());
     else {
       // Compile the code for this method.
       ExprList(node, OPTIONAL);

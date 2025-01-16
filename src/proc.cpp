@@ -90,7 +90,7 @@ static PNode* _CallDef(sym_t theType) {
 
     case S_SELECT:
       if (!theProc || !(sn = curObj->findSelector(theProc)) || IsProperty(sn)) {
-        Severe("%s is not a method for class %s", symStr, curObj->sym->name);
+        Severe("%s is not a method for class %s", symStr, curObj->sym->name());
         return 0;
       }
       break;

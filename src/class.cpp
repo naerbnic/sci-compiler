@@ -111,7 +111,7 @@ void DefineClass() {
   strptr superFile = newStr(symStr);
 
   Class* super = FindClass(superNum);
-  if (!super) Fatal("Can't find superclass for %s\n", sym->name);
+  if (!super) Fatal("Can't find superclass for %s\n", sym->name());
   Class* theClass = new Class(super);
   sym->obj = theClass;
   theClass->super = superNum;
@@ -123,7 +123,8 @@ void DefineClass() {
   if (classNum >= 0 && classes[classNum] == 0)
     classes[classNum] = theClass;
   else {
-    Severe("%s is already class #%d.", classes[classNum]->sym->name, classNum);
+    Severe("%s is already class #%d.", classes[classNum]->sym->name(),
+           classNum);
     return;
   }
 
