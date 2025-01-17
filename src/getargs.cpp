@@ -80,9 +80,9 @@ int getargs(int argc, char **argv) {
   char *slashPtr = strrchr(argv[0], '\\');
 
   if (slashPtr)
-    gProgName = strdup(slashPtr + 1);
+    gProgName = newStr(slashPtr + 1);
   else
-    gProgName = strdup(argv[0]);
+    gProgName = newStr(argv[0]);
 
   strlwr(gProgName);
 

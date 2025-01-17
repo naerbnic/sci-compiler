@@ -27,7 +27,8 @@ static int InitialValue(VarList& theVars, Var* vp, int arraySize);
 
 static Public* publicList = NULL;
 static int publicMax = -1;
-static constexpr std::string_view tooManyVars = "Too many variables. Max is %d.\n";
+static constexpr std::string_view tooManyVars =
+    "Too many variables. Max is %d.\n";
 
 namespace {
 
@@ -70,8 +71,8 @@ void Define() {
     GetRest();
 
     if (!newSym) {
-      char* newString = strdup(symStr);
-      char* oldString = strdup(sym->str());
+      char* newString = newStr(symStr);
+      char* oldString = newStr(sym->str());
 
       // trim the two strings
       trimstr(newString);

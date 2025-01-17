@@ -708,7 +708,7 @@ void ANVars::emit(OutputFile* out) {
 //////////////////////////////////////////////////////////////////////////////
 
 ANFileName::ANFileName(const char* name)
-    : ANOpCode(op_fileName), name(strdup(name)) {}
+    : ANOpCode(op_fileName), name(newStr(name)) {}
 
 ANFileName::~ANFileName() { free((void*)name); }
 
