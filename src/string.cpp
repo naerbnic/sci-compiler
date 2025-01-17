@@ -59,10 +59,16 @@ void trimstr(char *str) {
 }
 
 // this function mimics strdup
-char *newStr(const char *str) {
-  if (str) return strdup(str);
+char *newStr(std::string_view str) {
+  if (!str.data()) return nullptr;
 
-  return NULL;
+  // We use malloc here instead of new, as strdup documents that they can be
+  // freed with free.
+
+  char *newStr = (char *)malloc(str.size() + 1);
+  std::copy(str.begin(), str.end(), newStr);
+  newStr[str.size()] = 0;
+  return newStr;
 }
 
 std::string vstringf(const char *fmt, va_list args) {
