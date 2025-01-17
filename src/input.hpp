@@ -6,12 +6,14 @@
 
 #include <cstdio>
 #include <memory>
+#include <string>
+#include <string_view>
 
 #include "sc.hpp"
 
 struct InputSource {
   InputSource();
-  InputSource(char* fileName, int lineNum = 0);
+  InputSource(std::string_view fileName, int lineNum = 0);
   virtual ~InputSource() {}
 
   InputSource& operator=(InputSource&);
@@ -20,7 +22,7 @@ struct InputSource {
   virtual bool endInputLine() = 0;
 
   std::shared_ptr<InputSource> next;
-  strptr fileName;
+  std::string fileName;
   int lineNum;
   strptr ptr;
 };
@@ -65,7 +67,7 @@ void SetTokenEnd();
 
 struct StrList;
 
-extern char curFile[];
+extern std::string curFile;
 extern int curLine;
 extern std::shared_ptr<InputSource> curSourceFile;
 extern StrList* includePath;

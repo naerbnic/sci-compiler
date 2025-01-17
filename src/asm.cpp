@@ -4,6 +4,7 @@
 #include "asm.hpp"
 
 #include <cstdlib>
+#include <absl/strings/str_format.h>
 
 #include "anode.hpp"
 #include "define.hpp"
@@ -80,7 +81,7 @@ void Assemble() {
     exit(1);
   }
   FILE* infoFile = fopen(infoFileName, "wb");
-  fprintf(infoFile, "%s\n", curSourceFile->fileName);
+  absl::FPrintF(infoFile, "%s\n", curSourceFile->fileName);
   fclose(infoFile);
 
   // Now generate object code.

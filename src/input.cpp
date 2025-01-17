@@ -16,7 +16,7 @@
 #include "text.hpp"
 #include "token.hpp"
 
-char curFile[_MAX_PATH + 1];
+std::string curFile;
 int curLine;
 std::shared_ptr<InputSource> curSourceFile;
 StrList* includePath;
@@ -32,7 +32,7 @@ InputSource::InputSource() : fileName(0), lineNum(0) {
   curLine = lineNum;
 }
 
-InputSource::InputSource(char* fileName, int lineNum)
+InputSource::InputSource(std::string_view fileName, int lineNum)
     :
 
       fileName(fileName),
@@ -49,17 +49,11 @@ InputSource& InputSource::operator=(InputSource& s) {
 }
 
 InputFile::InputFile(FILE* fp, const char* name)
-    :
-
-      InputSource(newStr(name)),
-      file(fp) {
-  strcpy(curFile, fileName);
+    : InputSource(newStr(name)), file(fp) {
+  curFile = fileName;
 }
 
-InputFile::~InputFile() {
-  delete[] fileName;
-  fclose(file);
-}
+InputFile::~InputFile() { fclose(file); }
 
 bool InputFile::incrementPastNewLine(const char*& ip) {
   if (GetNewLine()) {
@@ -71,10 +65,7 @@ bool InputFile::incrementPastNewLine(const char*& ip) {
 
 bool InputFile::endInputLine() { return GetNewLine(); }
 
-InputString::InputString(const char* str)
-    :
-
-      InputSource(curFile, curLine) {
+InputString::InputString(const char* str) : InputSource(curFile, curLine) {
   ptr = str;
 }
 
@@ -143,7 +134,7 @@ bool CloseInputSource() {
   }
 
   if (is) {
-    strcpy(curFile, is->fileName);
+    curFile = is->fileName;
     curLine = is->lineNum;
   }
 

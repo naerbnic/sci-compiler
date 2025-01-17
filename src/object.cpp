@@ -161,7 +161,7 @@ void DoClass() {
   if (sn) sn->val = super->num;
 
   theClass->script = script;
-  theClass->file = newStr(theFile->fileName);
+  theClass->file = newStr(theFile->fileName.c_str());
 
   // Get any properties, methods, or procedures for this class.
   InstanceBody(theClass);
