@@ -27,6 +27,10 @@ static char inputLine[512];
 
 static void SetInputSource(const std::shared_ptr<InputSource>& nis);
 
+static FILE* FOpen(std::string_view path, const char* mode) {
+  return fopen(std::string(path).c_str(), mode);
+}
+
 InputSource::InputSource() : fileName(0), lineNum(0) {
   tokSym.setStr(nullptr);
   curLine = lineNum;
@@ -48,8 +52,8 @@ InputSource& InputSource::operator=(InputSource& s) {
   return *this;
 }
 
-InputFile::InputFile(FILE* fp, const char* name)
-    : InputSource(newStr(name)), file(fp) {
+InputFile::InputFile(FILE* fp, std::string_view name)
+    : InputSource(name), file(fp) {
   curFile = fileName;
 }
 
@@ -84,19 +88,19 @@ bool InputString::incrementPastNewLine(const char*& ip) {
   return True;
 }
 
-std::shared_ptr<InputSource> OpenFileAsInput(strptr fileName, bool required) {
+std::shared_ptr<InputSource> OpenFileAsInput(std::string_view fileName,
+                                             bool required) {
   FILE* file;
   std::shared_ptr<InputSource> theFile;
-  char newName[_MAX_PATH + 1];
+  std::string newName;
   StrList* ip;
 
   // Try to open the file.  If we can't, try opening it in each of
   // the directories in the include path.
   ip = includePath;
-  *newName = '\0';
-  for (file = fopen(fileName, "r"); !file && ip; ip = ip->next) {
-    MakeName(newName, ip->str, fileName, fileName);
-    file = fopen(newName, "r");
+  for (file = FOpen(fileName, "r"); !file && ip; ip = ip->next) {
+    newName = MakeName(ip->str, fileName, fileName);
+    file = fopen(newName.c_str(), "r");
   }
 
   if (!file) {

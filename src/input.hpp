@@ -28,7 +28,7 @@ struct InputSource {
 };
 
 struct InputFile : InputSource {
-  InputFile(FILE*, const char* name);
+  InputFile(FILE*, std::string_view name);
   ~InputFile();
 
   bool incrementPastNewLine(const char*&) override;
@@ -52,7 +52,7 @@ struct InputString : InputSource {
 bool CloseInputSource();
 void FreeIncludePath();
 bool GetNewInputLine();
-std::shared_ptr<InputSource> OpenFileAsInput(strptr, bool);
+std::shared_ptr<InputSource> OpenFileAsInput(std::string_view, bool);
 void SetIncludePath();
 void SetStringInput(strptr);
 void SetInputToCurrentLine();

@@ -111,7 +111,7 @@ struct OpStr {
 void OpenListFile(const char* sourceFileName) {
   if (!listCode) return;
 
-  MakeName(listName, (char*)sourceFileName, (char*)sourceFileName, ".sl");
+  MakeName(listName, sourceFileName, sourceFileName, ".sl");
   if (!(listFile = fopen(listName, "wt")))
     Panic("Can't open %s for listing", listName);
 

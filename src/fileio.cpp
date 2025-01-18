@@ -8,6 +8,8 @@
 
 #include "fileio.hpp"
 
+#include <string_view>
+
 #include "string.hpp"
 
 //
@@ -37,6 +39,24 @@ void MakeName(char *dest, const char *dir, const char *name, const char *ext) {
 
   // let's put the extension if any different
   if (name != ext) strcat(dest, ext);
+}
+
+std::string MakeName(std::string_view dir, std::string_view name,
+                     std::string_view ext) {
+  std::string result;
+
+  result.append(dir);
+  if (dir != name) {
+    if (!dir.empty() && (dir.back() != '\\') && (dir.back() != ':') &&
+        (name.front() != '\\')) {
+      result.append("\\");
+    }
+    result.append(name);
+  }
+
+  if (name != ext) result.append(ext);
+
+  return result;
 }
 
 //
