@@ -37,10 +37,17 @@ struct Compiler {
   CodeList* hunkList;
 } extern* sc;
 
+// The target SCI architecture for the scripts.
+enum class SciTargetArch {
+  SCI_1_1,
+  SCI_2,
+};
+
 extern bool includeDebugInfo;
 extern char outDir[];
 extern char progName[];
 extern int script;
 extern bool verbose;
+extern SciTargetArch targetArch;
 
 #endif

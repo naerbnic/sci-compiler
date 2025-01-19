@@ -37,12 +37,14 @@ bool includeDebugInfo;
 Compiler *sc;
 int script;
 bool verbose;
+SciTargetArch targetArch = SciTargetArch::SCI_2;
 
 static int totalErrors;
 
 static void CompileFile(strptr);
 static void ShowInfo();
 static void InstallCommandLineDefine(char *);
+static void SetTargetArchitecture(char *);
 
 //	used by getargs
 static strptr outDirPtr;
@@ -63,6 +65,8 @@ std::vector<Arg> switches = {
     {'v', &verbose, "verbose output"},
     {'w', &highByteFirst, "output words high-byte first (for M68000)"},
     {'z', &noOptimize, "turn off optimization"},
+    {'t', SetTargetArchitecture,
+     "Set the target architecture. Valid values are: SCI_1_1, SCI_2"},
 };
 
 #if !defined(WINDOWS)
@@ -237,4 +241,14 @@ static void InstallCommandLineDefine(char *str) {
   Symbol *sym = syms.installGlobal(token, S_DEFINE);
   token = strtok(0, "");
   sym->setStr(newStr(token ? token : "1"));
+}
+
+static void SetTargetArchitecture(char *str) {
+  if (strcmp(str, "SCI_1_1") == 0) {
+    targetArch = SciTargetArch::SCI_1_1;
+  } else if (strcmp(str, "SCI_2") == 0) {
+    targetArch = SciTargetArch::SCI_2;
+  } else {
+    Panic("Invalid target architecture: %s", str);
+  }
 }

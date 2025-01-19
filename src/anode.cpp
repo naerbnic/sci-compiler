@@ -35,6 +35,46 @@ static bool canOptimizeTransfer(size_t a, size_t b) {
   return (larger - smaller) < 128;
 }
 
+// In SCI 1.1 and earlier, Calls and Sends wrote the number of args as
+// one byte.  In SCI 2, it's two bytes.  These functions abstract those
+// architecture differences out.
+
+static int NumArgsSize() {
+  switch (targetArch) {
+    case SciTargetArch::SCI_1_1:
+      return 1;
+      break;
+
+    case SciTargetArch::SCI_2:
+      return 2;
+      break;
+  }
+}
+
+static void ListNumArgs(int n) {
+  switch (targetArch) {
+    case SciTargetArch::SCI_1_1:
+      ListByte(n);
+      break;
+
+    case SciTargetArch::SCI_2:
+      ListWord(n);
+      break;
+  }
+}
+
+static void WriteNumArgs(OutputFile* out, int n) {
+  switch (targetArch) {
+    case SciTargetArch::SCI_1_1:
+      out->WriteByte(n);
+      break;
+
+    case SciTargetArch::SCI_2:
+      out->WriteWord(n);
+      break;
+  }
+}
+
 ///////////////////////////////////////////////////
 // Class ANReference
 ///////////////////////////////////////////////////
@@ -384,12 +424,14 @@ ANOpExtern::ANOpExtern(Symbol* s, int32_t m, uint32_t e)
 }
 
 size_t ANOpExtern::size() {
+  int arg_size = NumArgsSize();
+
   switch (op & ~OP_BYTE) {
     case op_callk:
     case op_callb:
-      return op & OP_BYTE ? 4 : 5;
+      return (op & OP_BYTE ? 2 : 3) + arg_size;
     case op_calle:
-      return op & OP_BYTE ? 5 : 7;
+      return (op & OP_BYTE ? 3 : 4) + arg_size;
     default:
       return 0;
   }
@@ -405,7 +447,7 @@ void ANOpExtern::list() {
     case op_calle:
       ListArg("$%x/%x\t(%s)", (SCIUWord)module, (SCIUWord)entry, sym->name());
   }
-  ListWord(numArgs);
+  ListNumArgs(numArgs);
 }
 
 void ANOpExtern::emit(OutputFile* out) {
@@ -421,8 +463,7 @@ void ANOpExtern::emit(OutputFile* out) {
     out->WriteByte(entry);
   else
     out->WriteWord(entry);
-
-  out->WriteWord(numArgs);
+  WriteNumArgs(out, numArgs);
 }
 
 ///////////////////////////////////////////////////
@@ -436,19 +477,21 @@ ANCall::ANCall(Symbol* s) {
 }
 
 size_t ANCall::size() {
+  int arg_size = NumArgsSize();
+
   if (!shrink)
-    return op & OP_BYTE ? 4 : 5;
+    return (op & OP_BYTE ? 2 : 3) + arg_size;
   else if (!sym->loc() || target->offset == UNDEFINED)
-    return 5;
+    return 3 + arg_size;
 #if defined(OPTIMIZE_TRANSFERS)
   else if (canOptimizeTransfer(target->offset, offset + 5)) {
     op |= OP_BYTE;
-    return 4;
+    return 2 + arg_size;
   }
 #endif
   else {
     op &= ~OP_BYTE;
-    return 5;
+    return 3 + arg_size;
   }
 }
 
@@ -456,7 +499,7 @@ void ANCall::list() {
   ListOp(op_call);
   ListArg("$%-4x\t(%s)", SCIUWord(target->offset - (offset + size())),
           sym->name());
-  ListWord(numArgs);
+  ListNumArgs(numArgs);
 }
 
 void ANCall::emit(OutputFile* out) {
@@ -471,8 +514,7 @@ void ANCall::emit(OutputFile* out) {
     out->WriteByte(n);
   else
     out->WriteWord(n);
-
-  out->WriteWord(numArgs);
+  WriteNumArgs(out, numArgs);
 }
 
 ///////////////////////////////////////////////////
@@ -620,16 +662,16 @@ void ANEffctAddr::emit(OutputFile* out) {
 
 ANSend::ANSend(uint32_t o) : ANOpCode(o) {}
 
-size_t ANSend::size() { return 3; }
+size_t ANSend::size() { return 1 + NumArgsSize(); }
 
 void ANSend::list() {
   ListOp(op);
-  ListWord(numArgs);
+  ListNumArgs(numArgs);
 }
 
 void ANSend::emit(OutputFile* out) {
   out->WriteOp(op);
-  out->WriteWord(numArgs);
+  WriteNumArgs(out, numArgs);
 }
 
 ///////////////////////////////////////////////////
@@ -641,12 +683,12 @@ ANSuper::ANSuper(Symbol* s, uint32_t c)
   if (classNum < 256) op |= OP_BYTE;
 }
 
-size_t ANSuper::size() { return op & OP_BYTE ? 4 : 5; }
+size_t ANSuper::size() { return (op & OP_BYTE ? 2 : 3) + NumArgsSize(); }
 
 void ANSuper::list() {
   ListOp(op);
   ListArg("$%-4x\t(%s)", classNum, sym->name());
-  ListWord(numArgs);
+  ListNumArgs(numArgs);
 }
 
 void ANSuper::emit(OutputFile* out) {
@@ -655,7 +697,7 @@ void ANSuper::emit(OutputFile* out) {
     out->WriteByte(classNum);
   else
     out->WriteWord(classNum);
-  out->WriteWord(numArgs);
+  WriteNumArgs(out, numArgs);
 }
 
 ///////////////////////////////////////////////////
@@ -713,26 +755,66 @@ ANFileName::ANFileName(const char* name)
 ANFileName::~ANFileName() { free((void*)name); }
 
 void ANFileName::list() {
-  ListOffset();
-  Listing("file");
+  switch (targetArch) {
+    case SciTargetArch::SCI_1_1:
+      break;
+    case SciTargetArch::SCI_2:
+      ListOffset();
+      Listing("file");
+      break;
+  }
 }
 
 void ANFileName::emit(OutputFile* out) {
-  out->WriteOp(op);
-  out->Write(name, strlen(name) + 1);
+  switch (targetArch) {
+    case SciTargetArch::SCI_1_1:
+      break;
+    case SciTargetArch::SCI_2:
+      out->WriteOp(op);
+      out->Write(name, strlen(name) + 1);
+      break;
+  }
 }
 
-size_t ANFileName::size() { return 1 + strlen(name) + 1; }
+size_t ANFileName::size() {
+  switch (targetArch) {
+    case SciTargetArch::SCI_1_1:
+      return 0;
+    case SciTargetArch::SCI_2:
+      return 1 + strlen(name) + 1;
+  }
+}
 
 ////////////////////////////////////////////////////////////////////////////
 
 ANLineNum::ANLineNum(int num) : ANOpCode(op_lineNum), num(num) {}
 
-void ANLineNum::list() { ListSourceLine(num); }
-
-void ANLineNum::emit(OutputFile* out) {
-  out->WriteOp(op);
-  out->WriteWord(num);
+void ANLineNum::list() {
+  switch (targetArch) {
+    case SciTargetArch::SCI_1_1:
+      break;
+    case SciTargetArch::SCI_2:
+      ListSourceLine(num);
+      break;
+  }
 }
 
-size_t ANLineNum::size() { return 1 + sizeof(SCIWord); }
+void ANLineNum::emit(OutputFile* out) {
+  switch (targetArch) {
+    case SciTargetArch::SCI_1_1:
+      break;
+    case SciTargetArch::SCI_2:
+      out->WriteOp(op);
+      out->WriteWord(num);
+      break;
+  }
+}
+
+size_t ANLineNum::size() {
+  switch (targetArch) {
+    case SciTargetArch::SCI_1_1:
+      return 0;
+    case SciTargetArch::SCI_2:
+      return 1 + sizeof(SCIWord);
+  }
+}
