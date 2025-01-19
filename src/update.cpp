@@ -70,8 +70,7 @@ void WriteClassTbl() {
   // Now walk through the class symbol table, entering the script
   // number of each class in its proper place in the table.
   int index;
-  for (Symbol* sym = syms.classSymTbl->firstSym(); sym;
-       sym = syms.classSymTbl->nextSym()) {
+  for (auto const& [dummy, sym] : *syms.classSymTbl) {
     if (sym->obj()->num != -1) {
       classTbl[sym->obj()->num].objID = 0;
       classTbl[sym->obj()->num].scriptNum = SCIUWord(sym->obj()->script);
@@ -139,8 +138,7 @@ static void WriteSelector() {
   fseek(fp, 0L, SEEK_SET);
 
   fprintf(fp, "(selectors\n");
-  for (Symbol* sp = syms.selectorSymTbl->firstSym(); sp;
-       sp = syms.selectorSymTbl->nextSym())
+  for (auto const& [dummy, sp] : *syms.selectorSymTbl)
     fprintf(fp, "\t%-20s %d\n", sp->name(), sp->val());
 
   fprintf(fp, ")\n");
@@ -220,7 +218,6 @@ static void PrintSubClasses(Class* sp, int level, FILE* fp) {
 static void WriteSelectorVocab() {
   static char badSelMsg[] = "BAD SELECTOR";
 
-  Symbol* sp;
   SCIUWord* tbl;
   size_t ofs;
   uint32_t tblLen;
@@ -251,8 +248,7 @@ static void WriteSelectorVocab() {
 
   // Now write out the names of all the other selectors and put their
   // offsets into the table.
-  for (sp = syms.selectorSymTbl->firstSym(); sp;
-       sp = syms.selectorSymTbl->nextSym()) {
+  for (auto const& [dummy, sp] : *syms.selectorSymTbl) {
     tbl[sp->val() + 1] = SCIUWord(ofs);
     ofs += out.Write(sp->name());
   }

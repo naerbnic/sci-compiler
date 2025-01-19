@@ -4,7 +4,7 @@
 #ifndef SYMTBL_HPP
 #define SYMTBL_HPP
 
-#include <absl/container/flat_hash_map.h>
+#include <absl/container/btree_map.h>
 
 #include <memory>
 
@@ -32,26 +32,25 @@ class SymTbl {
   // moved to 'inactiveList' if they are needed to generate a listing later
   // or are deleted if no listing has been requested.
 
+  using SymbolMap = absl::btree_map<std::string, std::unique_ptr<Symbol>>;
+
  public:
+  ~SymTbl();
+
+  using iterator = SymbolMap::iterator;
+
   Symbol* add(Symbol* sym);
   // Add the Symbol 'sym' to this table.
-
-  Symbol* firstSym();
-  // Return the first symbol in the table, or 0 if the table
-  // is empty.
 
   Symbol* lookup(strptr name);
   // Return a pointer to the symbol with name 'name' if it is in
   // this table, 0 otherwise.
 
-  Symbol* nextSym();
-  // Return the next symbol in the table, or 0 if at the end
-  // of the table.
+  iterator begin() { return symbols.begin(); }
+  iterator end() { return symbols.end(); }
 
  private:
-  using SymbolMap = absl::flat_hash_map<std::string, std::unique_ptr<Symbol>>;
   SymTbl(int size = ST_MEDIUM, bool retain = false);
-  ~SymTbl();
 
   Symbol* install(strptr name, sym_t type);
   // Install the identifier 'name' as a Symbol of type 'type'.
@@ -72,10 +71,8 @@ class SymTbl {
   // Make sure that all pointers in symbols in the symbol table
   //	refering to ANodes is cleared.
 
-  SymTbl* next;  // pointer to next symbol table
   SymbolMap symbols;
   bool keep;  // should this table be kept for listings when out of scope?
-  SymbolMap::iterator curSym;  // current Symbol in firstSym()/nextSym()
 
   friend class SymTbls;
 };
@@ -98,7 +95,9 @@ class SymTbls {
   // Delete the symbol with name 'name' from the SymTbls in activeList
   // Return True if the symbol was present, False otherwise.
 
-  Symbol* installLocal(strptr n, sym_t t) { return activeList->install(n, t); }
+  Symbol* installLocal(strptr n, sym_t t) {
+    return activeList.front()->install(n, t);
+  }
   Symbol* installModule(strptr n, sym_t t) {
     return moduleSymTbl->install(n, t);
   }
@@ -127,14 +126,12 @@ class SymTbls {
   SymTbl* moduleSymTbl;
 
  private:
-  void unlink(SymTbl*);
-  // Unlink this table from the active symbol table list.
-
-  SymTbl* activeList;
-  SymTbl* inactiveList;
+  std::deque<std::unique_ptr<SymTbl>> activeList;
+  std::deque<std::unique_ptr<SymTbl>> inactiveList;
 
   SymTbl* globalSymTbl;
+};
 
-} extern syms;
+extern SymTbls syms;
 
 #endif

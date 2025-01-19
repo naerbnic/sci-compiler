@@ -5,6 +5,8 @@
 
 #include <string.h>
 
+#include <memory>
+
 #include "listing.hpp"
 #include "object.hpp"
 #include "sc.hpp"
@@ -20,7 +22,7 @@ void SymTbl::clearAsmPtrs() {
   // Make sure that all pointers to assembly nodes (the an element of the
   // structure) are cleared in a symbol table.
 
-  for (Symbol* sym = firstSym(); sym; sym = nextSym()) sym->clearAn();
+  for (auto const& [dummy, sym] : symbols) sym->clearAn();
 }
 
 Symbol* SymTbl::install(strptr name, sym_t type) {
@@ -76,25 +78,6 @@ bool SymTbl::del(strptr name) {
   return symbols.erase(std::string_view(name)) > 0;
 }
 
-Symbol* SymTbl::firstSym() {
-  // Open a symbol table for sequential access to its symbols using
-  //	nextSym().  Return the first symbol in the table, or 0 if the table
-  // is empty.
-  curSym = symbols.begin();
-  if (curSym == symbols.end()) return nullptr;
-  return curSym->second.get();
-}
-
-Symbol* SymTbl::nextSym() {
-  if (curSym == symbols.end()) return nullptr;
-
-  ++curSym;
-
-  if (curSym == symbols.end()) return nullptr;
-
-  return curSym->second.get();
-}
-
 ////////////////////////////////////////////////////////////////////////////
 
 SymTbls::SymTbls()
@@ -111,10 +94,10 @@ SymTbls::SymTbls()
 SymTbl* SymTbls::add(int size, bool keep) {
   // Add a new symbol table to the front of the active list
 
-  SymTbl* sp = new SymTbl(size, keep);
-  sp->next = activeList;
-  activeList = sp;
-  return sp;
+  auto sp = std::unique_ptr<SymTbl>(new SymTbl(size, keep));
+  auto* sp_ptr = sp.get();
+  activeList.push_front(std::move(sp));
+  return sp_ptr;
 }
 
 void SymTbls::clearAsmPtrs() {
@@ -127,34 +110,20 @@ Symbol* SymTbls::lookup(strptr name) {
   // Search the active symbol tables for the symbol whose name is pointed
   // to by 'name'.  Return a pointer to the symbol if found, NULL otherwise.
 
-  for (SymTbl* tp = activeList; tp; tp = tp->next) {
+  for (auto const& tp : activeList) {
     Symbol* sp = tp->lookup(name);
     if (sp) return sp;
   }
 
-  return 0;
+  return nullptr;
 }
 
 void SymTbls::delFreeTbls() {
   // Delete all symbol tables which do not have their 'keep' flag set.
-
-  SymTbl* sp;
-  SymTbl* ptr;
-
-  for (sp = activeList; sp; sp = ptr) {
-    ptr = sp->next;
-    if (!sp->keep) {
-      unlink(sp);
-      delete sp;
-    }
-  }
-
-  // Delete inactive symbol tables.
-  for (sp = inactiveList; sp; sp = ptr) {
-    ptr = sp->next;
-    delete sp;
-  }
-  inactiveList = 0;
+  auto new_end = std::remove_if(activeList.begin(), activeList.end(),
+                                [](auto& sp) { return !sp->keep; });
+  activeList.erase(new_end, activeList.end());
+  inactiveList.clear();
 }
 
 bool SymTbls::del(strptr name) {
@@ -162,10 +131,11 @@ bool SymTbls::del(strptr name) {
   // is pointed to by 'name'.  If it is found, delete the symbol
   // and return True, else return False.
 
-  for (SymTbl* tp = activeList; tp; tp = tp->next)
-    if (tp->del(name)) return True;
+  for (auto const& tp : activeList) {
+    if (tp->del(name)) return true;
+  }
 
-  return False;
+  return false;
 }
 
 Symbol* SymTbls::remove(strptr name) {
@@ -173,7 +143,7 @@ Symbol* SymTbls::remove(strptr name) {
   // to by 'name'.  Remove it and return a pointer to the symbol if found,
   // return 0 otherwise.
 
-  for (SymTbl* tp = activeList; tp; tp = tp->next) {
+  for (auto& tp : activeList) {
     Symbol* sp = tp->remove(name);
     if (sp) return sp;
   }
@@ -184,37 +154,14 @@ Symbol* SymTbls::remove(strptr name) {
 void SymTbls::deactivate(SymTbl* tbl) {
   // Add this symbol table to the inactive list.
 
-  // Remove the symbol table from the symbol table list.
-  unlink(tbl);
+  auto it = std::find_if(activeList.begin(), activeList.end(),
+                         [tbl](auto& sp) { return sp.get() == tbl; });
+  if (it == activeList.end()) return;
 
-  if (!listCode)
-    delete tbl;
+  std::unique_ptr<SymTbl> owned_tbl = std::move(*it);
+  activeList.erase(it);
 
-  else {
-    // See if the table is already in the inactive list.
-    SymTbl* tp;
-    for (tp = inactiveList; tp && tp != tbl; tp = tp->next);
-
-    // If the table is not in the inactive list, add it.
-    if (!tp) {
-      tbl->next = inactiveList;
-      inactiveList = tbl;
-    }
-  }
-}
-
-void SymTbls::unlink(SymTbl* tbl) {
-  // Unlink this symbol table from the active list.
-
-  if (tbl == activeList)
-    activeList = tbl->next;
-
-  else {
-    // Search for the symbol table preceeding this one in the list.
-    SymTbl* tp;
-    for (tp = activeList; tp && tp->next != tbl; tp = tp->next);
-
-    // Link around this table.
-    if (tp) tp->next = tbl->next;
+  if (listCode) {
+    inactiveList.push_front(std::move(owned_tbl));
   }
 }

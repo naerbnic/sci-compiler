@@ -28,9 +28,12 @@ Symbol::~Symbol() {
       delete ext_;
       break;
 
-    case S_OBJ:
+    case S_OBJ: {
+      // OBJ_SELF and OBJ_SUPER are special values that should not be deleted.
+      if (val_ == OBJ_SELF || val_ == OBJ_SUPER) break;
       delete obj_;
       break;
+    }
 
     default:
       break;

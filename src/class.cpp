@@ -222,8 +222,7 @@ int GetClassNumber(Class* theClass) {
 }
 
 Class* FindClass(int n) {
-  for (Symbol* sp = syms.classSymTbl->firstSym(); sp;
-       sp = syms.classSymTbl->nextSym())
+  for (auto const& [dummy, sp] : *syms.classSymTbl)
     if (sp->obj() && sp->obj()->num == n) return (Class*)sp->obj();
 
   return 0;
@@ -232,13 +231,12 @@ Class* FindClass(int n) {
 Class* NextClass(int n) {
   // Return a pointer to the class whose class number is the next after n.
 
-  Symbol* sp;
   Object* cp;
   int m;
 
   cp = 0;
   m = 0x7fff;
-  for (sp = syms.classSymTbl->firstSym(); sp; sp = syms.classSymTbl->nextSym())
+  for (auto const& [dummy, sp] : *syms.classSymTbl)
     if (sp->obj()->num > n && sp->obj()->num < m) {
       cp = sp->obj();
       m = cp->num;

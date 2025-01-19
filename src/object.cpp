@@ -124,7 +124,7 @@ void DoClass() {
 
     //	make sure the symbol is in the class symbol table
     if (sym->type != S_CLASS) {
-      syms.remove(sym->name());
+      sym = syms.remove(sym->name());
       sym->type = S_CLASS;
       syms.classSymTbl->add(sym);
     }

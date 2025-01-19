@@ -57,7 +57,7 @@ src/sc.cpp
 
 target_include_directories(sc PRIVATE src/)
 set_target_properties(sc PROPERTIES COMPILE_WARNING_AS_ERROR ON)
-target_link_libraries(sc absl::strings absl::str_format absl::flat_hash_map)
+target_link_libraries(sc absl::strings absl::str_format absl::flat_hash_map absl::btree)
 
 if(MSVC)
   target_compile_options(sc PRIVATE /W4 /WX)
@@ -67,7 +67,9 @@ else()
     -Wpedantic
     # Disable gcc-compat, as ABSL uses it with appropriately flagged code
     -Wno-gcc-compat
+    -fsanitize=address
     -Werror)
+  target_link_options(sc PRIVATE -fsanitize=address)
 endif()
 
 # TODO: Add tests and install targets if needed.
