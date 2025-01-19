@@ -16,8 +16,7 @@ Symbol::Symbol(const char* name, sym_t type)
       type(type),
       lineNum(curLine),
       an_(0),
-      str_(0),
-      next(0) {}
+      str_(0) {}
 
 Symbol::~Symbol() {
   switch (type) {

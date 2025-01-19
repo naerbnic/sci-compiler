@@ -184,8 +184,6 @@ class Symbol {
   void setExt(Public* ext) { ext_ = ext; }
 
  private:
-  friend class SymTbl;  // SymTbl is allowed access to the 'next' pointer
-  Symbol* next;         // pointer to next symbol in list
 };
 
 #define OPEN_P S_OPEN_P

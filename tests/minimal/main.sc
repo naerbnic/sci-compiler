@@ -2,5 +2,4 @@
 (global
   foo 0)
 
-
-(procedure (bar x y) (+ x y))
+(procedure (bar x y) (+ foo y))

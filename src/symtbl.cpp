@@ -12,29 +12,9 @@
 
 SymTbls syms;
 
-SymTbl::SymTbl(int size, bool keep)
-    :
+SymTbl::SymTbl(int size, bool keep) : keep(keep) {}
 
-      hashSize(size),
-      keep(keep) {
-  hashTable = new Symbol*[size];
-  memset(hashTable, 0, size * sizeof(Symbol*));
-}
-
-SymTbl::~SymTbl() {
-  Symbol* sp;
-  Symbol* nextSym;
-
-  // Free each piece of the table.
-  for (int i = 0; i < hashSize; ++i) {
-    for (sp = hashTable[i]; sp; sp = nextSym) {
-      nextSym = sp->next;
-      delete sp;
-    }
-  }
-
-  delete[] hashTable;
-}
+SymTbl::~SymTbl() {}
 
 void SymTbl::clearAsmPtrs() {
   // Make sure that all pointers to assembly nodes (the an element of the
@@ -51,12 +31,8 @@ Symbol* SymTbl::install(strptr name, sym_t type) {
 }
 
 Symbol* SymTbl::add(Symbol* sp) {
-  // Get the hash value for the symbol in this hash table.
-  uint32_t hashVal = hash(sp->name());
-
-  // Link the symbol in at the beginning of the appropriate hash list
-  sp->next = hashTable[hashVal];
-  hashTable[hashVal] = sp;
+  // Take ownership of the symbol
+  symbols.emplace(sp->name(), std::unique_ptr<Symbol>(sp));
 
   return sp;
 }
@@ -69,82 +45,54 @@ Symbol* SymTbl::lookup(strptr name) {
   // If nothing else, this puts those symbols which are not used at all at the
   // end of the list.
 
-  Symbol* prev = 0;
-  Symbol** start = &hashTable[hash(name)];
-  for (Symbol* sp = *start; sp; sp = sp->next) {
-    if (!strcmp(name, sp->name())) {
-      // Move the symbol to the start of the list.
-      if (prev) {
-        prev->next = sp->next;
-        sp->next = *start;
-        *start = sp;
-      }
-      return sp;
-    }
-    prev = sp;
+  std::string_view name_view = name;
+  auto it = symbols.find(name_view);
+  if (it != symbols.end()) {
+    return it->second.get();
   }
 
-  return 0;
+  return nullptr;
 }
 
 Symbol* SymTbl::remove(strptr name) {
   // Try to remove the symbol with name pointed to by 'name' from this table
   // and return a pointer to it if successful, NULL otherwise.
 
-  Symbol* prev = 0;
-  Symbol** start = &hashTable[hash(name)];
-  for (Symbol* sp = *start; sp; sp = sp->next) {
-    if (!strcmp(name, sp->name())) {
-      // Link around symbol and delete it.
-      if (!prev)
-        *start = sp->next;
-      else
-        prev->next = sp->next;
-      return sp;
-    }
-    prev = sp;
+  auto it = symbols.find(std::string_view(name));
+
+  if (it != symbols.end()) {
+    Symbol* sp = it->second.release();
+    symbols.erase(it);
+    return sp;
   }
 
-  return 0;
+  return nullptr;
 }
 
 bool SymTbl::del(strptr name) {
   // Delete the symbol with name pointed to by 'name' from this table and
   // return True if successful, False otherwise.
 
-  Symbol* sp = remove(name);
-  delete sp;
-
-  return (bool)sp;
-}
-
-uint32_t SymTbl::hash(strptr str) {
-  // Compute the hash value of the string 'str'.
-  long value;
-  for (value = 0; *str; value += *str++);
-
-  return (int)(value % (long)hashSize);
+  return symbols.erase(std::string_view(name)) > 0;
 }
 
 Symbol* SymTbl::firstSym() {
   // Open a symbol table for sequential access to its symbols using
   //	nextSym().  Return the first symbol in the table, or 0 if the table
   // is empty.
-
-  curIndex = -1;
-  curSym = 0;
-  return nextSym();
+  curSym = symbols.begin();
+  if (curSym == symbols.end()) return nullptr;
+  return curSym->second.get();
 }
 
 Symbol* SymTbl::nextSym() {
-  // Point to the next symbol in the current hash list.
-  if (curSym) curSym = curSym->next;
+  if (curSym == symbols.end()) return nullptr;
 
-  // If we're not pointing at a symbol, search for the next list
-  // in the hash chain which has one.
-  while (!curSym && ++curIndex < hashSize) curSym = hashTable[curIndex];
+  ++curSym;
 
-  return curSym;
+  if (curSym == symbols.end()) return nullptr;
+
+  return curSym->second.get();
 }
 
 ////////////////////////////////////////////////////////////////////////////

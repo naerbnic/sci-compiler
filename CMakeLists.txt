@@ -57,7 +57,7 @@ src/sc.cpp
 
 target_include_directories(sc PRIVATE src/)
 set_target_properties(sc PROPERTIES COMPILE_WARNING_AS_ERROR ON)
-target_link_libraries(sc absl::strings absl::str_format)
+target_link_libraries(sc absl::strings absl::str_format absl::flat_hash_map)
 
 if(MSVC)
   target_compile_options(sc PRIVATE /W4 /WX)

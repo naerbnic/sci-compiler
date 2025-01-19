@@ -1,12 +1,14 @@
 // symtbl.hpp
 //		definitions for symbol tables
 
-#if !defined(SYMTBL_HPP)
+#ifndef SYMTBL_HPP
 #define SYMTBL_HPP
 
-#if !defined(SYMBOL_HPP)
+#include <absl/container/flat_hash_map.h>
+
+#include <memory>
+
 #include "symbol.hpp"
-#endif
 
 // Possible hash table sizes for symbol tables.
 const int ST_LARGE = 253;
@@ -47,6 +49,7 @@ class SymTbl {
   // of the table.
 
  private:
+  using SymbolMap = absl::flat_hash_map<std::string, std::unique_ptr<Symbol>>;
   SymTbl(int size = ST_MEDIUM, bool retain = false);
   ~SymTbl();
 
@@ -69,15 +72,10 @@ class SymTbl {
   // Make sure that all pointers in symbols in the symbol table
   //	refering to ANodes is cleared.
 
-  SymTbl* next;        // pointer to next symbol table
-  int hashSize;        // size of hash table
-  Symbol** hashTable;  // pointer to the hash table
-  bool keep;       // should this table be kept for listings when out of scope?
-  Symbol* curSym;  // current Symbol in firstSym()/nextSym()
-  int curIndex;    // current hash table index in firstSym()/nextSym()
-
-  uint32_t hash(strptr str);
-  // Return the hash value of the string for this table
+  SymTbl* next;  // pointer to next symbol table
+  SymbolMap symbols;
+  bool keep;  // should this table be kept for listings when out of scope?
+  SymbolMap::iterator curSym;  // current Symbol in firstSym()/nextSym()
 
   friend class SymTbls;
 };
