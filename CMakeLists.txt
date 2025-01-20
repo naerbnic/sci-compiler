@@ -36,7 +36,6 @@ src/input.cpp
 src/list.cpp
 src/listing.cpp
 src/loop.cpp
-src/mem.cpp
 src/object.cpp
 src/optimize.cpp
 src/output.cpp

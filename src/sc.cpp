@@ -19,7 +19,6 @@
 #include "input.hpp"
 #include "jeff.hpp"
 #include "listing.hpp"
-#include "mem.hpp"
 #include "object.hpp"
 #include "opcodes.hpp"
 #include "output.hpp"
@@ -56,7 +55,6 @@ std::vector<Arg> switches = {
      "command line define (e.g. -DMAC or -DMAC=1)"},
     {'g', &maxVars, "maximum number of global or local variables"},
     {'l', &listCode, "generate a code listing"},
-    {'m', &writeMemSizes, "write memory allocation statistics"},
     {'n', &noAutoName, "no auto-naming of objects"},
     {'o', &outDirPtr, "set output directory"},
     {'O', &writeOffsets, "output the 'offsets' file"},
