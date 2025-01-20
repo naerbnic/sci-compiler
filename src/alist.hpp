@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <utility>
 
 #include "list.hpp"
 
@@ -45,6 +46,11 @@ struct AList : List {
   void optimize();
   // Do any possible optimizations on this list.  Currently
   // only applies to subclass CodeList.
+
+  template <class T, class... Args>
+  T* newNode(Args&&... args) {
+    return new T(this, std::forward<Args>(args)...);
+  }
 };
 
 class FixupList : public AList {
@@ -80,9 +86,9 @@ class FixupList : public AList {
 
  protected:
   int32_t numFixups;  // number of locations needing fixup in this AList
-  size_t* fixups;      // pointer to storage for fixup values
-  uint32_t fixIndex;   // index for adding fixups
-  size_t fixOfs;       // offset of start of fixups
+  size_t* fixups;     // pointer to storage for fixup values
+  uint32_t fixIndex;  // index for adding fixups
+  size_t fixOfs;      // offset of start of fixups
 };
 
 struct CodeList : FixupList {

@@ -27,7 +27,7 @@ struct Loop {
 Loop* loopList;
 
 Loop::Loop(LoopType t, Symbol* c, Symbol* e)
-    : next(loopList), type(t), start(new ANLabel(curList)), cont(c), end(e) {
+    : next(loopList), type(t), start(curList->newNode<ANLabel>()), cont(c), end(e) {
   // Add this loop to the loop list.
   loopList = this;
 }

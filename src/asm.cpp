@@ -39,13 +39,13 @@ void InitAsm() {
   lastLineNum = 0;
 
   // space for addr of heap component of resource
-  new ANWord(sc->hunkList);
+  sc->hunkList->newNode<ANWord>();
 
   // space to indicate whether script has far text (dummy)
-  new ANWord(sc->hunkList);
+  sc->hunkList->newNode<ANWord>();
 
-  numDispTblEntries = new ANWord(curList);
-  dispTbl = new ANTable(curList, "dispatch table");
+  numDispTblEntries = curList->newNode<ANWord>();
+  dispTbl = curList->newNode<ANTable>("dispatch table");
   dispTbl->finish();
 
   codeStart = 0;
@@ -55,7 +55,7 @@ void InitAsm() {
 void Assemble() {
   // Assemble the list pointed to by asmHead.
 
-  new ANVars(curList, script ? localVars : globalVars);
+  curList->newNode<ANVars>(script ? localVars : globalVars);
 
   // Set the offsets in the object list.
   sc->heapList->setOffset(0);
