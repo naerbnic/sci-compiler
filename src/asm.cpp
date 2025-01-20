@@ -3,8 +3,9 @@
 
 #include "asm.hpp"
 
-#include <cstdlib>
 #include <absl/strings/str_format.h>
+
+#include <cstdlib>
 
 #include "anode.hpp"
 #include "define.hpp"
@@ -43,8 +44,8 @@ void InitAsm() {
   // space to indicate whether script has far text (dummy)
   new ANWord(sc->hunkList);
 
-  numDispTblEntries = new ANWord;
-  dispTbl = new ANTable("dispatch table");
+  numDispTblEntries = new ANWord(curList);
+  dispTbl = new ANTable(curList, "dispatch table");
   dispTbl->finish();
 
   codeStart = 0;
@@ -54,7 +55,7 @@ void InitAsm() {
 void Assemble() {
   // Assemble the list pointed to by asmHead.
 
-  new ANVars(script ? localVars : globalVars);
+  new ANVars(curList, script ? localVars : globalVars);
 
   // Set the offsets in the object list.
   sc->heapList->setOffset(0);

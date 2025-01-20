@@ -159,8 +159,6 @@ void ANDispatch::backpatch(ANode* dest) {
 // Class ANWord
 ///////////////////////////////////////////////////
 
-ANWord::ANWord(int v) : value(v) {}
-
 ANWord::ANWord(AList* list, int v) : ANode(list), value(v) {}
 
 size_t ANWord::size() { return 2; }
@@ -173,12 +171,8 @@ void ANWord::emit(OutputFile* out) { out->WriteWord(value); }
 // Class ANTable
 ///////////////////////////////////////////////////
 
-ANTable::ANTable(strptr nameStr, ANode* before)
-    :
-
-      ANode(curList, before),
-      name(nameStr),
-      oldList(curList) {
+ANTable::ANTable(AList* list, strptr nameStr, ANode* before)
+    : ANode(curList, before), name(nameStr), oldList(curList) {
   curList = &entries;
 }
 
@@ -199,16 +193,15 @@ void ANTable::finish() { curList = oldList; }
 // Class ANObjTable
 ///////////////////////////////////////////////////
 
-ANObjTable::ANObjTable(strptr nameStr)
-    :
-
-      ANTable(nameStr, codeStart) {}
+ANObjTable::ANObjTable(AList* list, strptr nameStr)
+    : ANTable(list, nameStr, codeStart) {}
 
 ///////////////////////////////////////////////////
 // Class ANText
 ///////////////////////////////////////////////////
 
-ANText::ANText(Text* tp) : ANode(sc->heapList), text(tp) {}
+ANText::ANText(AList* list, Text* tp)
+    : ANode(/* sc->heapList */ list), text(tp) {}
 
 size_t ANText::setOffset(size_t ofs) {
   if (!textStart) textStart = ofs;
@@ -228,7 +221,7 @@ void ANText::emit(OutputFile* out) { out->Write(text->str, size()); }
 // Class ANObject
 ///////////////////////////////////////////////////
 
-ANObject::ANObject(Symbol* s, int n, ANode* before)
+ANObject::ANObject(AList* list, Symbol* s, int n, ANode* before)
     : ANode(curList, before), sym(s), num(n) {}
 
 void ANObject::list() { Listing("\nObject: %-20s", sym->name()); }
@@ -237,7 +230,7 @@ void ANObject::list() { Listing("\nObject: %-20s", sym->name()); }
 // Class ANCodeBlk
 ///////////////////////////////////////////////////
 
-ANCodeBlk::ANCodeBlk(Symbol* s) : sym(s) {
+ANCodeBlk::ANCodeBlk(AList* list, Symbol* s) : ANode(list), sym(s) {
   ANLabel::reset();
   oldList = curList;
   curList = &code;
@@ -268,7 +261,8 @@ void ANProcCode::list() { Listing("\n\nProcedure: (%s)\n", sym->name()); }
 // Class ANMethCode
 ///////////////////////////////////////////////////
 
-ANMethCode::ANMethCode(Symbol* s) : ANCodeBlk(s), objSym(curObj->sym) {}
+ANMethCode::ANMethCode(AList* list, Symbol* s)
+    : ANCodeBlk(list, s), objSym(curObj->sym) {}
 
 void ANMethCode::list() {
   Listing("\n\nMethod: (%s %s)\n", objSym->name(), sym->name());
@@ -278,7 +272,7 @@ void ANMethCode::list() {
 // Class ANProp
 ///////////////////////////////////////////////////
 
-ANProp::ANProp(Symbol* sp, int v) : sym(sp), val(v) {}
+ANProp::ANProp(AList* list, Symbol* sp, int v) : ANode(list), sym(sp), val(v) {}
 
 size_t ANProp::size() { return 2; }
 
@@ -292,7 +286,7 @@ strptr ANIntProp::desc() { return "prop"; }
 
 uint32_t ANIntProp::value() { return val; }
 
-ANTextProp::ANTextProp(Symbol* sp, int v) : ANProp(sp, v) {
+ANTextProp::ANTextProp(AList* list, Symbol* sp, int v) : ANProp(list, sp, v) {
   sc->heapList->incFixups();
 }
 
@@ -309,7 +303,8 @@ strptr ANOfsProp::desc() { return "ofs"; }
 
 uint32_t ANOfsProp::value() { return target->offset; }
 
-ANMethod::ANMethod(Symbol* sp, ANMethCode* mp) : ANProp(sp, 0), method(mp) {}
+ANMethod::ANMethod(AList* list, Symbol* sp, ANMethCode* mp)
+    : ANProp(list, sp, 0), method(mp) {}
 
 strptr ANMethod::desc() { return "local"; }
 
@@ -319,7 +314,7 @@ uint32_t ANMethod::value() { return method->offset; }
 // Class ANOpCode
 ///////////////////////////////////////////////////
 
-ANOpCode::ANOpCode(uint32_t o) : op(o) {}
+ANOpCode::ANOpCode(AList* list, uint32_t o) : ANode(list), op(o) {}
 
 size_t ANOpCode::size() { return 1; }
 
@@ -333,7 +328,7 @@ void ANOpCode::emit(OutputFile* out) { out->WriteOp(op); }
 
 uint32_t ANLabel::nextLabel = 0;
 
-ANLabel::ANLabel() : ANOpCode(OP_LABEL), number(nextLabel++) {}
+ANLabel::ANLabel(AList* list) : ANOpCode(list, OP_LABEL), number(nextLabel++) {}
 
 size_t ANLabel::size() { return 0; }
 
@@ -345,7 +340,7 @@ void ANLabel::emit(OutputFile*) {}
 // Class ANOpUnsign
 ///////////////////////////////////////////////////
 
-ANOpUnsign::ANOpUnsign(uint32_t o, uint32_t v) {
+ANOpUnsign::ANOpUnsign(AList* list, uint32_t o, uint32_t v) : ANOpCode(list) {
   value = v;
 #if defined(OPTIMIZE_TRANSFERS)
   op = o | (value < 256 ? OP_BYTE : 0);
@@ -380,7 +375,7 @@ void ANOpUnsign::emit(OutputFile* out) {
 // Class ANOpSign
 ///////////////////////////////////////////////////
 
-ANOpSign::ANOpSign(uint32_t o, int v) {
+ANOpSign::ANOpSign(AList* list, uint32_t o, int v) : ANOpCode(list) {
   value = v;
   op = o | ((uint32_t)abs(value) < 128 ? OP_BYTE : 0);
   sym = 0;
@@ -408,8 +403,8 @@ void ANOpSign::emit(OutputFile* out) {
 // Class ANOpExtern
 ///////////////////////////////////////////////////
 
-ANOpExtern::ANOpExtern(Symbol* s, int32_t m, uint32_t e)
-    : module(m), entry(e), sym(s) {
+ANOpExtern::ANOpExtern(AList* list, Symbol* s, int32_t m, uint32_t e)
+    : ANOpCode(list), module(m), entry(e), sym(s) {
   switch (module) {
     case KERNEL:
       op = op_callk | (entry < 256 ? OP_BYTE : 0);
@@ -470,7 +465,7 @@ void ANOpExtern::emit(OutputFile* out) {
 // Class ANCall
 ///////////////////////////////////////////////////
 
-ANCall::ANCall(Symbol* s) {
+ANCall::ANCall(AList* list, Symbol* s) : ANOpCode(list) {
   sym = s;
   op = op_call;
   offset = curOfs;
@@ -521,7 +516,7 @@ void ANCall::emit(OutputFile* out) {
 // Class ANBranch
 ///////////////////////////////////////////////////
 
-ANBranch::ANBranch(uint32_t o) { op = o; }
+ANBranch::ANBranch(AList* list, uint32_t o) : ANOpCode(list) { op = o; }
 
 size_t ANBranch::size() {
   if (!shrink)
@@ -560,7 +555,8 @@ void ANBranch::emit(OutputFile* out) {
 // Class ANVarAccess
 ///////////////////////////////////////////////////
 
-ANVarAccess::ANVarAccess(uint32_t o, uint32_t a) : addr(a) {
+ANVarAccess::ANVarAccess(AList* list, uint32_t o, uint32_t a)
+    : ANOpCode(list), addr(a) {
   op = addr < 256 ? o | OP_BYTE : o;
 }
 
@@ -586,7 +582,7 @@ void ANVarAccess::emit(OutputFile* out) {
 // Class ANOpOfs
 ///////////////////////////////////////////////////
 
-ANOpOfs::ANOpOfs(uint32_t o) : ANOpCode(op_lofsa), ofs(o) {
+ANOpOfs::ANOpOfs(AList* list, uint32_t o) : ANOpCode(list, op_lofsa), ofs(o) {
   sc->hunkList->incFixups();
 }
 
@@ -607,7 +603,7 @@ void ANOpOfs::emit(OutputFile* out) {
 // Class ANObjID
 ///////////////////////////////////////////////////
 
-ANObjID::ANObjID(Symbol* s) : ANOpCode(op_lofsa) {
+ANObjID::ANObjID(AList* list, Symbol* s) : ANOpCode(list, op_lofsa) {
   sym = s;
   sc->hunkList->incFixups();
 }
@@ -634,8 +630,8 @@ void ANObjID::emit(OutputFile* out) {
 // Class ANEffctAddr
 ///////////////////////////////////////////////////
 
-ANEffctAddr::ANEffctAddr(uint32_t o, uint32_t a, uint32_t t)
-    : ANVarAccess(o, a), eaType(t) {}
+ANEffctAddr::ANEffctAddr(AList* list, uint32_t o, uint32_t a, uint32_t t)
+    : ANVarAccess(list, o, a), eaType(t) {}
 
 size_t ANEffctAddr::size() { return op & OP_BYTE ? 3 : 5; }
 
@@ -660,7 +656,7 @@ void ANEffctAddr::emit(OutputFile* out) {
 // Class ANSend
 ///////////////////////////////////////////////////
 
-ANSend::ANSend(uint32_t o) : ANOpCode(o) {}
+ANSend::ANSend(AList* list, uint32_t o) : ANOpCode(list, o) {}
 
 size_t ANSend::size() { return 1 + NumArgsSize(); }
 
@@ -678,8 +674,8 @@ void ANSend::emit(OutputFile* out) {
 // Class ANSuper
 ///////////////////////////////////////////////////
 
-ANSuper::ANSuper(Symbol* s, uint32_t c)
-    : ANSend(op_super), classNum(c), sym(s) {
+ANSuper::ANSuper(AList* list, Symbol* s, uint32_t c)
+    : ANSend(list, op_super), classNum(c), sym(s) {
   if (classNum < 256) op |= OP_BYTE;
 }
 
@@ -704,7 +700,7 @@ void ANSuper::emit(OutputFile* out) {
 // Class ANVars
 ///////////////////////////////////////////////////
 
-ANVars::ANVars(VarList& theVars) : ANode(0), theVars(theVars) {
+ANVars::ANVars(AList* list, VarList& theVars) : ANode(0), theVars(theVars) {
   sc->heapList->addAfter(sc->heapList->first(), this);
   sc->heapList->incFixups(theVars.fixups);
 }
@@ -747,8 +743,8 @@ void ANVars::emit(OutputFile* out) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-ANFileName::ANFileName(const char* name)
-    : ANOpCode(op_fileName), name(newStr(name)) {}
+ANFileName::ANFileName(AList* list, const char* name)
+    : ANOpCode(list, op_fileName), name(newStr(name)) {}
 
 ANFileName::~ANFileName() { free((void*)name); }
 
@@ -785,7 +781,8 @@ size_t ANFileName::size() {
 
 ////////////////////////////////////////////////////////////////////////////
 
-ANLineNum::ANLineNum(int num) : ANOpCode(op_lineNum), num(num) {}
+ANLineNum::ANLineNum(AList* list, int num)
+    : ANOpCode(list, op_lineNum), num(num) {}
 
 void ANLineNum::list() {
   switch (targetArch) {
