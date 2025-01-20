@@ -72,6 +72,10 @@ bool Parse() {
         Extern();
         break;
 
+      case K_GLOBALDECL:
+        GlobalDecl();
+        break;
+
       case K_GLOBAL:
         Global();
         break;

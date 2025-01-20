@@ -24,6 +24,7 @@ bool GetString(strptr);
 bool GetIdent();
 bool GetDefineSymbol();
 bool IsIdent();
+bool IsUndefinedIdent();
 keyword_t Keyword();
 void GetKeyword(keyword_t);
 bool IsVar();

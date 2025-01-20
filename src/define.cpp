@@ -99,7 +99,7 @@ void Enum() {
     if (symType == S_NUM)
       val = symVal;
 
-    else if (IsIdent()) {
+    else if (IsUndefinedIdent()) {
       Symbol* theSym = syms.installLocal(symStr, S_DEFINE);
 
       //	initializer expression?
@@ -118,6 +118,44 @@ void Enum() {
   UnGetTok();
 }
 
+void GlobalDecl() {
+  // Handle a forward definition of global variables.
+
+  for (GetToken(); !CloseP(symType); GetToken()) {
+    if (!IsIdent()) {
+      Severe("Global variable name expected. Got: %s", symStr);
+      break;
+    }
+    std::string varName = symStr;
+    if (!GetNumber("Variable #")) break;
+
+    // We only install into the symbol table for globals. We do not add
+    // global variables to the globalVars list. That still has to be
+    // done by Script0.
+    Symbol* theSym = syms.lookup(varName.c_str());
+    if (theSym) {
+      if (theSym->type != S_GLOBAL) {
+        Error("Redefinition of %s as a global.", theSym->name());
+        break;
+      }
+
+      if (theSym->val() != symVal) {
+        Error(
+            "Redefinition of %s with different global index (%d expected, %d "
+            "found).",
+            theSym->name(), theSym->val(), symVal);
+        break;
+      }
+    } else {
+      // Install the symbol.
+      theSym = syms.installLocal(varName.c_str(), S_GLOBAL);
+      theSym->setVal(symVal);
+    }
+  }
+
+  UnGetTok();
+}
+
 void Global() {
   // Handle a global definition.
   //
@@ -125,7 +163,6 @@ void Global() {
   // variable 	glob-def 	::=	(symbol number) |
   // open definition close
 
-  Symbol* theSym;
   int n;
   int offset;
 
@@ -141,14 +178,30 @@ void Global() {
     if (OpenP(symType))
       Definition();
     else if (IsIdent()) {
-      // Install the symbol.
-      theSym = syms.installLocal(symStr, S_GLOBAL);
-
-      // Get the variable number and expand the size of the global block
-      // if necessary.
+      std::string varName = symStr;
       if (!GetNumber("Variable #")) break;
-      theSym->setVal(symVal);
-      offset = symVal;
+
+      // Try to get the symbol from the symbol table.
+      Symbol* theSym = syms.lookup(varName.c_str());
+      if (theSym) {
+        if (theSym->type != S_GLOBAL) {
+          Error("Redefinition of %s as a global.", theSym->name());
+          break;
+        }
+
+        if (theSym->val() != symVal) {
+          Error(
+              "Redefinition of %s with different global index (%d expected, %d "
+              "found).",
+              theSym->name(), theSym->val(), symVal);
+          break;
+        }
+      } else {
+        // Install the symbol.
+        theSym = syms.installLocal(varName.c_str(), S_GLOBAL);
+        theSym->setVal(symVal);
+      }
+      offset = theSym->val();
 
       // Get the initial value(s) of the variable and expand the size
       // of the block if more than one value is encountered.
@@ -214,7 +267,7 @@ void Local() {
     } else if (OpenP(symType))
       Definition();
 
-    else if (IsIdent()) {
+    else if (IsUndefinedIdent()) {
       theSym = syms.installLocal(symStr, S_LOCAL);
       theSym->setVal(size);
       n = InitialValue(localVars, size, 1);
@@ -378,6 +431,9 @@ static int InitialValue(VarList& theVars, int offset, int arraySize) {
           ++theVars.fixups;
       }
       Var* vp = &theVars.values[offset + i];
+      if (vp->type != (sym_t)VAR_NONE) {
+        Error("Redefinition of index %d", offset + i);
+      }
       vp->type = symType;
       vp->value = symVal;
     }

@@ -50,6 +50,7 @@ enum keyword_t {
   K_INCLUDE,     // 'include'
   K_PUBLIC,      // 'public'
   K_EXTERN,      // 'external'
+  K_GLOBALDECL,  // 'globaldecl'
   K_GLOBAL,      // 'global'
   K_LOCAL,       // 'local'
   K_TMP,         // '&tmp'

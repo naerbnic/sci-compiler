@@ -46,6 +46,7 @@ struct Public {
 
 void Define();
 void Enum();
+void GlobalDecl();
 void Global();
 void Local();
 void DoPublic();

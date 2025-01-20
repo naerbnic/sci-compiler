@@ -14,6 +14,7 @@ struct BuiltIn {
 } builtIns[] = {{"include", S_KEYWORD, K_INCLUDE},
                 {"public", S_KEYWORD, K_PUBLIC},
                 {"extern", S_KEYWORD, K_EXTERN},
+                {"globaldecl", S_KEYWORD, K_GLOBALDECL},
                 {"global", S_KEYWORD, K_GLOBAL},
                 {"local", S_KEYWORD, K_LOCAL},
                 {"define", S_KEYWORD, K_DEFINE},

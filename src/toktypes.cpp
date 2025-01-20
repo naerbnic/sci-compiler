@@ -77,7 +77,7 @@ bool GetIdent() {
   // Get an identifier.
 
   GetToken();
-  return IsIdent();
+  return IsUndefinedIdent();
 }
 
 bool GetDefineSymbol() {
@@ -102,6 +102,12 @@ bool IsIdent() {
     Severe("Identifier required: %s", symStr);
     return False;
   }
+
+  return True;
+}
+
+bool IsUndefinedIdent() {
+  if (!IsIdent()) return False;
 
   if (syms.lookup(symStr)) Warning("Redefinition of %s.", symStr);
 
