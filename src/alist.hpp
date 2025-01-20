@@ -51,6 +51,11 @@ struct AList : List {
   T* newNode(Args&&... args) {
     return new T(this, std::forward<Args>(args)...);
   }
+
+  template <class T, class... Args>
+  T* newNodeBefore(ANode* before, Args&&... args) {
+    return new T(this, before, std::forward<Args>(args)...);
+  }
 };
 
 class FixupList : public AList {

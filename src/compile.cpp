@@ -968,11 +968,12 @@ void MakeObject(Object* theObj) {
   curList = sc->heapList;
 
   // Create the object ID node.
-  ANObject* obj = curList->newNode<ANObject>(theObj->sym, theObj->num);
+  ANObject* obj =
+      curList->newNodeBefore<ANObject>(nullptr, theObj->sym, theObj->num);
   theObj->an = obj;
 
   // Create the table of properties.
-  ANTable* props = curList->newNode<ANTable>("properties");
+  ANTable* props = curList->newNodeBefore<ANTable>(nullptr, "properties");
   ANOfsProp* pDict = 0;
   ANOfsProp* mDict = 0;
 
@@ -1007,10 +1008,11 @@ void MakeObject(Object* theObj) {
 
   // The rest of the object goes into hunk, as it never changes.
   curList = sc->hunkList;
-  curList->newNode<ANObject>(theObj->sym, theObj->num, codeStart);
+  curList->newNodeBefore<ANObject>(codeStart, theObj->sym, theObj->num);
 
   // If this a class, add the property dictionary.
-  ANObjTable* propDict = curList->newNode<ANObjTable>("property dictionary");
+  ANObjTable* propDict =
+      curList->newNodeBefore<ANObjTable>(codeStart, "property dictionary");
   if (theObj->num != OBJECTNUM) {
     for (sp = theObj->selectors; sp; sp = sp->next)
       if (IsProperty(sp)) curList->newNode<ANWord>(sp->sym->val());
@@ -1018,7 +1020,8 @@ void MakeObject(Object* theObj) {
   propDict->finish();
   if (pDict) pDict->target = propDict;
 
-  ANObjTable* methDict = curList->newNode<ANObjTable>("method dictionary");
+  ANObjTable* methDict =
+      curList->newNodeBefore<ANObjTable>(codeStart, "method dictionary");
   ANWord* numMeth = curList->newNode<ANWord>((short)0);
   for (sp = theObj->selectors; sp; sp = sp->next)
     if (sp->tag == T_LOCAL) {

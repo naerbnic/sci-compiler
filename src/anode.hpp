@@ -94,7 +94,7 @@ struct ANDispatch : ANode,
 // the 'dispTbl' dispatch table, set up in InitAsm().
 {
   ANDispatch(AList* list) : ANode(list) {}
-  
+
   size_t size();
   void list();
   void emit(OutputFile*);
@@ -123,7 +123,7 @@ struct ANTable : ANode
 // finish() method must be called when the table is completed to restore
 // the original list as the current one.
 {
-  ANTable(AList* list, strptr nameStr, ANode* before = 0);
+  ANTable(AList* list, ANode* before, strptr nameStr);
 
   size_t size();
   size_t setOffset(size_t ofs);
@@ -140,7 +140,7 @@ struct ANObjTable : ANTable
 // ANObjTable sub-classes ANTable to have the table added before the first
 // instance of code in the hunk list.
 {
-  ANObjTable(AList* list, strptr nameStr);
+  ANObjTable(AList* list, ANode* before, strptr nameStr);
 };
 
 struct Text;
@@ -163,7 +163,7 @@ struct ANObject : ANode
 // It generates nothing in the object code file.  The object itself is built
 // up of ANTables containing properties, method dispatch vectors, etc.
 {
-  ANObject(AList* list, Symbol* s, int n, ANode* before = 0);
+  ANObject(AList* list, ANode* before, Symbol* s, int n);
 
   void list();
 

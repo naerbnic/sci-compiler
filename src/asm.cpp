@@ -45,7 +45,7 @@ void InitAsm() {
   sc->hunkList->newNode<ANWord>();
 
   numDispTblEntries = curList->newNode<ANWord>();
-  dispTbl = curList->newNode<ANTable>("dispatch table");
+  dispTbl = curList->newNodeBefore<ANTable>(nullptr, "dispatch table");
   dispTbl->finish();
 
   codeStart = 0;

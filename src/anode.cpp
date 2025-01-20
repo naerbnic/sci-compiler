@@ -171,7 +171,7 @@ void ANWord::emit(OutputFile* out) { out->WriteWord(value); }
 // Class ANTable
 ///////////////////////////////////////////////////
 
-ANTable::ANTable(AList* list, strptr nameStr, ANode* before)
+ANTable::ANTable(AList* list, ANode* before, strptr nameStr)
     : ANode(list, before), name(nameStr), oldList(curList) {
   curList = &entries;
 }
@@ -193,8 +193,8 @@ void ANTable::finish() { curList = oldList; }
 // Class ANObjTable
 ///////////////////////////////////////////////////
 
-ANObjTable::ANObjTable(AList* list, strptr nameStr)
-    : ANTable(list, nameStr, codeStart) {}
+ANObjTable::ANObjTable(AList* list, ANode* before, strptr nameStr)
+    : ANTable(list, before, nameStr) {}
 
 ///////////////////////////////////////////////////
 // Class ANText
@@ -221,7 +221,7 @@ void ANText::emit(OutputFile* out) { out->Write(text->str, size()); }
 // Class ANObject
 ///////////////////////////////////////////////////
 
-ANObject::ANObject(AList* list, Symbol* s, int n, ANode* before)
+ANObject::ANObject(AList* list, ANode* before, Symbol* s, int n)
     : ANode(list, before), sym(s), num(n) {}
 
 void ANObject::list() { Listing("\nObject: %-20s", sym->name()); }
