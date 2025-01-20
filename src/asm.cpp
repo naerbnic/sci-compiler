@@ -44,8 +44,13 @@ void InitAsm() {
   // space to indicate whether script has far text (dummy)
   sc->hunkList->newNode<ANWord>();
 
-  numDispTblEntries = curList->newNode<ANWord>();
-  dispTbl = curList->newNodeBefore<ANTable>(nullptr, "dispatch table");
+  if (curList) {
+    numDispTblEntries = curList->newNode<ANWord>();
+    dispTbl = curList->newNodeBefore<ANTable>(nullptr, "dispatch table");
+  } else {
+    numDispTblEntries = new ANWord();
+    dispTbl = new ANTable("dispatch table");
+  }
   dispTbl->finish();
 
   codeStart = 0;
@@ -55,7 +60,7 @@ void InitAsm() {
 void Assemble() {
   // Assemble the list pointed to by asmHead.
 
-  curList->newNode<ANVars>(script ? localVars : globalVars);
+  new ANVars(script ? localVars : globalVars);
 
   // Set the offsets in the object list.
   sc->heapList->setOffset(0);

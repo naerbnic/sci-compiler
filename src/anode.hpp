@@ -52,14 +52,7 @@ struct ANode : LNode {
   // to generate the actual object code for the module.  The nodes are kept
   // in an AList.
 
-  ANode(AList* list);
-  // Creates an ANode and adds it to the list (default is the current
-  // list in 'curList').
-
-  ANode(AList* list, ANode* before);
-  // Creates an ANode and adds it to the list before element 'before'.
-
-  virtual ~ANode() {};
+  virtual ~ANode() = default;
 
   virtual size_t size();
   // Returns the number of bytes of object code generated
@@ -93,8 +86,6 @@ struct ANDispatch : ANode,
 // each line in the (public ...) statement in SCI.  These are added to
 // the 'dispTbl' dispatch table, set up in InitAsm().
 {
-  ANDispatch(AList* list) : ANode(list) {}
-
   size_t size();
   void list();
   void emit(OutputFile*);
@@ -106,7 +97,7 @@ struct ANWord : ANode
 // used as a member of an ANTable, but can also appear directly in the
 // objcode output.  The property 'value' contains the value of the word.
 {
-  ANWord(AList* list, int v = 0);
+  ANWord(int v = 0);
 
   size_t size();
   void list();
@@ -123,7 +114,7 @@ struct ANTable : ANode
 // finish() method must be called when the table is completed to restore
 // the original list as the current one.
 {
-  ANTable(AList* list, ANode* before, strptr nameStr);
+  ANTable(strptr nameStr);
 
   size_t size();
   size_t setOffset(size_t ofs);
@@ -140,7 +131,7 @@ struct ANObjTable : ANTable
 // ANObjTable sub-classes ANTable to have the table added before the first
 // instance of code in the hunk list.
 {
-  ANObjTable(AList* list, ANode* before, strptr nameStr);
+  ANObjTable(strptr nameStr);
 };
 
 struct Text;
@@ -148,7 +139,7 @@ struct Text;
 struct ANText : ANode
 // The ANText class represents a text string.
 {
-  ANText(AList* list, Text* tp);
+  ANText(Text* tp);
 
   size_t setOffset(size_t ofs);  // set offset to ofs, return new ofs
   size_t size();
@@ -163,7 +154,7 @@ struct ANObject : ANode
 // It generates nothing in the object code file.  The object itself is built
 // up of ANTables containing properties, method dispatch vectors, etc.
 {
-  ANObject(AList* list, ANode* before, Symbol* s, int n);
+  ANObject(Symbol* s, int n);
 
   void list();
 
@@ -178,7 +169,7 @@ struct ANCodeBlk : ANode
 // reset the current list back to its original value when the code is
 // complete.
 {
-  ANCodeBlk(AList* list, Symbol* s);
+  ANCodeBlk(Symbol* s);
 
   size_t size();
   void emit(OutputFile*);
@@ -195,7 +186,7 @@ struct ANMethCode : ANCodeBlk
 // ANMethCode is just a listing-specific subclass of ANCodeBlk, which
 // generates "Method" rather than "Procedure" in the listing.
 {
-  ANMethCode(AList* list, Symbol* s);
+  ANMethCode(Symbol* s);
 
   void list();
 
@@ -207,7 +198,7 @@ struct ANProcCode : ANCodeBlk
 // ANProcCode is just a listing-specific subclass of ANCodeBlk, which
 // generates "Procedure" rather than "Method" in the listing.
 {
-  ANProcCode(AList *list, Symbol* s) : ANCodeBlk(list, s) {}
+  ANProcCode(Symbol* s) : ANCodeBlk(s) {}
 
   void list();
 };
@@ -217,7 +208,7 @@ struct ANProp : ANode
 // Its method uses the virtual methods desc() and value() to deal with
 // the differences between the various property types.
 {
-  ANProp(AList *list, Symbol* sp, int v);
+  ANProp(Symbol* sp, int v);
 
   virtual strptr desc() = 0;     // return descriptive string
   virtual uint32_t value() = 0;  // return value of selector
@@ -233,7 +224,7 @@ struct ANProp : ANode
 struct ANIntProp : ANProp
 // A subclass of ANProp which represents integer properties.
 {
-  ANIntProp(AList* list, Symbol* sp, int v) : ANProp(list, sp, v) {}
+  ANIntProp(Symbol* sp, int v) : ANProp(sp, v) {}
 
   strptr desc();     // return descriptive string
   uint32_t value();  // return value of selector
@@ -242,7 +233,7 @@ struct ANIntProp : ANProp
 struct ANTextProp : ANProp
 // A subclass of ANProp which represents text properties.
 {
-  ANTextProp(AList* list, Symbol* sp, int v);
+  ANTextProp(Symbol* sp, int v);
 
   void emit(OutputFile*);
   strptr desc();     // return descriptive string
@@ -252,7 +243,7 @@ struct ANTextProp : ANProp
 struct ANOfsProp : ANProp
 // A subclass of ANProp which represents an offset to an object table.
 {
-  ANOfsProp(AList* list, Symbol* sp) : ANProp(list, sp, 0) {}
+  ANOfsProp(Symbol* sp) : ANProp(sp, 0) {}
 
   strptr desc();
   uint32_t value();
@@ -263,7 +254,7 @@ struct ANOfsProp : ANProp
 struct ANMethod : ANProp
 // A subclass of ANProp which represents methods.
 {
-  ANMethod(AList* list, Symbol* sp, ANMethCode* mp);
+  ANMethod(Symbol* sp, ANMethCode* mp);
 
   strptr desc();     // return descriptive string
   uint32_t value();  // return value of selector
@@ -276,8 +267,8 @@ struct ANOpCode : ANode
 // requiring parameters are subclassed from this.  The property 'op' contains
 // the opcode.
 {
-  ANOpCode(AList* list) : ANode(list) {}
-  ANOpCode(AList* list, uint32_t o);
+  ANOpCode() = default;
+  ANOpCode(uint32_t o);
 
   size_t size();
   void list();
@@ -298,7 +289,7 @@ class ANLabel : public ANOpCode
 // method at the start of each procedure and method.
 {
  public:
-  ANLabel(AList* list);
+  ANLabel();
 
   size_t size();
   void list();
@@ -316,7 +307,7 @@ struct ANOpUnsign : ANOpCode
 // The ANOpUnsign class is an ANOpcode which takes an unsigned integer
 // as the argument to the opcode.
 {
-  ANOpUnsign(AList* list, uint32_t o, uint32_t v);
+  ANOpUnsign(uint32_t o, uint32_t v);
 
   size_t size();
   void list();
@@ -330,7 +321,7 @@ struct ANOpSign : ANOpCode
 // The ANOpSign class is an ANOpcode which takes a signed integer as the
 // argument to the opcode.
 {
-  ANOpSign(AList* list, uint32_t o, int v);
+  ANOpSign(uint32_t o, int v);
 
   size_t size();
   void list();
@@ -343,7 +334,7 @@ struct ANOpSign : ANOpCode
 struct ANOpExtern : ANOpCode
 // The ANOpExtern class describes a call to an external proceedure.
 {
-  ANOpExtern(AList* list, Symbol* s, int32_t m, uint32_t e);
+  ANOpExtern(Symbol* s, int32_t m, uint32_t e);
 
   size_t size();
   void list();
@@ -359,7 +350,7 @@ struct ANCall : ANOpCode,
                 public ANReference
 // The ANCall class describes a call to a procedure in the current module.
 {
-  ANCall(AList* list, Symbol* s);
+  ANCall(Symbol* s);
 
   size_t size();
   void list();
@@ -374,7 +365,7 @@ struct ANBranch : ANOpCode,
 // of the ANReference portion is the ANode (actually the ANLabel) to which
 // to branch.
 {
-  ANBranch(AList* list, uint32_t o);
+  ANBranch(uint32_t o);
 
   size_t size();
   void list();
@@ -387,7 +378,7 @@ struct ANVarAccess : ANOpCode
 // the 'addr' property the offset of the variable in the appropriate
 // variable block (global, local, or temporary).
 {
-  ANVarAccess(AList* list, uint32_t o, uint32_t a);
+  ANVarAccess(uint32_t o, uint32_t a);
 
   size_t size();
   void list();
@@ -401,7 +392,7 @@ struct ANOpOfs : ANOpCode
 // The ANOpOfs class gives the offset of a text string in
 // its block of the object code.
 {
-  ANOpOfs(AList* list, uint32_t o);
+  ANOpOfs(uint32_t o);
 
   size_t size();
   void list();
@@ -417,7 +408,7 @@ struct ANObjID : ANOpCode,
 // In the interpreter this gets fixed up at load time so that the opcode
 // generates the address of the object in the heap.
 {
-  ANObjID(AList* list, Symbol* sym);
+  ANObjID(Symbol* sym);
 
   size_t size();
   void list();
@@ -429,7 +420,7 @@ struct ANEffctAddr : ANVarAccess
 // a variable.  The type of variable is determined by the value of
 // the property 'eaType'.
 {
-  ANEffctAddr(AList* list, uint32_t o, uint32_t a, uint32_t t);
+  ANEffctAddr(uint32_t o, uint32_t a, uint32_t t);
 
   size_t size();
   void list();
@@ -441,7 +432,7 @@ struct ANEffctAddr : ANVarAccess
 struct ANSend : ANOpCode
 // The ANSend class represents a send to an object.
 {
-  ANSend(AList* list, uint32_t o);
+  ANSend(uint32_t o);
 
   size_t size();
   void list();
@@ -454,7 +445,7 @@ struct ANSuper : ANSend
 // The ANSuper class represents a send to the superclass whose number is
 // 'classNum'.
 {
-  ANSuper(AList* list, Symbol* s, uint32_t c);
+  ANSuper(Symbol* s, uint32_t c);
 
   size_t size();
   void list();
@@ -471,7 +462,7 @@ class ANVars : public ANode
 // module.
 {
  public:
-  ANVars(AList* list, VarList&);
+  ANVars(VarList&);
 
   size_t size();
   void list();
@@ -495,7 +486,7 @@ struct ANFixup : ANode {
 struct ANFileName : ANOpCode {
   //	contains the name of this script's source file for debugging
 
-  ANFileName(AList* list, const char* name);
+  ANFileName(const char* name);
   ~ANFileName();
 
   void list();
@@ -509,7 +500,7 @@ struct ANFileName : ANOpCode {
 struct ANLineNum : ANOpCode {
   //	contains the current line number
 
-  ANLineNum(AList* list, int num);
+  ANLineNum(int num);
 
   void list();
   void emit(OutputFile*);

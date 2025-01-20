@@ -49,12 +49,16 @@ struct AList : List {
 
   template <class T, class... Args>
   T* newNode(Args&&... args) {
-    return new T(this, std::forward<Args>(args)...);
+    auto node = new T(std::forward<Args>(args)...);
+    add(node);
+    return node;
   }
 
   template <class T, class... Args>
   T* newNodeBefore(ANode* before, Args&&... args) {
-    return new T(this, before, std::forward<Args>(args)...);
+    auto node = new T(std::forward<Args>(args)...);
+    addBefore(before, node);
+    return node;
   }
 };
 
