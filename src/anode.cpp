@@ -709,19 +709,18 @@ ANVars::ANVars(VarList& theVars) : ANode(0), theVars(theVars) {
   sc->heapList->incFixups(theVars.fixups);
 }
 
-size_t ANVars::size() { return 2 * (theVars.size + 1); }
+size_t ANVars::size() { return 2 * (theVars.values.size() + 1); }
 
 void ANVars::list() {
   size_t oldOfs = curOfs;
 
   Listing("\n\nVariables:");
-  ListWord(theVars.size);
+  ListWord(theVars.values.size());
   curOfs += 2;
 
-  Var* vp = theVars.values;
-  for (int i = 0; i < theVars.size; ++i, ++vp) {
-    int n = vp->value;
-    if (vp->type == S_STRING) n += textStart;
+  for (Var const& var : theVars.values) {
+    int n = var.value;
+    if (var.type == S_STRING) n += textStart;
     ListWord(n);
     curOfs += 2;
   }
@@ -731,13 +730,12 @@ void ANVars::list() {
 }
 
 void ANVars::emit(OutputFile* out) {
-  out->WriteWord(theVars.size);
+  out->WriteWord(theVars.values.size());
   curOfs += 2;
 
-  Var* vp = theVars.values;
-  for (int i = 0; i < theVars.size; ++i, ++vp) {
-    int n = vp->value;
-    if (vp->type == S_STRING) {
+  for (Var const& var : theVars.values) {
+    int n = var.value;
+    if (var.type == S_STRING) {
       n += textStart;
       sc->heapList->addFixup(curOfs);
     }

@@ -23,7 +23,7 @@ VarList localVars;
 VarList globalVars;
 int maxVars = 750;
 
-static int InitialValue(VarList& theVars, Var* vp, int arraySize);
+static int InitialValue(VarList& theVars, int offset, int arraySize);
 
 static Public* publicList = NULL;
 static int publicMax = -1;
@@ -41,12 +41,9 @@ char* newStrFromInt(int val) {
 }  // namespace
 
 void VarList::kill() {
-  delete[] values;
-
-  size = 0;
   type = VAR_NONE;
   fixups = 0;
-  values = 0;
+  values.clear();
 }
 
 void Define() {
@@ -129,26 +126,16 @@ void Global() {
   // open definition close
 
   Symbol* theSym;
-  int size;
   int n;
   int offset;
-  Var* values;
 
   if (script) {
     Error("Globals only allowed in script 0.");
     return;
   }
 
-  // Clear the variable array.
-  values = new Var[maxVars];
-
-  // If there are previously defined globals, copy them into the
-  // variable array and free the space which they occupy.
-  if (globalVars.values) {
-    memcpy(values, globalVars.values, sizeof(Var) * globalVars.size);
-    delete[] globalVars.values;
-  }
-  size = globalVars.size;
+  // If there are previously defined globals, keep them in the globals
+  // list.
 
   for (GetToken(); !CloseP(symType); GetToken()) {
     if (OpenP(symType))
@@ -162,13 +149,11 @@ void Global() {
       if (!GetNumber("Variable #")) break;
       theSym->setVal(symVal);
       offset = symVal;
-      size = Max(offset, size);
 
       // Get the initial value(s) of the variable and expand the size
       // of the block if more than one value is encountered.
-      n = InitialValue(globalVars, values + offset, 1);
-      size = Max(size, offset + n - 1);
-      if (n == -1 || size > maxVars) {
+      n = InitialValue(globalVars, offset, 1);
+      if (n == -1 || globalVars.values.size() > maxVars) {
         Error(tooManyVars, maxVars);
         break;
       }
@@ -176,13 +161,8 @@ void Global() {
   }
 
   // Put the information back in the variable structure.
-  ++size;  // account for zero-basing of variables.
   globalVars.type = VAR_GLOBAL;
-  globalVars.size = size;
-  n = sizeof(Var) * size;
-  globalVars.values = (Var*)(size ? memcpy(new Var[size], values, n) : 0);
 
-  delete[] values;
   UnGetTok();
 }
 
@@ -198,20 +178,18 @@ void Local() {
   int size;
   int n;
   int arraySize;
-  Var* values;
 
   if (!script) {
     Error("Only globals allowed in script 0.");
     return;
   }
 
-  if (localVars.values) {
+  if (!localVars.values.empty()) {
     Error("Only one local statement allowed");
     return;
   }
 
   size = 0;
-  values = new Var[maxVars];
 
   for (GetToken(); !CloseP(symType); GetToken()) {
     if (symType == S_OPEN_BRACKET) {
@@ -225,7 +203,7 @@ void Local() {
           Severe("no closing ']' in array declaration");
           break;
         }
-        n = InitialValue(localVars, values + size, arraySize);
+        n = InitialValue(localVars, size, arraySize);
         size += Max(n, arraySize);
         if (n == -1 || size > maxVars) {
           Error(tooManyVars, maxVars);
@@ -239,7 +217,7 @@ void Local() {
     else if (IsIdent()) {
       theSym = syms.installLocal(symStr, S_LOCAL);
       theSym->setVal(size);
-      n = InitialValue(localVars, values + size, 1);
+      n = InitialValue(localVars, size, 1);
       size += n;
       if (n == -1 || size > maxVars) {
         Error(tooManyVars, maxVars);
@@ -250,11 +228,7 @@ void Local() {
 
   // Put the information back in the variable structure.
   localVars.type = VAR_LOCAL;
-  localVars.size = size;
-  n = sizeof(Var) * size;
-  localVars.values = (Var*)(size ? memcpy(new Var[size], values, n) : 0);
 
-  delete[] values;
   UnGetTok();
 }
 
@@ -367,7 +341,7 @@ Symbol* FindPublic(int n) {
   return pp ? pp->sym : 0;
 }
 
-static int InitialValue(VarList& theVars, Var* vp, int arraySize) {
+static int InitialValue(VarList& theVars, int offset, int arraySize) {
   // 'vp' points to the variable(s) to initialize int 'theVars'.  Fill it in
   //	with any initial values, returning 1 if there are no initial values, the
   // number of initial values otherwise.  Syntax is
@@ -375,8 +349,6 @@ static int InitialValue(VarList& theVars, Var* vp, int arraySize) {
   // 'arraySize' is the declared size of the variable array.  If the initial
   // value is not a set of values ('num' rather than  '[num ...]'), the array
   // is filled with the single value passed.
-
-  int n, i;
 
   // See if there are initial values.  Return 1 if not (by default, there
   // is one initial value of 0 for all variable declarations).
@@ -386,31 +358,38 @@ static int InitialValue(VarList& theVars, Var* vp, int arraySize) {
     return 1;
   }
 
+  if (offset + arraySize > maxVars) return -1;
+
+  if (theVars.values.size() < (offset + arraySize)) {
+    theVars.values.resize(offset + arraySize);
+  }
+
   // See if the initialization is for an array.  If not, just get one
   // initial value and return.
   GetToken();
   if (symType != (sym_t)'[') {
     UnGetTok();
-    if (theVars.size + 1 > maxVars) return -1;
     GetNumberOrString("Initial value");
-    for (n = 0, i = 0; n < arraySize; ++n, ++i) {
+    for (int i = 0; i < arraySize; ++i) {
       switch (symType) {
         case S_NUM:
           break;
         default:
           ++theVars.fixups;
       }
+      Var* vp = &theVars.values[offset + i];
       vp->type = symType;
-      vp++->value = symVal;
+      vp->value = symVal;
     }
-    return i;
+    return arraySize;
   }
 
+  int n;
   // Read an array of initial values and return the number defined.
   for (n = 0, GetToken(); symType != (sym_t)']'; ++n, GetToken()) {
     UnGetTok();
-    if (theVars.size + n > maxVars) return -1;
     GetNumberOrString("Initial value");
+    Var* vp = &theVars.values[offset + n];
     vp->type = symType;
     switch (symType) {
       case S_NUM:
