@@ -161,7 +161,7 @@ void ListingNoCRLF(const char* parms, ...) {
   va_end(argPtr);
 }
 
-void ListOp(bool theOp) {
+void ListOp(uint8_t theOp) {
   OpStr* oPtr;
   char* sp;
   const char* op;

@@ -9,7 +9,7 @@ void OpenListFile(const char* sourceFileName);
 void CloseListFile();
 void DeleteListFile();
 void Listing(const char*, ...);
-void ListOp(bool);
+void ListOp(uint8_t);
 void ListArg(const char*, ...);
 void ListAsCode(const char*, ...);
 void ListWord(uint16_t);
