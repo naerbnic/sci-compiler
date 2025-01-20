@@ -3,6 +3,7 @@
 
 #include "input.hpp"
 
+#include <absl/strings/str_split.h>
 #include <stdlib.h>
 
 #include <memory>
@@ -19,7 +20,7 @@
 std::string curFile;
 int curLine;
 std::shared_ptr<InputSource> curSourceFile;
-StrList* includePath;
+std::vector<std::string> includePath;
 std::shared_ptr<InputSource> is;
 std::shared_ptr<InputSource> theFile;
 
@@ -90,17 +91,16 @@ bool InputString::incrementPastNewLine(const char*& ip) {
 
 std::shared_ptr<InputSource> OpenFileAsInput(std::string_view fileName,
                                              bool required) {
-  FILE* file;
   std::shared_ptr<InputSource> theFile;
-  std::string newName;
-  StrList* ip;
 
   // Try to open the file.  If we can't, try opening it in each of
   // the directories in the include path.
-  ip = includePath;
-  for (file = FOpen(fileName, "r"); !file && ip; ip = ip->next) {
-    newName = MakeName(ip->str, fileName, fileName);
-    file = fopen(newName.c_str(), "r");
+  FILE* file = FOpen(fileName, "r");
+  if (!file) {
+    for (auto const& path : includePath) {
+      std::string newName = MakeName(path.c_str(), fileName, fileName);
+      file = fopen(newName.c_str(), "r");
+    }
   }
 
   if (!file) {
@@ -173,54 +173,16 @@ bool GetNewInputLine() {
 
 void SetIncludePath() {
   strptr t;
-  char* p;
-  char path[128];
-  StrList* sn;
-  StrList* last;
 
   if (!(t = getenv("SINCLUDE"))) return;
 
   // Successively copy each element of the path into 'path',
   // and add it to the includePath chain.
-  for (p = path, last = 0; *t; p = path) {
-    // Scan to end of environment or a ';'
-    for (; *t && *t != ';'; ++t, ++p) *p = (char)(*t == '\\' ? '/' : *t);
-
-    // Make sure that the path terminates with either a '/' or ':'
-    if (p[-1] != '/' && p[-1] != ':') *p++ = '/';
-    *p = '\0';
-
-    // Point past a ';' (but not the end of the environment).
-    if (*t) ++t;
-
+  for (auto path : absl::StrSplit(t, ';')) {
     // Now allocate a node to keep this path on in the includePath chain
     // and link it into the list.
-    sn = new StrList;
-    if (!last)
-      last = includePath = sn;
-    else {
-      last->next = sn;
-      last = sn;
-    }
-
-    // Save the pathname and hang it off the node.
-    sn->str = newStr(path);
+    includePath.emplace_back(path);
   }
-}
-
-void FreeIncludePath() {
-  // Free the memory alloted to the include path.
-
-  StrList* sn;
-  StrList* tmp;
-
-  for (sn = includePath; sn;) {
-    tmp = sn->next;
-    delete[] sn->str;
-    delete sn;
-    sn = tmp;
-  }
-  includePath = 0;
 }
 
 static std::shared_ptr<InputSource> saveIs;

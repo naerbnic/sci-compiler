@@ -8,6 +8,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include "sc.hpp"
 
@@ -50,7 +51,6 @@ struct InputString : InputSource {
 };
 
 bool CloseInputSource();
-void FreeIncludePath();
 bool GetNewInputLine();
 std::shared_ptr<InputSource> OpenFileAsInput(std::string_view, bool);
 void SetIncludePath();
@@ -70,7 +70,7 @@ struct StrList;
 extern std::string curFile;
 extern int curLine;
 extern std::shared_ptr<InputSource> curSourceFile;
-extern StrList* includePath;
+extern std::vector<std::string> includePath;
 extern std::shared_ptr<InputSource> is;
 extern std::shared_ptr<InputSource> theFile;
 

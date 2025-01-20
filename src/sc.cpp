@@ -156,8 +156,6 @@ int main(int argc, char **argv) {
   if (writeOffsets) WritePropOffsets();
   Unlock();
 
-  FreeIncludePath();
-
   return totalErrors != 0;
 }
 

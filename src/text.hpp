@@ -34,15 +34,6 @@ class TextList {
   static uword hash(const char*);
 };
 
-struct StrList {
-  // Node for a linked list of strings.
-
-  StrList() : next(0), str(0) {}
-
-  StrList* next;
-  char* str;
-};
-
 extern TextList text;
 
 #endif
