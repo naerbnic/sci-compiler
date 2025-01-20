@@ -14,7 +14,6 @@ struct LNode {
   virtual ~LNode() {};
 
   LNode* next() { return next_; }
-  LNode* prev() { return prev_; }
 
  private:
   friend class List;
