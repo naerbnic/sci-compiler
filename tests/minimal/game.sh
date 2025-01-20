@@ -1,0 +1,2 @@
+(globaldecl
+  foo 0)
