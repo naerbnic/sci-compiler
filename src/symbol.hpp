@@ -33,6 +33,7 @@ enum sym_t {
   S_CLASS,               // class
   S_OBJ,                 // object
   S_SELECT,              // selector
+  S_SELECT_LIT,          // selector literal (e.g. "foo:")
   S_LPROP,               // property referenced as local var
   S_REST,                // &rest keyword
   S_PROP,                // property

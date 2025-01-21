@@ -184,7 +184,7 @@ Symbol* GetSelector(Symbol* obj) {
   // Get the next token.  If it's not an identifier, it can't be a selector.
   GetToken();
   if (symType == (sym_t)',') GetToken();
-  if (symType != S_IDENT) {
+  if (symType != S_SELECT_LIT) {
     UnGetTok();
     return 0;
   }

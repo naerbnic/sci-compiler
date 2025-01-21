@@ -5,12 +5,10 @@
 //
 // Header for character type table lookup
 
-#if !defined(CHARTYPE_H)
+#ifndef CHARTYPE_H
 #define CHARTYPE_H
 
-#if !defined(SC_HPP)
 #include "sc.hpp"
-#endif
 
 #define C_SEP 0x0001    // seperator
 #define C_TOK 0x0002    // single char token

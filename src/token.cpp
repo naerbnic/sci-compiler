@@ -216,6 +216,12 @@ bool NextToken() {
   symType = S_IDENT;
   while (!IsTerm(c)) {
     ++ip;
+    if (c == ':') {
+      // This is a selector literal (e.g. 'foo:'). Only include the part before
+      // the quote, but mark the sym type.
+      symType = S_SELECT_LIT;
+      break;
+    }
     if (IsIncl(c)) break;
     *sp = c;
     ++sp;

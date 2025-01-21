@@ -28,9 +28,7 @@ static void InstanceBody(Object*);
 static void MethodDef(Object*);
 
 Object::Object()
-    :
-
-      sym(0),
+    : sym(0),
       num(0),
       super(0),
       script(0),
@@ -49,9 +47,7 @@ Object::Object()
 }
 
 Object::Object(Class* theSuper)
-    :
-
-      sym(0),
+    : sym(0),
       num(0),
       super(0),
       script(0),
