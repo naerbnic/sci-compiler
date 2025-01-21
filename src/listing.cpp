@@ -173,6 +173,7 @@ void ListOp(uint8_t theOp) {
 
   ListOffset();
 
+  opStr[0] = '\0';
   op = sp = opStr;
   if (!(theOp & OP_LDST)) {
     oPtr = &theOpCodes[(theOp & ~OP_BYTE) / 2];

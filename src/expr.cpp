@@ -79,10 +79,12 @@ bool Expression(PNode* theNode, bool required) {
 
   theSym = LookupTok();
 
-  if (IsVar()) {
+  if (symType == (sym_t)'@') {
+    auto* addrof = theNode->addChild(new PNode(PN_ADDROF));
+    isExpr = Expression(addrof, true);
+  } else if (IsVar()) {
     UnGetTok();
     isExpr = Variable(theNode);
-
   } else {
     switch (symType) {
       case S_NUM:

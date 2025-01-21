@@ -61,6 +61,7 @@ enum pn_t {
   PN_REST,
   PN_PROP,
   PN_METH,
+  PN_ADDROF,              // address of operator (@)
   PN_MSG,
   PN_SWITCHTO
 };

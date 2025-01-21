@@ -94,6 +94,10 @@ void Compile(PNode* pn) {
       MakeAccess(pn, OP_LDST | OP_LOAD);
       break;
 
+    case PN_ADDROF:
+      MakeAccess(pn->child, op_lea);
+      break;
+
     case PN_CLASS:
       MakeClassID(pn);
       break;
@@ -184,6 +188,7 @@ void Compile(PNode* pn) {
 
     // Do nothing for unhandled node types.
     default:
+      Error("Internal error: unhandled node type in Compile(): %d", pn->type);
       break;
   }
 }
