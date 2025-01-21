@@ -60,7 +60,9 @@ void InitAsm() {
 void Assemble() {
   // Assemble the list pointed to by asmHead.
 
-  new ANVars(script ? localVars : globalVars);
+  auto vars = new ANVars(script ? localVars : globalVars);
+  sc->heapList->addAfter(sc->heapList->first(), vars);
+  sc->heapList->incFixups(vars->numFixups());
 
   // Set the offsets in the object list.
   sc->heapList->setOffset(0);

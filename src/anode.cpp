@@ -685,10 +685,7 @@ void ANSuper::emit(OutputFile* out) {
 // Class ANVars
 ///////////////////////////////////////////////////
 
-ANVars::ANVars(VarList& theVars) : theVars(theVars) {
-  sc->heapList->addAfter(sc->heapList->first(), this);
-  sc->heapList->incFixups(theVars.fixups);
-}
+ANVars::ANVars(VarList& theVars) : theVars(theVars) {}
 
 size_t ANVars::size() { return 2 * (theVars.values.size() + 1); }
 
@@ -725,6 +722,8 @@ void ANVars::emit(OutputFile* out) {
   }
   theVars.kill();
 }
+
+int ANVars::numFixups() const { return theVars.fixups; }
 
 //////////////////////////////////////////////////////////////////////////////
 

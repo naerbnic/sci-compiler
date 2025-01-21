@@ -467,6 +467,7 @@ class ANVars : public ANode
   size_t size();
   void list();
   void emit(OutputFile*);
+  int numFixups() const;
 
  protected:
   VarList& theVars;
