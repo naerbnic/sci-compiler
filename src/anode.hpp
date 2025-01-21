@@ -39,10 +39,10 @@ struct ANReference {
   // is not defined.  It adds this reference to the list of
   //	those waiting for the symbol definition.
 
-  union {
-    ANode* target;          // pointer to thing being referenced
-    ANReference* backLink;  // backpatch link
-  };
+  ANode* target() const { return std::get<ANode*>(value); }
+  void setTarget(ANode* target) { value = target; }
+
+  std::variant<ANode*, ANReference*> value;
   Symbol* sym;  // symbol of thing being referenced
 };
 

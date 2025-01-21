@@ -224,8 +224,7 @@ void SetParseStart() { startParse = startToken; }
 fpos_t GetParseStart() { return startParse; }
 
 fpos_t GetParsePos() {
-  return static_cast<InputFile*>(is.get())->lineStart +
-         (long)(is->ptr - inputLine);
+  return is->lineStartOffset() + (long)(is->ptr - inputLine);
 }
 
 fpos_t GetTokenEnd() { return endToken; }

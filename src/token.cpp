@@ -187,6 +187,7 @@ bool NextToken() {
 
   c = *ip;
   sp = symStr;
+
   if (IsTok(c)) {
     *sp = c;
     *++sp = '\0';

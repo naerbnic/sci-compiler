@@ -79,17 +79,17 @@ static void WriteNumArgs(OutputFile* out, int n) {
 // Class ANReference
 ///////////////////////////////////////////////////
 
-ANReference::ANReference() : target(0), sym(0) {}
+ANReference::ANReference() : value(static_cast<ANode*>(nullptr)), sym(0) {}
 
 void ANReference::addBackpatch(Symbol* sym) {
-  backLink = sym->ref();
+  value = sym->ref();
   sym->setRef(this);
 }
 
 void ANReference::backpatch(ANode* dest) {
   //	warning:  backLink and target are unioned
-  ANReference* next = backLink;
-  target = dest;
+  ANReference* next = std::get<ANReference*>(value);
+  value = dest;
   if (next) next->backpatch(dest);
 }
 
@@ -120,8 +120,8 @@ bool ANode::optimize() { return False; }
 void ANDispatch::list() {
   size_t oldOfs = curOfs;
 
-  if (target && sym)
-    ListAsCode("dispatch\t$%-4x\t(%s)", target->offset, sym->name());
+  if (target() && sym)
+    ListAsCode("dispatch\t$%-4x\t(%s)", target()->offset, sym->name());
   else if (sym)
     ListAsCode("dispatch\t----\t(%s)", sym->name());
   else
@@ -136,9 +136,9 @@ void ANDispatch::emit(OutputFile* out) {
   // If the destination of this dispatch entry is in the heap (i.e.
   // an object rather than code), it must be fixed up.
 
-  if (sc->heapList->contains(target)) sc->hunkList->addFixup(offset);
+  if (sc->heapList->contains(target())) sc->hunkList->addFixup(offset);
 
-  out->WriteWord((uint32_t)(target && sym ? target->offset : 0));
+  out->WriteWord((uint32_t)(target() && sym ? target()->offset : 0));
 }
 
 void ANDispatch::backpatch(ANode* dest) {
@@ -462,10 +462,10 @@ size_t ANCall::size() {
 
   if (!shrink)
     return (op & OP_BYTE ? 2 : 3) + arg_size;
-  else if (!sym->loc() || target->offset == UNDEFINED)
+  else if (!sym->loc() || target()->offset == UNDEFINED)
     return 3 + arg_size;
 #if defined(OPTIMIZE_TRANSFERS)
-  else if (canOptimizeTransfer(target->offset, offset + 5)) {
+  else if (canOptimizeTransfer(target()->offset, offset + 5)) {
     op |= OP_BYTE;
     return 2 + arg_size;
   }
@@ -478,18 +478,18 @@ size_t ANCall::size() {
 
 void ANCall::list() {
   ListOp(op_call);
-  ListArg("$%-4x\t(%s)", SCIUWord(target->offset - (offset + size())),
+  ListArg("$%-4x\t(%s)", SCIUWord(target()->offset - (offset + size())),
           sym->name());
   ListNumArgs(numArgs);
 }
 
 void ANCall::emit(OutputFile* out) {
-  if (!target || target->offset == UNDEFINED) {
+  if (!target() || target()->offset == UNDEFINED) {
     Error("Undefined procedure: %s", sym->name());
     return;
   }
 
-  int n = target->offset - (offset + size());
+  int n = target()->offset - (offset + size());
   out->WriteOp(op);
   if (op & OP_BYTE)
     out->WriteByte(n);
@@ -507,10 +507,10 @@ ANBranch::ANBranch(uint32_t o) { op = o; }
 size_t ANBranch::size() {
   if (!shrink)
     return op & OP_BYTE ? 2 : 3;
-  else if (!target || target->offset == UNDEFINED)
+  else if (!target() || target()->offset == UNDEFINED)
     return 3;
 #if defined(OPTIMIZE_TRANSFERS)
-  else if (canOptimizeTransfer(target->offset, offset + 4)) {
+  else if (canOptimizeTransfer(target()->offset, offset + 4)) {
     op |= OP_BYTE;
     return 2;
   }
@@ -523,12 +523,12 @@ size_t ANBranch::size() {
 
 void ANBranch::list() {
   ListOp(op);
-  ListArg("$%-4x\t(.%d)", SCIUWord(target->offset - (offset + size())),
-          ((ANLabel*)target)->number);
+  ListArg("$%-4x\t(.%d)", SCIUWord(target()->offset - (offset + size())),
+          ((ANLabel*)target())->number);
 }
 
 void ANBranch::emit(OutputFile* out) {
-  int n = target->offset - (offset + size());
+  int n = target()->offset - (offset + size());
 
   out->WriteOp(op);
   if (op & OP_BYTE)
@@ -597,7 +597,7 @@ size_t ANObjID::size() { return WORDSIZE; }
 
 void ANObjID::list() {
   ListOp(op);
-  ListArg("$%-4x\t(%s)", target->offset, sym->name());
+  ListArg("$%-4x\t(%s)", target()->offset, sym->name());
 }
 
 void ANObjID::emit(OutputFile* out) {
@@ -608,7 +608,7 @@ void ANObjID::emit(OutputFile* out) {
 
   out->WriteOp(op);
   sc->hunkList->addFixup(offset + 1);
-  out->WriteWord(target->offset);
+  out->WriteWord(target()->offset);
 }
 
 ///////////////////////////////////////////////////

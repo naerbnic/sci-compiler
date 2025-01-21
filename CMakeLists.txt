@@ -68,7 +68,9 @@ else()
     -Wno-gcc-compat
     -fsanitize=address
     -Werror)
-  target_link_options(sc PRIVATE -fsanitize=address)
+  target_link_options(sc PRIVATE
+    -fsanitize=address
+  )
 endif()
 
 # TODO: Add tests and install targets if needed.

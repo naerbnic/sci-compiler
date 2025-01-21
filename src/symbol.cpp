@@ -15,7 +15,6 @@ Symbol::Symbol(const char* name, sym_t type)
     : name_(name ? std::optional(std::string(name)) : std::nullopt),
       type(type),
       lineNum(curLine),
-      an_(0),
       str_(0) {}
 
 Symbol::~Symbol() {

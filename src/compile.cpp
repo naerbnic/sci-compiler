@@ -323,7 +323,7 @@ static void MakeCall(PNode* pn) {
     if (sym->type == S_PROC && sym->val() == UNDEFINED)
       call->addBackpatch(sym);
     else
-      call->target = sym->loc();
+      call->setTarget(sym->loc());
 
     call->numArgs = 2 * numArgs;
 
@@ -357,7 +357,7 @@ static void MakeObjID(PNode* pn) {
     if (!sym->obj() || sym->obj() == curObj)
       an->addBackpatch(sym);
     else
-      an->target = sym->obj()->an;
+      an->setTarget(sym->obj()->an);
   }
 }
 
@@ -587,7 +587,7 @@ void MakeBranch(ubyte theCode, ANode* bn, Symbol* dest) {
   // it.  Otherwise, add this node the the list of those waiting for
   // the target to be defined
   if (bn)
-    an->target = bn;
+    an->setTarget(bn);
   else if (dest)
     an->addBackpatch(dest);
   else
@@ -918,7 +918,9 @@ static void MakeProc(PNode* pn) {
   // they will be on a list hanging off the procedure's symbol table
   // entry (in the 'ref' property) (compiled by the first reference to the
   // procedure).  Let all these nodes know where this one is.
-  if (pn->sym->ref()) pn->sym->ref()->backpatch(an);
+  if (pn->sym->ref()) {
+    pn->sym->ref()->backpatch(an);
+  }
   pn->sym->setLoc(an);
 
   //	procedures and methods get special treatment:  the line number

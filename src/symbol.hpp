@@ -149,13 +149,8 @@ class Symbol {
   uint32_t lineNum;  //	where symbol was first defined
 
  private:
-  union {
-    // Pointer to symbol definition in the AList (or the reference chain,
-    // via 'ref', if the symbol is not yet defined).
-    ANode* an_;
-    ANode* loc_;
-    ANReference* ref_;
-  };
+  std::variant<ANode*, ANReference*>
+      sym_value_;  // pointer to symbol definition in the AList
 
   union {
     // Object to which symbol refers
@@ -169,12 +164,21 @@ class Symbol {
   strptr name() { return name_ ? name_->c_str() : nullptr; }
   void clearName() { name_ = std::nullopt; }
 
-  ANode* an() { return an_; }
-  void clearAn() { an_ = nullptr; }
-  ANode* loc() { return loc_; }
-  void setLoc(ANode* loc) { loc_ = loc_; }
-  ANReference* ref() { return ref_; }
-  void setRef(ANReference* ref) { ref_ = ref; }
+  ANode* an() {
+    auto* ptr = std::get_if<0>(&sym_value_);
+    return ptr ? *ptr : nullptr;
+  }
+  void clearAn() { sym_value_ = static_cast<ANode*>(nullptr); }
+  ANode* loc() {
+    auto* ptr = std::get_if<0>(&sym_value_);
+    return ptr ? *ptr : nullptr;
+  }
+  void setLoc(ANode* loc) { sym_value_ = loc; }
+  ANReference* ref() {
+    auto* ptr = std::get_if<1>(&sym_value_);
+    return ptr ? *ptr : nullptr;
+  }
+  void setRef(ANReference* ref) { sym_value_ = ref; }
 
   int val() { return val_; }
   void setVal(int val) { val_ = val; }

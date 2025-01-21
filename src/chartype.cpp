@@ -42,7 +42,7 @@ ubyte cType[256] = {
     C_SEP | C_TERM,                   // space
     0,                                // !
     0,                                // "
-    C_TOK,                            // #
+    0,                                // #
     C_DIGIT,                          // $
     C_DIGIT,                          // %
     0,                                // &
@@ -71,7 +71,7 @@ ubyte cType[256] = {
     0,                                // =
     0,                                // >
     C_INCL,                           // ?
-    C_TOK,                            // @
+    0,                                // @
     C_HEX,                            // A
     C_HEX,                            // B
     C_HEX,                            // C

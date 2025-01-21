@@ -21,6 +21,7 @@ struct InputSource {
 
   virtual bool incrementPastNewLine(const char*&) = 0;
   virtual bool endInputLine() = 0;
+  virtual fpos_t lineStartOffset() = 0;
 
   std::shared_ptr<InputSource> next;
   std::string fileName;
@@ -34,6 +35,7 @@ struct InputFile : InputSource {
 
   bool incrementPastNewLine(const char*&) override;
   bool endInputLine() override;
+  fpos_t lineStartOffset() override { return this->lineStart; }
 
   FILE* file;
   strptr fullFileName;
@@ -46,8 +48,9 @@ struct InputString : InputSource {
 
   InputString& operator=(InputString&);
 
-  bool incrementPastNewLine(const char*&);
-  bool endInputLine();
+  bool incrementPastNewLine(const char*&) override;
+  bool endInputLine() override;
+  fpos_t lineStartOffset() override { return 0; }
 };
 
 bool CloseInputSource();
