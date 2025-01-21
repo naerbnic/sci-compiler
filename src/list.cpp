@@ -13,7 +13,8 @@ void List::clear() {
   while (head) del(head);
 }
 
-void List::add(LNode* ln) {
+void List::add(std::unique_ptr<LNode> lnp) {
+  auto* ln = lnp.release();
   ln->next_ = 0;
   ln->prev_ = tail;
   if (tail) tail->next_ = ln;
@@ -21,7 +22,8 @@ void List::add(LNode* ln) {
   if (!head) head = ln;
 }
 
-void List::addFront(LNode* ln) {
+void List::addFront(std::unique_ptr<LNode> lnp) {
+  auto* ln = lnp.release();
   if (head) head->prev_ = ln;
   ln->next_ = head;
 
@@ -31,11 +33,13 @@ void List::addFront(LNode* ln) {
   if (!tail) tail = ln;
 }
 
-void List::addAfter(LNode* ln, LNode* nn) {
+void List::addAfter(LNode* ln, std::unique_ptr<LNode> nnp) {
   if (!ln) {
-    addFront(nn);
+    addFront(std::move(nnp));
     return;
   }
+
+  auto* nn = nnp.release();
 
   nn->next_ = ln->next_;
   if (nn->next_) nn->next_->prev_ = nn;
@@ -46,11 +50,13 @@ void List::addAfter(LNode* ln, LNode* nn) {
   if (ln == tail) tail = nn;
 }
 
-void List::addBefore(LNode* ln, LNode* nn) {
+void List::addBefore(LNode* ln, std::unique_ptr<LNode> nnp) {
   if (!ln) {
-    add(nn);
+    add(std::move(nnp));
     return;
   }
+
+  auto* nn = nnp.release();
 
   nn->next_ = ln;
   nn->prev_ = ln->prev_;
@@ -61,7 +67,7 @@ void List::addBefore(LNode* ln, LNode* nn) {
   if (ln == head) head = nn;
 }
 
-void List::remove(LNode* ln) {
+std::unique_ptr<LNode> List::remove(LNode* ln) {
   if (!ln->next_)
     tail = ln->prev_;
   else
@@ -74,14 +80,15 @@ void List::remove(LNode* ln) {
 
   if (cur == ln) cur = ln->prev_;
   if (!cur) cur = head;
+
+  return std::unique_ptr<LNode>(ln);
 }
 
-void List::del(LNode* ln) {
-  remove(ln);
-  delete ln;
-}
+void List::del(LNode* ln) { remove(ln); }
 
-LNode* List::replaceWith(LNode* ln, LNode* nn) {
+LNode* List::replaceWith(LNode* ln, std::unique_ptr<LNode> nnp) {
+  // Take ownership of the node
+  auto* nn = nnp.release();
   nn->next_ = ln->next_;
   nn->prev_ = ln->prev_;
 

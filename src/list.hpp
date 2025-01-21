@@ -4,6 +4,8 @@
 #ifndef LIST_HPP
 #define LIST_HPP
 
+#include <memory>
+
 class List;
 
 struct LNode {
@@ -30,25 +32,25 @@ class List {
   void clear();
   // Uses del() to remove each element from the list and delete it.
 
-  void add(LNode* ln);
+  void add(std::unique_ptr<LNode> ln);
   // Add ln to the tail of the list.
 
-  void addFront(LNode* ln);
+  void addFront(std::unique_ptr<LNode> ln);
   // Add ln to the head of the list.
 
-  void addAfter(LNode* ln, LNode* nn);
+  void addAfter(LNode* ln, std::unique_ptr<LNode> nn);
   // Add node nn after node ln in the list.
 
-  void addBefore(LNode* ln, LNode* nn);
+  void addBefore(LNode* ln, std::unique_ptr<LNode> nn);
   // Add node nn before node ln in the list.
 
-  void remove(LNode* ln);
+  std::unique_ptr<LNode> remove(LNode* ln);
   // Remove node ln from the list.
 
   void del(LNode* ln);
   // Remove node ln from the list and then delete it.
 
-  LNode* replaceWith(LNode* ln, LNode* nn);
+  LNode* replaceWith(LNode* ln, std::unique_ptr<LNode> nn);
   // Replace node ln with node nn, return a pointer to node nn.
 
   bool contains(LNode* ln);

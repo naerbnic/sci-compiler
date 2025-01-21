@@ -60,9 +60,9 @@ void InitAsm() {
 void Assemble() {
   // Assemble the list pointed to by asmHead.
 
-  auto vars = new ANVars(script ? localVars : globalVars);
-  sc->heapList->addAfter(sc->heapList->first(), vars);
+  auto vars = std::make_unique<ANVars>(script ? localVars : globalVars);
   sc->heapList->incFixups(vars->numFixups());
+  sc->heapList->addAfter(sc->heapList->first(), std::move(vars));
 
   // Set the offsets in the object list.
   sc->heapList->setOffset(0);

@@ -49,16 +49,18 @@ struct AList : List {
 
   template <class T, class... Args>
   T* newNode(Args&&... args) {
-    auto node = new T(std::forward<Args>(args)...);
-    add(node);
-    return node;
+    auto node = std::make_unique<T>(std::forward<Args>(args)...);
+    auto* node_ptr = node.get();
+    add(std::move(node));
+    return node_ptr;
   }
 
   template <class T, class... Args>
   T* newNodeBefore(ANode* before, Args&&... args) {
-    auto node = new T(std::forward<Args>(args)...);
-    addBefore(before, node);
-    return node;
+    auto node = std::make_unique<T>(std::forward<Args>(args)...);
+    auto node_ptr = node.get();
+    addBefore(before, std::move(node));
+    return node_ptr;
   }
 };
 
