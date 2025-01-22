@@ -130,7 +130,7 @@ static bool GetNumberOrStringToken(strptr errStr, bool stringOK) {
   Expression(pn, REQUIRED);
 
   // If the expression is not a constant, bitch.
-  pn_t type = pn->child->type;
+  pn_t type = pn->first_child()->type;
   if (type != PN_NUM && (type != PN_STRING || !stringOK)) {
     Error("%s required.", errStr);
     return False;
@@ -149,7 +149,7 @@ static bool GetNumberOrStringToken(strptr errStr, bool stringOK) {
       break;
   }
 
-  setSymVal(pn->child->val);
+  setSymVal(pn->first_child()->val);
 
   delete pn;
 

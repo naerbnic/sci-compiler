@@ -20,9 +20,7 @@
 jmp_buf recoverBuf;
 
 PNode::PNode(pn_t t)
-    : next(0),
-      child(0),
-      sym(0),
+    : sym(0),
       val(0),
       type(t),
       lineNum(curSourceFile ? curSourceFile->lineNum : 0) {}

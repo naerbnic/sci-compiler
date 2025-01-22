@@ -3,6 +3,8 @@
 
 #include "compile.hpp"
 
+#include <ranges>
+
 #include "anode.hpp"
 #include "asm.hpp"
 #include "define.hpp"
@@ -22,17 +24,17 @@ static void MakeCall(PNode* pn);
 static void MakeClassID(PNode*);
 static void MakeObjID(PNode*);
 static void MakeSend(PNode*);
-static int MakeMessage(PNode*);
+static int MakeMessage(PNode::ChildSpan children);
 static void MakeProc(PNode*);
-static int MakeArgs(PNode*);
+static int MakeArgs(PNode::ChildSpan children);
 static void MakeUnary(PNode*);
 static void MakeBinary(PNode*);
 static void MakeNary(PNode*);
 static void MakeAssign(PNode*);
 static void MakeReturn(PNode*);
 static void MakeComp(PNode*);
-static void MakeAnd(PNode*);
-static void MakeOr(PNode*);
+static void MakeAnd(PNode::ChildSpan);
+static void MakeOr(PNode::ChildSpan);
 static void MakeIncDec(PNode*);
 static void MakeCompOp(int);
 static void MakeIf(PNode*);
@@ -60,12 +62,12 @@ void Compile(PNode* pn) {
     case PN_ELIST:
       // An expression list.  Compile code for each expression
       // in the list.
-      for (pn = pn->child; pn; pn = pn->next) Compile(pn);
+      for (auto const& child : pn->children) Compile(child.get());
       break;
 
     case PN_EXPR:
       // Compile the expression.
-      Compile(pn->child);
+      Compile(pn->first_child());
       break;
 
     case PN_ASSIGN:
@@ -95,7 +97,7 @@ void Compile(PNode* pn) {
       break;
 
     case PN_ADDROF:
-      MakeAccess(pn->child, op_lea);
+      MakeAccess(pn->first_child(), op_lea);
       break;
 
     case PN_CLASS:
@@ -198,18 +200,17 @@ static void MakeAccess(PNode* pn, ubyte theCode) {
   // is OP_STORE or OP_LOAD
 
   ANVarAccess* an;
-  PNode* child;
   uword theAddr;
   pn_t varType;
 
   // Check for indexing and compile the index if necessary.
   bool indexed = pn->type == PN_INDEX;
   if (indexed) {
-    child = pn->child;
+    PNode* child = pn->children[0].get();
     if (theCode == (OP_LDST | OP_STORE))
       curList->newNode<ANOpCode>(
-          op_push);        // push the value to store on the stack
-    Compile(child->next);  // compile index value
+          op_push);                  // push the value to store on the stack
+    Compile(pn->children[1].get());  // compile index value
     if (theCode != op_lea) theCode |= OP_INDEX;  // set the indexing bit
     theAddr = child->val;
     varType = child->type;
@@ -291,7 +292,7 @@ static void MakeAccess(PNode* pn, ubyte theCode) {
     case PN_NUM:
       break;
     case PN_INDEX:
-      an->sym = child->sym;
+      an->sym = pn->child_at(0)->sym;
       break;
     default:
       an->sym = pn->sym;
@@ -313,7 +314,7 @@ static void MakeCall(PNode* pn) {
   ANOpUnsign* an = curList->newNode<ANOpUnsign>(op_pushi, 0);
 
   // Compile the arguments.
-  uint32_t numArgs = MakeArgs(pn->child);
+  uint32_t numArgs = MakeArgs(pn->children);
 
   // Put the number of arguments in its asmNode.
   an->value = numArgs;
@@ -371,11 +372,14 @@ static void MakeSend(PNode* pn) {
   // variable.
 
   // Get pointer to object node (an expression)
-  PNode* on = pn->child;
+  PNode* on = pn->children[0].get();
 
   // Compile the messages to the object.
   int numArgs = 0;
-  for (pn = on->next; pn; pn = pn->next) numArgs += MakeMessage(pn->child);
+  for (auto const& msg :
+       std::ranges::subrange(pn->children.begin() + 1, pn->children.end())) {
+    numArgs += MakeMessage(msg->children);
+  }
 
   // Add the appropriate send.
   ANSend* an;
@@ -391,11 +395,11 @@ static void MakeSend(PNode* pn) {
   an->numArgs = 2 * numArgs;
 }
 
-static int MakeMessage(PNode* theMsg) {
+static int MakeMessage(PNode::ChildSpan theMsg) {
   // Compile code to push a message on the stack.
 
   // Compile the selector.
-  Compile(theMsg);
+  Compile(theMsg.front().get());
   curList->newNode<ANOpCode>(op_push);
 
   // Push the number of arguments on the stack (we don't know the
@@ -404,22 +408,22 @@ static int MakeMessage(PNode* theMsg) {
 
   // Compile the arguments to the message and fix up the number
   // of arguments to the message.
-  an->value = MakeArgs(theMsg->next);
+  an->value = MakeArgs(theMsg.subspan(1));
 
   return an->value + 2;
 }
 
-static int MakeArgs(PNode* theArg) {
+static int MakeArgs(PNode::ChildSpan args) {
   // Compile code to push the arguments to a call on the stack.
   // Return the number of arguments.
 
   int numArgs = 0;
 
-  for (; theArg; theArg = theArg->next) {
-    if (theArg->type == PN_REST)
-      curList->newNode<ANOpUnsign>(op_rest | OP_BYTE, theArg->val);
+  for (auto const& arg : args) {
+    if (arg->type == PN_REST)
+      curList->newNode<ANOpUnsign>(op_rest | OP_BYTE, arg->val);
     else {
-      Compile(theArg);
+      Compile(arg.get());
       curList->newNode<ANOpCode>(op_push);
       ++numArgs;
     }
@@ -432,7 +436,7 @@ static void MakeUnary(PNode* pn) {
   // Compile code for unary operators.
 
   // Do the argument to the operator.
-  Compile(pn->child);
+  Compile(pn->first_child());
 
   // Put out the appropriate opcode.
   uword theCode;
@@ -454,9 +458,9 @@ static void MakeBinary(PNode* pn) {
   // Compile code for a binary operator.
 
   // Compile the arguments, putting the first on the stack.
-  Compile(pn->child);
+  Compile(pn->child_at(0));
   curList->newNode<ANOpCode>(op_push);
-  Compile(pn->child->next);
+  Compile(pn->child_at(1));
 
   // Put out the opcode.
   uword theCode;
@@ -484,13 +488,14 @@ static void MakeNary(PNode* pn) {
   // Compile code for an nary operator (one with any number of arguments).
 
   // Compile the first argument and push its value on the stack.
-  PNode* theArg = pn->child;
-  Compile(theArg);
-  curList->newNode<ANOpCode>(op_push);
+  Compile(pn->child_at(0));
 
-  for (theArg = theArg->next; theArg;) {
+  for (auto const& arg : pn->rest()) {
+    // Push the previous argument on the stack for combining with the
+    // next argument.
+    curList->newNode<ANOpCode>(op_push);
     // Compile the next argument.
-    Compile(theArg);
+    Compile(arg.get());
 
     // Put out the appropriate opcode.
     uword theCode;
@@ -512,13 +517,6 @@ static void MakeNary(PNode* pn) {
         break;
     }
     curList->newNode<ANOpCode>(theCode);
-
-    // Point to the next argument.  If there is one, push the current
-    // result on the stack for combining with the next argument.  If
-    // there is no next argument, we're done -- leave the result
-    // in the register.
-    theArg = theArg->next;
-    if (theArg) curList->newNode<ANOpCode>(op_push);
   }
 }
 
@@ -526,12 +524,12 @@ static void MakeAssign(PNode* pn) {
   // If this is an arithmetic-op assignment, put the value of the
   // target variable on the stack for the operation.
   if (pn->val != A_EQ) {
-    MakeAccess(pn->child, OP_LDST | OP_LOAD);
+    MakeAccess(pn->child_at(0), OP_LDST | OP_LOAD);
     curList->newNode<ANOpCode>(op_push);
   }
 
   // Compile the value to be assigned.
-  Compile(pn->child->next);
+  Compile(pn->child_at(1));
 
   // If this is an arithmetic-op assignment, do the arithmetic operation.
   uword theCode;
@@ -568,14 +566,14 @@ static void MakeAssign(PNode* pn) {
     curList->newNode<ANOpCode>(theCode);
   }
 
-  MakeAccess(pn->child, OP_LDST | OP_STORE);
+  MakeAccess(pn->child_at(0), OP_LDST | OP_STORE);
 }
 
 static void MakeReturn(PNode* pn) {
   // Compile code for a return.
 
   // If there was an argument to the return, compile it.
-  if (pn->child) Compile(pn->child);
+  if (pn->first_child()) Compile(pn->first_child());
 
   // Put out the return opcode.
   curList->newNode<ANOpCode>(op_ret);
@@ -609,28 +607,26 @@ static void MakeComp(PNode* pn) {
 
   if (op == N_OR)
     // Handle special case of '||'.
-    MakeOr(pn->child);
+    MakeOr(pn->children);
   else if (op == N_AND)
     // Handle special case of '&&'.
-    MakeAnd(pn->child);
+    MakeAnd(pn->children);
   else {
     // Point to the first argument and set up an empty need list (which
     // will be used to keep track of those nodes which need the address
     // of the end of the expression for the early out).
-    PNode* node = pn->child;
     Symbol earlyOut;
 
     // Compile the first two operands and do the test.
-    Compile(node);
+    Compile(pn->child_at(0));
     curList->newNode<ANOpCode>(op_push);
-    node = node->next;
-    Compile(node);
+    Compile(pn->child_at(1));
     MakeCompOp(op);
 
     // If there are no more operands, we're done.  Otherwise we've got
     // to bail out of the test if it is already false or continue if it
     // is true so far.
-    while ((node = node->next)) {
+    for (auto const& node : pn->rest_at(2)) {
       // Early out if false.
       MakeBranch(op_bnt, 0, &earlyOut);
 
@@ -639,7 +635,7 @@ static void MakeComp(PNode* pn) {
       curList->newNode<ANOpCode>(op_pprev);
 
       // Compile the next argument and test it.
-      Compile(node);
+      Compile(node.get());
       MakeCompOp(op);
     }
 
@@ -648,44 +644,36 @@ static void MakeComp(PNode* pn) {
   }
 }
 
-static void MakeAnd(PNode* pn) {
+static void MakeAnd(PNode::ChildSpan args) {
   // Compile code for the '&&' operator.
 
   Symbol earlyOut;
 
-  while (1) {
-    // Compile an argument.
-    Compile(pn);
+  Compile(args[0].get());
 
-    // If the argument just compiled was the last, the expression
-    // evaluates to its value and we're done.
-    pn = pn->next;
-    if (!pn) break;
-
+  for (auto const& arg : args.subspan(1)) {
     // Make a branch for an early out if the expression is false.
     MakeBranch(op_bnt, 0, &earlyOut);
+    // Compile an argument.
+    Compile(arg.get());
   }
 
   // Set the target for any early-out branches.
   MakeLabel(&earlyOut);
 }
 
-static void MakeOr(PNode* pn) {
+static void MakeOr(PNode::ChildSpan args) {
   // Compile code for the '||' operator.
 
   Symbol earlyOut;
 
-  while (1) {
-    // Compile code for an argument.
-    Compile(pn);
+  Compile(args[0].get());
 
-    // If this is the last argument, the expression takes on its
-    // value and we're done.
-    pn = pn->next;
-    if (!pn) break;
-
+  for (auto const& arg : args.subspan(1)) {
     // Make a branch for an early out if the expression is true.
     MakeBranch(op_bt, 0, &earlyOut);
+    // Compile code for an argument.
+    Compile(arg.get());
   }
 
   // Make a target for the early-out branches.
@@ -736,30 +724,27 @@ static void MakeIf(PNode* pn) {
   // Compile code for an 'if' statement.
 
   // Compile the conditional expression
-  PNode* node = pn->child;
-  Compile(node);
+  Compile(pn->child_at(0));
 
   // Branch to the else code (if there is any) if the expression is false.
   Symbol elseLabel;
   MakeBranch(op_bnt, 0, &elseLabel);
 
   // Compile the code to be executed if expression was true.
-  node = node->next;
-  if (node) Compile(node);
+  if (pn->child_at(1)) Compile(pn->child_at(1));
 
   // If there is no 'else' code, we're done -- backpatch the branch.
   // Otherwise, jump around the else code, backpatch the jump to the
   // else code, compile the else code, and backpatch the jump around
   // the else code.
-  if (node) node = node->next;
-  if (!node)
+  if (!pn->child_at(2))
     MakeLabel(&elseLabel);
 
   else {
     Symbol doneLabel;
     MakeBranch(op_jmp, 0, &doneLabel);
     MakeLabel(&elseLabel);
-    Compile(node);
+    Compile(pn->child_at(2));
     MakeLabel(&doneLabel);
   }
 }
@@ -771,48 +756,56 @@ static void MakeCond(PNode* pn) {
   Symbol next;
   bool elseSeen = False;
 
-  PNode* node = pn->child;
-  while (node) {
+  // Children alternate between conditions and body.
+  // Bodies are always an instance of ELIST, which is used to detect if there
+  // is any body for each clause.
+
+  int i = 0;
+  while (i < pn->children.size()) {
+    auto* condition = pn->children[i++].get();
+    PNode* body = i < pn->children.size() && pn->children[i]->type == PN_ELIST
+                      ? pn->children[i++].get()
+                      : nullptr;
+    bool atEnd = i == pn->children.size();
     // The else clause needs no test before its execution.  Otherwise,
     // compile the code to test a condition and branch to the next
     // condition test if the condition is not true.
-    if (node->type != PN_ELSE) {
+    if (condition->type != PN_ELSE) {
       if (elseSeen) Error("Else must come at end of cond statement");
 
       // Compile the condition test.
-      Compile(node);
+      Compile(condition);
 
-      //	if we're at the end, just fall through
-      if (!node->next)
-        ;
+      if (atEnd && !body) {
+        //	if we're at the end, just break out.
+        break;
+      }
 
       //	if we're on the last test and it fails, exit
-      else if (node->next->type == PN_ELIST && !node->next->next)
+      if (body && atEnd) {
         MakeBranch(op_bnt, 0, &done);
-
-      //	if we're on an interior test and it fails, go to next test
-      else
+        //	if we're on an interior test and it fails, go to next test
+      } else {
         MakeBranch(op_bnt, 0, &next);
+      }
 
-    } else if (elseSeen)
+    } else if (elseSeen) {
       Error("Multiple else clauses");
-
-    else
+    } else {
       elseSeen = True;
+    }
 
     // Compile the statements to be executed if a condition was
     // satisfied.
-    if (node->next && node->next->type == PN_ELIST) {
-      node = node->next;
-      Compile(node);
+    if (body) {
+      Compile(body);
     }
 
     // If we're at the end of the cond clause, we're done.  Otherwise
     // make a jump to the end of the cond clause and compile a
     // destination for the jump which branched around the code
     // just compiled.
-    node = node->next;
-    if (node) {
+    if (!atEnd) {
       MakeBranch(op_jmp, 0, &done);
       MakeLabel(&next);
     }
@@ -829,58 +822,68 @@ static void MakeSwitch(PNode* pn) {
   Symbol next;
   bool elseSeen = False;
 
+  PNode::ChildSpan children = pn->children;
+  auto* value = children[0].get();
+  auto cases = children.subspan(1);
+
   // Compile the expression to be switched on and put the value on
   // the stack.
-  PNode* node = pn->child;
-  Compile(node);
+  Compile(value);
   curList->newNode<ANOpCode>(op_push);
 
-  node = node->next;
-  while (node) {
+  int i = 0;
+  while (i < cases.size()) {
+    auto* caseClause = cases[i++].get();
+    PNode* body = i < cases.size() && cases[i]->type == PN_ELIST
+                      ? cases[i++].get()
+                      : nullptr;
+    bool atEnd = i == cases.size();
     // Compile the expression to compare the switch value to, then
     // test the values for equality.  Make a branch around the
     // code if the expressions are not equal.
-    if (node->type != PN_ELSE) {
-      if (elseSeen) Error("Else must come at end of switch statement");
+    if (caseClause->type != PN_ELSE) {
+      if (elseSeen) {
+        Error("Else must come at end of switch statement");
+      }
 
       // Duplicate the switch value.
       curList->newNode<ANOpCode>(op_dup);
 
       // Compile the test value.
-      Compile(node);
+      Compile(caseClause);
 
       // Test for equality.
       curList->newNode<ANOpCode>(op_eq);
 
       //	if we're at the end, just fall through
-      if (!node->next)
-        ;
+      if (atEnd && !body) {
+        break;
+      }
 
       //	if we're on the last test and it fails, exit
-      else if (node->next->type == PN_ELIST && !node->next->next)
+      if (atEnd && body) {
         MakeBranch(op_bnt, 0, &done);
 
-      //	if we're on an interior test and it fails, go to next test
-      else
+      } else {
+        //	if we're on an interior test and it fails, go to next test
         MakeBranch(op_bnt, 0, &next);
+      }
 
-    } else if (elseSeen)
+    } else if (elseSeen) {
       Error("Multiple else clauses");
-
-    else
+    } else {
       elseSeen = True;
+    }
 
     // Compile the statements to be executed if a switch matched.
-    if (node->next->type == PN_ELIST) {
-      node = node->next;
-      Compile(node);
+    if (body) {
+      Compile(body);
     }
 
     // If we're at the end of the switch expression, we're done.
     // Otherwise, make a jump to the end of the expression, then
     // make a target for the branch around the previous code.
-    node = node->next;
-    if (node) {
+    if (!atEnd) {
       MakeBranch(op_jmp, 0, &done);
       MakeLabel(&next);
     }
@@ -906,7 +909,7 @@ static void MakeIncDec(PNode* pn) {
       theCode = OP_LDST | OP_DEC;
       break;
   }
-  MakeAccess(pn->child, (ubyte)theCode);
+  MakeAccess(pn->first_child(), (ubyte)theCode);
 }
 
 static void MakeProc(PNode* pn) {
@@ -940,7 +943,7 @@ static void MakeProc(PNode* pn) {
   if (pn->val) curList->newNode<ANOpUnsign>(op_link, pn->val);
 
   // Compile code for the procedure followed by a return.
-  if (pn->child) Compile(pn->child);
+  if (pn->child_at(0)) Compile(pn->child_at(0));
 
   if (includeDebugInfo) {
     assert(curSourceFile);

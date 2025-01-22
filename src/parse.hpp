@@ -6,9 +6,11 @@
 
 #include <setjmp.h>
 
-#ifndef SYMBOL_HPP
+#include <memory>
+#include <span>
+#include <vector>
+
 #include "symbol.hpp"
-#endif
 
 // Parse node types.  The same as symbol types, but with some additions.
 enum pn_t {
@@ -61,7 +63,7 @@ enum pn_t {
   PN_REST,
   PN_PROP,
   PN_METH,
-  PN_ADDROF,              // address of operator (@)
+  PN_ADDROF,  // address of operator (@)
   PN_MSG,
   PN_SWITCHTO
 };
@@ -69,17 +71,38 @@ enum pn_t {
 struct PNode {
   // Node for building a parse tree.
 
+  using ChildVector = std::vector<std::unique_ptr<PNode>>;
+  using ChildSpan = std::span<std::unique_ptr<PNode> const>;
+
   PNode(pn_t t);
-  ~PNode();
 
-  PNode* addChild(PNode* node);
+  PNode* addChild(std::unique_ptr<PNode> node);
+  PNode* first_child() const {
+    return children.empty() ? nullptr : children[0].get();
+  }
 
-  PNode* next;   // pointer to next in sibling list
-  PNode* child;  // pointer to head of children list
-  Symbol* sym;   // symbol associated with node
-  int val;       // node value
-  pn_t type;     // type of node
-  int lineNum;   //	line number in current source file
+  PNode* child_at(int i) const {
+    return i < children.size() ? children[i].get() : nullptr;
+  }
+
+  ChildSpan rest() const { return rest_at(1); }
+  ChildSpan rest_at(std::size_t i) const {
+    return ChildSpan(children).subspan(i);
+  }
+
+  PNode* newChild(pn_t t) {
+    auto node = std::make_unique<PNode>(t);
+    auto ptr = node.get();
+    children.push_back(std::move(node));
+    return ptr;
+  }
+
+  // Children
+  ChildVector children;
+  Symbol* sym;  // symbol associated with node
+  int val;      // node value
+  pn_t type;    // type of node
+  int lineNum;  //	line number in current source file
 };
 
 //	parse.cpp

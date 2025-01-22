@@ -1,6 +1,8 @@
 //	loop.cpp
 // 	loop code generation
 
+#include <cassert>
+
 #include "anode.hpp"
 #include "compile.hpp"
 #include "opcodes.hpp"
@@ -27,7 +29,11 @@ struct Loop {
 Loop* loopList;
 
 Loop::Loop(LoopType t, Symbol* c, Symbol* e)
-    : next(loopList), type(t), start(curList->newNode<ANLabel>()), cont(c), end(e) {
+    : next(loopList),
+      type(t),
+      start(curList->newNode<ANLabel>()),
+      cont(c),
+      end(e) {
   // Add this loop to the loop list.
   loopList = this;
 }
@@ -46,15 +52,17 @@ void MakeWhile(PNode* theNode)
 
   cont.setLoc(lp.start);
 
+  assert(theNode->children.size() == 2);
+
   // Compile the conditional expression controlling the loop,
   // and its corresponding branch.
-  theNode = theNode->child;
-  Compile(theNode);
+  PNode* expr = theNode->child_at(0);
+  PNode* body = theNode->child_at(1);
+  Compile(expr);
   MakeBranch(op_bnt, 0, &end);
 
   // Compile the statements in the loop
-  theNode = theNode->next;
-  if (theNode) Compile(theNode);
+  if (body) Compile(body);
 
   // Make the branch back to the loop start.
   MakeBranch(op_jmp, lp.start, 0);
@@ -72,8 +80,10 @@ void MakeRepeat(PNode* theNode) {
 
   cont.setLoc(lp.start);
 
+  PNode* body = theNode->child_at(0);
+
   // Compile the loop's statements.
-  if (theNode->child) Compile(theNode->child);
+  if (body) Compile(body);
 
   // Make the branch back to the start of the loop.
   MakeBranch(op_jmp, lp.start, 0);
@@ -88,9 +98,13 @@ void MakeFor(PNode* theNode) {
   //			'(' statement* ')'
   //			statement*
 
+  auto* init = theNode->child_at(0);
+  auto* cond = theNode->child_at(1);
+  auto* update = theNode->child_at(2);
+  auto* body = theNode->child_at(3);
+
   // Make the initialization statements.
-  theNode = theNode->child;
-  if (theNode) Compile(theNode);
+  if (init) Compile(init);
 
   // Make the label at the start of the loop
   Symbol end;
@@ -99,17 +113,15 @@ void MakeFor(PNode* theNode) {
 
   // Compile the conditional expression controlling the loop,
   // and its corresponding branch.
-  theNode = theNode->next;
-  if (theNode) Compile(theNode);
+  if (cond) Compile(cond);
   MakeBranch(op_bnt, 0, &end);
 
   // Compile the statements in the loop
-  if (theNode->next && theNode->next->next) Compile(theNode->next->next);
+  if (body) Compile(body);
 
   // Compile the re-initialization statements
   MakeLabel(&cont);
-  theNode = theNode->next;
-  if (theNode) Compile(theNode);
+  if (update) Compile(update);
 
   // Make the branch back to the loop start.
   MakeBranch(op_jmp, lp.start, 0);
@@ -141,7 +153,7 @@ void MakeBreakIf(PNode* theNode) {
   int level = theNode->val - 1;
 
   // Compile the expression which determines whether or not we break.
-  Compile(theNode->child);
+  Compile(theNode->first_child());
 
   // Walk through the list of loops until we get to the proper
   // level to break to.  If the requested break level is greater
@@ -179,7 +191,7 @@ void MakeContIf(PNode* theNode) {
   int level = theNode->val - 1;
 
   // Compile the expression which determines whether or not we continue.
-  Compile(theNode->child);
+  Compile(theNode->first_child());
 
   // Walk through the list of loops until we get to the proper
   // level to continue at.  If the requested continue level is greater
