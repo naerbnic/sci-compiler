@@ -9,11 +9,11 @@
 
 #include "getargs.hpp"
 
-#include <absl/strings/str_format.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "absl/strings/str_format.h"
 #include "string.hpp"
 
 namespace {

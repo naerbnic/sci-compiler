@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <variant>
 
 #include "sc.hpp"
 

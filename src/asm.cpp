@@ -3,10 +3,9 @@
 
 #include "asm.hpp"
 
-#include <absl/strings/str_format.h>
-
 #include <cstdlib>
 
+#include "absl/strings/str_format.h"
 #include "anode.hpp"
 #include "define.hpp"
 #include "input.hpp"

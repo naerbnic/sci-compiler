@@ -1,0 +1,11 @@
+cc_binary(
+    name = "sc",
+    srcs = glob([
+        "*.cpp",
+        "*.hpp",
+    ]),
+    deps = [
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/container:btree",
+    ]
+)

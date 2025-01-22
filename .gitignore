@@ -395,3 +395,5 @@ sc.map
 
 build/
 .vscode/
+
+/bazel-*

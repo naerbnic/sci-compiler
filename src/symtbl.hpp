@@ -4,10 +4,9 @@
 #ifndef SYMTBL_HPP
 #define SYMTBL_HPP
 
-#include <absl/container/btree_map.h>
-
 #include <memory>
 
+#include "absl/container/btree_map.h"
 #include "symbol.hpp"
 
 // Possible hash table sizes for symbol tables.

@@ -4,6 +4,8 @@
 #ifndef ANODE_HPP
 #define ANODE_HPP
 
+#include <variant>
+
 #include "alist.hpp"
 #include "sc.hpp"
 
