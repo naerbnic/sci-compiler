@@ -1,4 +1,3 @@
-(include "game.sh")
 (script# 0)
 (global
   foo 0)

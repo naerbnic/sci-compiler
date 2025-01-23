@@ -16,7 +16,7 @@
 // This function builds a path name from the provided variables and stores it in
 // dest.
 //
-void MakeName(char *dest, const char *dir, const char *name, const char *ext);
+void MakeName(char *dest, std::string_view dir, std::string_view name, std::string_view ext);
 std::string MakeName(std::string_view dir, std::string_view name,
                      std::string_view ext);
 

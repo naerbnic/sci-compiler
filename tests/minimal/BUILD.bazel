@@ -1,0 +1,30 @@
+load("//rules:sc.bzl", "sci_build_env", "sci_script", "sci_binary")
+
+sci_build_env(
+    name = "base_env",
+    classdef = "classdef",
+    game_header = "game.sh",
+    selector = "selector",
+    system_header = "system.sh",
+)
+
+sci_script(
+    name = "main",
+    src = "main.sc",
+    script_num = 0,
+)
+
+sci_script(
+    name = "helper",
+    src = "helper.sc",
+    script_num = 1,
+)
+
+sci_binary(
+    name = "resources",
+    srcs = [
+        ":main",
+        ":helper",
+    ],
+    build_env = ":base_env",
+)

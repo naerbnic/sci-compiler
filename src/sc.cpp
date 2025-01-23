@@ -43,7 +43,7 @@ static int totalErrors;
 static void CompileFile(strptr);
 static void ShowInfo();
 static void InstallCommandLineDefine(std::string_view);
-static void SetTargetArchitecture(std::string_view);
+static SciTargetArch GetTargetArchitecture(std::string_view);
 
 //	used by getargs
 static std::string outDirPtr;
@@ -63,65 +63,94 @@ Compiler::~Compiler() {
 static void deleteCompiler() { delete sc; }
 
 int main(int argc, char **argv) {
-  argparse::ArgumentParser parser("sc");
-  parser.add_argument("-a")
+  argparse::ArgumentParser program("sc");
+  program.add_argument("-a")
       .help("abort compile if database locked")
-      .default_value(false);
-  parser.add_argument("-d").help("include debug info").default_value(false);
-  parser.add_argument("-D")
+      .default_value(false)
+      .flag();
+  program.add_argument("-d")
+      .help("include debug info")
+      .default_value(false)
+      .flag();
+  program.add_argument("-D")
       .help("command line define (e.g. -DMAC or -DMAC=1)")
-      .action(InstallCommandLineDefine);
-  parser.add_argument("-g")
+      .action(InstallCommandLineDefine)
+      .append()
+      .nargs(1);
+  program.add_argument("-g")
       .help("maximum number of global or local variables")
       .default_value(750);
-  parser.add_argument("-l")
+  program.add_argument("-l")
       .help("generate a code listing")
-      .default_value(false);
-  parser.add_argument("-n")
+      .default_value(false)
+      .flag();
+  program.add_argument("-n")
       .help("no auto-naming of objects")
-      .default_value(false);
-  parser.add_argument("-o").help("set output directory").default_value("");
-  parser.add_argument("-O")
+      .default_value(false)
+      .flag();
+  program.add_argument("-o").help("set output directory").default_value("");
+  program.add_argument("-O")
       .help("output the 'offsets' file")
-      .default_value(false);
-  parser.add_argument("-s")
+      .default_value(false)
+      .flag();
+  program.add_argument("-s")
       .help("show forward-referenced selectors")
-      .default_value(false);
-  parser.add_argument("-u")
+      .default_value(false)
+      .flag();
+  program.add_argument("-u")
       .help("don't lock class database")
-      .default_value(false);
-  parser.add_argument("-v").help("verbose output").default_value(false);
-  parser.add_argument("-w")
+      .default_value(false)
+      .flag();
+  program.add_argument("-v").help("verbose output").default_value(false).flag();
+  program.add_argument("-w")
       .help("output words high-byte first (for M68000)")
-      .default_value(false);
-  parser.add_argument("-z").help("turn off optimization").default_value(false);
-  parser.add_argument("-t")
+      .default_value(false)
+      .flag();
+  program.add_argument("-z").help("turn off optimization").default_value(false);
+  program.add_argument("-t")
       .help("Set the target architecture. Valid values are: SCI_1_1, SCI_2")
-      .default_value("SCI_2")
-      .choices("SCI_1_1", "SCI_2")
-      .action(SetTargetArchitecture);
-  parser.add_argument("files")
+      .default_value(std::string{"SCI_2"});
+  program.add_argument("files")
       .default_value(std::vector<std::string>())
       .remaining();
+  program.add_argument("--selector_file")
+      .help("The selector file to use during compilation")
+      .default_value(std::string{"selector"});
+  program.add_argument("--classdef_file")
+      .help("The class definition file to use during compilation")
+      .default_value(std::string{"classdef"});
+  program.add_argument("--system_header")
+      .help("The system header file to use during compilation")
+      .default_value(std::string{"system.sh"});
+  program.add_argument("--game_header")
+      .help("The game header file to use during compilation")
+      .default_value(std::string{"game.sh"});
+
   try {
-    parser.parse_args(argc, argv);
+    program.parse_args(argc, argv);
   } catch (const std::exception &err) {
     std::cerr << err.what() << std::endl;
-    std::cerr << parser;
+    std::cerr << program;
     return 1;
   }
-  abortIfLocked = parser.get<bool>("-a");
-  includeDebugInfo = parser.get<bool>("-d");
-  maxVars = parser.get<int>("-g");
-  listCode = parser.get<bool>("-l");
-  noAutoName = parser.get<bool>("-n");
-  outDirPtr = parser.get<std::string>("-o");
-  writeOffsets = parser.get<bool>("-O");
-  showSelectors = parser.get<bool>("-s");
-  dontLock = parser.get<bool>("-u");
-  verbose = parser.get<bool>("-v");
-  highByteFirst = parser.get<bool>("-w");
-  noOptimize = parser.get<bool>("-z");
+
+  abortIfLocked = program.get<bool>("-a");
+  includeDebugInfo = program.get<bool>("-d");
+  maxVars = program.get<int>("-g");
+  listCode = program.get<bool>("-l");
+  noAutoName = program.get<bool>("-n");
+  outDirPtr = program.get<std::string>("-o");
+  writeOffsets = program.get<bool>("-O");
+  showSelectors = program.get<bool>("-s");
+  dontLock = program.get<bool>("-u");
+  verbose = program.get<bool>("-v");
+  highByteFirst = program.get<bool>("-w");
+  noOptimize = program.get<bool>("-z");
+  targetArch = GetTargetArchitecture(program.get<std::string>("-t"));
+  auto selector_file = program.get<std::string>("--selector_file");
+  auto classdef_file = program.get<std::string>("--classdef_file");
+  auto system_header = program.get<std::string>("--system_header");
+  auto game_header = program.get<std::string>("--game_header");
 
   char *op;
   strptr extPtr;
@@ -138,10 +167,10 @@ int main(int argc, char **argv) {
 		atexit(WriteMemSizes);
 #endif
 
-  auto files = parser.get<std::vector<std::string>>("files");
+  auto files = program.get<std::vector<std::string>>("files");
   if (files.empty()) {
     std::cerr << "No input files specified" << std::endl;
-    std::cerr << parser;
+    std::cerr << program;
     return 1;
   }
 
@@ -172,10 +201,10 @@ int main(int argc, char **argv) {
   InstallObjects();
   Lock();
   errors = warnings = 0;
-  theFile = OpenFileAsInput("selector", True);
+  theFile = OpenFileAsInput(selector_file, True);
   Parse();
   if (access("classdef", 0) == 0) {
-    theFile = OpenFileAsInput("classdef", True);
+    theFile = OpenFileAsInput(classdef_file, True);
     Parse();
   }
 
@@ -183,10 +212,10 @@ int main(int argc, char **argv) {
   ReadDebugFile();
 #endif
 
-  theFile = OpenFileAsInput("system.sh", True);
+  theFile = OpenFileAsInput(system_header, True);
   Parse();
 
-  theFile = OpenFileAsInput("game.sh", False);
+  theFile = OpenFileAsInput(game_header, False);
   if (theFile) Parse();
 
   totalErrors += errors;
@@ -292,11 +321,11 @@ static void InstallCommandLineDefine(std::string_view str) {
   sym->setStr(newStr(value));
 }
 
-static void SetTargetArchitecture(std::string_view str) {
+static SciTargetArch GetTargetArchitecture(std::string_view str) {
   if (str == "SCI_1_1") {
-    targetArch = SciTargetArch::SCI_1_1;
+    return SciTargetArch::SCI_1_1;
   } else if (str == "SCI_2") {
-    targetArch = SciTargetArch::SCI_2;
+    return SciTargetArch::SCI_2;
   } else {
     Panic("Invalid target architecture: %s", str);
   }
