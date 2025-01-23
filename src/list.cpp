@@ -5,12 +5,69 @@
 #include "sc.hpp"
 #include "sol.hpp"
 
-List::List() { head = tail = cur = 0; }
+LNode* ListIter::get() { return cur_; }
+void ListIter::advance() { cur_ = cur_->next(); }
+ListIter::operator bool() { return cur_ != nullptr; }
+
+std::unique_ptr<LNode> ListIter::remove(LNode* ln) {
+  bool removing_cur = ln == cur_;
+  auto* prev = ln->prev_;
+  if (!ln->next_)
+    list_->tail = ln->prev_;
+  else
+    ln->next_->prev_ = ln->prev_;
+
+  if (!ln->prev_)
+    list_->head = ln->next_;
+  else
+    ln->prev_->next_ = ln->next_;
+
+  if (removing_cur) {
+    if (prev == nullptr) {
+      cur_ = list_->front();
+    } else {
+      cur_ = prev;
+    }
+  }
+  return std::unique_ptr<LNode>(ln);
+}
+
+LNode* ListIter::replaceWith(LNode* ln, std::unique_ptr<LNode> nnp) {
+  if (cur_ == ln) {
+    cur_ = nnp.get();
+  }
+  // Take ownership of the node
+  auto* nn = nnp.release();
+  nn->next_ = ln->next_;
+  nn->prev_ = ln->prev_;
+
+  if (!nn->next_)
+    list_->tail = nn;
+  else
+    nn->next_->prev_ = nn;
+
+  if (!nn->prev_)
+    list_->head = nn;
+  else
+    nn->prev_->next_ = nn;
+
+  delete ln;
+
+  return nn;
+}
+
+List::List() { head = tail = 0; }
 
 List::~List() { clear(); }
 
 void List::clear() {
-  while (head) del(head);
+  auto* cur = head;
+  while (cur) {
+    auto* next = cur->next();
+    delete cur;
+    cur = next;
+  };
+  head = tail = nullptr;
 }
 
 void List::add(std::unique_ptr<LNode> lnp) {
@@ -67,48 +124,6 @@ void List::addBefore(LNode* ln, std::unique_ptr<LNode> nnp) {
   if (ln == head) head = nn;
 }
 
-std::unique_ptr<LNode> List::remove(LNode* ln) {
-  if (!ln->next_)
-    tail = ln->prev_;
-  else
-    ln->next_->prev_ = ln->prev_;
-
-  if (!ln->prev_)
-    head = ln->next_;
-  else
-    ln->prev_->next_ = ln->next_;
-
-  if (cur == ln) cur = ln->prev_;
-  if (!cur) cur = head;
-
-  return std::unique_ptr<LNode>(ln);
-}
-
-void List::del(LNode* ln) { remove(ln); }
-
-LNode* List::replaceWith(LNode* ln, std::unique_ptr<LNode> nnp) {
-  // Take ownership of the node
-  auto* nn = nnp.release();
-  nn->next_ = ln->next_;
-  nn->prev_ = ln->prev_;
-
-  if (!nn->next_)
-    tail = nn;
-  else
-    nn->next_->prev_ = nn;
-
-  if (!nn->prev_)
-    head = nn;
-  else
-    nn->prev_->next_ = nn;
-
-  if (cur == ln) cur = nn;
-
-  delete ln;
-
-  return nn;
-}
-
 bool List::contains(LNode* ln) {
   if (!ln) return False;
 
@@ -118,12 +133,4 @@ bool List::contains(LNode* ln) {
   return node == ln;
 }
 
-LNode* List::first() {
-  cur = head;
-  return cur;
-}
-
-LNode* List::next() {
-  if (cur) cur = cur->next_;
-  return cur;
-}
+ListIter List::iter() { return ListIter(this, head); }

@@ -61,7 +61,7 @@ void Assemble() {
 
   auto vars = std::make_unique<ANVars>(script ? localVars : globalVars);
   sc->heapList->incFixups(vars->numFixups());
-  sc->heapList->addAfter(sc->heapList->first(), std::move(vars));
+  sc->heapList->addAfter(sc->heapList->front(), std::move(vars));
 
   // Set the offsets in the object list.
   sc->heapList->setOffset(0);

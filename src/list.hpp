@@ -7,6 +7,7 @@
 #include <memory>
 
 class List;
+class ListIter;
 
 struct LNode {
   // Class LNode is the base class for any class to be linked in a doubly
@@ -19,8 +20,29 @@ struct LNode {
 
  private:
   friend class List;
+  friend class ListIter;
   LNode* next_;
   LNode* prev_;
+};
+
+class ListIter {
+ public:
+  LNode* get();
+  void advance();
+  explicit operator bool();
+
+  // Remove node ln from the list. Returns a unique_ptr to the returned node.
+  std::unique_ptr<LNode> remove(LNode* ln);
+
+  // Replace node ln with node nn, return a pointer to node nn.
+  LNode* replaceWith(LNode* ln, std::unique_ptr<LNode> nn);
+
+ private:
+  friend class List;
+
+  explicit ListIter(List* list, LNode* cur) : list_(list), cur_(cur) {}
+  List* list_;
+  LNode* cur_;
 };
 
 class List {
@@ -44,31 +66,17 @@ class List {
   void addBefore(LNode* ln, std::unique_ptr<LNode> nn);
   // Add node nn before node ln in the list.
 
-  std::unique_ptr<LNode> remove(LNode* ln);
-  // Remove node ln from the list.
-
-  void del(LNode* ln);
-  // Remove node ln from the list and then delete it.
-
-  LNode* replaceWith(LNode* ln, std::unique_ptr<LNode> nn);
-  // Replace node ln with node nn, return a pointer to node nn.
-
   bool contains(LNode* ln);
   // Return True if the list contains node ln, False otherwise.
 
-  LNode* first();
-  // Starts iteration of the list by setting the current iterator
-  // position (property 'cur') to the head of the list and
-  // returning the head.
+  ListIter iter();
 
-  LNode* next();
-  // Once the iterator has been initialized with first(), return
-  // the next node in the list and advance the current pointer
-  // for the iterator.
+  LNode* front() { return head; }
+
  protected:
+  friend ListIter;
   LNode* head;  // head of the list
   LNode* tail;  // tail of the list
-  LNode* cur;   // current position of iterator in list
 };
 
 #endif

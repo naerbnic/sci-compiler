@@ -16,6 +16,38 @@ bool shrink;
 bool noOptimize;
 
 ///////////////////////////////////////////////////
+// Class AListIter
+///////////////////////////////////////////////////
+ANode* AListIter::get() { return (ANode*)iter_.get(); }
+void AListIter::advance() { iter_.advance(); }
+AListIter::operator bool() { return bool(iter_); }
+ANode* AListIter::operator->() { return get(); }
+
+std::unique_ptr<ANode> AListIter::remove(ANode* an) {
+  return std::unique_ptr<ANode>(
+      static_cast<ANode*>(iter_.remove(an).release()));
+}
+ANode* AListIter::replaceWith(ANode* an, std::unique_ptr<ANode> nn) {
+  return static_cast<ANode*>(iter_.replaceWith(an, std::move(nn)));
+}
+
+ANOpCode* AListIter::findOp(uint32_t op) {
+  ANOpCode* nn = (ANOpCode*)get()->next();
+
+  if (nn)
+    return nn->op == op ? nn : 0;
+  else
+    return 0;
+}
+
+bool AListIter::removeOp(uint32_t op) {
+  ANode* an = findOp(op);
+  if (an) remove(an);
+
+  return an != 0;
+}
+
+///////////////////////////////////////////////////
 // Class AList
 ///////////////////////////////////////////////////
 
@@ -30,39 +62,22 @@ ANOpCode* AList::nextOp(ANode* start) {
   return nn;
 }
 
-ANOpCode* AList::findOp(uint32_t op) {
-  ANOpCode* nn = (ANOpCode*)cur->next();
-
-  if (nn)
-    return nn->op == op ? nn : 0;
-  else
-    return 0;
-}
-
-bool AList::removeOp(uint32_t op) {
-  ANode* an = findOp(op);
-  if (an) del(an);
-
-  return an != 0;
-}
-
 size_t AList::size() {
   size_t s = 0;
-  for (ANode* an = (ANode*)first(); an; an = (ANode*)next()) s += an->size();
+  for (auto it = iter(); it; it.advance()) s += it->size();
   return s;
 }
 
 void AList::emit(OutputFile* out) {
-  for (ANode* an = (ANode*)first(); an; an = (ANode*)next()) {
-    curOfs = an->offset;
-    if (listCode) an->list();
-    an->emit(out);
+  for (auto it = iter(); it; it.advance()) {
+    curOfs = it->offset;
+    if (listCode) it->list();
+    it->emit(out);
   }
 }
 
 size_t AList::setOffset(size_t ofs) {
-  for (ANode* an = (ANode*)first(); an; an = (ANode*)next())
-    ofs = an->setOffset(ofs);
+  for (auto it = iter(); it; it.advance()) ofs = it->setOffset(ofs);
 
   return ofs;
 }
@@ -72,8 +87,8 @@ void AList::optimize() {
 
   if (noOptimize) return;
 
-  for (ANode* an = (ANode*)first(); an; an = (ANode*)next())
-    while (an->optimize());
+  for (auto it = iter(); it; it.advance())
+    while (it->optimize());
 }
 
 ///////////////////////////////////////////////////
