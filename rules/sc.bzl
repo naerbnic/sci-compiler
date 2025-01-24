@@ -59,8 +59,8 @@ sci_script = rule(
 
 def _sci_binary_impl(ctx):
     build_env_info = ctx.attr.build_env[_SciBuildEnvInfo]
-    vocab_996_file = ctx.actions.declare_file("996.voc")
-    outputs = [vocab_996_file]
+    out_dir = ctx.actions.declare_directory(ctx.label.name)
+    outputs = [out_dir]
     inputs = [
         build_env_info.selector_file,
         build_env_info.classdef_file,
@@ -71,9 +71,6 @@ def _sci_binary_impl(ctx):
     for src_value in ctx.attr.srcs:
         src_info = src_value[_SciScriptInfo]
         srcs.append(src_info.src)
-        scr_file = ctx.actions.declare_file("{0}.scr".format(src_info.script_num))
-        hep_file = ctx.actions.declare_file("{0}.hep".format(src_info.script_num))
-        outputs.extend([scr_file, hep_file])
 
     if build_env_info.target_vm == "2":
         target_env = "SCI_2"
@@ -97,7 +94,7 @@ def _sci_binary_impl(ctx):
                 .add("--classdef_file", build_env_info.classdef_file)
                 .add("--system_header", build_env_info.system_header)
                 .add("--game_header", build_env_info.game_header)
-                .add("-o", vocab_996_file.dirname)
+                .add("-o", out_dir.path)
                 .add_all(srcs),
         ],
     )
