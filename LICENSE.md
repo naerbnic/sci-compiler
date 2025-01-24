@@ -1,4 +1,4 @@
-MIT License
+# MIT License
 
 Copyright (c) 2024 Digital Alchemy Studios, LLC
 Copyright (c) 2024 Brian Chin
