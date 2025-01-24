@@ -7,5 +7,6 @@ cc_binary(
     deps = [
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/container:btree",
+        "@argparse//:argparse",
     ]
 )

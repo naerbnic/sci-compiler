@@ -41,7 +41,7 @@ class SymTbl {
   Symbol* add(Symbol* sym);
   // Add the Symbol 'sym' to this table.
 
-  Symbol* lookup(strptr name);
+  Symbol* lookup(std::string_view name);
   // Return a pointer to the symbol with name 'name' if it is in
   // this table, 0 otherwise.
 
@@ -51,7 +51,7 @@ class SymTbl {
  private:
   SymTbl(int size = ST_MEDIUM, bool retain = false);
 
-  Symbol* install(strptr name, sym_t type);
+  Symbol* install(std::string_view name, sym_t type);
   // Install the identifier 'name' as a Symbol of type 'type'.
   // Return a pointer to it.
 
@@ -100,7 +100,7 @@ class SymTbls {
   Symbol* installModule(strptr n, sym_t t) {
     return moduleSymTbl->install(n, t);
   }
-  Symbol* installGlobal(strptr n, sym_t t) {
+  Symbol* installGlobal(std::string_view n, sym_t t) {
     return globalSymTbl->install(n, t);
   }
   Symbol* installClass(strptr n) { return classSymTbl->install(n, S_CLASS); }
@@ -112,7 +112,7 @@ class SymTbls {
   // Delete all symbol tables which do not have their 'keep' property
   //	set
 
-  Symbol* lookup(strptr name);
+  Symbol* lookup(std::string_view name);
   // syms.lookup the Symbol with name 'name' in 'activeList'. Return 0
   // if not found.
 

@@ -8,6 +8,7 @@
 #include <string_view>
 #include <vector>
 
+#include "argparse/argparse.hpp"
 #include "asm.hpp"
 #include "banner.hpp"
 #include "builtins.hpp"
@@ -15,7 +16,6 @@
 #include "debug.hpp"
 #include "define.hpp"
 #include "error.hpp"
-#include "getargs.hpp"
 #include "input.hpp"
 #include "jeff.hpp"
 #include "listing.hpp"
@@ -42,30 +42,11 @@ static int totalErrors;
 
 static void CompileFile(strptr);
 static void ShowInfo();
-static void InstallCommandLineDefine(char *);
-static void SetTargetArchitecture(char *);
+static void InstallCommandLineDefine(std::string_view);
+static void SetTargetArchitecture(std::string_view);
 
 //	used by getargs
-static strptr outDirPtr;
-const std::string_view usageStr = "file_spec [-switches]";
-std::vector<Arg> switches = {
-    {'a', &abortIfLocked, "abort compile if database locked"},
-    {'d', &includeDebugInfo, "include debug info"},
-    {'D', InstallCommandLineDefine,
-     "command line define (e.g. -DMAC or -DMAC=1)"},
-    {'g', &maxVars, "maximum number of global or local variables"},
-    {'l', &listCode, "generate a code listing"},
-    {'n', &noAutoName, "no auto-naming of objects"},
-    {'o', &outDirPtr, "set output directory"},
-    {'O', &writeOffsets, "output the 'offsets' file"},
-    {'s', &showSelectors, "show forward-referenced selectors"},
-    {'u', &dontLock, "don't lock class database"},
-    {'v', &verbose, "verbose output"},
-    {'w', &highByteFirst, "output words high-byte first (for M68000)"},
-    {'z', &noOptimize, "turn off optimization"},
-    {'t', SetTargetArchitecture,
-     "Set the target architecture. Valid values are: SCI_1_1, SCI_2"},
-};
+static std::string outDirPtr;
 
 #if !defined(WINDOWS)
 
@@ -82,6 +63,66 @@ Compiler::~Compiler() {
 static void deleteCompiler() { delete sc; }
 
 int main(int argc, char **argv) {
+  argparse::ArgumentParser parser("sc");
+  parser.add_argument("-a")
+      .help("abort compile if database locked")
+      .default_value(false);
+  parser.add_argument("-d").help("include debug info").default_value(false);
+  parser.add_argument("-D")
+      .help("command line define (e.g. -DMAC or -DMAC=1)")
+      .action(InstallCommandLineDefine);
+  parser.add_argument("-g")
+      .help("maximum number of global or local variables")
+      .default_value(750);
+  parser.add_argument("-l")
+      .help("generate a code listing")
+      .default_value(false);
+  parser.add_argument("-n")
+      .help("no auto-naming of objects")
+      .default_value(false);
+  parser.add_argument("-o").help("set output directory").default_value("");
+  parser.add_argument("-O")
+      .help("output the 'offsets' file")
+      .default_value(false);
+  parser.add_argument("-s")
+      .help("show forward-referenced selectors")
+      .default_value(false);
+  parser.add_argument("-u")
+      .help("don't lock class database")
+      .default_value(false);
+  parser.add_argument("-v").help("verbose output").default_value(false);
+  parser.add_argument("-w")
+      .help("output words high-byte first (for M68000)")
+      .default_value(false);
+  parser.add_argument("-z").help("turn off optimization").default_value(false);
+  parser.add_argument("-t")
+      .help("Set the target architecture. Valid values are: SCI_1_1, SCI_2")
+      .default_value("SCI_2")
+      .choices("SCI_1_1", "SCI_2")
+      .action(SetTargetArchitecture);
+  parser.add_argument("files")
+      .default_value(std::vector<std::string>())
+      .remaining();
+  try {
+    parser.parse_args(argc, argv);
+  } catch (const std::exception &err) {
+    std::cerr << err.what() << std::endl;
+    std::cerr << parser;
+    return 1;
+  }
+  abortIfLocked = parser.get<bool>("-a");
+  includeDebugInfo = parser.get<bool>("-d");
+  maxVars = parser.get<int>("-g");
+  listCode = parser.get<bool>("-l");
+  noAutoName = parser.get<bool>("-n");
+  outDirPtr = parser.get<std::string>("-o");
+  writeOffsets = parser.get<bool>("-O");
+  showSelectors = parser.get<bool>("-s");
+  dontLock = parser.get<bool>("-u");
+  verbose = parser.get<bool>("-v");
+  highByteFirst = parser.get<bool>("-w");
+  noOptimize = parser.get<bool>("-z");
+
   char *op;
   strptr extPtr;
   int outLen;
@@ -92,23 +133,27 @@ int main(int argc, char **argv) {
 
   output("%s", banner);
 
-  if (getargs(argc, argv) == 1) ShowUsage();
-
-  exargs(&argc, &argv);
-
 #if 0
 	if (writeMemSizes)
 		atexit(WriteMemSizes);
 #endif
 
+  auto files = parser.get<std::vector<std::string>>("files");
+  if (files.empty()) {
+    std::cerr << "No input files specified" << std::endl;
+    std::cerr << parser;
+    return 1;
+  }
+
   // See if the first file to be compiled exists.  If not, exit.
-  extPtr = _ExtPtr(argv[1]);
-  MakeName(fileName, argv[1], argv[1], (*extPtr) ? extPtr : ".sc");
+  auto *first_file = files[0].c_str();
+  extPtr = _ExtPtr(first_file);
+  MakeName(fileName, first_file, first_file, (*extPtr) ? extPtr : ".sc");
   if (access(fileName, 0) == -1) Panic("Can't find %s", fileName);
 
   // Make sure that any output directory is terminated with a '/'.
-  if (outDirPtr) {
-    strcpy(outDir, outDirPtr);
+  if (!outDirPtr.empty()) {
+    strcpy(outDir, outDirPtr.c_str());
     outLen = strlen(outDir);
     op = &outDir[outLen - 1]; /* point to last char of outDir */
     if (*op != '\\' && *op != '/' && *op != ':') {
@@ -147,8 +192,8 @@ int main(int argc, char **argv) {
   totalErrors += errors;
 
   // Compile the files.
-  for (int arg_index = 1; arg_index < argc; ++arg_index) {
-    CompileFile(argv[arg_index]);
+  for (auto const &src_file : files) {
+    CompileFile(src_file.c_str());
   }
 
   // Write out the class table and unlock the class database.
@@ -226,23 +271,31 @@ static void ShowInfo() {
     output("\tNo errors.\n");
 }
 
-static void InstallCommandLineDefine(char *str) {
-  char *token;
-
-  if (!(token = strtok(str, "=")))
+static void InstallCommandLineDefine(std::string_view str) {
+  if (str.empty()) {
     Panic("-D flag used without symbol to define");
+  }
+  std::string_view token;
+  std::string_view value;
+  auto eq_index = str.find('=');
+  if (eq_index == std::string_view::npos) {
+    token = str;
+    value = "1";
+  } else {
+    token = str.substr(0, eq_index);
+    value = str.substr(eq_index + 1);
+  }
 
   if (syms.lookup(token)) Panic("'%s' has already been defined", token);
 
   Symbol *sym = syms.installGlobal(token, S_DEFINE);
-  token = strtok(0, "");
-  sym->setStr(newStr(token ? token : "1"));
+  sym->setStr(newStr(value));
 }
 
-static void SetTargetArchitecture(char *str) {
-  if (strcmp(str, "SCI_1_1") == 0) {
+static void SetTargetArchitecture(std::string_view str) {
+  if (str == "SCI_1_1") {
     targetArch = SciTargetArch::SCI_1_1;
-  } else if (strcmp(str, "SCI_2") == 0) {
+  } else if (str == "SCI_2") {
     targetArch = SciTargetArch::SCI_2;
   } else {
     Panic("Invalid target architecture: %s", str);

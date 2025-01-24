@@ -25,7 +25,7 @@ void SymTbl::clearAsmPtrs() {
   for (auto const& [dummy, sym] : symbols) sym->clearAn();
 }
 
-Symbol* SymTbl::install(strptr name, sym_t type) {
+Symbol* SymTbl::install(std::string_view name, sym_t type) {
   // Install the identifier with name 'name' in the symbol table 'symTbl'
   // with type 'type'.
 
@@ -39,7 +39,7 @@ Symbol* SymTbl::add(Symbol* sp) {
   return sp;
 }
 
-Symbol* SymTbl::lookup(strptr name) {
+Symbol* SymTbl::lookup(std::string_view name) {
   // Search this symbol table for the symbol whose name is pointed to by
   // 'name'.  Return a pointer to the symbol if found, NULL otherwise.
   // Note that when a symbol is found, it is moved to the front of its list,
@@ -47,8 +47,7 @@ Symbol* SymTbl::lookup(strptr name) {
   // If nothing else, this puts those symbols which are not used at all at the
   // end of the list.
 
-  std::string_view name_view = name;
-  auto it = symbols.find(name_view);
+  auto it = symbols.find(name);
   if (it != symbols.end()) {
     return it->second.get();
   }
@@ -106,7 +105,7 @@ void SymTbls::clearAsmPtrs() {
   globalSymTbl->clearAsmPtrs();
 }
 
-Symbol* SymTbls::lookup(strptr name) {
+Symbol* SymTbls::lookup(std::string_view name) {
   // Search the active symbol tables for the symbol whose name is pointed
   // to by 'name'.  Return a pointer to the symbol if found, NULL otherwise.
 

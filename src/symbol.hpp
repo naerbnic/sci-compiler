@@ -139,7 +139,7 @@ class Symbol {
   // The Symbol class is where information about identifiers resides.  Symbols
   // are collected in SymTbls for fast lookup of an identifier.
  public:
-  Symbol(const char* str = 0, sym_t = (sym_t)0);
+  Symbol(std::string_view str = "", sym_t = (sym_t)0);
   ~Symbol();
 
  private:

@@ -11,8 +11,8 @@
 #include "object.hpp"
 #include "symbol.hpp"
 
-Symbol::Symbol(const char* name, sym_t type)
-    : name_(name ? std::optional(std::string(name)) : std::nullopt),
+Symbol::Symbol(std::string_view name, sym_t type)
+    : name_(!name.empty() ? std::optional(std::string(name)) : std::nullopt),
       type(type),
       lineNum(curLine),
       str_(0) {}
