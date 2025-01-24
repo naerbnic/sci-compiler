@@ -1,13 +1,36 @@
 # Sierra Creative Interpreter Script Compiler
 
-The Sierra Creative Interpreter (SCI) Script Compiler is now available as an open-source project under the MIT License. Originally developed under proprietary ownership by Codemasters and subsequently transferred to the current license holder, Digital Alchemy Studios LLC, this release marks the transition of the project from closed-source to open-source.
+The SCI Script Compiler is a command-line tool that compiles SCI game scripts
+into resources that can be used to build SCI engine games, or to patch existing
+Sierra SCI games. It is intended to be buildable on MacOS and Linux, with possible Windows support in the future.
 
-Brought to you and maintained by Daniel Arnold, also known as Dhel.
+This is a **work in progress**, and the interface to the tool is in flux at
+this moment.
+
+This is a fork of the original
+[Sierra Creative Interpreter Script Compiler][da-sci] by Digital Alchemy and
+Daniel Arnold (Dhel). There have been sufficient changes in the codebase that
+I believe a full detached fork is warranted.
+
+[da-sci]: https://github.com/Digital-Alchemy-Studios/da-sci-compiler-pub
 
 ## Compiling
-Install Open Watcom 2.0
-https://github.com/open-watcom/open-watcom-v2
 
-The default directory for Open Watcom is C:\WATCOM in Windows. If this is different on your system, edit build.bat to set the directory. 
+The main build requires the [Bazel] build tool. To build, check out this
+repository, install Bazel, then run the following command:
 
-Run build.bat.
+```shell
+bazel build //src:sc
+```
+
+This may take a while, as the default configuration has to download several
+tools, including the LLVM compiler. When complete, the command will report
+where you can find the binary file.
+
+[Bazel]: https://bazel.build/
+
+## Bugs
+
+We intend to support MacOS, Linux. Windows support has to be tested and
+debugged. If you run into any build issues, please report bugs to this
+project.
