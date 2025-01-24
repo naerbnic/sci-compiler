@@ -18,7 +18,6 @@ add_subdirectory(third_party/abseil-cpp)
 
 # Add source to this project's executable.
 add_executable (sc
-src/getargs.cpp
 src/string.cpp
 src/fileio.cpp
 src/alist.cpp
