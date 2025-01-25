@@ -46,12 +46,6 @@ struct Object {
   int numProps;         // number of properties in object
   ANode* an;            // pointer to object definition
   strptr file;          // filename in which object was defined
-
-#if defined(PLAYGRAMMER)
-  strptr fullFileName;
-  fpos_t srcStart;
-  fpos_t srcEnd;
-#endif
 };
 
 struct Class : Object {

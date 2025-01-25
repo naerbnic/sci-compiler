@@ -117,9 +117,6 @@ std::shared_ptr<InputSource> OpenFileAsInput(std::string_view fileName,
 
   theFile = std::make_shared<InputFile>(file, fileName);
 
-#if defined(PLAYGRAMMER)
-  theFile->fullFileName = newStr(newName);
-#endif
   SetInputSource(theFile);
   GetNewLine();
 
@@ -154,9 +151,6 @@ bool GetNewInputLine() {
   // file, close the file, shifting input to the next source in the queue.
 
   while (is) {
-#if defined(PLAYGRAMMER)
-    fgetpos(is->file, &is->lineStart);
-#endif
     if ((is->ptr =
              fgets(inputLine, sizeof inputLine, ((InputFile*)is.get())->file)))
       break;

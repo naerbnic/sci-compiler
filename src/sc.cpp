@@ -207,10 +207,6 @@ int main(int argc, char **argv) {
     Parse();
   }
 
-#if defined(PLAYGRAMMER)
-  ReadDebugFile();
-#endif
-
   theFile = OpenFileAsInput(system_header, True);
   Parse();
 

@@ -42,10 +42,6 @@ void UpdateDataBase() {
     WriteClasses();
   }
 
-#if defined(PLAYGRAMMER)
-  WriteDebugFile();
-#endif
-
   selectorAdded = classAdded = False;
 }
 

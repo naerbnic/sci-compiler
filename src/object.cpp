@@ -36,15 +36,7 @@ Object::Object()
       selTail(0),
       numProps(0),
       an(0),
-      file(0)
-#if defined(PLAYGRAMMER)
-      ,
-      fullFileName(0),
-      srcStart(0),
-      srcEnd(0)
-#endif
-{
-}
+      file(0) {}
 
 Object::Object(Class* theSuper)
     : sym(0),
@@ -55,14 +47,7 @@ Object::Object(Class* theSuper)
       selTail(0),
       numProps(0),
       an(0),
-      file(0)
-#if defined(PLAYGRAMMER)
-      ,
-      fullFileName(0),
-      srcStart(0),
-      srcEnd(0)
-#endif
-{
+      file(0) {
   super = theSuper->num;
   dupSelectors(theSuper);
 }
@@ -71,10 +56,6 @@ Object::~Object() {
   freeSelectors();
 
   delete[] file;
-
-#if defined(PLAYGRAMMER)
-  delete[] fullFileName;
-#endif
 
   sym->setObj(nullptr);
 }
@@ -113,9 +94,6 @@ void DoClass() {
 
       //	free its filenames
       delete[] theClass->file;
-#if defined(PLAYGRAMMER)
-      delete[] theClass->fullFileName;
-#endif
     }
 
     //	make sure the symbol is in the class symbol table
@@ -161,12 +139,6 @@ void DoClass() {
 
   // Get any properties, methods, or procedures for this class.
   InstanceBody(theClass);
-
-#if defined(PLAYGRAMMER)
-  theClass->fullFileName = newStr(theFile->fullFileName);
-  theClass->srcStart = GetParseStart();
-  theClass->srcEnd = GetTokenEnd();
-#endif
 }
 
 void Instance() {
