@@ -127,7 +127,7 @@
     ATan -1 $79
     Lock -1 $7a
     StrSplit -1 $7b
-    GetMessage -1 $7c
+    Message -1 $7c
     IsItSkip -1 $7d
     MergePoly -1 $7e
     ResCheck -1 $7f
