@@ -41,14 +41,6 @@ static void MakeIf(PNode*);
 static void MakeCond(PNode*);
 static void MakeSwitch(PNode*);
 
-void CompileCode(PNode* pn) {
-  // Called pointing to the root of a parsed procedure.  Compile code for
-  // the procedure then delete its parse tree.
-
-  Compile(pn);
-  delete pn;
-}
-
 void Compile(PNode* pn) {
   // Recursively compile code for a given node.
 

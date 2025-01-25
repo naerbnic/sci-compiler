@@ -11,7 +11,7 @@
 
 bool inParmList;
 
-static PNode* _CallDef(sym_t theType);
+static std::unique_ptr<PNode> _CallDef(sym_t theType);
 static int ParameterList();
 static void NewParm(int n, sym_t type);
 static void AddRest(int ofs);
@@ -21,7 +21,6 @@ void Procedure() {
   //	OR
   //		procedure ::= procedure procedure-name+
 
-  PNode* theNode;
   Symbol* theSym;
   SymTbl* theSymTbl;
 
@@ -31,10 +30,12 @@ void Procedure() {
     // Then a procedure definition.
     theSymTbl = syms.add(ST_MINI);
 
-    theNode = CallDef(S_PROC);
-    if (theNode) {
-      ExprList(theNode, OPTIONAL);
-      CompileCode(theNode);
+    {
+      auto theNode = CallDef(S_PROC);
+      if (theNode) {
+        ExprList(theNode.get(), OPTIONAL);
+        Compile(theNode.get());
+      }
     }
 
     syms.deactivate(theSymTbl);
@@ -49,10 +50,8 @@ void Procedure() {
   }
 }
 
-PNode* CallDef(sym_t theType) {
+std::unique_ptr<PNode> CallDef(sym_t theType) {
   // call-def ::= open _call-def close
-
-  PNode* theNode;
 
   if (!OpenBlock()) {
     UnGetTok();
@@ -60,17 +59,16 @@ PNode* CallDef(sym_t theType) {
     return 0;
   }
 
-  theNode = _CallDef(theType);
+  auto theNode = _CallDef(theType);
   CloseBlock();
 
   return theNode;
 }
 
-static PNode* _CallDef(sym_t theType) {
+static std::unique_ptr<PNode> _CallDef(sym_t theType) {
   // _call-def ::= symbol [variable+] [&tmp variable+]
 
   Symbol* theProc;
-  PNode* theNode;
   Selector* sn;
 
   GetToken();
@@ -100,7 +98,8 @@ static PNode* _CallDef(sym_t theType) {
       break;
   }
 
-  theNode = new PNode(theType == S_SELECT ? PN_METHOD : PN_PROC);
+  auto theNode =
+      std::make_unique<PNode>(theType == S_SELECT ? PN_METHOD : PN_PROC);
   theNode->sym = theProc;
   theNode->val = ParameterList();  // number of temporary variables
 

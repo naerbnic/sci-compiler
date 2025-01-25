@@ -11,7 +11,6 @@ class Symbol;
 struct Object;
 
 //	compile.cpp
-void CompileCode(PNode* pn);
 void Compile(PNode* pn);
 void MakeBranch(uint8_t type, ANode*, Symbol* target);
 void MakeDispatch(int maxNum);

@@ -332,26 +332,26 @@ void MethodDef(Object* obj) {
   // _method-def ::= 'method' call-def expression*
 
   SymTbl* symTbl = syms.add(ST_MINI);
+  {
+    auto node = CallDef(S_SELECT);
+    if (node) {
+      Symbol* sym = node->sym;
 
-  PNode* node = CallDef(S_SELECT);
-  if (node) {
-    Symbol* sym = node->sym;
+      Selector* sn = obj->findSelector(sym);
+      if (sym->type != S_SELECT || IsProperty(sn))
+        Error("Not a method: %s", sym->name());
+      else if (sn->an)
+        Error("Method already defined: %s", sym->name());
+      else {
+        // Compile the code for this method.
+        ExprList(node.get(), OPTIONAL);
+        Compile(node.get());
 
-    Selector* sn = obj->findSelector(sym);
-    if (sym->type != S_SELECT || IsProperty(sn))
-      Error("Not a method: %s", sym->name());
-    else if (sn->an)
-      Error("Method already defined: %s", sym->name());
-    else {
-      // Compile the code for this method.
-      ExprList(node, OPTIONAL);
-      CompileCode(node);
-
-      // Save the pointer to the method code.
-      sn->tag = T_LOCAL;
-      sn->an = sym->an();
+        // Save the pointer to the method code.
+        sn->tag = T_LOCAL;
+        sn->an = sym->an();
+      }
     }
   }
-
   syms.deactivate(symTbl);
 }
