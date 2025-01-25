@@ -1,7 +1,8 @@
 ﻿# CMakeList.txt : CMake project for Script Compiler, include source and define
 # project specific logic here.
 #
-cmake_minimum_required (VERSION 3.12)
+cmake_minimum_required (VERSION 3.30)
+include(FetchContent)
 
 if (POLICY CMP0025)
     cmake_policy(SET CMP0025 NEW)
@@ -14,7 +15,14 @@ set(CMAKE_CXX_STANDARD 20)
 option(ABSL_PROPAGATE_CXX_STD
   "Use CMake C++ standard meta features (e.g. cxx_std_14) that propagate to targets that link to Abseil"
   ON) 
-add_subdirectory(third_party/abseil-cpp)
+
+FetchContent_Declare(absl
+  GIT_REPOSITORY https://github.com/abseil/abseil-cpp.git
+  GIT_TAG origin/lts_2023_01_25)
+FetchContent_Declare(argparse
+  GIT_REPOSITORY https://github.com/p-ranav/argparse.git
+  GIT_TAG origin/master)
+FetchContent_MakeAvailable(absl argparse)
 
 # Add source to this project's executable.
 add_executable (sc
@@ -55,7 +63,7 @@ src/sc.cpp
 
 target_include_directories(sc PRIVATE src/)
 set_target_properties(sc PROPERTIES COMPILE_WARNING_AS_ERROR ON)
-target_link_libraries(sc absl::strings absl::str_format absl::flat_hash_map absl::btree)
+target_link_libraries(sc absl::strings absl::str_format absl::flat_hash_map absl::btree argparse)
 
 if(MSVC)
   target_compile_options(sc PRIVATE /W4 /WX)
