@@ -17,31 +17,26 @@
 bool abortIfLocked;
 bool dontLock;
 
-const int LOCKMODE = O_CREAT | O_EXCL | O_RDONLY;
-
 static int haveLock;
 static char lockFile[] = "$$$sc.lck";
 
-static void Abort(int sig);
+static std::unique_ptr<FileLock> fileLock = nullptr;
 
 void Lock() {
-  int fd;
+  if (!fileLock) {
+    fileLock = FileLock::Create(lockFile);
+  }
   time_t now;
   time_t then;
 
   if (dontLock) return;
 
-  // First trap interrupts so that if we're aborted while holding the lock
-  // we can release it.
-  signal(SIGINT, Abort);
-  signal(SIGABRT, Abort);
-
   // Create the semaphore file.  If we can't do so, loop until we can.
-  if ((fd = open(lockFile, LOCKMODE, (int)S_IREAD)) == -1) {
+  if (!fileLock->LockFile()) {
     if (abortIfLocked) Panic("Access to database denied");
     fprintf(stderr, "Waiting for access to class database");
     time(&then);
-    while ((fd = open(lockFile, LOCKMODE, S_IREAD)) == -1) {
+    while (!fileLock->LockFile()) {
       do time(&now);
       while (now <= then);
       then = now;
@@ -50,20 +45,13 @@ void Lock() {
     putc('\n', stderr);
   }
 
-  close(fd);
   output("Class database locked.\n");
   haveLock = True;
 }
 
 void Unlock() {
   if (haveLock) {
-    chmod(lockFile, (int)(S_IREAD | S_IWRITE));
-    unlink(lockFile);
+    fileLock->ReleaseLock();
     output("Class database unlocked.\n");
   }
-}
-
-static void Abort(int) {
-  Unlock();
-  exit(1);
 }

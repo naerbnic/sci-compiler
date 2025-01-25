@@ -10,11 +10,9 @@
 #include <string>
 #include <string_view>
 
-// This may need to be define bound if used on a non-unix system.
-#include <unistd.h>
-
 #include "input.hpp"
 #include "listing.hpp"
+#include "platform.hpp"
 #include "sc.hpp"
 #include "share.hpp"
 #include "sol.hpp"
@@ -90,7 +88,7 @@ void WriteOutput(std::string_view str) {
   absl::PrintF("%s", str);
   fflush(stdout);
 
-  if (!isatty(fileno(stdout)) && isatty(fileno(stderr))) {
+  if (!IsTTY(stdout) && IsTTY(stderr)) {
     absl::FPrintF(stderr, "%s", str);
   }
 }

@@ -7,11 +7,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
 #include "error.hpp"
 #include "jeff.hpp"
 #include "memtype.hpp"
+#include "platform.hpp"
 #include "resource.hpp"
 #include "sc.hpp"
 #include "sol.hpp"
@@ -19,13 +19,13 @@
 bool highByteFirst;
 
 OutputFile::OutputFile(const char* fileName) : fileName(fileName) {
-  if ((fd = open(fileName, OMODE, PMODE)) == -1)
-    Panic("Can't open output file %s", fileName);
+  fp = CreateOutputFile(fileName);
+  if (!fp) Panic("Can't open output file %s", fileName);
 }
 
-OutputFile::~OutputFile() { close(fd); }
+OutputFile::~OutputFile() { fclose(fp); }
 
-void OutputFile::SeekTo(long offset) { lseek(fd, offset, 0); }
+void OutputFile::SeekTo(long offset) { fseek(fp, offset, SEEK_SET); }
 
 int OutputFile::Write(const char* str) {
   int length = strlen(str);
@@ -48,7 +48,7 @@ void OutputFile::WriteWord(int16_t w) {
 void OutputFile::WriteByte(ubyte b) { Write(&b, sizeof b); }
 
 void OutputFile::Write(const void* mp, size_t len) {
-  if (write(fd, mp, len) != static_cast<ssize_t>(len))
+  if (fwrite(mp, 1, len, fp) != static_cast<ssize_t>(len))
     Panic("Error writing %s", fileName);
 }
 
@@ -73,7 +73,7 @@ void OpenObjFiles(OutputFile** heapOut, OutputFile** hunkOut) {
 static void MakeObjFileName(char* dest, MemType type) {
   const char* resName = ResNameMake(type, script);
   MakeName(dest, outDir, resName, resName);
-  unlink(dest);
+  DeletePath(dest);
 }
 
 static OutputFile* OpenObjFile(MemType type, const char* name) {

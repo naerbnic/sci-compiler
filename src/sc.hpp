@@ -4,9 +4,9 @@
 #ifndef SC_HPP
 #define SC_HPP
 
-#include <unistd.h>
-
 #include <cstdint>
+
+#include "platform.hpp"
 
 // Modes for opening files.
 #ifdef _WIN32

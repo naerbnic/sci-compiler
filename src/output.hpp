@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 
 class OutputFile {
  public:
@@ -20,7 +21,7 @@ class OutputFile {
   int Write(const char*);
 
  protected:
-  int fd;
+  FILE* fp;
   const char* fileName;
 };
 

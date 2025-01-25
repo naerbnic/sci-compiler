@@ -6,12 +6,12 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 
 #include "anode.hpp"
 #include "error.hpp"
 #include "jeff.hpp"
 #include "opcodes.hpp"
+#include "platform.hpp"
 #include "sc.hpp"
 #include "sol.hpp"
 #include "string.hpp"
@@ -136,7 +136,7 @@ void CloseListFile() {
   }
 }
 
-void DeleteListFile() { unlink(listName); }
+void DeleteListFile() { DeletePath(listName); }
 
 void Listing(const char* parms, ...) {
   va_list argPtr;
