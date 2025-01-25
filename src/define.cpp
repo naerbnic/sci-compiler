@@ -42,7 +42,6 @@ char* newStrFromInt(int val) {
 
 void VarList::kill() {
   type = VAR_NONE;
-  fixups = 0;
   values.clear();
 }
 
@@ -424,12 +423,6 @@ static int InitialValue(VarList& theVars, int offset, int arraySize) {
     UnGetTok();
     GetNumberOrString("Initial value");
     for (int i = 0; i < arraySize; ++i) {
-      switch (symType) {
-        case S_NUM:
-          break;
-        default:
-          ++theVars.fixups;
-      }
       Var* vp = &theVars.values[offset + i];
       if (vp->type != (sym_t)VAR_NONE) {
         Error("Redefinition of index %d", offset + i);
@@ -447,12 +440,6 @@ static int InitialValue(VarList& theVars, int offset, int arraySize) {
     GetNumberOrString("Initial value");
     Var* vp = &theVars.values[offset + n];
     vp->type = symType;
-    switch (symType) {
-      case S_NUM:
-        break;
-      default:
-        ++theVars.fixups;
-    }
     vp++->value = symVal;
   }
   return n;

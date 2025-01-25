@@ -24,11 +24,10 @@ struct Var {
 
 struct VarList {
   // Variable block definition.
-  VarList() : fixups(0), type(VAR_NONE), values(0) {}
+  VarList() : type(VAR_NONE), values(0) {}
 
   void kill();
 
-  int fixups;               // number of fixups in this variable list
   VarType type;             // what type of variables are these
   std::vector<Var> values;  // pointer to block of initial values
 };

@@ -710,8 +710,6 @@ void ANVars::emit(OutputFile* out) {
   theVars.kill();
 }
 
-int ANVars::numFixups() const { return theVars.fixups; }
-
 //////////////////////////////////////////////////////////////////////////////
 
 ANFileName::ANFileName(const char* name)
