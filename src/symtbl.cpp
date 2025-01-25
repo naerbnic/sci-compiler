@@ -3,8 +3,6 @@
 
 #include "symtbl.hpp"
 
-#include <string.h>
-
 #include <memory>
 
 #include "listing.hpp"
@@ -75,6 +73,21 @@ bool SymTbl::del(strptr name) {
   // return True if successful, False otherwise.
 
   return symbols.erase(std::string_view(name)) > 0;
+}
+
+std::ostream& operator<<(std::ostream& os, const SymTbl& symtbl) {
+  os << "SymTbl(";
+  bool first = true;
+  for (auto const& [name, sym] : symtbl.symbols) {
+    if (first) {
+      first = false;
+    } else {
+      os << ", ";
+    }
+    os << "[" << name << ", " << *sym << "]";
+  }
+  os << ")";
+  return os;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -163,4 +176,19 @@ void SymTbls::deactivate(SymTbl* tbl) {
   if (listCode) {
     inactiveList.push_front(std::move(owned_tbl));
   }
+}
+
+std::ostream& operator<<(std::ostream& os, const SymTbls& symtbl) {
+  os << "SymTbls(";
+  bool first = true;
+  for (auto const& sp : symtbl.activeList) {
+    if (first) {
+      first = false;
+    } else {
+      os << ", ";
+    }
+    os << *sp;
+  }
+  os << ")";
+  return os;
 }

@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <optional>
+#include <ostream>
 #include <string>
 #include <variant>
 
@@ -162,7 +163,7 @@ class Symbol {
   };
 
  public:
-  strptr name() { return name_ ? name_->c_str() : nullptr; }
+  strptr name() const { return name_ ? name_->c_str() : nullptr; }
   void clearName() { name_ = std::nullopt; }
 
   ANode* an() {
@@ -191,6 +192,7 @@ class Symbol {
   void setExt(Public* ext) { ext_ = ext; }
 
  private:
+  friend std::ostream& operator<<(std::ostream& os, const Symbol& sym);
 };
 
 #define OPEN_P S_OPEN_P

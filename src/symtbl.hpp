@@ -5,6 +5,7 @@
 #define SYMTBL_HPP
 
 #include <memory>
+#include <ostream>
 
 #include "absl/container/btree_map.h"
 #include "symbol.hpp"
@@ -74,6 +75,8 @@ class SymTbl {
   bool keep;  // should this table be kept for listings when out of scope?
 
   friend class SymTbls;
+
+  friend std::ostream& operator<<(std::ostream& os, const SymTbl& symtbl);
 };
 
 class SymTbls {
@@ -129,6 +132,8 @@ class SymTbls {
   std::deque<std::unique_ptr<SymTbl>> inactiveList;
 
   SymTbl* globalSymTbl;
+
+  friend std::ostream& operator<<(std::ostream& os, const SymTbls& symtbl);
 };
 
 extern SymTbls syms;

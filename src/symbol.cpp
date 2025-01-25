@@ -38,3 +38,7 @@ Symbol::~Symbol() {
       break;
   }
 }
+
+std::ostream& operator<<(std::ostream& os, const Symbol& sym) {
+  return os << "Symbol(" << sym.name() << ")";
+}
