@@ -56,7 +56,7 @@ struct InputString : InputSource {
 bool CloseInputSource();
 bool GetNewInputLine();
 std::shared_ptr<InputSource> OpenFileAsInput(std::string_view, bool);
-void SetIncludePath();
+void SetIncludePath(std::vector<std::string> const& extra_paths);
 void SetStringInput(strptr);
 void SetInputToCurrentLine();
 void RestoreInput();

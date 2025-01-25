@@ -125,6 +125,11 @@ int main(int argc, char **argv) {
   program.add_argument("--game_header")
       .help("The game header file to use during compilation")
       .default_value(std::string{"game.sh"});
+  program.add_argument("-I", "--include_path")
+      .help("List of directories to use for include files")
+      .default_value(std::vector<std::string>())
+      .append()
+      .nargs(1);
 
   try {
     program.parse_args(argc, argv);
@@ -151,6 +156,7 @@ int main(int argc, char **argv) {
   auto classdef_file = program.get<std::string>("--classdef_file");
   auto system_header = program.get<std::string>("--system_header");
   auto game_header = program.get<std::string>("--game_header");
+  auto cli_include_path = program.get<std::vector<std::string>>("-I");
 
   char *op;
   strptr extPtr;
@@ -192,7 +198,7 @@ int main(int argc, char **argv) {
   }
 
   // Set the include path.
-  SetIncludePath();
+  SetIncludePath(cli_include_path);
 
   // Install the built-in symbols then read in and install
   // the definitions.  Lock the class database so that we're the only

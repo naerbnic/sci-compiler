@@ -171,18 +171,20 @@ bool GetNewInputLine() {
   return (bool)is;
 }
 
-void SetIncludePath() {
-  strptr t;
+void SetIncludePath(std::vector<std::string> const& extra_paths) {
+  strptr t = getenv("SINCLUDE");
 
-  if (!(t = getenv("SINCLUDE"))) return;
-
-  // Successively copy each element of the path into 'path',
-  // and add it to the includePath chain.
-  for (auto path : absl::StrSplit(t, ';')) {
-    // Now allocate a node to keep this path on in the includePath chain
-    // and link it into the list.
-    includePath.emplace_back(path);
+  if (t) {
+    // Successively copy each element of the path into 'path',
+    // and add it to the includePath chain.
+    for (auto path : absl::StrSplit(t, ';')) {
+      // Now allocate a node to keep this path on in the includePath chain
+      // and link it into the list.
+      includePath.emplace_back(path);
+    }
   }
+
+  std::ranges::copy(extra_paths, std::back_inserter(includePath));
 }
 
 static std::shared_ptr<InputSource> saveIs;
