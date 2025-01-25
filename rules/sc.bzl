@@ -1,5 +1,12 @@
 """Rules to build with the SC compiler."""
 
+_SciHeaderSetInfo = provider(
+    "Configuration info for a set of SCI headers.",
+    fields = {
+        "headers": "A depset of headers that are available to include.",
+    },
+)
+
 _SciBuildEnvInfo = provider(
     "The base set of files needed to build a SCI source file.",
     fields = {
@@ -16,6 +23,7 @@ _SciScriptInfo = provider(
     fields = {
         "src": "The source file to compile.",
         "script_num": "The script number to use.",
+        "headers": "A depset of header files.",
     },
 )
 
@@ -41,11 +49,36 @@ sci_build_env = rule(
     },
 )
 
+def _sci_headers_impl(ctx):
+    new_headers = depset(
+        ctx.files.hdrs,
+        transitive = [
+            dep[_SciHeaderSetInfo].headers
+            for dep in ctx.attr.deps
+        ])
+    return [
+        _SciHeaderSetInfo(
+            headers = new_headers,
+        ),
+    ]
+
+sci_headers = rule(
+    implementation = _sci_headers_impl,
+    attrs = {
+        "hdrs": attr.label_list(allow_files = True, mandatory = True),
+        "deps": attr.label_list(providers = [_SciHeaderSetInfo]),
+    },
+)
+
 def _sci_script_impl(ctx):
     return [
         _SciScriptInfo(
             src = ctx.file.src,
             script_num = ctx.attr.script_num,
+            headers = depset(transitive = [
+                dep[_SciHeaderSetInfo].headers
+                for dep in ctx.attr.deps
+            ]),
         ),
     ]
 
@@ -54,6 +87,7 @@ sci_script = rule(
     attrs = {
         "src": attr.label(allow_single_file = True, mandatory = True),
         "script_num": attr.int(mandatory = True),
+        "deps": attr.label_list(providers = [_SciHeaderSetInfo]),
     },
 )
 
@@ -68,6 +102,11 @@ def _sci_binary_impl(ctx):
         build_env_info.game_header,
     ]
     srcs = []
+    hdrs = depset(transitive = [
+        script[_SciScriptInfo].headers
+        for script in ctx.attr.srcs
+    ]).to_list()
+    include_dirs = [hdr.dirname for hdr in hdrs]
     for src_value in ctx.attr.srcs:
         src_info = src_value[_SciScriptInfo]
         srcs.append(src_info.src)
@@ -79,9 +118,8 @@ def _sci_binary_impl(ctx):
     else:
         fail("Unknown target VM: {0}".format(build_env_info.target_vm))
 
-
     ctx.actions.run(
-        inputs = inputs + srcs,
+        inputs = inputs + srcs + hdrs,
         outputs = outputs,
         executable = ctx.executable._sc_binary,
         arguments = [
@@ -94,6 +132,7 @@ def _sci_binary_impl(ctx):
                 .add("--classdef_file", build_env_info.classdef_file)
                 .add("--system_header", build_env_info.system_header)
                 .add("--game_header", build_env_info.game_header)
+                .add_all(include_dirs, before_each = "-I")
                 .add("-o", out_dir.path)
                 .add_all(srcs),
         ],

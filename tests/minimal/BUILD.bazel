@@ -1,4 +1,4 @@
-load("//rules:sc.bzl", "sci_build_env", "sci_script", "sci_binary")
+load("//rules:sc.bzl", "sci_build_env", "sci_script", "sci_binary", "sci_headers")
 
 sci_build_env(
     name = "base_env",
@@ -8,10 +8,18 @@ sci_build_env(
     system_header = "system.sh",
 )
 
+sci_headers(
+    name = "base_headers",
+    hdrs = [
+        "game.sh",
+    ]
+)
+
 sci_script(
     name = "main",
     src = "main.sc",
     script_num = 0,
+    deps = [":base_headers"],
 )
 
 sci_script(
