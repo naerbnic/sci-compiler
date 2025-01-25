@@ -60,13 +60,15 @@ void OutputFile::Write(const void* mp, size_t len) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-static OutputFile* OpenObjFile(MemType type, std::string name);
+static std::unique_ptr<OutputFile> OpenObjFile(MemType type, std::string name);
 static std::string MakeObjFileName(MemType type);
 
-void OpenObjFiles(OutputFile** heapOut, OutputFile** hunkOut) {
+ObjFiles OpenObjFiles() {
   //	open the new files
-  *heapOut = OpenObjFile(MemResHeap, MakeObjFileName(MemResHeap));
-  *hunkOut = OpenObjFile(MemResHunk, MakeObjFileName(MemResHunk));
+  return ObjFiles{
+      .heap = OpenObjFile(MemResHeap, MakeObjFileName(MemResHeap)),
+      .hunk = OpenObjFile(MemResHunk, MakeObjFileName(MemResHunk)),
+  };
 }
 
 static std::string MakeObjFileName(MemType type) {
@@ -76,8 +78,8 @@ static std::string MakeObjFileName(MemType type) {
   return dest;
 }
 
-static OutputFile* OpenObjFile(MemType type, std::string name) {
-  OutputFile* out = new OutputFile(std::move(name));
+static std::unique_ptr<OutputFile> OpenObjFile(MemType type, std::string name) {
+  auto out = std::make_unique<OutputFile>(std::move(name));
 
   // Put out the header information.
   ubyte header[2];

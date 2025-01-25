@@ -74,9 +74,7 @@ void Assemble() {
   // offsets.
   sc->heapList->setOffset(0);
 
-  OutputFile* heapOut;
-  OutputFile* hunkOut;
-  OpenObjFiles(&heapOut, &hunkOut);
+  ObjFiles obj_files = OpenObjFiles();
 
   const ssize_t MAX_INFO_FILE_NAME = 1024;
 
@@ -95,16 +93,13 @@ void Assemble() {
       "----------------------\n"
       "-------- Heap --------\n"
       "----------------------\n");
-  sc->heapList->emit(heapOut);
+  sc->heapList->emit(obj_files.heap.get());
   Listing(
       "\n\n\n\n"
       "----------------------\n"
       "-------- Hunk --------\n"
       "----------------------\n");
-  sc->hunkList->emit(hunkOut);
-
-  delete heapOut;
-  delete hunkOut;
+  sc->hunkList->emit(obj_files.hunk.get());
 
   sc->heapList->clear();
   sc->hunkList->clear();

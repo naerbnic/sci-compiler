@@ -27,7 +27,12 @@ class OutputFile {
   std::string fileName;
 };
 
-void OpenObjFiles(OutputFile** heapOut, OutputFile** hunkOut);
+struct ObjFiles {
+  std::unique_ptr<OutputFile> heap;
+  std::unique_ptr<OutputFile> hunk;
+};
+
+ObjFiles OpenObjFiles();
 
 extern bool highByteFirst;
 
