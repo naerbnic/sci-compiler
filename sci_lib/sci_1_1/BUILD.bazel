@@ -1,0 +1,20 @@
+load("//rules:sc.bzl", "sci_headers", "sci_system")
+
+sci_headers(
+    name = "system_headers",
+    hdrs = [
+        "kernel.sh",
+        "keys.sh",
+        "sci.sh",
+        "system.sh",
+    ],
+)
+
+sci_system(
+    name = "sci_1_1",
+    defines = ["SCI_1_1"],
+    deps = [":system_headers"],
+    system_header = "system.sh",
+    target_vm = "1.1",
+    visibility = ["//visibility:public"],
+)

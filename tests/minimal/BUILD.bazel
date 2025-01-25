@@ -5,7 +5,7 @@ sci_build_env(
     classdef = "classdef",
     game_header = "game.sh",
     selector = "selector",
-    system_header = "system.sh",
+    system = "//sci_lib/sci_1_1",
 )
 
 sci_headers(
