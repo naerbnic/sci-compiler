@@ -64,7 +64,7 @@ void OpenObjFiles(OutputFile** heapOut, OutputFile** hunkOut) {
 }
 
 static std::string MakeObjFileName(MemType type) {
-  const char* resName = ResNameMake(type, script);
+  std::string resName = ResNameMake(type, script);
   std::string dest = MakeName(outDir, resName, resName);
   DeletePath(dest);
   return dest;

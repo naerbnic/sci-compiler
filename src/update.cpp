@@ -73,7 +73,7 @@ void WriteClassTbl() {
   }
 
   // Write the table out.
-  strptr name = ResNameMake(MemResVocab, CLASSTBL_VOCAB);
+  std::string name = ResNameMake(MemResVocab, CLASSTBL_VOCAB);
   OutputFile out(MakeName(outDir, name, name));
   out.Write(resID, 2);
   for (index = 0; index < maxClassNum + 1; ++index) {
@@ -93,11 +93,10 @@ void WritePropOffsets() {
   int offset;
   Selector* sel;
   Symbol* theSym;
-  const char* name;
 
   theFile = OpenFileAsInput("offsets.txt", True);
 
-  name = ResNameMake(MemResVocab, PROPOFS_VOCAB);
+  std::string name = ResNameMake(MemResVocab, PROPOFS_VOCAB);
   OutputFile out(MakeName(outDir, name, name));
 
   // Write out the resource header (this will be a vocabulary resource).
@@ -212,9 +211,8 @@ static void WriteSelectorVocab() {
   SCIUWord* tbl;
   size_t ofs;
   uint32_t tblLen;
-  const char* resName;
 
-  resName = ResNameMake(MemResVocab, SELECTOR_VOCAB);
+  std::string resName = ResNameMake(MemResVocab, SELECTOR_VOCAB);
   std::string fileName = MakeName(outDir, resName, resName);
 
   // Compute the size of the table needed to hold offsets to all selectors,

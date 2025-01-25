@@ -3,8 +3,10 @@
 #ifndef RESOURCE_H
 #define RESOURCE_H
 
+#include <string>
+
 #include "memtype.hpp"
 
-const char* ResNameMake(MemType type, int num);
+std::string ResNameMake(MemType type, int num);
 
 #endif
