@@ -8,3 +8,9 @@ build:asan --copt -O1
 build:asan --copt -g
 build:asan --copt -fno-omit-frame-pointer
 build:asan --linkopt -fsanitize=address
+build:asan --host_copt -fsanitize=address
+build:asan --host_copt -DADDRESS_SANITIZER
+build:asan --host_copt -O1
+build:asan --host_copt -g
+build:asan --host_copt -fno-omit-frame-pointer
+build:asan --host_linkopt -fsanitize=address

@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "absl/strings/str_format.h"
 #include "error.hpp"
 #include "input.hpp"
 #include "jeff.hpp"
@@ -146,14 +147,14 @@ static void WriteClassDefs() {
     classNum = cp->num;
     if (cp->num == -1) continue;  // This is RootObj, defined by compiler.
 
-    fprintf(fp,
-            "(classdef %s\n"
-            "	script# %d\n"
-            "	class# %d\n"
-            "	super# %d\n"
-            "	file# \"%s\"\n\n",
-            cp->sym->name(), (SCIUWord)cp->script, (SCIUWord)cp->num,
-            (SCIUWord)cp->super, cp->file);
+    absl::FPrintF(fp,
+                  "(classdef %s\n"
+                  "	script# %d\n"
+                  "	class# %d\n"
+                  "	super# %d\n"
+                  "	file# \"%s\"\n\n",
+                  cp->sym->name(), (SCIUWord)cp->script, (SCIUWord)cp->num,
+                  (SCIUWord)cp->super, cp->file);
 
     // Get a pointer to the class' super-class.
     Class* sp = FindClass(cp->findSelector("-super-")->val);
@@ -196,8 +197,8 @@ static void WriteClasses() {
 
 static void PrintSubClasses(Class* sp, int level, FILE* fp) {
   // Print out this class' information.
-  fprintf(fp, "%.*s%-*s;%s\n", 2 * level, "               ", 20 - 2 * level,
-          sp->sym->name(), sp->file);
+  absl::FPrintF(fp, "%.*s%-*s;%s\n", 2 * level, "               ",
+                20 - 2 * level, sp->sym->name(), sp->file);
 
   // Print information about this class' subclasses.
   ++level;

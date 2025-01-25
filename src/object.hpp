@@ -5,6 +5,7 @@
 #define OBJECT_HPP
 
 #include <cstdint>
+#include <string>
 
 #include "sc.hpp"
 
@@ -45,7 +46,7 @@ struct Object {
   Selector* selTail;    // pointer to last selector
   int numProps;         // number of properties in object
   ANode* an;            // pointer to object definition
-  strptr file;          // filename in which object was defined
+  std::string file;     // filename in which object was defined
 };
 
 struct Class : Object {

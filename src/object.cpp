@@ -35,8 +35,7 @@ Object::Object()
       selectors(0),
       selTail(0),
       numProps(0),
-      an(0),
-      file(0) {}
+      an(0) {}
 
 Object::Object(Class* theSuper)
     : sym(0),
@@ -46,16 +45,13 @@ Object::Object(Class* theSuper)
       selectors(0),
       selTail(0),
       numProps(0),
-      an(0),
-      file(0) {
+      an(0) {
   super = theSuper->num;
   dupSelectors(theSuper);
 }
 
 Object::~Object() {
   freeSelectors();
-
-  delete[] file;
 
   sym->setObj(nullptr);
 }
@@ -93,7 +89,7 @@ void DoClass() {
       theClass->freeSelectors();
 
       //	free its filenames
-      delete[] theClass->file;
+      theClass->file.clear();
     }
 
     //	make sure the symbol is in the class symbol table
