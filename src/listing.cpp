@@ -276,7 +276,7 @@ void ListByte(uint8_t b) {
   ListAsCode("byte\t$%x", b);
 }
 
-void ListText(const char* s) {
+void ListText(std::string_view s) {
   char* l;
   char line[81];
 
@@ -284,12 +284,13 @@ void ListText(const char* s) {
 
   l = line;
   *l++ = '"';  // start with a quote
+  auto curr_it = s.begin();
   while (1) {
     // Copy from the text until the output line is full.
 
-    while (l < &line[80] && *s != '\0' && *s != '\n') {
-      if (*s == '%') *l++ = '%';
-      *l++ = *s++;
+    while (l < &line[80] && curr_it != s.end() && *curr_it != '\n') {
+      if (*curr_it == '%') *l++ = '%';
+      *l++ = *curr_it++;
     }
 
     // If the line is not full, we are done.  Finish with a quote.
@@ -306,10 +307,10 @@ void ListText(const char* s) {
 
     while (l > line && *l != ' ') {
       --l;
-      --s;
+      --curr_it;
     }
     *l = '\0';
-    ++s;  // point past the space
+    ++curr_it;  // point past the space
     Listing(line);
 
     l = line;

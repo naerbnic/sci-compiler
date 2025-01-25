@@ -19,6 +19,7 @@ class OutputFile {
   void WriteOp(uint8_t op) { WriteByte(op); }
   void WriteWord(int16_t);
   void Write(const void*, size_t);
+  int WriteNullTerminatedString(std::string_view str);
   int Write(const char*);
 
  protected:

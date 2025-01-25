@@ -191,14 +191,16 @@ size_t ANText::setOffset(size_t ofs) {
   return ANode::setOffset(ofs);
 }
 
-size_t ANText::size() { return strlen(text->str) + 1; }
+size_t ANText::size() { return text->str.size() + 1; }
 
 void ANText::list() {
   if (textStart == offset) Listing("\n\n");
   ListText(text->str);
 }
 
-void ANText::emit(OutputFile* out) { out->Write(text->str, size()); }
+void ANText::emit(OutputFile* out) {
+  out->WriteNullTerminatedString(text->str);
+}
 
 ///////////////////////////////////////////////////
 // Class ANObject

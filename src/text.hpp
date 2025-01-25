@@ -4,18 +4,19 @@
 #ifndef TEXT_HPP
 #define TEXT_HPP
 
+#include <string>
+
 #include "sc.hpp"
 
 struct Text {
   // Node for the message/string list.
 
-  Text() : next(0), num(0), str(0), hashVal(0) {}
-  ~Text() { delete[] str; }
+  Text() : next(0), num(0), hashVal(0) {}
 
   Text* next;
-  int num;        // Offset in near string space
-  char* str;      // Pointer to the string itself
-  uword hashVal;  // Hashed value of the string
+  int num;          // Offset in near string space
+  std::string str;  // Pointer to the string itself
+  uword hashVal;    // Hashed value of the string
 };
 
 class TextList {

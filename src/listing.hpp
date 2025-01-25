@@ -16,7 +16,7 @@ void ListAsCode(const char*, ...);
 void ListWord(uint16_t);
 void ListByte(uint8_t);
 void ListOffset();
-void ListText(const char*);
+void ListText(std::string_view);
 void ListingNoCRLF(const char* parms, ...);
 void ListSourceLine(int num);
 

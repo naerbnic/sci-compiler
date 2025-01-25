@@ -27,6 +27,12 @@ OutputFile::~OutputFile() { fclose(fp); }
 
 void OutputFile::SeekTo(long offset) { fseek(fp, offset, SEEK_SET); }
 
+int OutputFile::WriteNullTerminatedString(std::string_view str) {
+  Write(str.data(), str.length());
+  WriteByte(0);
+  return str.length() + 1;
+}
+
 int OutputFile::Write(const char* str) {
   int length = strlen(str);
   WriteWord(length);

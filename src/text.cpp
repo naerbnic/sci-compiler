@@ -72,7 +72,7 @@ Text* TextList::search(const char* str) const {
 
   uword hashVal = hash(str);
   Text* tp;
-  for (tp = head; tp && (tp->hashVal != hashVal || strcmp(str, tp->str));
+  for (tp = head; tp && (tp->hashVal != hashVal || str != tp->str);
        tp = tp->next);
 
   return tp;
