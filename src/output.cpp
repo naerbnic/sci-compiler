@@ -18,7 +18,7 @@
 
 bool highByteFirst;
 
-OutputFile::OutputFile(const char* fileName) : fileName(fileName) {
+OutputFile::OutputFile(std::string fileName) : fileName(fileName) {
   fp = CreateOutputFile(fileName);
   if (!fp) Panic("Can't open output file %s", fileName);
 }
@@ -54,30 +54,24 @@ void OutputFile::Write(const void* mp, size_t len) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-static OutputFile* OpenObjFile(MemType type, const char* name);
-static void MakeObjFileName(char* dest, MemType type);
+static OutputFile* OpenObjFile(MemType type, std::string name);
+static std::string MakeObjFileName(MemType type);
 
 void OpenObjFiles(OutputFile** heapOut, OutputFile** hunkOut) {
-  char heapName[_MAX_PATH + 1];
-  char hunkName[_MAX_PATH + 1];
-
-  //	make the names and delete old objects
-  MakeObjFileName(heapName, MemResHeap);
-  MakeObjFileName(hunkName, MemResHunk);
-
   //	open the new files
-  *heapOut = OpenObjFile(MemResHeap, heapName);
-  *hunkOut = OpenObjFile(MemResHunk, hunkName);
+  *heapOut = OpenObjFile(MemResHeap, MakeObjFileName(MemResHeap));
+  *hunkOut = OpenObjFile(MemResHunk, MakeObjFileName(MemResHunk));
 }
 
-static void MakeObjFileName(char* dest, MemType type) {
+static std::string MakeObjFileName(MemType type) {
   const char* resName = ResNameMake(type, script);
-  MakeName(dest, outDir, resName, resName);
+  std::string dest = MakeName(outDir, resName, resName);
   DeletePath(dest);
+  return dest;
 }
 
-static OutputFile* OpenObjFile(MemType type, const char* name) {
-  OutputFile* out = new OutputFile(name);
+static OutputFile* OpenObjFile(MemType type, std::string name) {
+  OutputFile* out = new OutputFile(std::move(name));
 
   // Put out the header information.
   ubyte header[2];

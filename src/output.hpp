@@ -7,10 +7,11 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <string>
 
 class OutputFile {
  public:
-  OutputFile(const char* fileName);
+  OutputFile(std::string fileName);
   ~OutputFile();
 
   void SeekTo(long offset);
@@ -22,7 +23,7 @@ class OutputFile {
 
  protected:
   FILE* fp;
-  const char* fileName;
+  std::string fileName;
 };
 
 void OpenObjFiles(OutputFile** heapOut, OutputFile** hunkOut);

@@ -19,7 +19,7 @@
 bool listCode;
 
 static FILE* listFile;
-static char listName[_MAX_PATH + 1];
+static std::string listName;
 static FILE* sourceFile;
 static int sourceLineNum;
 
@@ -108,15 +108,15 @@ struct OpStr {
     {"pushSelf", JUST_OP},
 };
 
-void OpenListFile(const char* sourceFileName) {
+void OpenListFile(std::string_view sourceFileName) {
   if (!listCode) return;
 
-  MakeName(listName, sourceFileName, sourceFileName, ".sl");
-  if (!(listFile = fopen(listName, "wt")))
+  listName = MakeName(sourceFileName, sourceFileName, ".sl");
+  if (!(listFile = fopen(listName.c_str(), "wt")))
     Panic("Can't open %s for listing", listName);
 
   if (includeDebugInfo) {
-    if (!(sourceFile = fopen(sourceFileName, "rt")))
+    if (!(sourceFile = fopen(std::string(sourceFileName).c_str(), "rt")))
       Panic("Can't open %s for source lines in listing", sourceFileName);
     sourceLineNum = 0;
   }

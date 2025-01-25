@@ -4,8 +4,9 @@
 #define LISTING_HPP
 
 #include <cstdint>
+#include <string_view>
 
-void OpenListFile(const char* sourceFileName);
+void OpenListFile(std::string_view sourceFileName);
 void CloseListFile();
 void DeleteListFile();
 void Listing(const char*, ...);

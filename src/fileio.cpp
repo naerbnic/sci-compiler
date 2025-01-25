@@ -11,18 +11,10 @@
 #include <filesystem>
 #include <string_view>
 
-#include "string.hpp"
-
 //
 // This function builds a path name from the provided variables and stores it in
 // dest.
 //
-void MakeName(char *dest, std::string_view dir, std::string_view name,
-              std::string_view ext) {
-  auto computed_name = MakeName(dir, name, ext);
-  strcpy(dest, computed_name.c_str());
-}
-
 std::string MakeName(std::string_view dir, std::string_view name,
                      std::string_view ext) {
   std::string result;
@@ -55,8 +47,6 @@ std::string MakeName(std::string_view dir, std::string_view name,
 // if an extension is found.  Otherwise, it returns a pointer to the end of the
 // string.
 //
-const char *_ExtPtr(const char *str) {
-  if (strchr(str, '.')) return str;
-
-  return &str[strlen(str)];
+bool HasExt(std::string_view str) {
+  return str.rfind('.') != std::string_view::npos;
 }

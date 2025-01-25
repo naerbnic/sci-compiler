@@ -9,8 +9,6 @@
 #ifndef _STRING_HPP_
 #define _STRING_HPP_
 
-#include <string.h>
-
 #include <string>
 #include <string_view>
 
@@ -27,6 +25,6 @@ std::string vstringf(const char *fmt, va_list args);
 // Equivalent of sprintf, but that returns a std::string instead.
 std::string stringf(const char *fmt, ...);
 
-void strlwr(char *str);
+void strlwr(std::string& str);
 
 #endif

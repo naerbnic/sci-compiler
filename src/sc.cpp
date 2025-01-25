@@ -155,9 +155,7 @@ int main(int argc, char **argv) {
   auto cli_include_path = program.get<std::vector<std::string>>("-I");
 
   char *op;
-  strptr extPtr;
   int outLen;
-  char fileName[_MAX_PATH + 1];
 
   sc = new Compiler;
   atexit(deleteCompiler);
@@ -177,10 +175,9 @@ int main(int argc, char **argv) {
   }
 
   // See if the first file to be compiled exists.  If not, exit.
-  auto *first_file = files[0].c_str();
-  extPtr = _ExtPtr(first_file);
-  MakeName(fileName, first_file, first_file, (*extPtr) ? extPtr : ".sc");
-  if (access(fileName, 0) == -1) Panic("Can't find %s", fileName);
+  std::string fileName =
+      MakeName(files[0], files[0], HasExt(files[0]) ? files[0] : ".sc");
+  if (access(fileName.c_str(), 0) == -1) Panic("Can't find %s", fileName);
 
   // Make sure that any output directory is terminated with a '/'.
   if (!outDirPtr.empty()) {
@@ -238,9 +235,6 @@ int main(int argc, char **argv) {
 #endif
 
 static void CompileFile(strptr fileName) {
-  char sourceFileName[_MAX_PATH + 1];
-  const char *extPtr;
-
   // Do some initialization.
   script = -1;
   errors = warnings = 0;
@@ -254,8 +248,8 @@ static void CompileFile(strptr fileName) {
   nameSymbol = syms.selectorSymTbl->lookup("name");
 
   // Open the source file.
-  extPtr = _ExtPtr(fileName);
-  MakeName(sourceFileName, fileName, fileName, *extPtr ? extPtr : ".sc");
+  std::string sourceFileName =
+      MakeName(fileName, fileName, HasExt(fileName) ? fileName : ".sc");
   strlwr(sourceFileName);
 
   output("%s\n", sourceFileName);

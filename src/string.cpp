@@ -99,9 +99,6 @@ std::string stringf(const char *fmt, ...) {
   return result;
 }
 
-void strlwr(char *str) {
-  while (*str) {
-    *str = tolower(*str);
-    str++;
-  }
+void strlwr(std::string &str) {
+  std::ranges::transform(str, str.begin(), std::tolower);
 }
