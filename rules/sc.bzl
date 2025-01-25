@@ -1,5 +1,7 @@
 """Rules to build with the SC compiler."""
 
+visibility("public")
+
 _SciSystemInfo = provider(
     "Configuration info for a particular SCI system.",
     fields = {

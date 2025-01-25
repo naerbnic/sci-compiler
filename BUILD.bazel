@@ -1,0 +1,11 @@
+alias(
+    name = "sc",
+    actual = "//src:sc",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "sci_system_1_1",
+    actual = "//sci_lib/sci_1_1",
+    visibility = ["//visibility:public"],
+)
