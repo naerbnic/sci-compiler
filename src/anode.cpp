@@ -141,12 +141,6 @@ void ANDispatch::emit(OutputFile* out) {
   out->WriteWord((uint32_t)(target() && sym ? target()->offset : 0));
 }
 
-void ANDispatch::backpatch(ANode* dest) {
-  if (sc->heapList->contains(dest)) sc->hunkList->incFixups();
-
-  ANReference::backpatch(dest);
-}
-
 ///////////////////////////////////////////////////
 // Class ANWord
 ///////////////////////////////////////////////////
@@ -273,9 +267,7 @@ strptr ANIntProp::desc() { return "prop"; }
 
 uint32_t ANIntProp::value() { return val; }
 
-ANTextProp::ANTextProp(Symbol* sp, int v) : ANProp(sp, v) {
-  sc->heapList->incFixups();
-}
+ANTextProp::ANTextProp(Symbol* sp, int v) : ANProp(sp, v) {}
 
 void ANTextProp::emit(OutputFile* out) {
   sc->heapList->addFixup(offset);
@@ -567,9 +559,7 @@ void ANVarAccess::emit(OutputFile* out) {
 // Class ANOpOfs
 ///////////////////////////////////////////////////
 
-ANOpOfs::ANOpOfs(uint32_t o) : ANOpCode(op_lofsa), ofs(o) {
-  sc->hunkList->incFixups();
-}
+ANOpOfs::ANOpOfs(uint32_t o) : ANOpCode(op_lofsa), ofs(o) {}
 
 size_t ANOpOfs::size() { return WORDSIZE; }
 
@@ -588,10 +578,7 @@ void ANOpOfs::emit(OutputFile* out) {
 // Class ANObjID
 ///////////////////////////////////////////////////
 
-ANObjID::ANObjID(Symbol* s) : ANOpCode(op_lofsa) {
-  sym = s;
-  sc->hunkList->incFixups();
-}
+ANObjID::ANObjID(Symbol* s) : ANOpCode(op_lofsa) { sym = s; }
 
 size_t ANObjID::size() { return WORDSIZE; }
 

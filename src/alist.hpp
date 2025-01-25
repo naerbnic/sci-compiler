@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <utility>
+#include <vector>
 
 #include "list.hpp"
 
@@ -96,7 +97,6 @@ class FixupList : public AList {
   void emit(OutputFile*);
   size_t setOffset(size_t ofs);
 
-  void incFixups(uint32_t inc = 1) { numFixups += inc; }
   // Increment the number of elements needing fixup.  This is
   // called each time we generate an ANode requiring fixup.
 
@@ -115,10 +115,8 @@ class FixupList : public AList {
   // Add the offset to the fixup table.
 
  protected:
-  int32_t numFixups;  // number of locations needing fixup in this AList
-  size_t* fixups;     // pointer to storage for fixup values
-  uint32_t fixIndex;  // index for adding fixups
-  size_t fixOfs;      // offset of start of fixups
+  std::vector<size_t> fixups;  // storage for fixup values
+  size_t fixOfs;               // offset of start of fixups
 };
 
 struct CodeList : FixupList {

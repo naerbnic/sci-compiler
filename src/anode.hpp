@@ -91,7 +91,6 @@ struct ANDispatch : ANode,
   size_t size();
   void list();
   void emit(OutputFile*);
-  void backpatch(ANode* dest);
 };
 
 struct ANWord : ANode
@@ -469,6 +468,7 @@ class ANVars : public ANode
   size_t size();
   void list();
   void emit(OutputFile*);
+  // FIXME: Do we need to keep this, with dynamically allocated fixups?
   int numFixups() const;
 
  protected:

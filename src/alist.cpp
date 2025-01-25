@@ -95,16 +95,13 @@ void AList::optimize() {
 // Class FixupList
 ///////////////////////////////////////////////////
 
-FixupList::FixupList() : numFixups(0), fixups(0), fixIndex(0) {}
+FixupList::FixupList() {}
 
 FixupList::~FixupList() { clear(); }
 
 void FixupList::clear() {
   AList::clear();
-  delete[] fixups;
-
-  fixups = 0;
-  numFixups = fixIndex = 0;
+  fixups.clear();
 
   // All fixup lists have a word node at the start which is the offset
   // to the fixup table.
@@ -121,9 +118,7 @@ void FixupList::initFixups() {
   // adjust to an even one.
 
   ((ANWord*)head)->value = fixOfs + (fixOfs & 1);
-
-  fixups = new size_t[numFixups];
-  fixIndex = 0;
+  fixups.clear();
 }
 
 void FixupList::listFixups() {
@@ -135,11 +130,11 @@ void FixupList::listFixups() {
   }
 
   Listing("\n\nFixups:");
-  ListWord(numFixups);
+  ListWord(fixups.size());
   curOfs += 2;
 
-  for (int i = 0; i < numFixups; ++i) {
-    ListWord(fixups[i]);
+  for (size_t fixup : fixups) {
+    ListWord(fixup);
     curOfs += 2;
   }
 }
@@ -149,11 +144,11 @@ void FixupList::emitFixups(OutputFile* out) {
 
   if (fixOfs & 1) out->WriteByte(0);
 
-  out->WriteWord(numFixups);
-  for (int i = 0; i < numFixups; ++i) out->WriteWord(fixups[i]);
+  out->WriteWord(fixups.size());
+  for (size_t fixup : fixups) out->WriteWord(fixup);
 }
 
-void FixupList::addFixup(size_t ofs) { fixups[fixIndex++] = ofs; }
+void FixupList::addFixup(size_t ofs) { fixups.push_back(ofs); }
 
 void FixupList::emit(OutputFile* out) {
   initFixups();
