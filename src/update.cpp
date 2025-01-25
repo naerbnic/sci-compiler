@@ -59,9 +59,11 @@ void WriteClassTbl() {
     SCIUWord scriptNum;
   };
 #pragma pack(pop)
+  static_assert(sizeof(ClassTblEntry) == 4, "Class table entry is wrong size");
 
   // Allocate storage for the class table.
-  ClassTblEntry* classTbl = new ClassTblEntry[maxClassNum + 1];
+  std::vector<ClassTblEntry> classTbl;
+  classTbl.resize(maxClassNum + 1);
 
   // Now walk through the class symbol table, entering the script
   // number of each class in its proper place in the table.
@@ -81,8 +83,6 @@ void WriteClassTbl() {
     out.WriteWord(classTbl[index].objID);
     out.WriteWord(classTbl[index].scriptNum);
   }
-
-  delete[] classTbl;
 }
 
 void WritePropOffsets() {
@@ -209,7 +209,6 @@ static void PrintSubClasses(Class* sp, int level, FILE* fp) {
 static void WriteSelectorVocab() {
   static char badSelMsg[] = "BAD SELECTOR";
 
-  SCIUWord* tbl;
   size_t ofs;
   uint32_t tblLen;
 
@@ -220,9 +219,9 @@ static void WriteSelectorVocab() {
   // allocate the table, and initialize it to point to the byte following
   // the table so that un-implemented selector values will have a string.
   tblLen = sizeof(SCIUWord) * (maxSelector + 2);
-  tbl = new SCIUWord[tblLen / sizeof *tbl];
+  auto tbl = std::make_unique<SCIUWord[]>(tblLen / sizeof(SCIUWord));
   ofs = tblLen;
-  *tbl = SCIUWord(maxSelector);
+  tbl[0] = SCIUWord(maxSelector);
   for (int i = 1; i <= maxSelector + 1; ++i) tbl[i] = SCIUWord(ofs);
 
   OutputFile out(fileName);
@@ -244,7 +243,5 @@ static void WriteSelectorVocab() {
 
   // Seek back to the table's position in the file and write it out.
   out.SeekTo(sizeof resHdr);
-  for (size_t i = 0; i < tblLen / sizeof *tbl; i++) out.WriteWord(tbl[i]);
-
-  delete[] tbl;
+  for (size_t i = 0; i < tblLen / sizeof(SCIUWord); i++) out.WriteWord(tbl[i]);
 }
