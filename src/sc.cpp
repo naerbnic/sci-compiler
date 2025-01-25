@@ -205,7 +205,7 @@ int main(int argc, char **argv) {
   errors = warnings = 0;
   theFile = OpenFileAsInput(selector_file, True);
   Parse();
-  if (access("classdef", 0) == 0) {
+  if (access(classdef_file.c_str(), 0) == 0) {
     theFile = OpenFileAsInput(classdef_file, True);
     Parse();
   }
