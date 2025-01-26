@@ -6,7 +6,9 @@
 
 #include <vector>
 
-#include "symbol.hpp"
+#include "symtypes.hpp"
+
+class Symbol;
 
 enum VarType {
   VAR_NONE,
