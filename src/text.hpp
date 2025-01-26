@@ -13,9 +13,8 @@
 struct Text {
   // Node for the message/string list.
 
-  Text() : next(0), num(0), hashVal(0) {}
+  Text() : num(0), hashVal(0) {}
 
-  Text* next;
   int num;          // Offset in near string space
   std::string str;  // Pointer to the string itself
   uword hashVal;    // Hashed value of the string
