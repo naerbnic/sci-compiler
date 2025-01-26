@@ -4,7 +4,9 @@
 #ifndef TEXT_HPP
 #define TEXT_HPP
 
+#include <ranges>
 #include <string>
+#include <string_view>
 
 #include "sc.hpp"
 
@@ -22,17 +24,21 @@ struct Text {
 class TextList {
  public:
   void init();
-  uint32_t find(const char*);
+  uint32_t find(std::string_view);
 
-  Text* head;   // Pointer to start of text list
-  Text* tail;   // Pointer to end of text list
-  size_t size;  // Size of text in list
+  auto items() const {
+    return std::ranges::transform_view(
+        textList, [](const auto& item) { return item.get(); });
+  }
 
  protected:
-  Text* add(const char*);
-  Text* search(const char*) const;
+  std::vector<std::unique_ptr<Text>> textList;
+  size_t size;  // Size of text in list
 
-  static uword hash(const char*);
+  Text* add(std::string_view);
+  Text* search(std::string_view) const;
+
+  static uword hash(std::string_view);
 };
 
 extern TextList text;

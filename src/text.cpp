@@ -9,71 +9,54 @@
 
 TextList text;
 
-void TextList::init() {
-  Text* next;
-  for (Text* text = head; text;) {
-    next = text->next;
-    delete text;
-    text = next;
-  }
+void TextList::init() { textList.clear(); }
 
-  head = tail = 0;
-  size = 0;
-}
-
-uint32_t TextList::find(const char* str) {
+uint32_t TextList::find(std::string_view str) {
   // The value of a string is its offset in string space.
 
-  Text* text;
+  Text* text = search(str);
 
   // If the text string has already been used, use its offset.
   // Otherwise, allocate and link a new node into the list.
-  if (!(text = search(str))) text = add(str);
+  if (!text) text = add(str);
 
   return text->num;
 }
 
-uword TextList::hash(const char* tp) {
-  uword hashVal;
+uword TextList::hash(std::string_view tp) {
+  uword hashVal = 0;
 
-  for (hashVal = 0; *tp; ++tp) hashVal += *tp;
+  for (char ch : tp) hashVal += ch;
 
   return hashVal;
 }
 
-Text* TextList::add(const char* str) {
+Text* TextList::add(std::string_view str) {
   // Add a string to text space
 
-  Text* np;
-
   // Allocate the text node and link it into the list.
-  np = new Text;
-  if (!tail)
-    head = tail = np;
-  else {
-    tail->next = np;
-    tail = np;
-  }
+  auto np_owned = std::make_unique<Text>();
+  auto* np = np_owned.get();
+  textList.push_back(std::move(np_owned));
 
   // Save the string and increment the offset in text space by
   // its length.  Get the hash value of the string.
   np->num = size;
-  size += strlen(str) + 1;
+  size += str.length() + 1;
 
-  np->str = newStr(str);
+  np->str = str;
   np->hashVal = hash(str);
 
   return np;
 }
 
-Text* TextList::search(const char* str) const {
+Text* TextList::search(std::string_view str) const {
   // Return the offset in string space of 'str' if it is already in string
   // space, 0 otherwise.
 
   uword hashVal = hash(str);
-  Text* tp;
-  for (tp = head; tp && (tp->hashVal != hashVal || str != tp->str);
-       tp = tp->next);
-
-  return tp;
+  for (Text* tp : items()) {
+    if (hashVal == tp->hashVal && str == tp->str) return tp;
+  }
+  return nullptr;
 }

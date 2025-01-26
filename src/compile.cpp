@@ -1042,8 +1042,7 @@ void MakeText() {
 
   // terminate the object portion of the heap with a null word
   sc->heapList->newNode<ANWord>();
-  for (Text* tp = text.head; tp; tp = tp->next)
-    sc->heapList->newNode<ANText>(tp);
+  for (Text* tp : text.items()) sc->heapList->newNode<ANText>(tp);
 }
 
 void MakeLabel(Symbol* dest) {
