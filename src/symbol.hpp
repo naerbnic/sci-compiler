@@ -195,12 +195,12 @@ class Symbol {
   friend std::ostream& operator<<(std::ostream& os, const Symbol& sym);
 };
 
-#define OPEN_P S_OPEN_P
-#define OPEN_B ((sym_t)'{')
-#define CLOSE_P ((sym_t)')')
-#define CLOSE_B ((sym_t)'}')
-#define OpenP(c) ((c) == OPEN_P)
-#define CloseP(c) ((c) == CLOSE_P)
+inline constexpr auto OPEN_P = S_OPEN_P;
+inline constexpr auto OPEN_B = ((sym_t)'{');
+inline constexpr auto CLOSE_P = ((sym_t)')');
+inline constexpr auto CLOSE_B = ((sym_t)'}');
+inline bool OpenP(sym_t c) { return c == OPEN_P; }
+inline bool CloseP(sym_t c) { return c == CLOSE_P; }
 
 #define KERNEL -1  // Module # of kernel
 
