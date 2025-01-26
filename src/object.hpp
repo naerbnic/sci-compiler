@@ -5,6 +5,7 @@
 #define OBJECT_HPP
 
 #include <cstdint>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -38,14 +39,21 @@ struct Object {
   Selector* findSelector(strptr name);
   void freeSelectors();
 
-  Symbol* sym;  // the symbol for this object/class
-  int num;      // class number (== OBJECTNUM for objects)
-  int super;    // number of this object's super-class
-  int script;   // module # in which this object is defined
-  std::vector<std::unique_ptr<Selector>> selectors;  // object's selectors
+  auto selectors() const {
+    return std::views::transform(selectors_,
+                                 [](auto const& p) { return p.get(); });
+  }
+
+  Symbol* sym;       // the symbol for this object/class
+  int num;           // class number (== OBJECTNUM for objects)
+  int super;         // number of this object's super-class
+  int script;        // module # in which this object is defined
   int numProps;      // number of properties in object
   ANode* an;         // pointer to object definition
   std::string file;  // filename in which object was defined
+
+ protected:
+  std::vector<std::unique_ptr<Selector>> selectors_;  // object's selectors
 };
 
 struct Class : Object {

@@ -162,16 +162,16 @@ static void WriteClassDefs() {
     // Write out any new properties or properties which differ in
     // value from the superclass.
     fprintf(fp, "\t(properties\n");
-    for (auto const& tp : cp->selectors) {
-      if (IsProperty(tp) && sp->selectorDiffers(tp.get()))
+    for (auto* tp : cp->selectors()) {
+      if (IsProperty(tp) && sp->selectorDiffers(tp))
         fprintf(fp, "\t\t%s %d\n", tp->sym->name(), tp->val);
     }
     fprintf(fp, "\t)\n\n");
 
     // Write out any new methods or methods which have been redefined.
     fprintf(fp, "\t(methods\n");
-    for (auto const& tp : cp->selectors)
-      if (IsMethod(tp) && sp->selectorDiffers(tp.get()))
+    for (auto* tp : cp->selectors())
+      if (IsMethod(tp) && sp->selectorDiffers(tp))
         fprintf(fp, "\t\t%s\n", tp->sym->name());
     fprintf(fp, "\t)\n");
 

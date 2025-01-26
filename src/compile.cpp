@@ -979,7 +979,7 @@ void MakeObject(Object* theObj) {
   ANOfsProp* pDict = 0;
   ANOfsProp* mDict = 0;
 
-  for (auto const& sp : theObj->selectors)
+  for (auto* sp : theObj->selectors())
     if (IsProperty(sp)) {
       switch (sp->tag) {
         case T_PROP:
@@ -1015,7 +1015,7 @@ void MakeObject(Object* theObj) {
   ANObjTable* propDict =
       curList->newNodeBefore<ANObjTable>(codeStart, "property dictionary");
   if (theObj->num != OBJECTNUM) {
-    for (auto const& sp : theObj->selectors)
+    for (auto* sp : theObj->selectors())
       if (IsProperty(sp)) curList->newNode<ANWord>(sp->sym->val());
   }
   propDict->finish();
@@ -1024,7 +1024,7 @@ void MakeObject(Object* theObj) {
   ANObjTable* methDict =
       curList->newNodeBefore<ANObjTable>(codeStart, "method dictionary");
   ANWord* numMeth = curList->newNode<ANWord>((short)0);
-  for (auto const& sp : theObj->selectors)
+  for (auto* sp : theObj->selectors())
     if (sp->tag == T_LOCAL) {
       curList->newNode<ANWord>(sp->sym->val());
       curList->newNode<ANMethod>(sp->sym, (ANMethCode*)sp->an);

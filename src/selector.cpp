@@ -25,11 +25,14 @@ static uint16_t selTbl[SEL_TBL_SIZE];
 void Object::dupSelectors(Class* super) {
   // duplicate super's selectors
 
-  for (auto const& sn : super->selectors) {
+  for (auto* sn : super->selectors()) {
     auto tn = std::make_unique<Selector>();
     *tn = *sn;
-    if (tn->tag == T_LOCAL) tn->tag = T_METHOD;  // No longer a local method.
-    selectors.push_back(std::move(tn));
+    if (tn->tag == T_LOCAL) {
+      tn->tag = T_METHOD;  // No longer a local method.
+      tn->an = nullptr;    // No code defined for this class.
+    }
+    selectors_.push_back(std::move(tn));
   }
 
   numProps = super->numProps;
@@ -40,8 +43,8 @@ Selector* Object::findSelector(Symbol* sym) {
   //	symbol 'sym'.
 
   int val = sym->val();
-  for (auto const& sn : selectors) {
-    if (val == sn->sym->val()) return sn.get();
+  for (auto* sn : selectors()) {
+    if (val == sn->sym->val()) return sn;
   }
 
   return nullptr;
@@ -57,7 +60,7 @@ Selector* Object::findSelector(strptr name) {
 void Object::freeSelectors() {
   // free the object's selectors
 
-  selectors.clear();
+  selectors_.clear();
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -71,7 +74,7 @@ Selector* Class::addSelector(Symbol* sym, int what) {
 
   auto sn_owned = std::make_unique<Selector>(sym);
   auto* sn = sn_owned.get();
-  selectors.push_back(std::move(sn_owned));
+  selectors_.push_back(std::move(sn_owned));
 
   switch (sym->val()) {
     case SEL_METHDICT:

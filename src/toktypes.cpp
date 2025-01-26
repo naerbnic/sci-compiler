@@ -33,7 +33,7 @@ Symbol* LookupTok() {
     theSym = 0;
 
   if (symType == S_SELECT) {
-    if (curObj && !curObj->selectors.empty()) {
+    if (curObj && !curObj->selectors().empty()) {
       // If the symbol is a property and we're in a method definition,
       //	access the symbol as a local variable.
 
