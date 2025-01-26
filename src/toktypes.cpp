@@ -123,10 +123,10 @@ static bool GetNumberOrStringToken(strptr errStr, bool stringOK) {
   // Get a number (or a string) from the input.
 
   // Get a parse node.
-  PNode* pn = new PNode(PN_EXPR);
+  auto pn = std::make_unique<PNode>(PN_EXPR);
 
   // Get an expression.
-  Expression(pn, REQUIRED);
+  Expression(pn.get(), REQUIRED);
 
   // If the expression is not a constant, bitch.
   pn_t type = pn->first_child()->type;
@@ -149,8 +149,6 @@ static bool GetNumberOrStringToken(strptr errStr, bool stringOK) {
   }
 
   setSymVal(pn->first_child()->val);
-
-  delete pn;
 
   return True;
 }
