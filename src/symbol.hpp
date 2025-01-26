@@ -187,7 +187,7 @@ class Symbol {
   strptr str() { return str_; }
   void setStr(strptr str) { str_ = str; }
   Object* obj() { return obj_; }
-  void setObj(Object* obj) { obj_ = obj; }
+  void setObj(std::unique_ptr<Object> obj) { obj_ = obj.release(); }
   Public* ext() { return ext_; }
   void setExt(std::unique_ptr<Public> ext) { ext_ = ext.release(); }
 

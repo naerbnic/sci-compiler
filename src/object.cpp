@@ -103,11 +103,12 @@ void DoClass() {
     theClass->dupSelectors(super);
 
   else {
-    theClass = new Class(super);
+    auto theClassOwned = std::make_unique<Class>(super);
+    theClass = theClassOwned.get();
     theClass->num = classNum =
         classNum == OBJECTNUM ? GetClassNumber(theClass) : classNum;
     theClass->sym = sym;
-    sym->setObj(theClass);
+    sym->setObj(std::move(theClassOwned));
     classes[classNum] = theClass;
   }
 
@@ -150,10 +151,11 @@ void Instance() {
   Class* super = (Class*)sym->obj();
 
   // Create the object as an instance of the class.
-  Object* obj = new Object(super);
+  auto objOwned = std::make_unique<Object>(super);
+  auto* obj = objOwned.get();
   obj->num = OBJECTNUM;
   obj->sym = objSym;
-  objSym->setObj(obj);
+  objSym->setObj(std::move(objOwned));
 
   // Set the super-class number for this object.
   Selector* sn = obj->findSelector("-super-");

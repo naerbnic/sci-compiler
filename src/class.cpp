@@ -29,8 +29,9 @@ static void DefClassItems(Class* theClass, int what);
 void InstallObjects() {
   // Install 'RootObj' as the root of the class system.
   Symbol* sym = syms.installClass("RootObj");
-  Class* rootClass = new Class;
-  sym->setObj(rootClass);
+  auto rootClassOwned = std::make_unique<Class>();
+  auto* rootClass = rootClassOwned.get();
+  sym->setObj(std::move(rootClassOwned));
   rootClass->sym = sym;
   rootClass->script = KERNEL;
   rootClass->num = -1;
@@ -112,8 +113,9 @@ void DefineClass() {
 
   Class* super = FindClass(superNum);
   if (!super) Fatal("Can't find superclass for %s\n", sym->name());
-  Class* theClass = new Class(super);
-  sym->setObj(theClass);
+  auto theClassOwned = std::make_unique<Class>(super);
+  auto* theClass = theClassOwned.get();
+  sym->setObj(std::move(theClassOwned));
   theClass->super = superNum;
   theClass->script = scriptNum;
   theClass->num = classNum;
