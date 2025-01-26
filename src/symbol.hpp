@@ -189,7 +189,7 @@ class Symbol {
   Object* obj() { return obj_; }
   void setObj(Object* obj) { obj_ = obj; }
   Public* ext() { return ext_; }
-  void setExt(Public* ext) { ext_ = ext; }
+  void setExt(std::unique_ptr<Public> ext) { ext_ = ext.release(); }
 
  private:
   friend std::ostream& operator<<(std::ostream& os, const Symbol& sym);

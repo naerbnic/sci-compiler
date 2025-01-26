@@ -305,9 +305,7 @@ void Extern() {
   //	extern ::= 'extern' (symbol script# entry#)+
 
   Symbol* theSym;
-  Public* theEntry;
 
-  theEntry = 0;
   for (GetToken(); !CloseP(symType); GetToken()) {
     if (OpenP(symType))
       Definition();
@@ -316,8 +314,9 @@ void Extern() {
       // externals list.
       if (!syms.lookup((strptr)(theSym = (Symbol*)symStr)))
         theSym = syms.installLocal(symStr, S_EXTERN);
-      theEntry = new Public(theSym);
-      theSym->setExt(theEntry);
+      auto entry = std::make_unique<Public>(theSym);
+      auto* theEntry = entry.get();
+      theSym->setExt(std::move(entry));
 
       // Get the script and entry numbers of the symbol.
       if (!GetNumber("Script #")) break;
@@ -326,11 +325,7 @@ void Extern() {
       if (!GetNumber("Entry #")) break;
       theEntry->entry = symVal;
     }
-
-    theEntry = 0;
   }
-
-  delete theEntry;
 
   UnGetTok();
 }
