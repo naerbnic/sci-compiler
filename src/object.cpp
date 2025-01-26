@@ -175,7 +175,7 @@ static void InstanceBody(Object* obj) {
 
   // Get a pointer to the 'name' selector for this object and zero
   // out the property.
-  Selector* nameSelector = obj->findSelector(nameSymbol);
+  Selector* nameSelector = obj->findSelectorByNum(nameSymbol->val());
   if (nameSelector) nameSelector->val = -1;
 
   // Get any property or method definitions.
@@ -274,7 +274,7 @@ static void Declaration(Object* obj, int type) {
     }
 
     // If this selector is not in the current class, add it.
-    Selector* sn = sym ? obj->findSelector(sym) : 0;
+    Selector* sn = sym ? obj->findSelectorByNum(sym->val()) : 0;
     if (!sn) {
       if (obj->num != OBJECTNUM)
         sn = ((Class*)obj)->addSelector(sym, type);
@@ -324,7 +324,7 @@ void MethodDef(Object* obj) {
     if (node) {
       Symbol* sym = node->sym;
 
-      Selector* sn = obj->findSelector(sym);
+      Selector* sn = obj->findSelectorByNum(sym->val());
       if (sym->type != S_SELECT || IsProperty(sn))
         Error("Not a method: %s", sym->name());
       else if (sn->an)

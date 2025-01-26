@@ -35,7 +35,7 @@ struct Object {
   ~Object();
 
   void dupSelectors(Class*);
-  Selector* findSelector(Symbol*);
+  Selector* findSelectorByNum(int val);
   Selector* findSelector(strptr name);
   void freeSelectors();
 

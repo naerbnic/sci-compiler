@@ -168,7 +168,7 @@ void DefClassItems(Class* theClass, int what) {
     }
 
     // If the selector is already a selector of a different sort, complain.
-    Selector* tn = theClass->findSelector(sym);
+    Selector* tn = theClass->findSelectorByNum(sym->val());
     if (tn && PropTag(what) != IsProperty(tn)) {
       Error("Already defined as %s: %s", IsProperty(tn) ? "property" : "method",
             symStr);
@@ -274,7 +274,7 @@ bool Class::selectorDiffers(Selector* tp) {
 
   if (num == -1) return True;
 
-  stp = findSelector(tp->sym);
+  stp = findSelectorByNum(tp->sym->val());
   return !stp || (IsMethod(tp) && tp->tag == T_LOCAL) ||
          (tp->tag == T_PROP && tp->val != stp->val);
 }

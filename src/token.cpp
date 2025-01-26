@@ -17,14 +17,13 @@
 
 int nestedCondCompile;
 char symStr[MaxTokenLen];
-Symbol tokSym;
+TokenSlot tokSym;
 
 static char binDigits[] = "01";
 static char decDigits[] = "0123456789";
 static bool haveUnGet;
 static char hexDigits[] = "0123456789abcdef";
-static sym_t lastType;
-static Symbol::RefVal lastVal;
+static TokenSlot lastTok;
 
 //	preprocessor tokens
 enum pt {
@@ -46,13 +45,11 @@ static void ReadNumber(strptr ip);
 
 void GetToken() {
   // Get a token and bitch if one is not available.
-
   if (!NewToken()) EarlyEnd();
 
   // Save the token type and value returned, in case we want to 'unget'
   // the token after changing them.
-  lastType = symType;
-  lastVal = std::move(tokSym.refVal());
+  lastTok = tokSym;
 }
 
 bool NewToken() {
@@ -142,8 +139,7 @@ bool NextToken() {
 
   if (haveUnGet) {
     haveUnGet = False;
-    symType = lastType;
-    tokSym.setRefVal(std::move(lastVal));
+    tokSym = lastTok;
     return True;
   }
 

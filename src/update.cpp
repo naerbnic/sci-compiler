@@ -111,7 +111,7 @@ void WritePropOffsets() {
       continue;
     }
     cp = theSym->obj();
-    if (!LookupTok() || !(sel = cp->findSelector(&tokSym))) {
+    if (!LookupTok() || !(sel = cp->findSelectorByNum(tokSym.val()))) {
       Error("Not a selector for class %s: %s", cp->sym->name(), symStr);
       continue;
     }

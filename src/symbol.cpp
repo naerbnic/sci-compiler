@@ -3,7 +3,6 @@
 
 #include "symbol.hpp"
 
-#include "absl/strings/str_format.h"
 #include "define.hpp"
 #include "input.hpp"
 #include "object.hpp"
@@ -17,18 +16,15 @@ Symbol::~Symbol() {
   switch (ref_val_.index()) {
     case 1:
       if (type == S_DEFINE) {
-        absl::PrintF("deleting string %p\n", std::get<1>(ref_val_));
         delete[] std::get<1>(ref_val_);
       }
       break;
 
     case 2:
-      absl::PrintF("deleting obj %p\n", std::get<2>(ref_val_));
       delete std::get<2>(ref_val_);
       break;
 
     case 3:
-      absl::PrintF("deleting ext %p\n", std::get<3>(ref_val_));
       delete std::get<3>(ref_val_);
       break;
 

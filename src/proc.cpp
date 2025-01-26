@@ -87,7 +87,8 @@ static std::unique_ptr<PNode> _CallDef(sym_t theType) {
       break;
 
     case S_SELECT:
-      if (!theProc || !(sn = curObj->findSelector(theProc)) || IsProperty(sn)) {
+      if (!theProc || !(sn = curObj->findSelectorByNum(theProc->val())) ||
+          IsProperty(sn)) {
         Severe("%s is not a method for class %s", symStr, curObj->sym->name());
         return 0;
       }
@@ -140,7 +141,7 @@ static int ParameterList() {
       }
 
     } else if (symType == S_SELECT) {
-      if (curObj && curObj->findSelector(&tokSym))
+      if (curObj && curObj->findSelectorByNum(tokSym.val()))
         Error("%s is a selector for current object.", symStr);
       else
         syms.installLocal(symStr, parmType)->setVal(parmOfs++);

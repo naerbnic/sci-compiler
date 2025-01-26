@@ -27,7 +27,7 @@ Symbol* LookupTok() {
   if (symType == (sym_t)'#') return Immediate();
 
   if (symType == S_IDENT && (theSym = syms.lookup(symStr))) {
-    tokSym = *theSym;
+    tokSym.SaveSymbol(*theSym);
     tokSym.clearName();
   } else
     theSym = 0;
@@ -40,7 +40,7 @@ Symbol* LookupTok() {
       // A selector list is in effect -- check that the selector
       //	reference is legal (i.e. it is a property in the current
       //	selector list).
-      auto* sn = curObj->findSelector(theSym);
+      auto* sn = curObj->findSelectorByNum(theSym->val());
       if (!sn) {
         if (!inParmList) {
           Error("Not a selector for current class/object: %s", theSym->name());
@@ -57,19 +57,16 @@ Symbol* LookupTok() {
   return theSym;
 }
 
-bool GetSymbol() {
+Symbol* GetSymbol() {
   // Get a token that is in the symbol table.
-
   Symbol* theSym;
-
   GetToken();
   if (!(theSym = syms.lookup(symStr))) {
     Severe("%s not defined.", symStr);
-    return False;
+    return nullptr;
   }
 
-  tokSym = *theSym;
-  return True;
+  return theSym;
 }
 
 bool GetIdent() {
@@ -219,7 +216,8 @@ bool IsVar() {
       return True;
 
     case S_SELECT:
-      return curObj && selectorIsVar && (sn = curObj->findSelector(&tokSym)) &&
+      return curObj && selectorIsVar &&
+             (sn = curObj->findSelectorByNum(tokSym.val())) &&
              sn->tag == T_PROP;
 
     default:
@@ -250,7 +248,7 @@ static Symbol* Immediate() {
       Error("Selector required: %s", symStr);
       return 0;
     }
-    tokSym = *theSym;
+    tokSym.SaveSymbol(*theSym);
     tokSym.type = S_NUM;
   }
   return theSym;

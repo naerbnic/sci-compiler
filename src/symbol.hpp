@@ -179,6 +179,7 @@ class Symbol {
   void setRef(ANReference* ref) { sym_value_ = ref; }
 
   RefVal& refVal() { return ref_val_; }
+  RefVal const& refVal() const { return ref_val_; }
   void setRefVal(RefVal ref_val) { ref_val_ = std::move(ref_val); }
 
   int val() const;

@@ -441,7 +441,7 @@ static bool Message(PNode* theNode, Symbol* theSym) {
 
     // Make sure we're not sending multiple arguments to a property
     if (nArgs > 1 && curReceiver) {
-      Selector* sn = curReceiver->findSelector(msgSel);
+      Selector* sn = curReceiver->findSelectorByNum(msgSel->val());
       assert(sn);
       if (sn->tag != T_LOCAL && sn->tag != T_METHOD)
         Error(
@@ -793,17 +793,17 @@ static bool Variable(PNode* theNode) {
 static bool Array(PNode* theNode) {
   PNode* node;
 
-  GetSymbol();
-  if (symType != S_GLOBAL && symType != S_LOCAL && symType != S_PARM &&
-      symType != S_TMP) {
+  Symbol* lookupSym = GetSymbol();
+  if (lookupSym->type != S_GLOBAL && lookupSym->type != S_LOCAL &&
+      lookupSym->type != S_PARM && lookupSym->type != S_TMP) {
     Severe("Array name expected: %s.", symStr);
     return False;
   }
 
   auto pn = std::make_unique<PNode>(PN_INDEX);
-  node = pn->newChild(PNType(symType));
-  node->val = symVal;
-  node->sym = &tokSym;
+  node = pn->newChild(PNType(lookupSym->type));
+  node->val = lookupSym->val();
+  node->sym = lookupSym;
 
   // Get the index into the array.
   if (!Expression(pn.get(), REQUIRED)) {

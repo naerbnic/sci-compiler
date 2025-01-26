@@ -38,11 +38,10 @@ void Object::dupSelectors(Class* super) {
   numProps = super->numProps;
 }
 
-Selector* Object::findSelector(Symbol* sym) {
+Selector* Object::findSelectorByNum(int val) {
   // Return a pointer to the selector node which corresponds to the
   //	symbol 'sym'.
 
-  int val = sym->val();
   for (auto* sn : selectors()) {
     if (val == sn->sym->val()) return sn;
   }
@@ -54,7 +53,7 @@ Selector* Object::findSelector(strptr name) {
   // Return a pointer to the selector node which has the name 'name'.
 
   Symbol* sym = syms.lookup(name);
-  return sym ? findSelector(sym) : 0;
+  return sym ? findSelectorByNum(sym->val()) : 0;
 }
 
 void Object::freeSelectors() {
@@ -181,7 +180,7 @@ Symbol* GetSelector(Symbol* obj) {
     msgSel = syms.lookup(symStr);
     if (showSelectors) Info("%s is being installed as a selector.", symStr);
   }
-  tokSym = *msgSel;
+  tokSym.SaveSymbol(*msgSel);
 
   // The symbol must be either a variable or a selector.
   if (symType != S_SELECT && !IsVar()) {
@@ -216,7 +215,7 @@ Symbol* GetSelector(Symbol* obj) {
       receiver = obj->obj();
     }
 
-    if (!receiver->findSelector(&tokSym)) {
+    if (!receiver->findSelectorByNum(tokSym.val())) {
       Error("Not a selector for %s: %s", obj->name(), tokSym.name());
       return 0;
     }
