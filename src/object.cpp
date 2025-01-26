@@ -79,9 +79,9 @@ void DoClass() {
 
     //	make sure the symbol is in the class symbol table
     if (sym->type != S_CLASS) {
-      sym = syms.remove(sym->name());
-      sym->type = S_CLASS;
-      syms.classSymTbl->add(sym);
+      auto symOwned = syms.remove(sym->name());
+      symOwned->type = S_CLASS;
+      syms.classSymTbl->add(std::move(symOwned));
     }
   }
 

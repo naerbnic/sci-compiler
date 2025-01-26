@@ -39,7 +39,7 @@ class SymTbl {
 
   using iterator = SymbolMap::iterator;
 
-  Symbol* add(Symbol* sym);
+  Symbol* add(std::unique_ptr<Symbol> sym);
   // Add the Symbol 'sym' to this table.
 
   Symbol* lookup(std::string_view name);
@@ -56,7 +56,7 @@ class SymTbl {
   // Install the identifier 'name' as a Symbol of type 'type'.
   // Return a pointer to it.
 
-  Symbol* remove(strptr name);
+  std::unique_ptr<Symbol> remove(strptr name);
   // Remove the Symbol with name 'name' from this table.  Return
   // a pointer to the Symbol.
 
@@ -119,7 +119,7 @@ class SymTbls {
   // syms.lookup the Symbol with name 'name' in 'activeList'. Return 0
   // if not found.
 
-  Symbol* remove(strptr name);
+  std::unique_ptr<Symbol> remove(strptr name);
   // Remove the symbol with name 'name' from the SymTbls in activeList
   // Return a pointer to the symbol if found, NULL otherwise.
 

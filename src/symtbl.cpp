@@ -27,14 +27,15 @@ Symbol* SymTbl::install(std::string_view name, sym_t type) {
   // Install the identifier with name 'name' in the symbol table 'symTbl'
   // with type 'type'.
 
-  return add(new Symbol(name, type));
+  return add(std::make_unique<Symbol>(name, type));
 }
 
-Symbol* SymTbl::add(Symbol* sp) {
+Symbol* SymTbl::add(std::unique_ptr<Symbol> sp) {
+  auto* sp_ptr = sp.get();
   // Take ownership of the symbol
-  symbols.emplace(sp->name(), std::unique_ptr<Symbol>(sp));
+  symbols.emplace(sp->name(), std::move(sp));
 
-  return sp;
+  return sp_ptr;
 }
 
 Symbol* SymTbl::lookup(std::string_view name) {
@@ -53,14 +54,14 @@ Symbol* SymTbl::lookup(std::string_view name) {
   return nullptr;
 }
 
-Symbol* SymTbl::remove(strptr name) {
+std::unique_ptr<Symbol> SymTbl::remove(strptr name) {
   // Try to remove the symbol with name pointed to by 'name' from this table
   // and return a pointer to it if successful, NULL otherwise.
 
   auto it = symbols.find(std::string_view(name));
 
   if (it != symbols.end()) {
-    Symbol* sp = it->second.release();
+    auto sp = std::move(it->second);
     symbols.erase(it);
     return sp;
   }
@@ -150,13 +151,13 @@ bool SymTbls::del(strptr name) {
   return false;
 }
 
-Symbol* SymTbls::remove(strptr name) {
+std::unique_ptr<Symbol> SymTbls::remove(strptr name) {
   // Search the active symbol tables for the symbol whose name is pointed
   // to by 'name'.  Remove it and return a pointer to the symbol if found,
   // return 0 otherwise.
 
   for (auto& tp : activeList) {
-    Symbol* sp = tp->remove(name);
+    auto sp = tp->remove(name);
     if (sp) return sp;
   }
 
