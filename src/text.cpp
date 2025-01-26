@@ -4,8 +4,6 @@
 
 #include "jeff.hpp"
 #include "sc.hpp"
-#include "sol.hpp"
-#include "string.hpp"
 
 TextList text;
 

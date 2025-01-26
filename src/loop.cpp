@@ -7,8 +7,6 @@
 #include "compile.hpp"
 #include "opcodes.hpp"
 #include "parse.hpp"
-#include "sc.hpp"
-#include "sol.hpp"
 #include "symbol.hpp"
 
 enum LoopType { LOOP_FOR, LOOP_WHILE, LOOP_REPEAT };

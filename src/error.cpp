@@ -6,17 +6,13 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-#include <exception>
-#include <string>
 #include <string_view>
 
 #include "input.hpp"
 #include "listing.hpp"
 #include "platform.hpp"
-#include "sc.hpp"
 #include "share.hpp"
 #include "sol.hpp"
-#include "string.hpp"
 #include "symbol.hpp"
 #include "token.hpp"
 

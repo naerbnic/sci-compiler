@@ -10,12 +10,9 @@
 #include "define.hpp"
 #include "input.hpp"
 #include "listing.hpp"
-#include "object.hpp"
 #include "output.hpp"
 #include "sc.hpp"
 #include "sol.hpp"
-#include "symbol.hpp"
-#include "text.hpp"
 
 bool addNodesToList;
 ANTable* dispTbl;

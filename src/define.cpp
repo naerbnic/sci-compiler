@@ -11,7 +11,6 @@
 #include "anode.hpp"
 #include "compile.hpp"
 #include "error.hpp"
-#include "listing.hpp"
 #include "parse.hpp"
 #include "sc.hpp"
 #include "sol.hpp"

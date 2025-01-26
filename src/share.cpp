@@ -3,7 +3,6 @@
 // 	network-compatible
 
 #include <fcntl.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -11,7 +10,7 @@
 
 #include "error.hpp"
 #include "jeff.hpp"
-#include "sc.hpp"
+#include "platform.hpp"
 #include "sol.hpp"
 
 bool abortIfLocked;

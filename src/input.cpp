@@ -13,8 +13,6 @@
 #include "jeff.hpp"
 #include "sc.hpp"
 #include "sol.hpp"
-#include "string.hpp"
-#include "text.hpp"
 #include "token.hpp"
 
 std::string curFile;

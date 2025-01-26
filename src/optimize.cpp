@@ -6,8 +6,6 @@
 #include "anode.hpp"
 #include "jeff.hpp"
 #include "opcodes.hpp"
-#include "sc.hpp"
-#include "sol.hpp"
 
 enum {
   UNKNOWN = 0x4000,

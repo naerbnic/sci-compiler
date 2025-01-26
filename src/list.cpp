@@ -2,7 +2,6 @@
 
 #include "list.hpp"
 
-#include "sc.hpp"
 #include "sol.hpp"
 
 LNode* ListIter::get() { return cur_; }
