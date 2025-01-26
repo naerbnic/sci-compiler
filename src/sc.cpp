@@ -47,13 +47,8 @@ static std::string outDirPtr;
 #if !defined(WINDOWS)
 
 Compiler::Compiler() {
-  hunkList = new CodeList;
-  heapList = new FixupList;
-}
-
-Compiler::~Compiler() {
-  delete hunkList;
-  delete heapList;
+  hunkList = std::make_unique<CodeList>();
+  heapList = std::make_unique<FixupList>();
 }
 
 static void deleteCompiler() { delete sc; }

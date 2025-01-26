@@ -53,7 +53,7 @@ void InitAsm() {
   dispTbl->finish();
 
   codeStart = 0;
-  curList = sc->hunkList;
+  curList = sc->hunkList.get();
 }
 
 void Assemble() {

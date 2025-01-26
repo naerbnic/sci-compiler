@@ -967,7 +967,7 @@ void MakeDispatch(int maxEntry) {
 
 void MakeObject(Object* theObj) {
   AList* oldList = curList;
-  curList = sc->heapList;
+  curList = sc->heapList.get();
 
   // Create the object ID node.
   ANObject* obj =
@@ -1009,7 +1009,7 @@ void MakeObject(Object* theObj) {
   obj->sym->setLoc(props);
 
   // The rest of the object goes into hunk, as it never changes.
-  curList = sc->hunkList;
+  curList = sc->hunkList.get();
   curList->newNodeBefore<ANObject>(codeStart, theObj->sym, theObj->num);
 
   // If this a class, add the property dictionary.

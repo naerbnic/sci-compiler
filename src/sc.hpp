@@ -5,6 +5,7 @@
 #define SC_HPP
 
 #include <cstdint>
+#include <memory>
 
 #include "platform.hpp"
 
@@ -31,10 +32,9 @@ struct CodeList;
 
 struct Compiler {
   Compiler();
-  ~Compiler();
 
-  FixupList* heapList;
-  CodeList* hunkList;
+  std::unique_ptr<FixupList> heapList;
+  std::unique_ptr<CodeList> hunkList;
 } extern* sc;
 
 // The target SCI architecture for the scripts.
