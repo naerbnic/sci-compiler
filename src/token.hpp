@@ -35,6 +35,7 @@ bool IsNumber();
 #define symObj tokSym.obj()
 #define symType tokSym.type
 #define symVal tokSym.val()
+#define symHasVal(x) tokSym.hasVal(x)
 #define setSymVal(x) tokSym.setVal(x)
 
 const int MaxTokenLen = 2048;

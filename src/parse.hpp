@@ -100,6 +100,8 @@ struct PNode {
   // Children
   ChildVector children;
   Symbol* sym;  // symbol associated with node
+  // FIXME: This is sometimes redudnant with the sym ptr. Check to see what is
+  // needed
   int val;      // node value
   pn_t type;    // type of node
   int lineNum;  //	line number in current source file

@@ -202,23 +202,20 @@ Symbol* GetSelector(Symbol* obj) {
   receiver = 0;
   if (!IsVar() && obj && (obj->type == S_OBJ || obj->type == S_CLASS) &&
       obj->obj()) {
-    switch ((uint32_t)obj->val()) {
-      case OBJ_SELF:
+    if (obj->hasVal(OBJ_SELF)) {
+      receiver = curObj;
+    } else if (obj->hasVal(OBJ_SUPER)) {
+      /* Dont try to find super of RootObj */
+      if (curObj->super >= 0)
+        receiver = classes[curObj->super];
+      else {
         receiver = curObj;
-        break;
-      case OBJ_SUPER:
-        /* Dont try to find super of RootObj */
-        if (curObj->super >= 0)
-          receiver = classes[curObj->super];
-        else {
-          receiver = curObj;
-          Severe("RootObj has no super.");
-        }
-        break;
-      default:
-        receiver = obj->obj();
-        break;
+        Severe("RootObj has no super.");
+      }
+    } else {
+      receiver = obj->obj();
     }
+
     if (!receiver->findSelector(&tokSym)) {
       Error("Not a selector for %s: %s", obj->name(), tokSym.name());
       return 0;

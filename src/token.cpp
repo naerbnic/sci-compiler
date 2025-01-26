@@ -24,7 +24,7 @@ static char decDigits[] = "0123456789";
 static bool haveUnGet;
 static char hexDigits[] = "0123456789abcdef";
 static sym_t lastType;
-static int lastVal;
+static Symbol::RefVal lastVal;
 
 //	preprocessor tokens
 enum pt {
@@ -52,7 +52,7 @@ void GetToken() {
   // Save the token type and value returned, in case we want to 'unget'
   // the token after changing them.
   lastType = symType;
-  lastVal = symVal;
+  lastVal = std::move(tokSym.refVal());
 }
 
 bool NewToken() {
@@ -143,7 +143,7 @@ bool NextToken() {
   if (haveUnGet) {
     haveUnGet = False;
     symType = lastType;
-    setSymVal(lastVal);
+    tokSym.setRefVal(std::move(lastVal));
     return True;
   }
 

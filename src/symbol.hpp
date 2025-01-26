@@ -140,6 +140,8 @@ class Symbol {
   // The Symbol class is where information about identifiers resides.  Symbols
   // are collected in SymTbls for fast lookup of an identifier.
  public:
+  using RefVal = std::variant<int, strptr, Object*, Public*>;
+
   Symbol(std::string_view str = "", sym_t = (sym_t)0);
   ~Symbol();
 
@@ -154,13 +156,7 @@ class Symbol {
   std::variant<ANode*, ANReference*>
       sym_value_;  // pointer to symbol definition in the AList
 
-  union {
-    // Object to which symbol refers
-    int val_;      // symbol value
-    strptr str_;   // pointer to string if a define
-    Object* obj_;  // pointer to object/class if this is one
-    Public* ext_;  // pointer to public/external definition
-  };
+  RefVal ref_val_;
 
  public:
   strptr name() const { return name_ ? name_->c_str() : nullptr; }
@@ -182,14 +178,18 @@ class Symbol {
   }
   void setRef(ANReference* ref) { sym_value_ = ref; }
 
-  int val() const { return val_; }
-  void setVal(int val) { val_ = val; }
-  strptr str() const { return str_; }
-  void setStr(strptr str) { str_ = str; }
-  Object* obj() const { return obj_; }
-  void setObj(std::unique_ptr<Object> obj) { obj_ = obj.release(); }
-  Public* ext() const { return ext_; }
-  void setExt(std::unique_ptr<Public> ext) { ext_ = ext.release(); }
+  RefVal& refVal() { return ref_val_; }
+  void setRefVal(RefVal ref_val) { ref_val_ = std::move(ref_val); }
+
+  int val() const;
+  bool hasVal(int val) const;
+  void setVal(int val);
+  strptr str() const;
+  void setStr(strptr str);
+  Object* obj() const;
+  void setObj(std::unique_ptr<Object> obj);
+  Public* ext() const;
+  void setExt(std::unique_ptr<Public> ext);
 
  private:
   friend std::ostream& operator<<(std::ostream& os, const Symbol& sym);

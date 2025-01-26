@@ -343,7 +343,7 @@ static void MakeClassID(PNode* pn) {
 static void MakeObjID(PNode* pn) {
   // Compile an object ID.
 
-  if (pn->sym->val() == (int)OBJ_SELF)
+  if (pn->sym->hasVal(OBJ_SELF))
     curList->newNode<ANOpCode>(op_selfID);
 
   else {

@@ -345,10 +345,12 @@ static bool Assignment(PNode* theNode) {
 static bool Call(PNode* theNode, Symbol* theSym) {
   // call ::= procedure-symbol expression*
 
-  auto pn = std::make_unique<PNode>(
-      (pn_t)(theSym->type == S_EXTERN ? PN_EXTERN : PN_CALL));
-  pn->val = theSym->val();
+  bool is_extern = theSym->type == S_EXTERN;
+  auto pn = std::make_unique<PNode>((pn_t)(is_extern ? PN_EXTERN : PN_CALL));
   pn->sym = theSym;
+  if (!is_extern) {
+    pn->val = theSym->val();
+  }
 
   // Collect the arguments
   while (Expression(pn.get(), OPTIONAL));
@@ -368,7 +370,7 @@ static bool Send(PNode* theNode, Symbol* theSym) {
 
   // Add a node giving the type and value which determines
   // the destination of the send.
-  if (symType == S_CLASS && symVal == (int)OBJ_SUPER) {
+  if (symType == S_CLASS && symHasVal(OBJ_SUPER)) {
     dn = pn->newChild(PN_SUPER);
     dn->sym = classes[curObj->super]->sym;
     dn->val = classes[curObj->super]->num;
