@@ -7,6 +7,8 @@ cc_binary(
     deps = [
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/container:btree",
+        "@abseil-cpp//absl/debugging:symbolize",
+        "@abseil-cpp//absl/debugging:failure_signal_handler",
         "@argparse//:argparse",
     ],
     visibility = ["//visibility:public"],

@@ -8,6 +8,8 @@
 #include <string_view>
 #include <vector>
 
+#include "absl/debugging/failure_signal_handler.h"
+#include "absl/debugging/symbolize.h"
 #include "argparse/argparse.hpp"
 #include "asm.hpp"
 #include "banner.hpp"
@@ -52,6 +54,10 @@ Compiler::Compiler() {
 }
 
 int main(int argc, char **argv) {
+  // Initialize Abseil symbolizer, so errors will report correct info.
+  absl::InitializeSymbolizer(argv[0]);
+  absl::FailureSignalHandlerOptions options;
+  absl::InstallFailureSignalHandler(options);
   argparse::ArgumentParser program("sc");
   program.add_argument("-a")
       .help("abort compile if database locked")
