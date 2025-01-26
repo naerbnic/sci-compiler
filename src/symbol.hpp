@@ -182,13 +182,13 @@ class Symbol {
   }
   void setRef(ANReference* ref) { sym_value_ = ref; }
 
-  int val() { return val_; }
+  int val() const { return val_; }
   void setVal(int val) { val_ = val; }
-  strptr str() { return str_; }
+  strptr str() const { return str_; }
   void setStr(strptr str) { str_ = str; }
-  Object* obj() { return obj_; }
+  Object* obj() const { return obj_; }
   void setObj(std::unique_ptr<Object> obj) { obj_ = obj.release(); }
-  Public* ext() { return ext_; }
+  Public* ext() const { return ext_; }
   void setExt(std::unique_ptr<Public> ext) { ext_ = ext.release(); }
 
  private:
