@@ -21,7 +21,6 @@ Symbol* LookupTok() {
   // a pointer to the symbol in the table.
 
   Symbol* theSym;
-  Selector* sn;
 
   GetToken();
 
@@ -34,15 +33,15 @@ Symbol* LookupTok() {
     theSym = 0;
 
   if (symType == S_SELECT) {
-    sn = curObj ? curObj->selectors : 0;
-    if (sn) {
+    if (curObj && !curObj->selectors.empty()) {
       // If the symbol is a property and we're in a method definition,
       //	access the symbol as a local variable.
 
       // A selector list is in effect -- check that the selector
       //	reference is legal (i.e. it is a property in the current
       //	selector list).
-      if (!(sn = curObj->findSelector(theSym))) {
+      auto* sn = curObj->findSelector(theSym);
+      if (!sn) {
         if (!inParmList) {
           Error("Not a selector for current class/object: %s", theSym->name());
           theSym = 0;

@@ -29,7 +29,7 @@
 #include "update.hpp"
 
 bool includeDebugInfo;
-Compiler *sc;
+std::unique_ptr<Compiler> sc;
 int script;
 bool verbose;
 SciTargetArch targetArch = SciTargetArch::SCI_2;
@@ -50,8 +50,6 @@ Compiler::Compiler() {
   hunkList = std::make_unique<CodeList>();
   heapList = std::make_unique<FixupList>();
 }
-
-static void deleteCompiler() { delete sc; }
 
 int main(int argc, char **argv) {
   argparse::ArgumentParser program("sc");
@@ -152,8 +150,7 @@ int main(int argc, char **argv) {
   char *op;
   int outLen;
 
-  sc = new Compiler;
-  atexit(deleteCompiler);
+  sc = std::make_unique<Compiler>();
 
   output("%s", banner);
 

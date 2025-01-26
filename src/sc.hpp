@@ -35,7 +35,9 @@ struct Compiler {
 
   std::unique_ptr<FixupList> heapList;
   std::unique_ptr<CodeList> hunkList;
-} extern* sc;
+};
+
+extern std::unique_ptr<Compiler> sc;
 
 // The target SCI architecture for the scripts.
 enum class SciTargetArch {

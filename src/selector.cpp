@@ -25,17 +25,11 @@ static uint16_t selTbl[SEL_TBL_SIZE];
 void Object::dupSelectors(Class* super) {
   // duplicate super's selectors
 
-  for (Selector* sn = super->selectors; sn; sn = sn->next) {
-    Selector* tn = new Selector;
+  for (auto const& sn : super->selectors) {
+    auto tn = std::make_unique<Selector>();
     *tn = *sn;
     if (tn->tag == T_LOCAL) tn->tag = T_METHOD;  // No longer a local method.
-
-    if (!selectors)
-      selectors = selTail = tn;
-    else {
-      selTail->next = tn;
-      selTail = tn;
-    }
+    selectors.push_back(std::move(tn));
   }
 
   numProps = super->numProps;
@@ -46,10 +40,11 @@ Selector* Object::findSelector(Symbol* sym) {
   //	symbol 'sym'.
 
   int val = sym->val();
-  Selector* sn;
-  for (sn = selectors; sn && val != sn->sym->val(); sn = sn->next);
+  for (auto const& sn : selectors) {
+    if (val == sn->sym->val()) return sn.get();
+  }
 
-  return sn;
+  return nullptr;
 }
 
 Selector* Object::findSelector(strptr name) {
@@ -62,13 +57,7 @@ Selector* Object::findSelector(strptr name) {
 void Object::freeSelectors() {
   // free the object's selectors
 
-  Selector* next;
-  for (Selector* s = selectors; s; s = next) {
-    next = s->next;
-    delete s;
-  }
-  selectors = 0;
-  selTail = 0;
+  selectors.clear();
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -80,16 +69,9 @@ Selector* Class::addSelector(Symbol* sym, int what) {
 
   if (!sym) return 0;
 
-  Selector* sn = new Selector(sym);
-
-  if (!selectors)
-    // This is the first selector in the class.
-    selectors = selTail = sn;
-  else {
-    // Link the selector in at the end of those for this class.
-    selTail->next = sn;
-    selTail = sn;
-  }
+  auto sn_owned = std::make_unique<Selector>(sym);
+  auto* sn = sn_owned.get();
+  selectors.push_back(std::move(sn_owned));
 
   switch (sym->val()) {
     case SEL_METHDICT:

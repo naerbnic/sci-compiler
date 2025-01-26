@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 #include "sc.hpp"
 
@@ -14,11 +15,10 @@ class Symbol;
 
 // Structure of a node in a class or object template.
 struct Selector {
-  Selector(Symbol* s = 0) : next(0), sym(s), val(0), an(0), tag(0) {}
+  Selector(Symbol* s = 0) : sym(s), val(0), an(0), tag(0) {}
 
-  Selector* next;  // Pointer to next node
-  Symbol* sym;     // Pointer to symbol for this entry
-  int val;         //	For a property, its initial value
+  Symbol* sym;  // Pointer to symbol for this entry
+  int val;      //	For a property, its initial value
   union {
     int ofs;    // Offset of property in template
     ANode* an;  // Pointer to code for a local method
@@ -38,15 +38,14 @@ struct Object {
   Selector* findSelector(strptr name);
   void freeSelectors();
 
-  Symbol* sym;          // the symbol for this object/class
-  int num;              // class number (== OBJECTNUM for objects)
-  int super;            // number of this object's super-class
-  int script;           // module # in which this object is defined
-  Selector* selectors;  // object's selectors
-  Selector* selTail;    // pointer to last selector
-  int numProps;         // number of properties in object
-  ANode* an;            // pointer to object definition
-  std::string file;     // filename in which object was defined
+  Symbol* sym;  // the symbol for this object/class
+  int num;      // class number (== OBJECTNUM for objects)
+  int super;    // number of this object's super-class
+  int script;   // module # in which this object is defined
+  std::vector<std::unique_ptr<Selector>> selectors;  // object's selectors
+  int numProps;      // number of properties in object
+  ANode* an;         // pointer to object definition
+  std::string file;  // filename in which object was defined
 };
 
 struct Class : Object {

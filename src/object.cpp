@@ -27,25 +27,10 @@ static void Declaration(Object*, int);
 static void InstanceBody(Object*);
 static void MethodDef(Object*);
 
-Object::Object()
-    : sym(0),
-      num(0),
-      super(0),
-      script(0),
-      selectors(0),
-      selTail(0),
-      numProps(0),
-      an(0) {}
+Object::Object() : sym(0), num(0), super(0), script(0), numProps(0), an(0) {}
 
 Object::Object(Class* theSuper)
-    : sym(0),
-      num(0),
-      super(0),
-      script(0),
-      selectors(0),
-      selTail(0),
-      numProps(0),
-      an(0) {
+    : sym(0), num(0), super(0), script(0), numProps(0), an(0) {
   super = theSuper->num;
   dupSelectors(theSuper);
 }
