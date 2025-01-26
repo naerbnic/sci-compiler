@@ -68,7 +68,7 @@ void WriteClassTbl() {
   // Now walk through the class symbol table, entering the script
   // number of each class in its proper place in the table.
   int index;
-  for (auto const& [dummy, sym] : *syms.classSymTbl) {
+  for (auto* sym : syms.classSymTbl->symbols()) {
     if (sym->obj()->num != -1) {
       classTbl[sym->obj()->num].objID = 0;
       classTbl[sym->obj()->num].scriptNum = SCIUWord(sym->obj()->script);
@@ -129,7 +129,7 @@ static void WriteSelector() {
   fseek(fp, 0L, SEEK_SET);
 
   fprintf(fp, "(selectors\n");
-  for (auto const& [dummy, sp] : *syms.selectorSymTbl)
+  for (auto* sp : syms.selectorSymTbl->symbols())
     fprintf(fp, "\t%-20s %d\n", sp->name(), sp->val());
 
   fprintf(fp, ")\n");
@@ -235,7 +235,7 @@ static void WriteSelectorVocab() {
 
   // Now write out the names of all the other selectors and put their
   // offsets into the table.
-  for (auto const& [dummy, sp] : *syms.selectorSymTbl) {
+  for (auto* sp : syms.selectorSymTbl->symbols()) {
     tbl[sp->val() + 1] = SCIUWord(ofs);
     ofs += out.Write(sp->name());
   }

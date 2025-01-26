@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <ostream>
+#include <ranges>
 
 #include "absl/container/btree_map.h"
 #include "symbol.hpp"
@@ -46,8 +47,10 @@ class SymTbl {
   // Return a pointer to the symbol with name 'name' if it is in
   // this table, 0 otherwise.
 
-  iterator begin() { return symbols.begin(); }
-  iterator end() { return symbols.end(); }
+  auto symbols() const {
+    return std::ranges::transform_view(
+        symbols_, [](auto const& pair) { return pair.second.get(); });
+  }
 
  private:
   SymTbl(int size = ST_MEDIUM, bool retain = false);
@@ -71,7 +74,7 @@ class SymTbl {
   // Make sure that all pointers in symbols in the symbol table
   //	refering to ANodes is cleared.
 
-  SymbolMap symbols;
+  SymbolMap symbols_;
   bool keep;  // should this table be kept for listings when out of scope?
 
   friend class SymTbls;

@@ -222,7 +222,7 @@ int GetClassNumber(Class* theClass) {
 }
 
 Class* FindClass(int n) {
-  for (auto const& [dummy, sp] : *syms.classSymTbl)
+  for (auto* sp : syms.classSymTbl->symbols())
     if (sp->obj() && sp->obj()->num == n) return (Class*)sp->obj();
 
   return 0;
@@ -236,7 +236,7 @@ Class* NextClass(int n) {
 
   cp = 0;
   m = 0x7fff;
-  for (auto const& [dummy, sp] : *syms.classSymTbl)
+  for (auto* sp : syms.classSymTbl->symbols())
     if (sp->obj()->num > n && sp->obj()->num < m) {
       cp = sp->obj();
       m = cp->num;

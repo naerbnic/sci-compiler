@@ -20,7 +20,7 @@ void SymTbl::clearAsmPtrs() {
   // Make sure that all pointers to assembly nodes (the an element of the
   // structure) are cleared in a symbol table.
 
-  for (auto const& [dummy, sym] : symbols) sym->clearAn();
+  for (auto* sym : symbols()) sym->clearAn();
 }
 
 Symbol* SymTbl::install(std::string_view name, sym_t type) {
@@ -33,7 +33,7 @@ Symbol* SymTbl::install(std::string_view name, sym_t type) {
 Symbol* SymTbl::add(std::unique_ptr<Symbol> sp) {
   auto* sp_ptr = sp.get();
   // Take ownership of the symbol
-  symbols.emplace(sp->name(), std::move(sp));
+  symbols_.emplace(sp->name(), std::move(sp));
 
   return sp_ptr;
 }
@@ -46,8 +46,8 @@ Symbol* SymTbl::lookup(std::string_view name) {
   // If nothing else, this puts those symbols which are not used at all at the
   // end of the list.
 
-  auto it = symbols.find(name);
-  if (it != symbols.end()) {
+  auto it = symbols_.find(name);
+  if (it != symbols_.end()) {
     return it->second.get();
   }
 
@@ -58,11 +58,11 @@ std::unique_ptr<Symbol> SymTbl::remove(strptr name) {
   // Try to remove the symbol with name pointed to by 'name' from this table
   // and return a pointer to it if successful, NULL otherwise.
 
-  auto it = symbols.find(std::string_view(name));
+  auto it = symbols_.find(std::string_view(name));
 
-  if (it != symbols.end()) {
+  if (it != symbols_.end()) {
     auto sp = std::move(it->second);
-    symbols.erase(it);
+    symbols_.erase(it);
     return sp;
   }
 
@@ -73,13 +73,13 @@ bool SymTbl::del(strptr name) {
   // Delete the symbol with name pointed to by 'name' from this table and
   // return True if successful, False otherwise.
 
-  return symbols.erase(std::string_view(name)) > 0;
+  return symbols_.erase(std::string_view(name)) > 0;
 }
 
 std::ostream& operator<<(std::ostream& os, const SymTbl& symtbl) {
   os << "SymTbl(";
   bool first = true;
-  for (auto const& [name, sym] : symtbl.symbols) {
+  for (auto const& [name, sym] : symtbl.symbols_) {
     if (first) {
       first = false;
     } else {

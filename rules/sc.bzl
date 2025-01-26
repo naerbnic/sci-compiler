@@ -165,6 +165,7 @@ def _sci_binary_impl(ctx):
             ctx.actions.args()
                 .add("-a")
                 .add("-u")
+                .add("-l")
                 .add_all(system_info.defines, before_each = "-D")
                 .add("-t", target_env)
                 .add("--selector_file", build_env_info.selector_file)
