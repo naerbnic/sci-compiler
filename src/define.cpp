@@ -25,7 +25,7 @@ int maxVars = 750;
 
 static int InitialValue(VarList& theVars, int offset, int arraySize);
 
-static Public* publicList = NULL;
+static std::deque<std::unique_ptr<Public>> publicList;
 static int publicMax = -1;
 static constexpr std::string_view tooManyVars =
     "Too many variables. Max is %d.\n";
@@ -331,21 +331,7 @@ void Extern() {
 }
 
 void InitPublics() {
-  Public* pn;
-  Public* nn;
-
-  if (publicList) {
-    pn = publicList;
-
-    while (pn) {
-      nn = pn->next;
-      delete pn;
-
-      pn = nn;
-    }
-  }
-
-  publicList = 0;
+  publicList.clear();
   publicMax = -1;
 }
 
@@ -353,21 +339,20 @@ void DoPublic() {
   //	public ::= 'public' (symbol number)+
 
   Symbol* theSym;
-  Public* theEntry;
 
   for (GetToken(); !CloseP(symType); GetToken()) {
     // Install the symbol in both the symbol table and the
     // publics list.
     if (!(theSym = syms.lookup(symStr)) || theSym->type == S_EXTERN)
       theSym = syms.installModule(symStr, (sym_t)(!theSym ? S_OBJ : S_IDENT));
-    theEntry = new Public(theSym);
-    theEntry->next = publicList;
-    publicList = theEntry;
+    auto theEntry = std::make_unique<Public>(theSym);
+    auto* entryPtr = theEntry.get();
+    publicList.push_front(std::move(theEntry));
 
     if (!GetNumber("Entry #")) break;
 
     // Keep track of the maximum numbered public entry.
-    theEntry->entry = symVal;
+    entryPtr->entry = symVal;
     if (symVal > publicMax) publicMax = symVal;
   }
 
@@ -381,11 +366,11 @@ Symbol* FindPublic(int n) {
   // Return a pointer to the symbol which is entry number 'n' in the
   // dispatch table.
 
-  Public* pp;
+  for (auto const& entry : publicList) {
+    if (entry->entry == (uint32_t)n) return entry->sym;
+  }
 
-  for (pp = publicList; pp && pp->entry != (uint32_t)n; pp = pp->next);
-
-  return pp ? pp->sym : 0;
+  return nullptr;
 }
 
 static int InitialValue(VarList& theVars, int offset, int arraySize) {
