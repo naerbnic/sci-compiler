@@ -12,6 +12,8 @@
 
 #include "sc.hpp"
 
+using LineOffset = int;
+
 struct InputSource {
   InputSource();
   InputSource(std::string_view fileName, int lineNum = 0);
@@ -21,7 +23,7 @@ struct InputSource {
 
   virtual bool incrementPastNewLine(const char*&) = 0;
   virtual bool endInputLine() = 0;
-  virtual fpos_t lineStartOffset() = 0;
+  virtual LineOffset lineStartOffset() = 0;
 
   std::shared_ptr<InputSource> next;
   std::string fileName;
@@ -35,11 +37,11 @@ struct InputFile : InputSource {
 
   bool incrementPastNewLine(const char*&) override;
   bool endInputLine() override;
-  fpos_t lineStartOffset() override { return this->lineStart; }
+  LineOffset lineStartOffset() override { return this->lineStart; }
 
   FILE* file;
   strptr fullFileName;
-  fpos_t lineStart;
+  LineOffset lineStart;
 };
 
 struct InputString : InputSource {
@@ -50,7 +52,7 @@ struct InputString : InputSource {
 
   bool incrementPastNewLine(const char*&) override;
   bool endInputLine() override;
-  fpos_t lineStartOffset() override { return 0; }
+  LineOffset lineStartOffset() override { return 0; }
 };
 
 bool CloseInputSource();
@@ -63,9 +65,9 @@ void RestoreInput();
 
 void SetTokenStart();
 void SetParseStart();
-fpos_t GetParseStart();
-fpos_t GetParsePos();
-fpos_t GetTokenEnd();
+LineOffset GetParseStart();
+LineOffset GetParsePos();
+LineOffset GetTokenEnd();
 void SetTokenEnd();
 
 struct StrList;

@@ -9,6 +9,10 @@
 #include <cassert>
 #include <string>
 
+#ifdef __linux__
+#include <sys/file.h>
+#endif
+
 #define OMODE (int)(O_CREAT | O_RDWR | O_TRUNC)
 #define PMODE (int)(S_IREAD | S_IWRITE)
 
