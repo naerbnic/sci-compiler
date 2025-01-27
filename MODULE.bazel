@@ -19,14 +19,16 @@ cc_configure_extension = use_extension(
 
 use_repo(cc_configure_extension, "local_config_cc")
 
-register_execution_platforms(
-    "//:x64_windows-clang-cl",
-)
+# # Registration for Windows development.
+#
+# register_execution_platforms(
+#     "//:x64_windows-clang-cl",
+# )
 
-register_toolchains(
-    "@local_config_cc//:cc-toolchain-x64_windows-clang-cl",
-    dev_dependency = True,
-)
+# register_toolchains(
+#     "@local_config_cc//:cc-toolchain-x64_windows-clang-cl",
+#     dev_dependency = True,
+# )
 
 # Configure and register the toolchain.
 llvm = use_extension(

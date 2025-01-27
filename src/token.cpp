@@ -427,7 +427,6 @@ static void ReadNumber(strptr ip) {
   int base;
   int sign;
   std::string_view validDigits;
-  strptr theIndex;
 
   SCIWord val = 0;
 
@@ -486,7 +485,6 @@ static void ReadString(strptr ip) {
   char c;
   char open;
   char* sp;
-  strptr np;
   bool truncated;
   uint32_t n;
 
