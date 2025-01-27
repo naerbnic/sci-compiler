@@ -244,7 +244,6 @@ static void CompileFile(strptr fileName) {
   // Open the source file.
   std::string sourceFileName =
       MakeName(fileName, fileName, HasExt(fileName) ? fileName : ".sc");
-  strlwr(sourceFileName);
 
   output("%s\n", sourceFileName);
   theFile = OpenFileAsInput(sourceFileName, True);
