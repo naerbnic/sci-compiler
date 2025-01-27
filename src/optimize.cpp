@@ -4,7 +4,6 @@
 #include "optimize.hpp"
 
 #include "anode.hpp"
-#include "fileio.hpp"
 #include "opcodes.hpp"
 
 enum {

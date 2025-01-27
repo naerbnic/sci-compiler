@@ -4,7 +4,6 @@
 #include "asm.hpp"
 
 #include <cstdlib>
-#include <cstdint>
 
 #include "absl/strings/str_format.h"
 #include "anode.hpp"

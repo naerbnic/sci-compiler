@@ -2,7 +2,6 @@
 
 #include "text.hpp"
 
-#include "fileio.hpp"
 #include "sc.hpp"
 
 TextList text;
