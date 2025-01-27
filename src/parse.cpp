@@ -127,7 +127,7 @@ bool Parse() {
 }
 
 void Include() {
-  char fileName[_MAX_PATH + 1];
+  char fileName[MAX_PATH + 1];
 
   GetToken();
   if (symType != S_IDENT && symType != S_STRING)

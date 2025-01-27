@@ -5,6 +5,8 @@
 
 #include <cstdio>
 #include <string_view>
+#include <memory>
+#include <string_view>
 
 // A platform independent way of using advisory locks on a lock file. This
 // should release the lock when the FileLock object is destroyed, or the
@@ -22,5 +24,6 @@ class FileLock {
 bool IsTTY(FILE* fp);
 void DeletePath(std::string_view path);
 FILE* CreateOutputFile(std::string_view path);
+bool FileExists(std::string_view path);
 
 #endif  // PLATFORM_HPP

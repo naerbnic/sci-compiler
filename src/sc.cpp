@@ -17,12 +17,13 @@
 #include "compile.hpp"
 #include "define.hpp"
 #include "error.hpp"
-#include "input.hpp"
 #include "fileio.hpp"
+#include "input.hpp"
 #include "listing.hpp"
 #include "object.hpp"
 #include "output.hpp"
 #include "parse.hpp"
+#include "platform.hpp"
 #include "share.hpp"
 #include "sol.hpp"
 #include "string.hpp"
@@ -175,7 +176,7 @@ int main(int argc, char **argv) {
   // See if the first file to be compiled exists.  If not, exit.
   std::string fileName =
       MakeName(files[0], files[0], HasExt(files[0]) ? files[0] : ".sc");
-  if (access(fileName.c_str(), 0) == -1) Panic("Can't find %s", fileName);
+  if (!FileExists(fileName)) Panic("Can't find %s", fileName);
 
   // Make sure that any output directory is terminated with a '/'.
   if (!outDirPtr.empty()) {
@@ -200,7 +201,7 @@ int main(int argc, char **argv) {
   errors = warnings = 0;
   theFile = OpenFileAsInput(selector_file, True);
   Parse();
-  if (access(classdef_file.c_str(), 0) == 0) {
+  if (FileExists(classdef_file)) {
     theFile = OpenFileAsInput(classdef_file, True);
     Parse();
   }

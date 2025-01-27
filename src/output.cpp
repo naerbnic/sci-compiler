@@ -8,6 +8,8 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#include <cstddef>
+
 #include "error.hpp"
 #include "fileio.hpp"
 #include "memtype.hpp"
@@ -54,7 +56,7 @@ void OutputFile::WriteWord(int16_t w) {
 void OutputFile::WriteByte(ubyte b) { Write(&b, sizeof b); }
 
 void OutputFile::Write(const void* mp, size_t len) {
-  if (fwrite(mp, 1, len, fp) != static_cast<ssize_t>(len))
+  if (fwrite(mp, 1, len, fp) != static_cast<std::size_t>(len))
     Panic("Error writing %s", fileName);
 }
 

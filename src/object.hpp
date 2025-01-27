@@ -32,7 +32,6 @@ struct Class;
 struct Object {
   Object();
   Object(Class* theClass);
-  ~Object();
 
   void dupSelectors(Class*);
   Selector* findSelectorByNum(int val);

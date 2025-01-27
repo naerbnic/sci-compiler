@@ -12,7 +12,11 @@
 #include <string.h>
 #include <stdarg.h>
 
+#include <cstdarg>
+#include <ranges>
+#include <stdexcept>
 #include <string>
+#include <algorithm>
 
 // this function trims all of the whitespace from the passed string, both front
 // and back
@@ -101,5 +105,5 @@ std::string stringf(const char *fmt, ...) {
 }
 
 void strlwr(std::string &str) {
-  std::ranges::transform(str, str.begin(), std::tolower);
+  std::transform(str.begin(), str.end(), str.begin(), std::tolower);
 }

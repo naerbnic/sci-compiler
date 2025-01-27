@@ -7,6 +7,7 @@
 
 #include <memory>
 
+#include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
 #include "error.hpp"
 #include "fileio.hpp"

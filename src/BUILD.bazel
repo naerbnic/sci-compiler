@@ -4,12 +4,13 @@ cc_binary(
         "*.cpp",
         "*.hpp",
     ]),
-    deps = [
-        "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/container:btree",
-        "@abseil-cpp//absl/debugging:symbolize",
-        "@abseil-cpp//absl/debugging:failure_signal_handler",
-        "@argparse//:argparse",
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        "@abseil-cpp//absl/container:btree",
+        "@abseil-cpp//absl/debugging:failure_signal_handler",
+        "@abseil-cpp//absl/debugging:symbolize",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:str_format",
+        "@argparse",
+    ],
 )

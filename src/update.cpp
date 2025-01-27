@@ -21,7 +21,7 @@
 
 bool classAdded;
 bool selectorAdded;
-char outDir[_MAX_PATH + 1];
+char outDir[MAX_PATH + 1];
 bool writeOffsets;
 
 static ubyte resHdr[] = {MemResVocab, 0};

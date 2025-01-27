@@ -51,6 +51,6 @@ int AssertFail(char* file, int line, char* expression);
 
 // Sufficient MAX_PATH for all platforms
 
-#define _MAX_PATH 1024
+#define MAX_PATH 1024
 
 #endif

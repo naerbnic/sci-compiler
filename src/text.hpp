@@ -4,6 +4,7 @@
 #ifndef TEXT_HPP
 #define TEXT_HPP
 
+#include <vector>
 #include <ranges>
 #include <string>
 #include <string_view>

@@ -35,12 +35,6 @@ Object::Object(Class* theSuper)
   dupSelectors(theSuper);
 }
 
-Object::~Object() {
-  freeSelectors();
-
-  sym->setObj(nullptr);
-}
-
 ///////////////////////////////////////////////////////////////////////////
 
 void DoClass() {

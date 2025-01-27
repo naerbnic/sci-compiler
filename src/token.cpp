@@ -6,6 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <string_view>
+
+#include "absl/strings/ascii.h"
 #include "chartype.hpp"
 #include "error.hpp"
 #include "input.hpp"
@@ -19,10 +22,10 @@ int nestedCondCompile;
 char symStr[MaxTokenLen];
 TokenSlot tokSym;
 
-static char binDigits[] = "01";
-static char decDigits[] = "0123456789";
+static constexpr std::string_view binDigits = "01";
+static constexpr std::string_view decDigits = "0123456789";
 static bool haveUnGet;
-static char hexDigits[] = "0123456789abcdef";
+static constexpr std::string_view hexDigits = "0123456789abcdef";
 static TokenSlot lastTok;
 
 //	preprocessor tokens
@@ -423,7 +426,7 @@ static void ReadNumber(strptr ip) {
   int c;
   int base;
   int sign;
-  strptr validDigits;
+  std::string_view validDigits;
   strptr theIndex;
 
   SCIWord val = 0;
@@ -457,12 +460,15 @@ static void ReadNumber(strptr ip) {
   }
 
   while (!IsTerm(*ip)) {
-    c = _tolower(*sp = *ip);
-    if (!(theIndex = strchr(validDigits, (char)c))) {
-      Warning("Invalid character in number: %c.  Number = %d", *ip, symVal);
+    *sp = *ip;
+    c = absl::ascii_tolower(*ip);
+    auto char_index = validDigits.find((char)c);
+    if (char_index == std::string_view::npos) {
+      Warning("Invalid character in number: %c (%d).  Number = %d. Index: %d",
+              *ip, *ip, symVal, validDigits[4]);
       break;
     }
-    val = SCIWord(val * base + (theIndex - validDigits));
+    val = SCIWord((val * base) + char_index);
     ++ip;
     ++sp;
   }
@@ -549,13 +555,13 @@ static void ReadString(strptr ip) {
         } else {
           // Then insert a hex number in the string.
 
-          c = (char)_tolower(c);
-          np = strchr(hexDigits, c);
-          n = (uint32_t)(np - hexDigits) * 16;
+          c = absl::ascii_tolower(c);
+          int high_digit = hexDigits.find(c);
+          n = (uint32_t)high_digit * 16;
           c = *ip++;
-          c = (char)_tolower(c);
-          np = strchr(hexDigits, c);
-          n += (uint32_t)(np - hexDigits);
+          c = absl::ascii_tolower(c);
+          int low_digit = hexDigits.find(c);
+          n += (uint32_t)low_digit;
           if (!truncated) *sp++ = (char)n;
         }
 

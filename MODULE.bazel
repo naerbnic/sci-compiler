@@ -5,9 +5,28 @@ module(
     version = "0.0.1",
 )
 
+bazel_dep(name = "rules_cc", version = "0.1.0")
+bazel_dep(name = "platforms", version = "0.0.11")
 bazel_dep(name = "argparse", version = "3.0.0")
-bazel_dep(name = "abseil-cpp", version = "20240116.0")
+bazel_dep(name = "abseil-cpp", version = "20240116.1")
 bazel_dep(name = "toolchains_llvm", version = "1.3.0")
+
+cc_configure_extension = use_extension(
+    "@rules_cc//cc:extensions.bzl",
+    "cc_configure_extension",
+    dev_dependency = True,
+)
+
+use_repo(cc_configure_extension, "local_config_cc")
+
+register_execution_platforms(
+    "//:x64_windows-clang-cl",
+)
+
+register_toolchains(
+    "@local_config_cc//:cc-toolchain-x64_windows-clang-cl",
+    dev_dependency = True,
+)
 
 # Configure and register the toolchain.
 llvm = use_extension(
@@ -21,6 +40,7 @@ llvm.toolchain(
 )
 
 use_repo(llvm, "llvm_toolchain")
+
 # use_repo(llvm, "llvm_toolchain_llvm") # if you depend on specific tools in scripts
 
 register_toolchains("@llvm_toolchain//:all", dev_dependency = True)

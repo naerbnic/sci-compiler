@@ -4,6 +4,7 @@
 #include "asm.hpp"
 
 #include <cstdlib>
+#include <cstdint>
 
 #include "absl/strings/str_format.h"
 #include "anode.hpp"
@@ -73,7 +74,7 @@ void Assemble() {
 
   ObjFiles obj_files = OpenObjFiles();
 
-  const ssize_t MAX_INFO_FILE_NAME = 1024;
+  const std::size_t MAX_INFO_FILE_NAME = 1024;
 
   char infoFileName[MAX_INFO_FILE_NAME];
   if (snprintf(infoFileName, 1024, "%d.inf", (unsigned short)script) >=
