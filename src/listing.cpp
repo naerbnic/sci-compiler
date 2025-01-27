@@ -14,7 +14,6 @@
 #include "platform.hpp"
 #include "sc.hpp"
 #include "sol.hpp"
-#include "string.hpp"
 
 bool listCode;
 
@@ -107,6 +106,30 @@ struct OpStr {
     {"push2", JUST_OP},
     {"pushSelf", JUST_OP},
 };
+
+namespace {
+
+std::string vstringf(const char* fmt, va_list args) {
+  va_list args2;
+  va_copy(args2, args);
+
+  int size = vsnprintf(nullptr, 0, fmt, args2);
+  va_end(args2);
+  if (size < 0) {
+    throw std::runtime_error("vsnprintf failed");
+  }
+
+  std::string result;
+
+  if (size > 0) {
+    result.resize(size);
+    vsnprintf(&result[0], size + 1, fmt, args);
+  }
+
+  return result;
+}
+
+}  // namespace
 
 void OpenListFile(std::string_view sourceFileName) {
   if (!listCode) return;

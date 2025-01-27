@@ -487,15 +487,14 @@ struct ANFixup : ANode {
 struct ANFileName : ANOpCode {
   //	contains the name of this script's source file for debugging
 
-  ANFileName(const char* name);
-  ~ANFileName();
+  ANFileName(std::string name);
 
   void list();
   void emit(OutputFile*);
   size_t size();
 
  protected:
-  const char* name;
+  std::string name;
 };
 
 struct ANLineNum : ANOpCode {

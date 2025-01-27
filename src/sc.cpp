@@ -26,7 +26,6 @@
 #include "platform.hpp"
 #include "share.hpp"
 #include "sol.hpp"
-#include "string.hpp"
 #include "symtbl.hpp"
 #include "text.hpp"
 #include "update.hpp"
@@ -308,7 +307,7 @@ static void InstallCommandLineDefine(std::string_view str) {
   if (syms.lookup(token)) Panic("'%s' has already been defined", token);
 
   Symbol *sym = syms.installGlobal(token, S_DEFINE);
-  sym->setStr(newStr(value));
+  sym->setStr(std::string(value));
 }
 
 static SciTargetArch GetTargetArchitecture(std::string_view str) {

@@ -5,16 +5,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <sstream>
 #include <string_view>
 
+#include "absl/strings/ascii.h"
 #include "anode.hpp"
 #include "compile.hpp"
 #include "error.hpp"
 #include "parse.hpp"
 #include "sc.hpp"
 #include "sol.hpp"
-#include "string.hpp"
 #include "symtbl.hpp"
 #include "token.hpp"
 
@@ -28,16 +27,6 @@ static std::deque<std::unique_ptr<Public>> publicList;
 static int publicMax = -1;
 static constexpr std::string_view tooManyVars =
     "Too many variables. Max is %d.\n";
-
-namespace {
-
-char* newStrFromInt(int val) {
-  std::stringstream stream;
-  stream << val;
-  return newStr(stream.str().c_str());
-}
-
-}  // namespace
 
 void VarList::kill() {
   type = VAR_NONE;
@@ -66,25 +55,17 @@ void Define() {
     GetRest();
 
     if (!newSym) {
-      char* newString = newStr(symStr);
-      char* oldString = newStr(sym->str());
+      std::string_view newString = absl::StripAsciiWhitespace(symStr);
+      std::string_view oldString = absl::StripAsciiWhitespace(sym->str());
 
-      // trim the two strings
-      trimstr(newString);
-      trimstr(oldString);
-
-      if (strcmp(newString, oldString)) {
-        Warning("Redefinition of %s from %s to %s", sym->name(),
-                (char*)oldString, (char*)newString);
-        delete[] sym->str();
+      if (newString != oldString) {
+        Warning("Redefinition of %s from %s to %s", sym->name(), oldString,
+                newString);
         newSym = True;
       }
-
-      free(newString);
-      free(oldString);
     }
 
-    if (newSym) sym->setStr(newStr(symStr));
+    if (newSym) sym->setStr(symStr);
   }
 }
 
@@ -108,7 +89,7 @@ void Enum() {
         GetNumber("Constant expression required");
         val = symVal;
       }
-      theSym->setStr(newStrFromInt(val));
+      theSym->setStr(absl::StrCat(val));
       ++val;
     }
   }

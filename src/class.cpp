@@ -12,8 +12,6 @@
 #include "error.hpp"
 #include "object.hpp"
 #include "parse.hpp"
-#include "sc.hpp"
-#include "string.hpp"
 #include "symtbl.hpp"
 #include "token.hpp"
 
@@ -107,7 +105,7 @@ void DefineClass() {
   int superNum = symVal;
   GetKeyword(K_FILE);
   GetString("File name");
-  strptr superFile = newStr(symStr);
+  std::string_view superFile = symStr;
 
   Class* super = FindClass(superNum);
   if (!super) Fatal("Can't find superclass for %s\n", sym->name());

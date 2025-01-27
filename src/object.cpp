@@ -12,7 +12,6 @@
 #include "parse.hpp"
 #include "sc.hpp"
 #include "sol.hpp"
-#include "string.hpp"
 #include "symtbl.hpp"
 #include "text.hpp"
 #include "token.hpp"
@@ -111,7 +110,7 @@ void DoClass() {
   if (sn) sn->val = super->num;
 
   theClass->script = script;
-  theClass->file = newStr(theFile->fileName.c_str());
+  theClass->file = theFile->fileName;
 
   // Get any properties, methods, or procedures for this class.
   InstanceBody(theClass);

@@ -69,7 +69,7 @@ class Symbol {
   bool hasVal(int val) const;
   void setVal(int val);
   strptr str() const;
-  void setStr(strptr str);
+  void setStr(std::string str);
   Object* obj() const;
   void setObj(std::unique_ptr<Object> obj);
   Public* ext() const;

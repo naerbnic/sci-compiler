@@ -18,7 +18,7 @@ bool Symbol::hasVal(int val) const {
 }
 void Symbol::setVal(int val) { ref_val_ = val; }
 strptr Symbol::str() const { return std::get<1>(ref_val_).c_str(); }
-void Symbol::setStr(strptr str) { ref_val_ = str; }
+void Symbol::setStr(std::string str) { ref_val_ = std::move(str); }
 Object* Symbol::obj() const {
   auto* ptr = std::get_if<2>(&ref_val_);
   return ptr ? ptr->get() : nullptr;

@@ -18,7 +18,6 @@
 #include "output.hpp"
 #include "sc.hpp"
 #include "sol.hpp"
-#include "string.hpp"
 #include "symbol.hpp"
 #include "text.hpp"
 
@@ -714,10 +713,7 @@ void ANVars::emit(OutputFile* out) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-ANFileName::ANFileName(const char* name)
-    : ANOpCode(op_fileName), name(newStr(name)) {}
-
-ANFileName::~ANFileName() { free((void*)name); }
+ANFileName::ANFileName(std::string name) : ANOpCode(op_fileName), name(name) {}
 
 void ANFileName::list() {
   switch (targetArch) {
@@ -736,7 +732,7 @@ void ANFileName::emit(OutputFile* out) {
       break;
     case SciTargetArch::SCI_2:
       out->WriteOp(op);
-      out->Write(name, strlen(name) + 1);
+      out->WriteNullTerminatedString(name);
       break;
   }
 }
@@ -746,7 +742,7 @@ size_t ANFileName::size() {
     case SciTargetArch::SCI_1_1:
       return 0;
     case SciTargetArch::SCI_2:
-      return 1 + strlen(name) + 1;
+      return 1 + name.length() + 1;
   }
 }
 
