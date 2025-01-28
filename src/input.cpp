@@ -58,7 +58,7 @@ InputFile::InputFile(FILE* fp, std::string_view name)
 
 InputFile::~InputFile() { fclose(file); }
 
-bool InputFile::incrementPastNewLine(const char*& ip) {
+bool InputFile::incrementPastNewLine(std::string_view& ip) {
   if (GetNewLine()) {
     ip = is->inputPtr;
     return True;
@@ -82,8 +82,8 @@ InputString& InputString::operator=(InputString& s) {
 
 bool InputString::endInputLine() { return CloseInputSource(); }
 
-bool InputString::incrementPastNewLine(const char*& ip) {
-  ++ip;
+bool InputString::incrementPastNewLine(std::string_view& ip) {
+  ip = ip.substr(1);
   return True;
 }
 
@@ -149,9 +149,10 @@ bool GetNewInputLine() {
   // file, close the file, shifting input to the next source in the queue.
 
   while (is) {
-    if ((is->inputPtr =
-             fgets(inputLine, sizeof inputLine, ((InputFile*)is.get())->file)))
+    if (fgets(inputLine, sizeof inputLine, ((InputFile*)is.get())->file)) {
+      is->inputPtr = inputLine;
       break;
+    }
     CloseInputSource();
   }
 
@@ -218,7 +219,7 @@ void SetParseStart() { startParse = startToken; }
 LineOffset GetParseStart() { return startParse; }
 
 LineOffset GetParsePos() {
-  return is->lineStartOffset() + (long)(is->inputPtr - inputLine);
+  return is->lineStartOffset() + (long)(is->inputPtr.data() - inputLine);
 }
 
 LineOffset GetTokenEnd() { return endToken; }

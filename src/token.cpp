@@ -42,9 +42,22 @@ enum pt {
 };
 
 static pt GetPreprocessorToken();
-static void ReadKey(strptr ip);
-static void ReadString(strptr ip);
-static void ReadNumber(strptr ip);
+static void ReadKey(std::string_view ip);
+static void ReadString(std::string_view ip);
+static void ReadNumber(std::string_view ip);
+
+static char currCharAndAdvance(std::string_view& ip) {
+  if (ip.empty()) return '\0';
+  auto c = ip.front();
+  ip.remove_prefix(1);
+  return c;
+}
+
+static char currChar(std::string_view ip) { return ip.empty() ? '\0' : ip[0]; }
+
+static void advance(std::string_view& ip) {
+  if (!ip.empty()) ip.remove_prefix(1);
+}
 
 void GetToken() {
   // Get a token and bitch if one is not available.
@@ -78,19 +91,28 @@ void GetRest(bool error) {
   //	If just seeking until next closing paren, don't display further
   //	messages.
 
-  strptr ip;
   int pLevel;
   bool truncate;
 
   if (error && !is) return;
 
-  ip = is->inputPtr;
+  std::string_view ip = is->inputPtr;
   symStr.clear();
   pLevel = 0;
   truncate = False;
 
   while (1) {
-    switch (*ip) {
+    if (ip.empty()) {
+      CloseInputSource();
+      if (!is) {
+        if (!error) EarlyEnd();
+        return;
+      }
+      ip = is->inputPtr;
+      continue;
+    }
+
+    switch (ip[0]) {
       case '(':
         ++pLevel;
         break;
@@ -109,19 +131,9 @@ void GetRest(bool error) {
       case '\n':
         if (!is->incrementPastNewLine(ip)) EarlyEnd();
         continue;
-
-      case '\0':
-        CloseInputSource();
-        if (!is) {
-          if (!error) EarlyEnd();
-          return;
-        }
-        ip = is->inputPtr;
-        continue;
     }
 
-    if (!truncate) symStr.push_back(*ip);
-    ++ip;
+    if (!truncate) symStr.push_back(currCharAndAdvance(ip));
 
     if (symStr.length() >= MaxTokenLen && !truncate) {
       if (!error) Warning("Define too long.  Truncated.");
@@ -134,8 +146,7 @@ bool NextToken() {
   // Return the next token.  If we're at the end of the current input source,
   // close it and get input from the previous source in the queue.
 
-  strptr ip;  // pointer to input line
-  ubyte c;    // the character
+  ubyte c;  // the character
 
   if (haveUnGet) {
     haveUnGet = False;
@@ -149,23 +160,38 @@ bool NextToken() {
   }
 
   // Get pointer to input in a register
-  ip = is->inputPtr;
+  std::string_view ip = is->inputPtr;
 
   // Scan to the start of the next token.
-  while (IsSep(*ip)) {
-    // Eat any whitespace.
-    while (*ip == '\t' || *ip == ' ') ++ip;
-
-    // If we hit the start of a comment, skip it.
-    if (*ip == ';')
-      while (*ip != '\n' && *ip != '\0') ++ip;
-
-    if (*ip == '\0' || *ip == '\n') {
-      if (is->endInputLine())
+  while (1) {
+    if (ip.empty() || ip[0] == '\n') {
+      if (is->endInputLine()) {
         ip = is->inputPtr;
-      else {
+        continue;
+      } else {
         symType = S_END;
         return False;
+      }
+    }
+
+    if (!IsSep(ip[0])) break;
+
+    // Eat any whitespace.
+    auto first_non_whitespace = ip.find_first_not_of(" \t");
+    if (first_non_whitespace != std::string_view::npos) {
+      ip.remove_prefix(first_non_whitespace);
+    } else {
+      ip = "";
+      continue;
+    }
+
+    // If we hit the start of a comment, skip it.
+    if (ip[0] == ';') {
+      auto comment_end = ip.find('\n');
+      if (comment_end != std::string_view::npos) {
+        ip.remove_prefix(comment_end);
+      } else {
+        ip = "";
       }
     }
   }
@@ -181,20 +207,20 @@ bool NextToken() {
 
   SetTokenStart();
 
-  c = *ip;
+  c = ip[0];
   symStr.clear();
 
   if (IsTok(c)) {
     symStr.push_back(c);
     symType = (sym_t)c;
-    is->inputPtr = ++ip;
+    is->inputPtr = ip.substr(1);
     SetTokenEnd();
     return True;
   }
 
   if (c == '`') {
     // A character constant.
-    ReadKey(++ip);
+    ReadKey(ip.substr(1));
     return True;
   }
 
@@ -203,7 +229,7 @@ bool NextToken() {
     return True;
   }
 
-  if (IsDigit(c) || (c == '-' && IsDigit(*(ip + 1)))) {
+  if (IsDigit(c) || (c == '-' && ip.length() > 1 && IsDigit(ip[1]))) {
     symType = S_NUM;
     ReadNumber(ip);
     return True;
@@ -211,7 +237,7 @@ bool NextToken() {
 
   symType = S_IDENT;
   while (!IsTerm(c)) {
-    ++ip;
+    ip.remove_prefix(1);
     if (c == ':') {
       // This is a selector literal (e.g. 'foo:'). Only include the part
       // before the quote, but mark the sym type.
@@ -220,7 +246,10 @@ bool NextToken() {
     }
     if (IsIncl(c)) break;
     symStr.push_back(c);
-    c = *ip;
+    if (ip.empty()) {
+      break;
+    }
+    c = ip[0];
   }
   is->inputPtr = ip;
   SetTokenEnd();
@@ -383,7 +412,7 @@ static pt GetPreprocessorToken() {
   //	definition of 'token'
 
   struct {
-    const char* text;
+    std::string_view text;
     pt token;
   } tokens[] = {{"#ifdef", PT_IFDEF},  //	put longer before shorter
                 {"#ifndef", PT_IFNDEF},     {"#if", PT_IF},
@@ -392,19 +421,23 @@ static pt GetPreprocessorToken() {
                 {"#else", PT_ELSE},         {"#endif", PT_ENDIF}};
 
   //	find first nonwhite
-  const char* cp;
-  for (cp = is->inputPtr; *cp && (*cp == ' ' || *cp == '\t'); cp++);
+  std::string_view cp = is->inputPtr;
+  auto first_non_whitespace = cp.find_first_not_of(" \t");
+  if (first_non_whitespace != std::string_view::npos) {
+    cp.remove_prefix(first_non_whitespace);
+  } else {
+    cp = "";
+  }
 
   //	has to start with #
-  if (!*cp || *cp != '#') return PT_NONE;
+  if (cp.empty() || !cp.starts_with('#')) return PT_NONE;
 
   //	see if it matches any of the tokens
   for (size_t i = 0; i < sizeof tokens / sizeof *tokens; i++) {
-    int len = strlen(tokens[i].text);
-    if (!strncmp(cp, tokens[i].text, len)) {
+    if (cp.starts_with(tokens[i].text)) {
       //	make sure that the full token matches
-      cp += len;
-      if (!*cp || *cp == '\n' || *cp == ' ' || *cp == '\t') {
+      cp.remove_prefix(tokens[i].text.length());
+      if (cp.empty() || cp[0] == '\n' || cp[0] == ' ' || cp[0] == '\t') {
         is->inputPtr = cp;
         return tokens[i].token;
       }
@@ -415,7 +448,7 @@ static pt GetPreprocessorToken() {
   return PT_NONE;
 }
 
-static void ReadNumber(strptr ip) {
+static void ReadNumber(std::string_view ip) {
   int c;
   int base;
   int sign;
@@ -425,18 +458,18 @@ static void ReadNumber(strptr ip) {
   symStr.clear();
 
   // Determine the sign of the number
-  if (*ip != '-')
+  if (currChar(ip) != '-')
     sign = 1;
   else {
     sign = -1;
-    symStr.push_back(*ip++);
+    symStr.push_back(currCharAndAdvance(ip));
   }
 
   // Determine the base of the number
   base = 10;
-  if (*ip == '%' || *ip == '$') {
-    base = (*ip == '%') ? 2 : 16;
-    symStr.push_back(*ip++);
+  if (currChar(ip) == '%' || currChar(ip) == '$') {
+    base = (currChar(ip) == '%') ? 2 : 16;
+    symStr.push_back(currCharAndAdvance(ip));
   }
   switch (base) {
     case 2:
@@ -450,17 +483,16 @@ static void ReadNumber(strptr ip) {
       break;
   }
 
-  while (!IsTerm(*ip)) {
-    auto rawChar = *ip;
-    c = absl::ascii_tolower(*ip);
+  while (!IsTerm(currChar(ip))) {
+    auto rawChar = currChar(ip);
+    c = absl::ascii_tolower(rawChar);
     auto char_index = validDigits.find((char)c);
     if (char_index == std::string_view::npos) {
-      Warning("Invalid character in number: %c (%d).  Number = %d. Index: %d",
-              *ip, *ip, symVal, validDigits[4]);
+      Warning("Invalid character in number: %c.  Number = %d", rawChar, symVal);
       break;
     }
     val = SCIWord((val * base) + char_index);
-    ++ip;
+    advance(ip);
     symStr.push_back(rawChar);
   }
 
@@ -472,15 +504,15 @@ static void ReadNumber(strptr ip) {
   SetTokenEnd();
 }
 
-static void ReadString(strptr ip) {
-  char c;
+static void ReadString(std::string_view ip) {
+  char c = '\0';
   char open;
   bool truncated;
   uint32_t n;
 
   truncated = False;
   symStr.clear();
-  open = *ip++;
+  open = currCharAndAdvance(ip);
 
   symType = S_STRING;
 
@@ -491,7 +523,7 @@ static void ReadString(strptr ip) {
       break;
   }
 
-  while ((c = *ip++) != open && c != '\0') {
+  while ((c = currCharAndAdvance(ip)) != open && c != '\0') {
     switch (c) {
       case '\n':
         GetNewLine();
@@ -511,8 +543,8 @@ static void ReadString(strptr ip) {
         if (!symStr.empty() && symStr.back() != '\n' && !truncated) {
           symStr.push_back(' ');
         }
-        while ((c = *ip) == ' ' || c == '\t' || c == '\n') {
-          ++ip;
+        while ((c = currChar(ip)) == ' ' || c == '\t' || c == '\n') {
+          advance(ip);
           if (c == '\n') {
             GetNewLine();
             if (!is) Fatal("Unterminated string");
@@ -522,7 +554,7 @@ static void ReadString(strptr ip) {
         break;
 
       case '\\':
-        if (!IsHex(c = *ip++)) {  // else move to next char
+        if (!IsHex(c = currCharAndAdvance(ip))) {  // else move to next char
           // Then just use char as is.
           switch (c) {
             case 'n':
@@ -548,7 +580,7 @@ static void ReadString(strptr ip) {
           c = absl::ascii_tolower(c);
           int high_digit = hexDigits.find(c);
           n = (uint32_t)high_digit * 16;
-          c = *ip++;
+          c = currCharAndAdvance(ip);
           c = absl::ascii_tolower(c);
           int low_digit = hexDigits.find(c);
           n += (uint32_t)low_digit;
@@ -584,11 +616,11 @@ static uint32_t altKey[] = {
     31, 20, 22, 47, 17, 45, 21, 44       // s - z
 };
 
-static void ReadKey(strptr ip) {
+static void ReadKey(std::string_view ip) {
   symType = S_NUM;
 
   symStr.clear();
-  while (!IsTerm(*ip)) symStr.push_back(*ip++);
+  while (!IsTerm(currChar(ip))) symStr.push_back(currCharAndAdvance(ip));
 
   char firstChar = symStr[0];
 
