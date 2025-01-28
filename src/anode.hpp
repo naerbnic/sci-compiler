@@ -7,7 +7,6 @@
 #include <variant>
 
 #include "alist.hpp"
-#include "sc.hpp"
 
 class OutputFile;
 

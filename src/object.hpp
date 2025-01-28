@@ -9,8 +9,6 @@
 #include <string>
 #include <vector>
 
-#include "sc.hpp"
-
 struct ANode;
 class Symbol;
 

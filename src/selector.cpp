@@ -2,7 +2,6 @@
 // 	code for handling selectors
 
 #include <stdio.h>
-#include <string.h>
 
 #include "error.hpp"
 #include "object.hpp"

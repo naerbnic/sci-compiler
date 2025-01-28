@@ -7,7 +7,6 @@
 
 #include "listing.hpp"
 #include "object.hpp"
-#include "sc.hpp"
 #include "sol.hpp"
 
 SymTbls syms;
