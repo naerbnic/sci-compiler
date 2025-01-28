@@ -160,11 +160,6 @@ int main(int argc, char **argv) {
 
   output("%s", banner);
 
-#if 0
-	if (writeMemSizes)
-		atexit(WriteMemSizes);
-#endif
-
   auto files = program.get<std::vector<std::string>>("files");
   if (files.empty()) {
     std::cerr << "No input files specified" << std::endl;
@@ -274,12 +269,6 @@ static void CompileFile(strptr fileName) {
 
   // Delete any free symbol tables.
   syms.delFreeTbls();
-
-  // This was used to handle custom memory management. Disabled.
-#if 0  // !defined(WINDOWS) && !defined(__386__)
-  if (writeMemSizes) MemDisplay();
-  HEAPCHK
-#endif
 }
 
 static void ShowInfo() {

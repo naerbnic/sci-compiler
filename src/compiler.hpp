@@ -6,46 +6,6 @@
 
 #include <cstdint>
 
-// These appear to be old pragmas for the WATCOM compiler. I don't know exactly
-// what all of them do, but I don't want to lose context if bugs arise due to
-// compiler-specific behavior.
-#if 0
-
-//	turn off WATCOM's "assignment found in boolean" warning: 'if (a = b())'
-#pragma warning 391 9
-
-// turn off WATCOM's "must look ahead ..a declaration/type or an expression"
-#pragma warning 604 9
-#pragma warning 595 9
-
-// turn off WATCOM's warning about truncation when assigning ints to shorter
-#pragma warning 389 9
-
-// turn off WATCOM's warning about expression only useful for its side effects
-#pragma warning 387 9
-
-// turn off WATCOM's warning about sizeof() using compiler-generated info
-#pragma warning 549 9
-
-//	create a "type" that specifies that arguments are pushed on the stack
-//	instead of being passed in registers.  Also, leave names alone.  Note
-//	that this is necessary even if a function doesn't take arguments, else
-//	the name will be changed.  The "*" prevents this.
-#pragma aux PushArgs "*" parm caller[];
-
-//	make an inline function called from within another inline function get
-//	expanded inline
-#pragma inline_recursion on;
-#pragma inline_depth 255;
-
-// Force the following functions to be inline
-//   (Assume <string.h> included before compiler.hpp)
-#pragma intrinsic(memset);
-#pragma intrinsic(memcpy);
-#pragma intrinsic(memcmp);
-
-#endif
-
 //	data types for external data (files or OS data structures)
 //	each contain the number of bits indicated
 
