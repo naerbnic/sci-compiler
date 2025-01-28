@@ -40,13 +40,12 @@ struct InputFile : InputSource {
   LineOffset lineStartOffset() override { return this->lineStart; }
 
   FILE* file;
-  strptr fullFileName;
   LineOffset lineStart;
 };
 
 struct InputString : InputSource {
   InputString();
-  InputString(const char* str);
+  InputString(std::string_view str);
 
   InputString& operator=(InputString&);
 
@@ -59,7 +58,7 @@ bool CloseInputSource();
 bool GetNewInputLine();
 std::shared_ptr<InputSource> OpenFileAsInput(std::string_view, bool);
 void SetIncludePath(std::vector<std::string> const& extra_paths);
-void SetStringInput(strptr);
+void SetStringInput(std::string_view);
 void SetInputToCurrentLine();
 void RestoreInput();
 

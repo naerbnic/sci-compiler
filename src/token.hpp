@@ -52,7 +52,7 @@ class TokenSlot {
         break;
 
       case 1:
-        ref_val_ = sym.str();
+        ref_val_ = std::string(sym.str());
         break;
 
       case 2:

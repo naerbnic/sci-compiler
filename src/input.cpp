@@ -11,7 +11,6 @@
 #include "absl/strings/str_split.h"
 #include "error.hpp"
 #include "fileio.hpp"
-#include "sc.hpp"
 #include "sol.hpp"
 #include "token.hpp"
 
@@ -68,7 +67,7 @@ bool InputFile::incrementPastNewLine(std::string_view& ip) {
 
 bool InputFile::endInputLine() { return GetNewLine(); }
 
-InputString::InputString(const char* str) : InputSource(curFile, curLine) {
+InputString::InputString(std::string_view str) : InputSource(curFile, curLine) {
   inputPtr = str;
 }
 
@@ -140,7 +139,7 @@ bool CloseInputSource() {
   return (bool)is;
 }
 
-void SetStringInput(strptr str) {
+void SetStringInput(std::string_view str) {
   SetInputSource(std::make_shared<InputString>(str));
 }
 

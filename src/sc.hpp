@@ -21,7 +21,6 @@
 #define UNDEFINED 0
 #define DEFINED 1
 
-typedef const char* strptr;
 typedef unsigned char ubyte;
 typedef unsigned short uword;
 

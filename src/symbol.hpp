@@ -12,7 +12,6 @@
 
 #include "define.hpp"
 #include "object.hpp"
-#include "sc.hpp"
 #include "symtypes.hpp"
 
 struct ANode;
@@ -70,7 +69,7 @@ class Symbol {
   int val() const;
   bool hasVal(int val) const;
   void setVal(int val);
-  strptr str() const;
+  std::string_view str() const;
   void setStr(std::string str);
   Object* obj() const;
   void setObj(std::unique_ptr<Object> obj);

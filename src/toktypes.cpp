@@ -177,7 +177,7 @@ keyword_t Keyword() {
 }
 
 void GetKeyword(keyword_t which) {
-  strptr str;
+  std::string_view str;
 
   GetToken();
   if (Keyword() != which) {
