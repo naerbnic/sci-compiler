@@ -80,10 +80,4 @@ enum MemType {
   NotFound = 0xff     // 0xff
 };
 
-MemType GetSCITypeFromStr(const char* str);
-const char* GetSCIMemTypeStr(MemType type);
-
-const char* GetMemTypeStr(MemType);
-MemType GetMemTypeFromStr(const char* str);
-
 #endif

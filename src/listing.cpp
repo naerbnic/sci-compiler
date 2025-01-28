@@ -7,7 +7,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <string_view>
+
 #include "absl/functional/function_ref.h"
+#include "absl/strings/str_cat.h"
 #include "anode.hpp"
 #include "error.hpp"
 #include "fileio.hpp"
@@ -28,7 +31,7 @@ static int sourceLineNum;
 #define OP_SIZE 2  // Operator takes a size
 
 struct OpStr {
-  const char* str;
+  std::string_view str;
   uint16_t info;
 } static theOpCodes[] = {
     {"bnot", JUST_OP},
@@ -168,9 +171,8 @@ void DeleteListFile() { DeletePath(listName); }
 
 void ListOp(uint8_t theOp) {
   OpStr* oPtr;
-  char* sp;
-  const char* op;
-  char opStr[10];
+  std::string_view op;
+  std::string scratch;
   bool hasArgs;
   bool addSize;
 
@@ -178,65 +180,65 @@ void ListOp(uint8_t theOp) {
 
   ListOffset();
 
-  opStr[0] = '\0';
-  op = sp = opStr;
   if (!(theOp & OP_LDST)) {
     oPtr = &theOpCodes[(theOp & ~OP_BYTE) / 2];
     hasArgs = oPtr->info & OP_ARGS;
     addSize = oPtr->info & OP_SIZE;
-    if (addSize)
-      sp = stradd(sp, oPtr->str);
-    else
+    if (addSize) {
+      scratch = std::string(oPtr->str);
+      absl::StrAppend(&scratch, (theOp & OP_BYTE) ? ".b" : ".w");
+      op = scratch;
+    } else {
       op = oPtr->str;
+    }
 
   } else {
     switch (theOp & OP_TYPE) {
       case OP_LOAD:
-        *sp++ = 'l';
+        scratch.push_back('l');
         break;
 
       case OP_STORE:
-        *sp++ = 's';
+        scratch.push_back('s');
         break;
 
       case OP_INC:
-        *sp++ = '+';
+        scratch.push_back('+');
         break;
 
       case OP_DEC:
-        *sp++ = '-';
+        scratch.push_back('-');
         break;
     }
 
     if (theOp & OP_STACK)
-      *sp++ = 's';
+      scratch.push_back('s');
     else
-      *sp++ = 'a';
+      scratch.push_back('a');
 
     switch (theOp & OP_VAR) {
       case OP_GLOBAL:
-        *sp++ = 'g';
+        scratch.push_back('g');
         break;
 
       case OP_LOCAL:
-        *sp++ = 'l';
+        scratch.push_back('l');
         break;
 
       case OP_TMP:
-        *sp++ = 't';
+        scratch.push_back('t');
         break;
 
       case OP_PARM:
-        *sp++ = 'p';
+        scratch.push_back('p');
         break;
     }
 
-    if (theOp & OP_INDEX) *sp++ = 'i';
+    if (theOp & OP_INDEX) scratch.push_back('i');
 
+    op = scratch;
     addSize = hasArgs = True;
   }
-
-  if (op == opStr) *sp = '\0';
 
   if (hasArgs)
     ListingNoCRLF("%-5s", op);

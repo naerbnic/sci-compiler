@@ -12,8 +12,6 @@
 //	establish compiler-dependent types and other information
 #include "compiler.hpp"
 
-#define stradd strcat
-
 //	abbreviations
 typedef unsigned char uchar;
 typedef unsigned short ushort;
