@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "absl/functional/function_ref.h"
 #include "anode.hpp"
 #include "error.hpp"
 #include "fileio.hpp"
@@ -107,29 +108,33 @@ struct OpStr {
     {"pushSelf", JUST_OP},
 };
 
-namespace {
+namespace listing_impl {
 
-std::string vstringf(const char* fmt, va_list args) {
-  va_list args2;
-  va_copy(args2, args);
+void ListingImpl(absl::FunctionRef<bool(FILE*)> print_func) {
+  if (!listCode || !listFile) return;
 
-  int size = vsnprintf(nullptr, 0, fmt, args2);
-  va_end(args2);
-  if (size < 0) {
-    throw std::runtime_error("vsnprintf failed");
+  if (!print_func(listFile) || putc('\n', listFile) == EOF) {
+    Panic("Error writing list file");
   }
-
-  std::string result;
-
-  if (size > 0) {
-    result.resize(size);
-    vsnprintf(&result[0], size + 1, fmt, args);
-  }
-
-  return result;
 }
 
-}  // namespace
+void ListAsCodeImpl(absl::FunctionRef<bool(FILE*)> print_func) {
+  if (!listCode || !listFile) return;
+
+  ListOffset();
+
+  ListingImpl(print_func);
+}
+
+void ListingNoCRLFImpl(absl::FunctionRef<bool(FILE*)> print_func) {
+  if (!listCode || !listFile) return;
+
+  if (!print_func(listFile)) {
+    Panic("Error writing list file");
+  }
+}
+
+}  // namespace listing_impl
 
 void OpenListFile(std::string_view sourceFileName) {
   if (!listCode) return;
@@ -160,29 +165,6 @@ void CloseListFile() {
 }
 
 void DeleteListFile() { DeletePath(listName); }
-
-void Listing(const char* parms, ...) {
-  va_list argPtr;
-
-  if (!listCode || !listFile) return;
-
-  va_start(argPtr, parms);
-  if (vfprintf(listFile, parms, argPtr) == EOF || putc('\n', listFile) == EOF)
-    Panic("Error writing list file");
-  va_end(argPtr);
-}
-
-void ListingNoCRLF(const char* parms, ...) {
-  va_list argPtr;
-
-  if (!listCode || !listFile) return;
-
-  va_start(argPtr, parms);
-
-  if (vfprintf(listFile, parms, argPtr) == EOF)
-    Panic("Error writing list file");
-  va_end(argPtr);
-}
 
 void ListOp(uint8_t theOp) {
   OpStr* oPtr;
@@ -262,31 +244,6 @@ void ListOp(uint8_t theOp) {
     Listing("%s", op);
 }
 
-void ListArg(const char* parms, ...) {
-  va_list argPtr;
-
-  if (!listCode || !listFile) return;
-
-  va_start(argPtr, parms);
-  auto argStr = vstringf(parms, argPtr);
-  va_end(argPtr);
-
-  Listing("\t%s", argStr.c_str());
-}
-
-void ListAsCode(const char* parms, ...) {
-  va_list argPtr;
-
-  if (!listCode || !listFile) return;
-
-  ListOffset();
-
-  va_start(argPtr, parms);
-  auto buf = vstringf(parms, argPtr);
-  va_end(argPtr);
-  Listing(buf.c_str());
-}
-
 void ListWord(uint16_t w) {
   if (!listCode || !listFile) return;
 
@@ -322,7 +279,7 @@ void ListText(std::string_view s) {
       *l++ = '"';
       *l++ = '\n';
       *l = '\0';
-      Listing(line);
+      Listing("%s", line);
       break;
     }
 
@@ -334,7 +291,7 @@ void ListText(std::string_view s) {
     }
     *l = '\0';
     ++curr_it;  // point past the space
-    Listing(line);
+    Listing("%s", line);
 
     l = line;
   }
