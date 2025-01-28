@@ -3,6 +3,8 @@
 #ifndef TOKEN_HPP
 #define TOKEN_HPP
 
+#include <string_view>
+
 #include "symbol.hpp"
 
 //	token.cpp
@@ -16,9 +18,9 @@ bool GetNewLine();
 //	toktypes.cpp
 Symbol* LookupTok();
 Symbol* GetSymbol();
-bool GetNumber(strptr);
-bool GetNumberOrString(strptr);
-bool GetString(strptr);
+bool GetNumber(std::string_view);
+bool GetNumberOrString(std::string_view);
+bool GetString(std::string_view);
 bool GetIdent();
 bool GetDefineSymbol();
 bool IsIdent();

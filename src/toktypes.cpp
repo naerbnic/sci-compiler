@@ -13,7 +13,7 @@
 int selectorIsVar;
 
 static Symbol* Immediate();
-static bool GetNumberOrStringToken(strptr errStr, bool stringOK);
+static bool GetNumberOrStringToken(std::string_view errStr, bool stringOK);
 
 Symbol* LookupTok() {
   // Get a token.  If it is an identifier, look it up in the current
@@ -110,13 +110,15 @@ bool IsUndefinedIdent() {
   return True;
 }
 
-bool GetNumber(strptr errStr) { return GetNumberOrStringToken(errStr, False); }
+bool GetNumber(std::string_view errStr) {
+  return GetNumberOrStringToken(errStr, False);
+}
 
-bool GetNumberOrString(strptr errStr) {
+bool GetNumberOrString(std::string_view errStr) {
   return GetNumberOrStringToken(errStr, True);
 }
 
-static bool GetNumberOrStringToken(strptr errStr, bool stringOK) {
+static bool GetNumberOrStringToken(std::string_view errStr, bool stringOK) {
   // Get a number (or a string) from the input.
 
   // Get a parse node.
@@ -150,7 +152,7 @@ static bool GetNumberOrStringToken(strptr errStr, bool stringOK) {
   return True;
 }
 
-bool GetString(const char* errStr) {
+bool GetString(std::string_view errStr) {
   // Get a string from the input.
 
   GetToken();
