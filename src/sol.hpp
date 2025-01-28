@@ -7,11 +7,8 @@
 //	for size_t
 #include <stddef.h>
 #include <stdio.h>
-#include <string_view>
-#include <string.h>
 
-//	establish compiler-dependent types and other information
-#include "compiler.hpp"
+#include <string_view>
 
 //	abbreviations
 typedef unsigned char uchar;
@@ -39,17 +36,10 @@ inline S Min(S a, T b) {
   return a < b ? a : b;
 }
 
-//	calculate the number of elements in an array whose size is known
-#define NEls(array) (sizeof(array) / sizeof *(array))
-
 //	Each implementation should define its own AssertFail().
 //	Normally, it will simply call the msgMgr, but we give it its own
 // function 	so anyone can use assert() without having to drag MSG.HPP
 // around.
 int AssertFail(std::string_view file, int line, std::string_view expression);
-
-// Sufficient MAX_PATH for all platforms
-
-#define MAX_PATH 1024
 
 #endif

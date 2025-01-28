@@ -10,8 +10,6 @@
 #include <string_view>
 #include <vector>
 
-#include "sc.hpp"
-
 using LineOffset = int;
 
 struct InputSource {
