@@ -46,11 +46,18 @@ void OutputFile::WriteWord(int16_t w) {
   // write a word in proper byte order
   //	NOTE:  this code assumes knowledge of the size of SCIWord
 
-  if (highByteFirst)
-    // swap high and low bytes
-    w = ((w >> 8) & 0xFF) | (w << 8);
+  // Ensure we're working with the raw bits by using an unsigned value.
+  uint16_t u = w;
 
-  Write(&w, sizeof w);
+  std::endian targetEndian =
+      highByteFirst ? std::endian::big : std::endian::little;
+
+  if (std::endian::native != targetEndian) {
+    // Swap the bytes.
+    u = (u >> 8) | (u << 8);
+  }
+
+  Write(&u, sizeof u);
 }
 
 void OutputFile::WriteByte(uint8_t b) { Write(&b, sizeof b); }
