@@ -105,9 +105,6 @@ int main(int argc, char **argv) {
   program.add_argument("-t")
       .help("Set the target architecture. Valid values are: SCI_1_1, SCI_2")
       .default_value(std::string{"SCI_2"});
-  program.add_argument("files")
-      .default_value(std::vector<std::string>())
-      .remaining();
   program.add_argument("--selector_file")
       .help("The selector file to use during compilation")
       .default_value(std::string{"selector"});
@@ -125,6 +122,9 @@ int main(int argc, char **argv) {
       .default_value(std::vector<std::string>())
       .append()
       .nargs(1);
+  program.add_argument("files")
+      .default_value(std::vector<std::string>())
+      .remaining();
 
   try {
     program.parse_args(argc, argv);
@@ -152,15 +152,11 @@ int main(int argc, char **argv) {
   auto system_header = program.get<std::string>("--system_header");
   auto game_header = program.get<std::string>("--game_header");
   auto cli_include_path = program.get<std::vector<std::string>>("-I");
-
-  char *op;
-  int outLen;
+  auto files = program.get<std::vector<std::string>>("files");
 
   sc = std::make_unique<Compiler>();
 
   output("%s", banner);
-
-  auto files = program.get<std::vector<std::string>>("files");
   if (files.empty()) {
     std::cerr << "No input files specified" << std::endl;
     std::cerr << program;
@@ -174,12 +170,10 @@ int main(int argc, char **argv) {
 
   // Make sure that any output directory is terminated with a '/'.
   if (!outDirPtr.empty()) {
-    strcpy(outDir, outDirPtr.c_str());
-    outLen = strlen(outDir);
-    op = &outDir[outLen - 1]; /* point to last char of outDir */
-    if (*op != '\\' && *op != '/' && *op != ':') {
-      *++op = '/';
-      *++op = '\0';
+    outDir = outDirPtr;
+    char lastChar = outDir.back();
+    if (lastChar != '\\' && lastChar != '/' && lastChar != ':') {
+      outDir.push_back('/');
     }
   }
 

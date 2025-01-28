@@ -8,7 +8,6 @@ void WriteClassTbl();
 void WritePropOffsets();
 
 extern bool classAdded;
-extern char outDir[];
 extern bool selectorAdded;
 extern bool writeOffsets;
 

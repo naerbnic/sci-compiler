@@ -8,8 +8,8 @@
 
 #include "absl/strings/str_format.h"
 #include "error.hpp"
-#include "input.hpp"
 #include "fileio.hpp"
+#include "input.hpp"
 #include "object.hpp"
 #include "output.hpp"
 #include "resource.hpp"
@@ -21,7 +21,7 @@
 
 bool classAdded;
 bool selectorAdded;
-char outDir[MAX_PATH + 1];
+std::string outDir;
 bool writeOffsets;
 
 static ubyte resHdr[] = {MemResVocab, 0};
