@@ -4,8 +4,8 @@
 #ifndef SC_HPP
 #define SC_HPP
 
+#include <filesystem>
 #include <memory>
-#include <string>
 
 // Modes for opening files.
 #ifdef _WIN32
@@ -40,7 +40,7 @@ enum class SciTargetArch {
 };
 
 extern bool includeDebugInfo;
-extern std::string outDir;
+extern std::filesystem::path outDir;
 extern int script;
 extern bool verbose;
 extern SciTargetArch targetArch;

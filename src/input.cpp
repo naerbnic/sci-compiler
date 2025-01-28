@@ -5,19 +5,19 @@
 
 #include <stdlib.h>
 
+#include <filesystem>
 #include <memory>
 
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
 #include "error.hpp"
-#include "fileio.hpp"
 #include "sol.hpp"
 #include "token.hpp"
 
-std::string curFile;
+std::filesystem::path curFile;
 int curLine;
 std::shared_ptr<InputSource> curSourceFile;
-std::vector<std::string> includePath;
+std::vector<std::filesystem::path> includePath;
 std::shared_ptr<InputSource> is;
 std::shared_ptr<InputSource> theFile;
 
@@ -25,8 +25,8 @@ static char inputLine[512];
 
 static void SetInputSource(const std::shared_ptr<InputSource>& nis);
 
-static FILE* FOpen(std::string_view path, const char* mode) {
-  return fopen(std::string(path).c_str(), mode);
+static FILE* FOpen(std::filesystem::path const& path, const char* mode) {
+  return fopen(path.string().c_str(), mode);
 }
 
 InputSource::InputSource() : fileName(0), lineNum(0) {
@@ -34,11 +34,8 @@ InputSource::InputSource() : fileName(0), lineNum(0) {
   curLine = lineNum;
 }
 
-InputSource::InputSource(std::string_view fileName, int lineNum)
-    :
-
-      fileName(fileName),
-      lineNum(lineNum) {
+InputSource::InputSource(std::filesystem::path fileName, int lineNum)
+    : fileName(fileName), lineNum(lineNum) {
   tokSym.setStr(symStr);
   curLine = lineNum;
 }
@@ -50,7 +47,7 @@ InputSource& InputSource::operator=(InputSource& s) {
   return *this;
 }
 
-InputFile::InputFile(FILE* fp, std::string_view name)
+InputFile::InputFile(FILE* fp, std::filesystem::path name)
     : InputSource(name), file(fp) {
   curFile = fileName;
 }
@@ -86,17 +83,16 @@ bool InputString::incrementPastNewLine(std::string_view& ip) {
   return True;
 }
 
-std::shared_ptr<InputSource> OpenFileAsInput(std::string_view fileName,
-                                             bool required) {
+std::shared_ptr<InputSource> OpenFileAsInput(
+    std::filesystem::path const& fileName, bool required) {
   std::shared_ptr<InputSource> theFile;
 
   // Try to open the file.  If we can't, try opening it in each of
   // the directories in the include path.
   FILE* file = FOpen(fileName, "r");
-  if (!file) {
+  if (!file && fileName.is_relative()) {
     for (auto const& path : includePath) {
-      std::string newName = MakeName(path.c_str(), fileName, fileName);
-      file = fopen(newName.c_str(), "r");
+      file = FOpen(path / fileName, "r");
     }
   }
 

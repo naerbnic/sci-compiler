@@ -5,6 +5,7 @@
 #define INPUT_HPP
 
 #include <cstdio>
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -14,7 +15,7 @@ using LineOffset = int;
 
 struct InputSource {
   InputSource();
-  InputSource(std::string_view fileName, int lineNum = 0);
+  InputSource(std::filesystem::path fileName, int lineNum = 0);
   virtual ~InputSource() {}
 
   InputSource& operator=(InputSource&);
@@ -24,13 +25,13 @@ struct InputSource {
   virtual LineOffset lineStartOffset() = 0;
 
   std::shared_ptr<InputSource> next;
-  std::string fileName;
+  std::filesystem::path fileName;
   int lineNum;
   std::string_view inputPtr;
 };
 
 struct InputFile : InputSource {
-  InputFile(FILE*, std::string_view name);
+  InputFile(FILE*, std::filesystem::path name);
   ~InputFile();
 
   bool incrementPastNewLine(std::string_view&) override;
@@ -54,7 +55,8 @@ struct InputString : InputSource {
 
 bool CloseInputSource();
 bool GetNewInputLine();
-std::shared_ptr<InputSource> OpenFileAsInput(std::string_view, bool);
+std::shared_ptr<InputSource> OpenFileAsInput(
+    std::filesystem::path const& fileName, bool);
 void SetIncludePath(std::vector<std::string> const& extra_paths);
 void SetStringInput(std::string_view);
 void SetInputToCurrentLine();
@@ -69,10 +71,10 @@ void SetTokenEnd();
 
 struct StrList;
 
-extern std::string curFile;
+extern std::filesystem::path curFile;
 extern int curLine;
 extern std::shared_ptr<InputSource> curSourceFile;
-extern std::vector<std::string> includePath;
+extern std::vector<std::filesystem::path> includePath;
 extern std::shared_ptr<InputSource> is;
 extern std::shared_ptr<InputSource> theFile;
 

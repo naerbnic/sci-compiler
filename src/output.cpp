@@ -11,7 +11,6 @@
 #include <cstddef>
 
 #include "error.hpp"
-#include "fileio.hpp"
 #include "memtype.hpp"
 #include "platform.hpp"
 #include "resource.hpp"
@@ -82,7 +81,7 @@ ObjFiles OpenObjFiles() {
 
 static std::string MakeObjFileName(MemType type) {
   std::string resName = ResNameMake(type, script);
-  std::string dest = MakeName(outDir, resName, resName);
+  std::string dest = (outDir / resName).string();
   DeletePath(dest);
   return dest;
 }

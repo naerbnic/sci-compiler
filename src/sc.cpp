@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 
+#include <filesystem>
 #include <string_view>
 #include <vector>
 
@@ -17,7 +18,6 @@
 #include "compile.hpp"
 #include "define.hpp"
 #include "error.hpp"
-#include "fileio.hpp"
 #include "input.hpp"
 #include "listing.hpp"
 #include "object.hpp"
@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
       .append()
       .nargs(1);
   program.add_argument("files")
-      .default_value(std::vector<std::string>())
+      .default_value(std::vector<std::filesystem::path>())
       .remaining();
 
   try {
@@ -164,18 +164,9 @@ int main(int argc, char **argv) {
   }
 
   // See if the first file to be compiled exists.  If not, exit.
-  std::string fileName =
-      MakeName(files[0], files[0], HasExt(files[0]) ? files[0] : ".sc");
-  if (!FileExists(fileName)) Panic("Can't find %s", fileName);
+  if (!FileExists(files[0])) Panic("Can't find %s", files[0]);
 
-  // Make sure that any output directory is terminated with a '/'.
-  if (!outDirPtr.empty()) {
-    outDir = outDirPtr;
-    char lastChar = outDir.back();
-    if (lastChar != '\\' && lastChar != '/' && lastChar != ':') {
-      outDir.push_back('/');
-    }
-  }
+  outDir = outDirPtr;
 
   // Set the include path.
   SetIncludePath(cli_include_path);
@@ -231,8 +222,8 @@ static void CompileFile(std::string_view fileName) {
   nameSymbol = syms.selectorSymTbl->lookup("name");
 
   // Open the source file.
-  std::string sourceFileName =
-      MakeName(fileName, fileName, HasExt(fileName) ? fileName : ".sc");
+
+  std::string sourceFileName(fileName);
 
   output("%s\n", sourceFileName);
   theFile = OpenFileAsInput(sourceFileName, True);

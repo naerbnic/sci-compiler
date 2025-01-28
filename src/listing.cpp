@@ -13,7 +13,6 @@
 #include "absl/strings/str_cat.h"
 #include "anode.hpp"
 #include "error.hpp"
-#include "fileio.hpp"
 #include "opcodes.hpp"
 #include "platform.hpp"
 #include "sc.hpp"
@@ -142,9 +141,10 @@ void ListingNoCRLFImpl(absl::FunctionRef<bool(FILE*)> print_func) {
 void OpenListFile(std::string_view sourceFileName) {
   if (!listCode) return;
 
-  listName = MakeName(sourceFileName, sourceFileName, ".sl");
-  if (!(listFile = fopen(listName.c_str(), "wt")))
-    Panic("Can't open %s for listing", listName);
+  auto listName = outDir / absl::StrFormat("%d.sl", script);
+
+  if (!(listFile = fopen(listName.string().c_str(), "wt")))
+    Panic("Can't open %s for listing", listName.string());
 
   if (includeDebugInfo) {
     if (!(sourceFile = fopen(std::string(sourceFileName).c_str(), "rt")))

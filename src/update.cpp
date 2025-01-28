@@ -6,9 +6,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <filesystem>
+
 #include "absl/strings/str_format.h"
 #include "error.hpp"
-#include "fileio.hpp"
 #include "input.hpp"
 #include "object.hpp"
 #include "output.hpp"
@@ -21,7 +22,7 @@
 
 bool classAdded;
 bool selectorAdded;
-std::string outDir;
+std::filesystem::path outDir;
 bool writeOffsets;
 
 static uint8_t resHdr[] = {MemResVocab, 0};
@@ -77,7 +78,7 @@ void WriteClassTbl() {
 
   // Write the table out.
   std::string name = ResNameMake(MemResVocab, CLASSTBL_VOCAB);
-  OutputFile out(MakeName(outDir, name, name));
+  OutputFile out(outDir / name);
   out.Write(resID, 2);
   for (index = 0; index < maxClassNum + 1; ++index) {
     out.WriteWord(classTbl[index].objID);
@@ -98,7 +99,7 @@ void WritePropOffsets() {
   theFile = OpenFileAsInput("offsets.txt", True);
 
   std::string name = ResNameMake(MemResVocab, PROPOFS_VOCAB);
-  OutputFile out(MakeName(outDir, name, name));
+  OutputFile out(outDir / name);
 
   // Write out the resource header (this will be a vocabulary resource).
   out.Write(resHdr, sizeof resHdr);
@@ -212,7 +213,7 @@ static void WriteSelectorVocab() {
   uint32_t tblLen;
 
   std::string resName = ResNameMake(MemResVocab, SELECTOR_VOCAB);
-  std::string fileName = MakeName(outDir, resName, resName);
+  std::string fileName = outDir / resName;
 
   // Compute the size of the table needed to hold offsets to all selectors,
   // allocate the table, and initialize it to point to the byte following
