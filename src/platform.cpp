@@ -13,9 +13,6 @@
 #include <sys/file.h>
 #endif
 
-#define OMODE (int)(O_CREAT | O_RDWR | O_TRUNC)
-#define PMODE (int)(S_IREAD | S_IWRITE)
-
 bool IsTTY(FILE* fp) { return isatty(fileno(fp)); }
 void DeletePath(std::string_view path) { unlink(std::string(path).c_str()); }
 
@@ -70,7 +67,8 @@ bool IsTTY(FILE* fp) { return _isatty(_fileno(fp)); }
 void DeletePath(std::string_view path) { _unlink(std::string(path).c_str()); }
 
 FILE* CreateOutputFile(std::string_view path) {
-  int fd = _open(std::string(path).c_str(), O_CREAT | O_RDWR | O_TRUNC, 0600);
+  int fd = _open(std::string(path).c_str(),
+                 O_BINARY | O_CREAT | O_RDWR | O_TRUNC, 0600);
   if (fd == -1) return nullptr;
   return fdopen(fd, "w+");
 }

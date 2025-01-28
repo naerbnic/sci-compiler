@@ -13,7 +13,6 @@
 #include "error.hpp"
 #include "parse.hpp"
 #include "sc.hpp"
-#include "sol.hpp"
 #include "symtbl.hpp"
 #include "token.hpp"
 
@@ -61,7 +60,7 @@ void Define() {
       if (newString != oldString) {
         Warning("Redefinition of %s from %s to %s", sym->name(), oldString,
                 newString);
-        newSym = True;
+        newSym = true;
       }
     }
 
@@ -236,7 +235,7 @@ void Local() {
           break;
         }
         n = InitialValue(localVars, size, arraySize);
-        size += Max(n, arraySize);
+        size += std::max(n, arraySize);
         if (n == -1 || size > maxVars) {
           Error(tooManyVars, maxVars);
           break;

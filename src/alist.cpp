@@ -9,7 +9,6 @@
 #include "opcodes.hpp"
 #include "output.hpp"
 #include "sc.hpp"
-#include "sol.hpp"
 
 AList* curList;
 bool shrink;
@@ -165,7 +164,7 @@ void CodeList::optimize() {
 
   // Make a first pass, resolving offsets and converting to byte offsets
   // where possible.
-  shrink = True;
+  shrink = true;
   setOffset(0);
 
   // Continue resolving and converting to byte offsets until we've shrunk
@@ -178,7 +177,7 @@ void CodeList::optimize() {
 
   // Now stabilize the code and offsets by resolving without allowing
   // conversion to byte offsets.
-  shrink = False;
+  shrink = false;
   do {
     oldLen = curLen;
     curLen = setOffset(0);

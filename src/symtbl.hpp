@@ -65,7 +65,7 @@ class SymTbl {
 
   bool del(std::string_view name);
   // Remove and delete a Symbol with name 'name' from the table.
-  // Return True if it was found and deleted, False otherwise.
+  // Return true if it was found and deleted, false otherwise.
 
   void retain(bool keepIt = true) { keep = keepIt; }
   // Set the 'keep' property to the value of 'keepIt'
@@ -98,7 +98,7 @@ class SymTbls {
 
   bool del(std::string_view name);
   // Delete the symbol with name 'name' from the SymTbls in activeList
-  // Return True if the symbol was present, False otherwise.
+  // Return true if the symbol was present, false otherwise.
 
   Symbol* installLocal(std::string_view n, sym_t t) {
     return activeList.front()->install(n, t);

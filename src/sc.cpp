@@ -25,7 +25,6 @@
 #include "parse.hpp"
 #include "platform.hpp"
 #include "share.hpp"
-#include "sol.hpp"
 #include "symtbl.hpp"
 #include "text.hpp"
 #include "update.hpp"
@@ -178,17 +177,17 @@ int main(int argc, char **argv) {
   InstallObjects();
   Lock();
   errors = warnings = 0;
-  theFile = OpenFileAsInput(selector_file, True);
+  theFile = OpenFileAsInput(selector_file, true);
   Parse();
   if (FileExists(classdef_file)) {
-    theFile = OpenFileAsInput(classdef_file, True);
+    theFile = OpenFileAsInput(classdef_file, true);
     Parse();
   }
 
-  theFile = OpenFileAsInput(system_header, True);
+  theFile = OpenFileAsInput(system_header, true);
   Parse();
 
-  theFile = OpenFileAsInput(game_header, False);
+  theFile = OpenFileAsInput(game_header, false);
   if (theFile) Parse();
 
   totalErrors += errors;
@@ -226,7 +225,7 @@ static void CompileFile(std::string_view fileName) {
   std::string sourceFileName(fileName);
 
   output("%s\n", sourceFileName);
-  theFile = OpenFileAsInput(sourceFileName, True);
+  theFile = OpenFileAsInput(sourceFileName, true);
   curSourceFile = theFile;
 
   // Parse the file (don't lock the symbol tables), then assemble it.

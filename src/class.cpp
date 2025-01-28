@@ -5,10 +5,6 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
-#include "sol.hpp"
-
-// #include	"fileio.hpp"
-// #include	"char.hpp"
 #include "error.hpp"
 #include "object.hpp"
 #include "parse.hpp"
@@ -270,7 +266,7 @@ bool Class::selectorDiffers(Selector* tp) {
 
   Selector* stp;
 
-  if (num == -1) return True;
+  if (num == -1) return true;
 
   stp = findSelectorByNum(tp->sym->val());
   return !stp || (IsMethod(tp) && tp->tag == T_LOCAL) ||

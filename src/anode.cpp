@@ -110,7 +110,7 @@ void ANode::emit(OutputFile*) {}
 
 void ANode::list() {}
 
-bool ANode::optimize() { return False; }
+bool ANode::optimize() { return false; }
 
 ///////////////////////////////////////////////////
 // Class ANDispatch

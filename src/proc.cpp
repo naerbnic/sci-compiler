@@ -5,7 +5,6 @@
 #include "object.hpp"
 #include "parse.hpp"
 #include "sc.hpp"
-#include "sol.hpp"
 #include "symtbl.hpp"
 #include "token.hpp"
 
@@ -116,7 +115,7 @@ static int ParameterList() {
   parmOfs = 1;
   parmType = S_PARM;
 
-  inParmList = True;
+  inParmList = true;
   for (LookupTok(); !CloseP(symType); LookupTok()) {
     if (symType == S_KEYWORD && symVal == K_TMP) {
       // Now defining temporaries -- set 'rest of argument' value.
@@ -152,7 +151,7 @@ static int ParameterList() {
 
   if (parmType == S_PARM) AddRest(parmOfs);
 
-  inParmList = False;
+  inParmList = false;
 
   UnGetTok();
 

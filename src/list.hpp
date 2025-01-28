@@ -67,7 +67,7 @@ class List {
   // Add node nn before node ln in the list.
 
   bool contains(LNode* ln);
-  // Return True if the list contains node ln, False otherwise.
+  // Return true if the list contains node ln, false otherwise.
 
   ListIter iter();
 

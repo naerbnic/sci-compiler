@@ -13,7 +13,6 @@
 #include "listing.hpp"
 #include "platform.hpp"
 #include "share.hpp"
-#include "sol.hpp"
 #include "symbol.hpp"
 #include "token.hpp"
 
@@ -33,16 +32,7 @@ void ListingOutput(std::string_view str) {
 
 void EarlyEnd() { Fatal("Unexpected end of input."); }
 
-static void beep() { putc('\a', stderr); }
-
-int AssertFail(std::string_view file, int line, std::string_view expression) {
-  absl::PrintF("Assertion failed in %s(%d): %s\n", file, line, expression);
-  abort();
-
-  // Return value is only useful for the way this function is used in
-  // assert() macro under BC++.  However, WATCOM knows it's senseless.
-  return 0;
-}
+static void beep() { putc('\a', stderr); };
 
 namespace error_impl {
 
@@ -54,7 +44,7 @@ void WriteError(std::string_view text) {
   ListingOutput("\n");
 
   if (!CloseP(symType))
-    GetRest(True);
+    GetRest(true);
   else
     UnGetTok();
 
@@ -98,7 +88,7 @@ void WriteSevere(std::string_view text) {
   ListingOutput("\n");
 
   if (!CloseP(symType))
-    GetRest(True);
+    GetRest(true);
   else
     UnGetTok();
 

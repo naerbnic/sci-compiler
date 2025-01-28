@@ -44,7 +44,7 @@ void UpdateDataBase() {
     WriteClasses();
   }
 
-  selectorAdded = classAdded = False;
+  selectorAdded = classAdded = false;
 }
 
 void WriteClassTbl() {
@@ -96,7 +96,7 @@ void WritePropOffsets() {
   Selector* sel;
   Symbol* theSym;
 
-  theFile = OpenFileAsInput("offsets.txt", True);
+  theFile = OpenFileAsInput("offsets.txt", true);
 
   std::string name = ResNameMake(MemResVocab, PROPOFS_VOCAB);
   OutputFile out(outDir / name);

@@ -12,7 +12,6 @@
 #include "input.hpp"
 #include "object.hpp"
 #include "sc.hpp"
-#include "sol.hpp"
 #include "symtbl.hpp"
 #include "token.hpp"
 
@@ -130,7 +129,7 @@ void Include() {
   if (symType != S_IDENT && symType != S_STRING)
     Severe("Need a filename: %s", symStr);
   else {
-    OpenFileAsInput(symStr, True);
+    OpenFileAsInput(symStr, true);
   }
 }
 
@@ -142,9 +141,9 @@ bool OpenBlock() {
 bool CloseBlock() {
   GetToken();
   if (symType == CLOSE_P)
-    return True;
+    return true;
   else {
     Severe("Expected closing parenthesis: %s", symStr);
-    return False;
+    return false;
   }
 }

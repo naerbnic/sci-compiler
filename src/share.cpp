@@ -10,7 +10,6 @@
 
 #include "error.hpp"
 #include "platform.hpp"
-#include "sol.hpp"
 
 bool abortIfLocked;
 bool dontLock;
@@ -44,7 +43,7 @@ void Lock() {
   }
 
   output("Class database locked.\n");
-  haveLock = True;
+  haveLock = true;
 }
 
 void Unlock() {

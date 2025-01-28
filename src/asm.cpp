@@ -12,7 +12,6 @@
 #include "listing.hpp"
 #include "output.hpp"
 #include "sc.hpp"
-#include "sol.hpp"
 
 bool addNodesToList;
 ANTable* dispTbl;
@@ -25,7 +24,7 @@ void InitAsm() {
 
   localVars.kill();
 
-  addNodesToList = True;
+  addNodesToList = true;
   textStart = 0;
 
   sc->heapList->clear();
@@ -63,9 +62,9 @@ void Assemble() {
   sc->heapList->setOffset(0);
 
   // Optimize the code, setting all the offsets.
-  addNodesToList = False;
+  addNodesToList = false;
   sc->hunkList->optimize();
-  addNodesToList = True;
+  addNodesToList = true;
 
   // Reset the offsets in the object list to get the current code
   // offsets.

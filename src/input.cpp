@@ -11,7 +11,6 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
 #include "error.hpp"
-#include "sol.hpp"
 #include "token.hpp"
 
 std::filesystem::path curFile;
@@ -57,9 +56,9 @@ InputFile::~InputFile() { fclose(file); }
 bool InputFile::incrementPastNewLine(std::string_view& ip) {
   if (GetNewLine()) {
     ip = is->inputPtr;
-    return True;
+    return true;
   }
-  return False;
+  return false;
 }
 
 bool InputFile::endInputLine() { return GetNewLine(); }
@@ -80,7 +79,7 @@ bool InputString::endInputLine() { return CloseInputSource(); }
 
 bool InputString::incrementPastNewLine(std::string_view& ip) {
   ip = ip.substr(1);
-  return True;
+  return true;
 }
 
 std::shared_ptr<InputSource> OpenFileAsInput(

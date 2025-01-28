@@ -7,7 +7,6 @@
 
 #include "listing.hpp"
 #include "object.hpp"
-#include "sol.hpp"
 
 SymTbls syms;
 
@@ -70,7 +69,7 @@ std::unique_ptr<Symbol> SymTbl::remove(std::string_view name) {
 
 bool SymTbl::del(std::string_view name) {
   // Delete the symbol with name pointed to by 'name' from this table and
-  // return True if successful, False otherwise.
+  // return true if successful, false otherwise.
 
   return symbols_.erase(std::string_view(name)) > 0;
 }
@@ -97,10 +96,10 @@ SymTbls::SymTbls()
 
       activeList(0),
       inactiveList(0) {
-  moduleSymTbl = add(ST_MEDIUM, False);
-  selectorSymTbl = add(ST_MEDIUM, True);
-  classSymTbl = add(ST_SMALL, True);
-  globalSymTbl = add(ST_LARGE, True);
+  moduleSymTbl = add(ST_MEDIUM, false);
+  selectorSymTbl = add(ST_MEDIUM, true);
+  classSymTbl = add(ST_SMALL, true);
+  globalSymTbl = add(ST_LARGE, true);
 }
 
 SymTbl* SymTbls::add(int size, bool keep) {
@@ -141,7 +140,7 @@ void SymTbls::delFreeTbls() {
 bool SymTbls::del(std::string_view name) {
   // Search the active symbol tables for the symbol whose name
   // is pointed to by 'name'.  If it is found, delete the symbol
-  // and return True, else return False.
+  // and return true, else return false.
 
   for (auto const& tp : activeList) {
     if (tp->del(name)) return true;

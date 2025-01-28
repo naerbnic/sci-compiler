@@ -11,7 +11,6 @@
 #include "input.hpp"
 #include "parse.hpp"
 #include "sc.hpp"
-#include "sol.hpp"
 #include "symtbl.hpp"
 #include "text.hpp"
 #include "token.hpp"
@@ -42,7 +41,7 @@ void DoClass() {
   Class* theClass;
 
   // Since we're defining a class, we'll need to rewrite the classdef file.
-  classAdded = True;
+  classAdded = true;
 
   int classNum = OBJECTNUM;
   int superNum = OBJECTNUM;

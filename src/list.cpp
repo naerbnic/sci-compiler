@@ -2,8 +2,6 @@
 
 #include "list.hpp"
 
-#include "sol.hpp"
-
 LNode* ListIter::get() { return cur_; }
 void ListIter::advance() { cur_ = cur_->next(); }
 ListIter::operator bool() { return cur_ != nullptr; }
@@ -124,7 +122,7 @@ void List::addBefore(LNode* ln, std::unique_ptr<LNode> nnp) {
 }
 
 bool List::contains(LNode* ln) {
-  if (!ln) return False;
+  if (!ln) return false;
 
   LNode* node;
   for (node = head; node && node != ln; node = node->next_);

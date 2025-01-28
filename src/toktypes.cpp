@@ -6,7 +6,6 @@
 #include "object.hpp"
 #include "parse.hpp"
 #include "sc.hpp"
-#include "sol.hpp"
 #include "symtbl.hpp"
 #include "token.hpp"
 
@@ -82,40 +81,40 @@ bool GetDefineSymbol() {
   NextToken();
   if (symType != S_IDENT) {
     Error("Defined symbol expected");
-    return False;
+    return false;
   }
   Symbol* sym = syms.lookup(symStr);
-  if (!sym) return False;
+  if (!sym) return false;
   if (sym->type != S_DEFINE) {
     Error("Define expected");
-    return False;
+    return false;
   }
-  return True;
+  return true;
 }
 
 bool IsIdent() {
   if (symType != S_IDENT) {
     Severe("Identifier required: %s", symStr);
-    return False;
+    return false;
   }
 
-  return True;
+  return true;
 }
 
 bool IsUndefinedIdent() {
-  if (!IsIdent()) return False;
+  if (!IsIdent()) return false;
 
   if (syms.lookup(symStr)) Warning("Redefinition of %s.", symStr);
 
-  return True;
+  return true;
 }
 
 bool GetNumber(std::string_view errStr) {
-  return GetNumberOrStringToken(errStr, False);
+  return GetNumberOrStringToken(errStr, false);
 }
 
 bool GetNumberOrString(std::string_view errStr) {
-  return GetNumberOrStringToken(errStr, True);
+  return GetNumberOrStringToken(errStr, true);
 }
 
 static bool GetNumberOrStringToken(std::string_view errStr, bool stringOK) {
@@ -131,7 +130,7 @@ static bool GetNumberOrStringToken(std::string_view errStr, bool stringOK) {
   pn_t type = pn->first_child()->type;
   if (type != PN_NUM && (type != PN_STRING || !stringOK)) {
     Error("%s required.", errStr);
-    return False;
+    return false;
   }
 
   // Otherwise, put the expression value into the symbol variables.
@@ -149,7 +148,7 @@ static bool GetNumberOrStringToken(std::string_view errStr, bool stringOK) {
 
   setSymVal(pn->first_child()->val);
 
-  return True;
+  return true;
 }
 
 bool GetString(std::string_view errStr) {
@@ -158,10 +157,10 @@ bool GetString(std::string_view errStr) {
   GetToken();
   if (symType != S_STRING) {
     Severe("%s required: %s", errStr, symStr);
-    return False;
+    return false;
   }
 
-  return True;
+  return true;
 }
 
 keyword_t Keyword() {
@@ -215,7 +214,7 @@ bool IsVar() {
     case S_PARM:
     case S_PROP:
     case S_OPEN_BRACKET:
-      return True;
+      return true;
 
     case S_SELECT:
       return curObj && selectorIsVar &&
@@ -223,13 +222,13 @@ bool IsVar() {
              sn->tag == T_PROP;
 
     default:
-      return False;
+      return false;
   }
 }
 
 bool IsProc() {
   // If the current symbol is a procedure of some type, return the type.
-  // Otherwise return False.
+  // Otherwise return false.
 
   return symType == S_PROC || symType == S_EXTERN;
 }

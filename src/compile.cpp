@@ -14,7 +14,6 @@
 #include "opcodes.hpp"
 #include "parse.hpp"
 #include "sc.hpp"
-#include "sol.hpp"
 #include "text.hpp"
 
 static void MakeAccess(PNode*, uint8_t);
@@ -746,7 +745,7 @@ static void MakeCond(PNode* pn) {
 
   Symbol done;
   Symbol next;
-  bool elseSeen = False;
+  bool elseSeen = false;
 
   // Children alternate between conditions and body.
   // Bodies are always an instance of ELIST, which is used to detect if there
@@ -784,7 +783,7 @@ static void MakeCond(PNode* pn) {
     } else if (elseSeen) {
       Error("Multiple else clauses");
     } else {
-      elseSeen = True;
+      elseSeen = true;
     }
 
     // Compile the statements to be executed if a condition was
@@ -812,7 +811,7 @@ static void MakeSwitch(PNode* pn) {
 
   Symbol done;
   Symbol next;
-  bool elseSeen = False;
+  bool elseSeen = false;
 
   PNode::ChildSpan children = pn->children;
   auto* value = children[0].get();
@@ -864,7 +863,7 @@ static void MakeSwitch(PNode* pn) {
     } else if (elseSeen) {
       Error("Multiple else clauses");
     } else {
-      elseSeen = True;
+      elseSeen = true;
     }
 
     // Compile the statements to be executed if a switch matched.

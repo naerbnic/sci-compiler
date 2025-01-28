@@ -237,7 +237,7 @@ void ListOp(uint8_t theOp) {
     if (theOp & OP_INDEX) scratch.push_back('i');
 
     op = scratch;
-    addSize = hasArgs = True;
+    addSize = hasArgs = true;
   }
 
   if (hasArgs)

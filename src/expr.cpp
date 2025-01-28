@@ -9,7 +9,6 @@
 #include "object.hpp"
 #include "parse.hpp"
 #include "sc.hpp"
-#include "sol.hpp"
 #include "symtbl.hpp"
 #include "text.hpp"
 #include "token.hpp"
@@ -54,7 +53,7 @@ bool ExprList(PNode* theNode, bool required) {
 
   // Get the expressions making up the list.  Even if an expression
   // list is required, only the first expression is required.
-  for (numExpr = 0; Expression(pn.get(), required); ++numExpr) required = False;
+  for (numExpr = 0; Expression(pn.get(), required); ++numExpr) required = false;
 
   // If we successfully got an expression, add it to the parse tree,
   // otherwise delete it.
@@ -90,18 +89,18 @@ bool Expression(PNode* theNode, bool required) {
     switch (symType) {
       case S_NUM:
         theNode->newChild(PN_NUM)->val = symVal;
-        isExpr = True;
+        isExpr = true;
         break;
 
       case S_REST:
         theNode->newChild(PN_REST)->val = symVal;
-        isExpr = True;
+        isExpr = true;
         break;
 
       case S_SELECT:
         if (theSym)
           Error("Selector %s used as value without #", theSym->name());
-        isExpr = False;
+        isExpr = false;
         break;
 
       case S_IDENT:
@@ -118,7 +117,7 @@ bool Expression(PNode* theNode, bool required) {
         // This needs to stay right here, as the handling of
         // S_IDENT falls through to it.
         theNode->newChild(PN_OBJ)->sym = theSym;
-        isExpr = True;
+        isExpr = true;
         break;
 
       case S_CLASS:
@@ -130,12 +129,12 @@ bool Expression(PNode* theNode, bool required) {
           pn->sym = theSym;
           pn->val = symObj->num;
         }
-        isExpr = True;
+        isExpr = true;
         break;
 
       case S_STRING:
         theNode->newChild(PN_STRING)->val = text.find(symStr);
-        isExpr = True;
+        isExpr = true;
         break;
 
       case OPEN_P:
@@ -148,7 +147,7 @@ bool Expression(PNode* theNode, bool required) {
           Severe("Expression required: %s", symStr);
         else
           UnGetTok();
-        isExpr = False;
+        isExpr = false;
     }
   }
 
@@ -184,7 +183,7 @@ static bool _Expression(PNode* theNode) {
   bool oldSelectVar;
 
   oldSelectVar = selectorIsVar;
-  selectorIsVar = True;
+  selectorIsVar = true;
 
   theSym = LookupTok();
 
@@ -282,12 +281,12 @@ static bool _Expression(PNode* theNode) {
 
           case K_DEFINE:
             Define();
-            retVal = True;
+            retVal = true;
             break;
 
           case K_ENUM:
             Enum();
-            retVal = True;
+            retVal = true;
             break;
 
           case K_CLASS:
@@ -300,13 +299,13 @@ static bool _Expression(PNode* theNode) {
 
           default:
             Severe("Expected an expression here: %s", symStr);
-            retVal = True;
+            retVal = true;
         }
         break;
 
       default:
         Severe("Expected an expression here: %s", symStr);
-        retVal = True;
+        retVal = true;
     }
   }
 
@@ -321,13 +320,13 @@ static bool Return(PNode* theNode) {
   pn = theNode->newChild(PN_RETURN);
   Expression(pn, OPTIONAL);
 
-  return True;
+  return true;
 }
 
 static bool Assignment(PNode* theNode) {
   // assignment ::= assign-op variable expression
 
-  bool retVal = False;
+  bool retVal = false;
 
   auto pn = std::make_unique<PNode>(PN_ASSIGN);
   pn->val = symVal;
@@ -356,7 +355,7 @@ static bool Call(PNode* theNode, Symbol* theSym) {
   while (Expression(pn.get(), OPTIONAL));
 
   theNode->addChild(std::move(pn));
-  return True;
+  return true;
 }
 
 static bool Send(PNode* theNode, Symbol* theSym) {
@@ -396,10 +395,10 @@ static bool Send(PNode* theNode, Symbol* theSym) {
 
   if (!nMsgs) {
     Error("No messages sent to %s", objName);
-    return False;
+    return false;
   }
 
-  return True;
+  return true;
 }
 
 static bool Message(PNode* theNode, Symbol* theSym) {
@@ -411,13 +410,13 @@ static bool Message(PNode* theNode, Symbol* theSym) {
 
   // A variable can be a selector
   oldSelectVar = selectorIsVar;
-  selectorIsVar = True;
+  selectorIsVar = true;
 
   // Get the message selector.  If there is none (we hit a closing paren),
-  // we're at the end of a series of sends -- return False.
+  // we're at the end of a series of sends -- return false.
   msgSel = GetSelector(theSym);
   if (!msgSel)
-    retVal = False;
+    retVal = false;
   else {
     // Add the message node to the send.
     pn = theNode->newChild(PN_MSG);
@@ -449,7 +448,7 @@ static bool Message(PNode* theNode, Symbol* theSym) {
             "comma");
     }
 
-    retVal = True;
+    retVal = true;
   }
 
   selectorIsVar = oldSelectVar;
@@ -464,7 +463,7 @@ static bool While(PNode* theNode) {
 
   // Get the conditional expression which drives the loop
   if (!Expression(pn.get(), REQUIRED)) {
-    return False;
+    return false;
   }
 
   // Increment the loop nesting count, then get the statements to be
@@ -475,7 +474,7 @@ static bool While(PNode* theNode) {
   --loopNest;
 
   theNode->addChild(std::move(pn));
-  return True;
+  return true;
 }
 
 static bool Repeat(PNode* theNode) {
@@ -492,7 +491,7 @@ static bool Repeat(PNode* theNode) {
   ExprList(pn, OPTIONAL);
   --loopNest;
 
-  return True;
+  return true;
 }
 
 static bool For(PNode* theNode) {
@@ -506,7 +505,7 @@ static bool For(PNode* theNode) {
   // Get the initialization for the loop
   if (!OpenBlock()) {
     Severe("Need loop initialization.");
-    return False;
+    return false;
   }
   ExprList(pn.get(), OPTIONAL);
   CloseBlock();
@@ -514,13 +513,13 @@ static bool For(PNode* theNode) {
   // Get the conditional expression which determines exit from the loop.
   if (!Expression(pn.get(), OPTIONAL)) {
     Severe("Need loop termination.");
-    return False;
+    return false;
   }
 
   // Get the re-initialization of the loop.
   if (!OpenBlock()) {
     Severe("Need loop re-initialization.");
-    return False;
+    return false;
   }
   ExprList(pn.get(), OPTIONAL);
   CloseBlock();
@@ -533,7 +532,7 @@ static bool For(PNode* theNode) {
   --loopNest;
 
   theNode->addChild(std::move(pn));
-  return True;
+  return true;
 }
 
 static bool Break(PNode* theNode) {
@@ -554,7 +553,7 @@ static bool Break(PNode* theNode) {
   if (pn->val > loopNest)
     Warning("Break level greater than loop nesting count.");
 
-  return True;
+  return true;
 }
 
 static bool BreakIf(PNode* theNode) {
@@ -565,7 +564,7 @@ static bool BreakIf(PNode* theNode) {
   // Get the conditional expression.
   if (!Expression(pn.get(), REQUIRED)) {
     Severe("Conditional required in 'breakif'.");
-    return False;
+    return false;
   }
 
   // Get the optional break level.
@@ -581,7 +580,7 @@ static bool BreakIf(PNode* theNode) {
     Warning("Break level greater than loop nesting count.");
 
   theNode->addChild(std::move(pn));
-  return True;
+  return true;
 }
 
 static bool Continue(PNode* theNode) {
@@ -602,7 +601,7 @@ static bool Continue(PNode* theNode) {
   if (pn->val > loopNest)
     Warning("Continue level greater than loop nesting count.");
 
-  return True;
+  return true;
 }
 
 static bool ContIf(PNode* theNode) {
@@ -613,7 +612,7 @@ static bool ContIf(PNode* theNode) {
   // Get the conditional expression.
   if (!Expression(pn.get(), REQUIRED)) {
     Severe("Conditional required in 'breakif'.");
-    return False;
+    return false;
   }
 
   // Get the optional break level.
@@ -629,7 +628,7 @@ static bool ContIf(PNode* theNode) {
     Warning("Continue level greater than loop nesting count.");
 
   theNode->addChild(std::move(pn));
-  return True;
+  return true;
 }
 
 static bool If(PNode* theNode) {
@@ -640,25 +639,25 @@ static bool If(PNode* theNode) {
 
   // Get the condition
   if (!Expression(pn.get(), REQUIRED)) {
-    return False;
+    return false;
   }
 
   // Get the true branch
   if (!ExprList(pn.get(), OPTIONAL)) {
-    return False;
+    return false;
   }
 
   // Get the else branch, if it exists
   GetToken();
   if (Keyword() == K_ELSE) {
     if (!ExprList(pn.get(), OPTIONAL)) {
-      return False;
+      return false;
     }
   } else
     UnGetTok();
 
   theNode->addChild(std::move(pn));
-  return True;
+  return true;
 }
 
 static bool Cond(PNode* theNode) {
@@ -676,7 +675,7 @@ static bool Cond(PNode* theNode) {
     else {
       UnGetTok();
       if (!Expression(pn.get(), REQUIRED)) {
-        return False;
+        return false;
       }
     }
 
@@ -690,7 +689,7 @@ static bool Cond(PNode* theNode) {
   UnGetTok();
 
   theNode->addChild(std::move(pn));
-  return True;
+  return true;
 }
 
 static bool Switch(PNode* theNode) {
@@ -701,7 +700,7 @@ static bool Switch(PNode* theNode) {
 
   // Get the expression to be switched on
   if (!Expression(pn.get(), REQUIRED)) {
-    return False;
+    return false;
   }
 
   GetToken();
@@ -713,7 +712,7 @@ static bool Switch(PNode* theNode) {
     else {
       UnGetTok();
       if (!Expression(pn.get(), REQUIRED)) {
-        return False;
+        return false;
       }
     }
 
@@ -725,7 +724,7 @@ static bool Switch(PNode* theNode) {
   UnGetTok();
 
   theNode->addChild(std::move(pn));
-  return True;
+  return true;
 }
 
 static bool SwitchTo(PNode* theNode) {
@@ -738,7 +737,7 @@ static bool SwitchTo(PNode* theNode) {
 
   // Get the expression to be switched on
   if (!Expression(pn.get(), REQUIRED)) {
-    return False;
+    return false;
   }
 
   while (OpenBlock()) {
@@ -751,7 +750,7 @@ static bool SwitchTo(PNode* theNode) {
   UnGetTok();
 
   theNode->addChild(std::move(pn));
-  return True;
+  return true;
 }
 
 static bool IncDec(PNode* theNode) {
@@ -764,9 +763,9 @@ static bool IncDec(PNode* theNode) {
   // Get the argument
   if (Variable(pn.get())) {
     theNode->addChild(std::move(pn));
-    return True;
+    return true;
   } else {
-    return False;
+    return false;
   }
 }
 
@@ -781,13 +780,13 @@ static bool Variable(PNode* theNode) {
 
   if (!IsVar()) {
     Severe("Variable name expected: %s.", symStr);
-    return False;
+    return false;
   }
   pn = theNode->newChild(PNType(symType));
   pn->val = symVal;
   pn->sym = theSym;
 
-  return True;
+  return true;
 }
 
 static bool Array(PNode* theNode) {
@@ -797,7 +796,7 @@ static bool Array(PNode* theNode) {
   if (lookupSym->type != S_GLOBAL && lookupSym->type != S_LOCAL &&
       lookupSym->type != S_PARM && lookupSym->type != S_TMP) {
     Severe("Array name expected: %s.", symStr);
-    return False;
+    return false;
   }
 
   auto pn = std::make_unique<PNode>(PN_INDEX);
@@ -807,27 +806,27 @@ static bool Array(PNode* theNode) {
 
   // Get the index into the array.
   if (!Expression(pn.get(), REQUIRED)) {
-    return False;
+    return false;
   }
 
   GetToken();
   if (symType != (sym_t)']') {
     Error("Expected closing ']': %s.", symStr);
-    return False;
+    return false;
   }
 
   theNode->addChild(std::move(pn));
-  return True;
+  return true;
 }
 
 static bool Rest(PNode* theNode) {
   LookupTok();
   if (!IsVar() || symType != S_PARM) {
     Severe("Variable name expected: %s.", symStr);
-    return False;
+    return false;
   }
   theNode->newChild(PN_REST)->val = symVal;
-  return True;
+  return true;
 }
 
 static bool NaryExpr(PNode* theNode) {
@@ -846,10 +845,10 @@ static bool NaryExpr(PNode* theNode) {
 
   // Get the first and second arguments
   if (!Expression(pn.get(), REQUIRED)) {
-    return False;
+    return false;
   }
   if (!logicExpr && !Expression(pn.get(), REQUIRED)) {
-    return False;
+    return false;
   }
 
   // Get any optional arguments
@@ -917,7 +916,7 @@ static bool NaryExpr(PNode* theNode) {
   }
 
   theNode->addChild(std::move(pn));
-  return True;
+  return true;
 }
 
 static bool BinaryExpr(PNode* theNode) {
@@ -929,14 +928,14 @@ static bool BinaryExpr(PNode* theNode) {
 
   // Get the first argument.
   if (!Expression(pn.get(), REQUIRED)) {
-    return False;
+    return false;
   }
 
   // Get the second argument.  If the operator is '-' and there is
   // no second argument, it is a unary minus, i.e. a negation.
   if (opType != B_MINUS) {
     if (!Expression(pn.get(), REQUIRED)) {
-      return False;
+      return false;
     }
 
   } else if (!Expression(pn.get(), OPTIONAL)) {
@@ -965,7 +964,7 @@ static bool BinaryExpr(PNode* theNode) {
       case B_DIV:
         if (!val2) {
           Severe("division by zero.");
-          return False;
+          return false;
         }
         pn->val = val1 / val2;
         break;
@@ -983,7 +982,7 @@ static bool BinaryExpr(PNode* theNode) {
   }
 
   theNode->addChild(std::move(pn));
-  return True;
+  return true;
 }
 
 static bool UnaryExpr(PNode* theNode) {
@@ -995,7 +994,7 @@ static bool UnaryExpr(PNode* theNode) {
 
   // Get the argument
   if (!Expression(pn.get(), REQUIRED)) {
-    return False;
+    return false;
   }
 
   // If the argument is constant, just do the unary operation on it,
@@ -1015,7 +1014,7 @@ static bool UnaryExpr(PNode* theNode) {
   }
 
   theNode->addChild(std::move(pn));
-  return True;
+  return true;
 }
 
 static bool CompExpr(PNode* theNode) {
@@ -1027,17 +1026,17 @@ static bool CompExpr(PNode* theNode) {
 
   // Get the first and second arguments.
   if (!Expression(pn.get(), REQUIRED)) {
-    return False;
+    return false;
   }
   if (!Expression(pn.get(), REQUIRED)) {
-    return False;
+    return false;
   }
 
   // Get any optional arguments
   while (Expression(pn.get(), OPTIONAL));
 
   theNode->addChild(std::move(pn));
-  return True;
+  return true;
 }
 
 pn_t PNType(sym_t st) {

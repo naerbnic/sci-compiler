@@ -78,12 +78,12 @@ bool NewToken() {
       SetStringInput(theSym->str());
       NewToken();
     }
-    return True;
+    return true;
   }
-  return False;
+  return false;
 }
 
-void UnGetTok() { haveUnGet = True; }
+void UnGetTok() { haveUnGet = true; }
 
 void GetRest(bool error) {
   // Copy the rest of the parenthesized expression into 'symStr'.
@@ -98,7 +98,7 @@ void GetRest(bool error) {
   std::string_view ip = is->inputPtr;
   symStr.clear();
   pLevel = 0;
-  truncate = False;
+  truncate = false;
 
   while (1) {
     if (ip.empty()) {
@@ -136,7 +136,7 @@ void GetRest(bool error) {
 
     if (symStr.length() >= MaxTokenLen && !truncate) {
       if (!error) Warning("Define too long.  Truncated.");
-      truncate = True;
+      truncate = true;
     }
   }
 }
@@ -148,14 +148,14 @@ bool NextToken() {
   uint8_t c;  // the character
 
   if (haveUnGet) {
-    haveUnGet = False;
+    haveUnGet = false;
     tokSym = lastTok;
-    return True;
+    return true;
   }
 
   if (!is) {
     symType = S_END;
-    return False;
+    return false;
   }
 
   // Get pointer to input in a register
@@ -169,7 +169,7 @@ bool NextToken() {
         continue;
       } else {
         symType = S_END;
-        return False;
+        return false;
       }
     }
 
@@ -214,24 +214,24 @@ bool NextToken() {
     symType = (sym_t)c;
     is->inputPtr = ip.substr(1);
     SetTokenEnd();
-    return True;
+    return true;
   }
 
   if (c == '`') {
     // A character constant.
     ReadKey(ip.substr(1));
-    return True;
+    return true;
   }
 
   if (c == '"' || c == ALT_QUOTE) {
     ReadString(ip);
-    return True;
+    return true;
   }
 
   if (IsDigit(c) || (c == '-' && ip.length() > 1 && IsDigit(ip[1]))) {
     symType = S_NUM;
     ReadNumber(ip);
-    return True;
+    return true;
   }
 
   symType = S_IDENT;
@@ -253,7 +253,7 @@ bool NextToken() {
   is->inputPtr = ip;
   SetTokenEnd();
 
-  return True;
+  return true;
 }
 
 bool GetNewLine() {
@@ -279,7 +279,7 @@ compiling:
   while (1) {
     //	if input was limited to the current line before, unlimit it
     RestoreInput();
-    if (!GetNewInputLine()) return False;
+    if (!GetNewInputLine()) return false;
     SetInputToCurrentLine();
 
     switch (GetPreprocessorToken()) {
@@ -324,7 +324,7 @@ compiling:
 
       default:
         RestoreInput();
-        return True;
+        return true;
     }
   }
 
@@ -333,7 +333,7 @@ notCompiling:
 
   while (1) {
     RestoreInput();
-    if (!GetNewInputLine()) return False;
+    if (!GetNewInputLine()) return false;
     SetInputToCurrentLine();
 
     switch (GetPreprocessorToken()) {
@@ -381,7 +381,7 @@ gettingEndif:
 
   while (1) {
     RestoreInput();
-    if (!GetNewInputLine()) return False;
+    if (!GetNewInputLine()) return false;
     SetInputToCurrentLine();
 
     switch (GetPreprocessorToken()) {
@@ -509,7 +509,7 @@ static void ReadString(std::string_view ip) {
   bool truncated;
   uint32_t n;
 
-  truncated = False;
+  truncated = false;
   symStr.clear();
   open = currCharAndAdvance(ip);
 
@@ -595,7 +595,7 @@ static void ReadString(std::string_view ip) {
 
     if (symStr.length() >= MaxTokenLen && !truncated) {
       Error("String too large.");
-      truncated = True;
+      truncated = true;
     }
   }
 

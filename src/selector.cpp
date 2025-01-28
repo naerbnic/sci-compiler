@@ -5,7 +5,6 @@
 
 #include "error.hpp"
 #include "object.hpp"
-#include "sol.hpp"
 #include "symtbl.hpp"
 #include "token.hpp"
 #include "update.hpp"
@@ -120,7 +119,7 @@ void InitSelectors() {
 
   // The selectors just added were read from the file 'selector'.  Thus
   // there is no reason to rewrite that file.
-  selectorAdded = False;
+  selectorAdded = false;
 }
 
 Symbol* InstallSelector(std::string_view name, int value) {
@@ -130,7 +129,7 @@ Symbol* InstallSelector(std::string_view name, int value) {
   ClaimSelectorNum(value);
 
   // Since this is a new selector, we'll need to rewrite the file 'selector'.
-  selectorAdded = True;
+  selectorAdded = true;
 
   // Install the selector in the selector symbol table.
   Symbol* sym = syms.installSelector(name);
