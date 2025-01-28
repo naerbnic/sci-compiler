@@ -5,7 +5,6 @@
 
 #include "error.hpp"
 #include "object.hpp"
-#include "sc.hpp"
 #include "sol.hpp"
 #include "symtbl.hpp"
 #include "token.hpp"

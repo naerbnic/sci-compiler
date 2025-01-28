@@ -12,7 +12,6 @@
 #include "chartype.hpp"
 #include "error.hpp"
 #include "input.hpp"
-#include "sc.hpp"
 #include "sol.hpp"
 #include "symtbl.hpp"
 

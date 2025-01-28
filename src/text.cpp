@@ -2,8 +2,6 @@
 
 #include "text.hpp"
 
-#include "sc.hpp"
-
 TextList text;
 
 void TextList::init() { textList.clear(); }

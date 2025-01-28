@@ -9,16 +9,14 @@
 #include <string_view>
 #include <vector>
 
-#include "sc.hpp"
-
 struct Text {
   // Node for the message/string list.
 
   Text() : num(0), hashVal(0) {}
 
-  int num;          // Offset in near string space
-  std::string str;  // Pointer to the string itself
-  uint16_t hashVal;    // Hashed value of the string
+  int num;           // Offset in near string space
+  std::string str;   // Pointer to the string itself
+  uint16_t hashVal;  // Hashed value of the string
 };
 
 class TextList {
