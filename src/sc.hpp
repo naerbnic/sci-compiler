@@ -21,9 +21,6 @@
 #define UNDEFINED 0
 #define DEFINED 1
 
-typedef unsigned char ubyte;
-typedef unsigned short uword;
-
 class FixupList;
 struct CodeList;
 

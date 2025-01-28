@@ -3,10 +3,7 @@
 
 #include "chartype.hpp"
 
-#include "sc.hpp"
-#include "sol.hpp"
-
-ubyte cType[256] = {
+uint8_t cType[256] = {
     C_SEP | C_TERM,                   // ^@ NUL
     0,                                // ^A SOH
     0,                                // ^B STX

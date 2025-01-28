@@ -20,8 +20,8 @@ uint32_t TextList::find(std::string_view str) {
   return text->num;
 }
 
-uword TextList::hash(std::string_view tp) {
-  uword hashVal = 0;
+uint16_t TextList::hash(std::string_view tp) {
+  uint16_t hashVal = 0;
 
   for (char ch : tp) hashVal += ch;
 
@@ -51,7 +51,7 @@ Text* TextList::search(std::string_view str) const {
   // Return the offset in string space of 'str' if it is already in string
   // space, 0 otherwise.
 
-  uword hashVal = hash(str);
+  uint16_t hashVal = hash(str);
   for (Text* tp : items()) {
     if (hashVal == tp->hashVal && str == tp->str) return tp;
   }

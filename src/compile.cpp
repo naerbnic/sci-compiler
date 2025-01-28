@@ -17,7 +17,7 @@
 #include "sol.hpp"
 #include "text.hpp"
 
-static void MakeAccess(PNode*, ubyte);
+static void MakeAccess(PNode*, uint8_t);
 static void MakeImmediate(int);
 static void MakeString(PNode*);
 static void MakeCall(PNode* pn);
@@ -187,12 +187,12 @@ void Compile(PNode* pn) {
   }
 }
 
-static void MakeAccess(PNode* pn, ubyte theCode) {
+static void MakeAccess(PNode* pn, uint8_t theCode) {
   // Compile code to access the variable indicated by pn.  Access
   // is OP_STORE or OP_LOAD
 
   ANVarAccess* an;
-  uword theAddr;
+  uint16_t theAddr;
   pn_t varType;
 
   // Check for indexing and compile the index if necessary.
@@ -431,7 +431,7 @@ static void MakeUnary(PNode* pn) {
   Compile(pn->first_child());
 
   // Put out the appropriate opcode.
-  uword theCode;
+  uint16_t theCode;
   switch (pn->val) {
     case U_NEG:
       theCode = op_neg;
@@ -455,7 +455,7 @@ static void MakeBinary(PNode* pn) {
   Compile(pn->child_at(1));
 
   // Put out the opcode.
-  uword theCode;
+  uint16_t theCode;
   switch (pn->val) {
     case B_MINUS:
       theCode = op_sub;
@@ -490,7 +490,7 @@ static void MakeNary(PNode* pn) {
     Compile(arg.get());
 
     // Put out the appropriate opcode.
-    uword theCode;
+    uint16_t theCode;
     switch (pn->val) {
       case N_PLUS:
         theCode = op_add;
@@ -524,7 +524,7 @@ static void MakeAssign(PNode* pn) {
   Compile(pn->child_at(1));
 
   // If this is an arithmetic-op assignment, do the arithmetic operation.
-  uword theCode;
+  uint16_t theCode;
   if (pn->val != A_EQ) {
     switch (pn->val) {
       case A_PLUS:
@@ -571,7 +571,7 @@ static void MakeReturn(PNode* pn) {
   curList->newNode<ANOpCode>(op_ret);
 }
 
-void MakeBranch(ubyte theCode, ANode* bn, Symbol* dest) {
+void MakeBranch(uint8_t theCode, ANode* bn, Symbol* dest) {
   // Compile code for a branch.  The type of branch is in 'theCode', the
   // destination is 'bn'.  If the the destination is not yet defined,
   // 'dest' will point to a the symbol of the destination.
@@ -675,7 +675,7 @@ static void MakeOr(PNode::ChildSpan args) {
 static void MakeCompOp(int op) {
   // Compile the opcode corresponding to the comparison operator 'op'.
 
-  uword theCode;
+  uint16_t theCode;
   switch (op) {
     case C_GT:
       theCode = op_gt;
@@ -891,7 +891,7 @@ static void MakeSwitch(PNode* pn) {
 static void MakeIncDec(PNode* pn) {
   // Compile code for increment or decrement operators.
 
-  uword theCode;
+  uint16_t theCode;
 
   switch (pn->val) {
     case K_INC:
@@ -901,7 +901,7 @@ static void MakeIncDec(PNode* pn) {
       theCode = OP_LDST | OP_DEC;
       break;
   }
-  MakeAccess(pn->first_child(), (ubyte)theCode);
+  MakeAccess(pn->first_child(), (uint8_t)theCode);
 }
 
 static void MakeProc(PNode* pn) {

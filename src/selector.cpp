@@ -82,7 +82,7 @@ Selector* Class::addSelector(Symbol* sym, int what) {
       sn->tag = T_PROPDICT;
       break;
     default:
-      sn->tag = (ubyte)what;
+      sn->tag = (uint8_t)what;
       break;
   }
 

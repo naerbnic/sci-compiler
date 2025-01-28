@@ -53,7 +53,7 @@ void OutputFile::WriteWord(int16_t w) {
   Write(&w, sizeof w);
 }
 
-void OutputFile::WriteByte(ubyte b) { Write(&b, sizeof b); }
+void OutputFile::WriteByte(uint8_t b) { Write(&b, sizeof b); }
 
 void OutputFile::Write(const void* mp, size_t len) {
   if (fwrite(mp, 1, len, fp) != static_cast<std::size_t>(len))
@@ -84,7 +84,7 @@ static std::unique_ptr<OutputFile> OpenObjFile(MemType type, std::string name) {
   auto out = std::make_unique<OutputFile>(std::move(name));
 
   // Put out the header information.
-  ubyte header[2];
+  uint8_t header[2];
   header[0] = (char)type;
   header[1] = 0;
   out->Write(header, sizeof header);

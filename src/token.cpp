@@ -146,7 +146,7 @@ bool NextToken() {
   // Return the next token.  If we're at the end of the current input source,
   // close it and get input from the previous source in the queue.
 
-  ubyte c;  // the character
+  uint8_t c;  // the character
 
   if (haveUnGet) {
     haveUnGet = False;

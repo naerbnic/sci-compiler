@@ -4,10 +4,10 @@
 #ifndef TEXT_HPP
 #define TEXT_HPP
 
-#include <vector>
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include "sc.hpp"
 
@@ -18,7 +18,7 @@ struct Text {
 
   int num;          // Offset in near string space
   std::string str;  // Pointer to the string itself
-  uword hashVal;    // Hashed value of the string
+  uint16_t hashVal;    // Hashed value of the string
 };
 
 class TextList {
@@ -38,7 +38,7 @@ class TextList {
   Text* add(std::string_view);
   Text* search(std::string_view) const;
 
-  static uword hash(std::string_view);
+  static uint16_t hash(std::string_view);
 };
 
 extern TextList text;

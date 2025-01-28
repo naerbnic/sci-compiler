@@ -24,7 +24,7 @@ bool selectorAdded;
 std::string outDir;
 bool writeOffsets;
 
-static ubyte resHdr[] = {MemResVocab, 0};
+static uint8_t resHdr[] = {MemResVocab, 0};
 
 static void WriteSelector();
 static void WriteClassDefs();
@@ -52,7 +52,7 @@ void WriteClassTbl() {
   // class ID when the class is loaded.  The second word contains the script
   // number in which the class resides.
 
-  static ubyte resID[2] = {MemResVocab, 0};
+  static uint8_t resID[2] = {MemResVocab, 0};
 #pragma pack(push, 1)
   struct ClassTblEntry {
     SCIUWord objID;

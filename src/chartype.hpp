@@ -8,7 +8,7 @@
 #ifndef CHARTYPE_H
 #define CHARTYPE_H
 
-#include "sc.hpp"
+#include <cstdint>
 
 #define C_SEP 0x0001    // seperator
 #define C_TOK 0x0002    // single char token
@@ -28,6 +28,6 @@
 #define IsTerm(c) (cType[static_cast<uint8_t>(c)] & C_TERM)
 #define IsIncl(c) (cType[static_cast<uint8_t>(c)] & C_INCL)
 
-extern ubyte cType[];
+extern uint8_t cType[];
 
 #endif
