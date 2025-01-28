@@ -115,7 +115,7 @@ struct ANTable : ANode
 // finish() method must be called when the table is completed to restore
 // the original list as the current one.
 {
-  ANTable(strptr nameStr);
+  ANTable(std::string nameStr);
 
   size_t size();
   size_t setOffset(size_t ofs);
@@ -123,16 +123,16 @@ struct ANTable : ANode
   void emit(OutputFile*);
   void finish();
 
-  strptr name;     // name of table (values follow)
-  AList entries;   // list of entries in the table
-  AList* oldList;  // list active when table was created
+  std::string name;  // name of table (values follow)
+  AList entries;     // list of entries in the table
+  AList* oldList;    // list active when table was created
 };
 
 struct ANObjTable : ANTable
 // ANObjTable sub-classes ANTable to have the table added before the first
 // instance of code in the hunk list.
 {
-  ANObjTable(strptr nameStr);
+  ANObjTable(std::string nameStr);
 };
 
 struct Text;
@@ -211,8 +211,8 @@ struct ANProp : ANode
 {
   ANProp(Symbol* sp, int v);
 
-  virtual strptr desc() = 0;     // return descriptive string
-  virtual uint32_t value() = 0;  // return value of selector
+  virtual std::string_view desc() = 0;  // return descriptive string
+  virtual uint32_t value() = 0;         // return value of selector
 
   size_t size();
   void list();
@@ -227,8 +227,8 @@ struct ANIntProp : ANProp
 {
   ANIntProp(Symbol* sp, int v) : ANProp(sp, v) {}
 
-  strptr desc();     // return descriptive string
-  uint32_t value();  // return value of selector
+  std::string_view desc();  // return descriptive string
+  uint32_t value();         // return value of selector
 };
 
 struct ANTextProp : ANProp
@@ -237,7 +237,7 @@ struct ANTextProp : ANProp
   ANTextProp(Symbol* sp, int v);
 
   void emit(OutputFile*);
-  strptr desc();     // return descriptive string
+  std::string_view desc();     // return descriptive string
   uint32_t value();  // return value of selector
 };
 
@@ -246,7 +246,7 @@ struct ANOfsProp : ANProp
 {
   ANOfsProp(Symbol* sp) : ANProp(sp, 0) {}
 
-  strptr desc();
+  std::string_view desc();
   uint32_t value();
 
   ANode* target;
@@ -257,7 +257,7 @@ struct ANMethod : ANProp
 {
   ANMethod(Symbol* sp, ANMethCode* mp);
 
-  strptr desc();     // return descriptive string
+  std::string_view desc();     // return descriptive string
   uint32_t value();  // return value of selector
 
   ANMethCode* method;

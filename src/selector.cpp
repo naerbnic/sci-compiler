@@ -49,7 +49,7 @@ Selector* Object::findSelectorByNum(int val) {
   return nullptr;
 }
 
-Selector* Object::findSelector(strptr name) {
+Selector* Object::findSelector(std::string_view name) {
   // Return a pointer to the selector node which has the name 'name'.
 
   Symbol* sym = syms.lookup(name);
@@ -126,7 +126,7 @@ void InitSelectors() {
   selectorAdded = False;
 }
 
-Symbol* InstallSelector(strptr name, int value) {
+Symbol* InstallSelector(std::string_view name, int value) {
   // Add 'name' to the global symbol table as a selector with value 'value'.
 
   // Allocate this selector number.

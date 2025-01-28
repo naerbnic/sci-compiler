@@ -35,7 +35,7 @@ struct Object {
 
   void dupSelectors(Class*);
   Selector* findSelectorByNum(int val);
-  Selector* findSelector(strptr name);
+  Selector* findSelector(std::string_view name);
   void freeSelectors();
 
   auto selectors() const {
@@ -120,7 +120,7 @@ void Instance();
 //	selector.cpp
 Symbol* GetSelector(Symbol*);
 void InitSelectors();
-Symbol* InstallSelector(strptr name, int value);
+Symbol* InstallSelector(std::string_view name, int value);
 int NewSelectorNum();
 
 extern Class* classes[];

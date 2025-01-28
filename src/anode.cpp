@@ -156,7 +156,7 @@ void ANWord::emit(OutputFile* out) { out->WriteWord(value); }
 // Class ANTable
 ///////////////////////////////////////////////////
 
-ANTable::ANTable(strptr nameStr) : name(nameStr), oldList(curList) {
+ANTable::ANTable(std::string nameStr) : name(nameStr), oldList(curList) {
   curList = &entries;
 }
 
@@ -177,7 +177,7 @@ void ANTable::finish() { curList = oldList; }
 // Class ANObjTable
 ///////////////////////////////////////////////////
 
-ANObjTable::ANObjTable(strptr nameStr) : ANTable(nameStr) {}
+ANObjTable::ANObjTable(std::string nameStr) : ANTable(nameStr) {}
 
 ///////////////////////////////////////////////////
 // Class ANText
@@ -264,7 +264,7 @@ void ANProp::list() {
 
 void ANProp::emit(OutputFile* out) { out->WriteWord(value()); }
 
-strptr ANIntProp::desc() { return "prop"; }
+std::string_view ANIntProp::desc() { return "prop"; }
 
 uint32_t ANIntProp::value() { return val; }
 
@@ -275,17 +275,17 @@ void ANTextProp::emit(OutputFile* out) {
   ANProp::emit(out);
 }
 
-strptr ANTextProp::desc() { return "text"; }
+std::string_view ANTextProp::desc() { return "text"; }
 
 uint32_t ANTextProp::value() { return val + textStart; }
 
-strptr ANOfsProp::desc() { return "ofs"; }
+std::string_view ANOfsProp::desc() { return "ofs"; }
 
 uint32_t ANOfsProp::value() { return target->offset; }
 
 ANMethod::ANMethod(Symbol* sp, ANMethCode* mp) : ANProp(sp, 0), method(mp) {}
 
-strptr ANMethod::desc() { return "local"; }
+std::string_view ANMethod::desc() { return "local"; }
 
 uint32_t ANMethod::value() { return method->offset; }
 
@@ -339,7 +339,7 @@ void ANOpUnsign::list() {
   if (!sym)
     ListArg("$%-4x", (SCIUWord)value);
   else
-    ListArg("$%-4x\t(%s)", (SCIUWord)value, sym->name() ? sym->name() : "");
+    ListArg("$%-4x\t(%s)", (SCIUWord)value, sym->name());
 }
 
 void ANOpUnsign::emit(OutputFile* out) {
@@ -367,7 +367,7 @@ void ANOpSign::list() {
   if (!sym)
     ListArg("$%-4x", (SCIUWord)value);
   else
-    ListArg("$%-4x\t(%s)", (SCIUWord)value, sym->name() ? sym->name() : "");
+    ListArg("$%-4x\t(%s)", (SCIUWord)value, sym->name());
 }
 
 void ANOpSign::emit(OutputFile* out) {
@@ -543,7 +543,7 @@ size_t ANVarAccess::size() { return op & OP_BYTE ? 2 : 3; }
 void ANVarAccess::list() {
   ListOp(op);
   if (sym)
-    ListArg("$%-4x\t(%s)", addr, sym->name() ? sym->name() : "");
+    ListArg("$%-4x\t(%s)", addr, sym->name());
   else
     ListArg("$%-4x", addr);
 }

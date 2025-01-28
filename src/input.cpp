@@ -11,7 +11,6 @@
 #include "absl/strings/str_split.h"
 #include "error.hpp"
 #include "fileio.hpp"
-#include "fileio.hpp"
 #include "sc.hpp"
 #include "sol.hpp"
 #include "token.hpp"
@@ -165,7 +164,7 @@ bool GetNewInputLine() {
 }
 
 void SetIncludePath(std::vector<std::string> const& extra_paths) {
-  strptr t = getenv("SINCLUDE");
+  const char* t = getenv("SINCLUDE");
 
   if (t) {
     // Successively copy each element of the path into 'path',

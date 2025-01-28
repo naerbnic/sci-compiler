@@ -35,10 +35,10 @@ int OutputFile::WriteNullTerminatedString(std::string_view str) {
   return str.length() + 1;
 }
 
-int OutputFile::Write(const char* str) {
-  int length = strlen(str);
+int OutputFile::Write(std::string_view str) {
+  int length = str.length();
   WriteWord(length);
-  Write(str, length);
+  Write(str.data(), length);
   return length + sizeof(SCIWord);
 }
 

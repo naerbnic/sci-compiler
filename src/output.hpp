@@ -21,7 +21,7 @@ class OutputFile {
   void WriteWord(int16_t);
   void Write(const void*, size_t);
   int WriteNullTerminatedString(std::string_view str);
-  int Write(const char*);
+  int Write(std::string_view);
 
  protected:
   FILE* fp;

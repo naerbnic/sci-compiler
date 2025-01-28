@@ -38,7 +38,7 @@ SciTargetArch targetArch = SciTargetArch::SCI_2;
 
 static int totalErrors;
 
-static void CompileFile(strptr);
+static void CompileFile(std::string_view);
 static void ShowInfo();
 static void InstallCommandLineDefine(std::string_view);
 static SciTargetArch GetTargetArchitecture(std::string_view);
@@ -217,7 +217,7 @@ int main(int argc, char **argv) {
 
 #endif
 
-static void CompileFile(strptr fileName) {
+static void CompileFile(std::string_view fileName) {
   // Do some initialization.
   script = -1;
   errors = warnings = 0;

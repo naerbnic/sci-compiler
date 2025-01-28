@@ -54,7 +54,7 @@ Symbol* SymTbl::lookup(std::string_view name) {
   return nullptr;
 }
 
-std::unique_ptr<Symbol> SymTbl::remove(strptr name) {
+std::unique_ptr<Symbol> SymTbl::remove(std::string_view name) {
   // Try to remove the symbol with name pointed to by 'name' from this table
   // and return a pointer to it if successful, NULL otherwise.
 
@@ -69,7 +69,7 @@ std::unique_ptr<Symbol> SymTbl::remove(strptr name) {
   return nullptr;
 }
 
-bool SymTbl::del(strptr name) {
+bool SymTbl::del(std::string_view name) {
   // Delete the symbol with name pointed to by 'name' from this table and
   // return True if successful, False otherwise.
 
@@ -139,7 +139,7 @@ void SymTbls::delFreeTbls() {
   inactiveList.clear();
 }
 
-bool SymTbls::del(strptr name) {
+bool SymTbls::del(std::string_view name) {
   // Search the active symbol tables for the symbol whose name
   // is pointed to by 'name'.  If it is found, delete the symbol
   // and return True, else return False.
@@ -151,7 +151,7 @@ bool SymTbls::del(strptr name) {
   return false;
 }
 
-std::unique_ptr<Symbol> SymTbls::remove(strptr name) {
+std::unique_ptr<Symbol> SymTbls::remove(std::string_view name) {
   // Search the active symbol tables for the symbol whose name is pointed
   // to by 'name'.  Remove it and return a pointer to the symbol if found,
   // return 0 otherwise.

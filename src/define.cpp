@@ -284,16 +284,16 @@ void Definition() {
 void Extern() {
   //	extern ::= 'extern' (symbol script# entry#)+
 
-  Symbol* theSym;
-
   for (GetToken(); !CloseP(symType); GetToken()) {
     if (OpenP(symType))
       Definition();
     else {
       // Install the symbol in both the symbol table and the
       // externals list.
-      if (!syms.lookup((strptr)(theSym = (Symbol*)symStr)))
+      Symbol* theSym = syms.lookup(symStr);
+      if (!theSym) {
         theSym = syms.installLocal(symStr, S_EXTERN);
+      }
       auto entry = std::make_unique<Public>(theSym);
       auto* theEntry = entry.get();
       theSym->setExt(std::move(entry));

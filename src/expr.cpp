@@ -364,7 +364,7 @@ static bool Send(PNode* theNode, Symbol* theSym) {
 
   PNode* pn;
   PNode* dn;
-  const char* objName;
+  std::string_view objName;
 
   pn = theNode->newChild(PN_SEND);
 

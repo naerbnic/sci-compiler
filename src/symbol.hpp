@@ -42,7 +42,9 @@ class Symbol {
   RefVal ref_val_;
 
  public:
-  strptr name() const { return name_ ? name_->c_str() : ""; }
+  std::string_view name() const {
+    return name_ ? std::string_view(*name_) : "";
+  }
   void clearName() { name_ = std::nullopt; }
 
   ANode* an() {

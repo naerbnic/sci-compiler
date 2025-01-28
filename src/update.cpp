@@ -128,11 +128,11 @@ static void WriteSelector() {
     Panic("Can't open 'selector' for output.");
   fseek(fp, 0L, SEEK_SET);
 
-  fprintf(fp, "(selectors\n");
+  absl::FPrintF(fp, "(selectors\n");
   for (auto* sp : syms.selectorSymTbl->symbols())
-    fprintf(fp, "\t%-20s %d\n", sp->name(), sp->val());
+    absl::FPrintF(fp, "\t%-20s %d\n", sp->name(), sp->val());
 
-  fprintf(fp, ")\n");
+  absl::FPrintF(fp, ")\n");
 
   if (fclose(fp) == EOF) Panic("Error writing selector file");
 }
@@ -161,21 +161,21 @@ static void WriteClassDefs() {
 
     // Write out any new properties or properties which differ in
     // value from the superclass.
-    fprintf(fp, "\t(properties\n");
+    absl::FPrintF(fp, "\t(properties\n");
     for (auto* tp : cp->selectors()) {
       if (IsProperty(tp) && sp->selectorDiffers(tp))
-        fprintf(fp, "\t\t%s %d\n", tp->sym->name(), tp->val);
+        absl::FPrintF(fp, "\t\t%s %d\n", tp->sym->name(), tp->val);
     }
-    fprintf(fp, "\t)\n\n");
+    absl::FPrintF(fp, "\t)\n\n");
 
     // Write out any new methods or methods which have been redefined.
-    fprintf(fp, "\t(methods\n");
+    absl::FPrintF(fp, "\t(methods\n");
     for (auto* tp : cp->selectors())
       if (IsMethod(tp) && sp->selectorDiffers(tp))
-        fprintf(fp, "\t\t%s\n", tp->sym->name());
-    fprintf(fp, "\t)\n");
+        absl::FPrintF(fp, "\t\t%s\n", tp->sym->name());
+    absl::FPrintF(fp, "\t)\n");
 
-    fprintf(fp, ")\n\n\n");
+    absl::FPrintF(fp, ")\n\n\n");
   }
 
   if (fclose(fp) == EOF) Panic("Error writing classdef");
