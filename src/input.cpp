@@ -60,7 +60,7 @@ InputFile::~InputFile() { fclose(file); }
 
 bool InputFile::incrementPastNewLine(const char*& ip) {
   if (GetNewLine()) {
-    ip = is->ptr;
+    ip = is->inputPtr;
     return True;
   }
   return False;
@@ -69,14 +69,14 @@ bool InputFile::incrementPastNewLine(const char*& ip) {
 bool InputFile::endInputLine() { return GetNewLine(); }
 
 InputString::InputString(const char* str) : InputSource(curFile, curLine) {
-  ptr = str;
+  inputPtr = str;
 }
 
-InputString::InputString() { ptr = 0; }
+InputString::InputString() { inputPtr = 0; }
 
 InputString& InputString::operator=(InputString& s) {
   InputSource::operator=(s);
-  ptr = s.ptr;
+  inputPtr = s.inputPtr;
   return *this;
 }
 
@@ -149,7 +149,7 @@ bool GetNewInputLine() {
   // file, close the file, shifting input to the next source in the queue.
 
   while (is) {
-    if ((is->ptr =
+    if ((is->inputPtr =
              fgets(inputLine, sizeof inputLine, ((InputFile*)is.get())->file)))
       break;
     CloseInputSource();
@@ -218,7 +218,7 @@ void SetParseStart() { startParse = startToken; }
 LineOffset GetParseStart() { return startParse; }
 
 LineOffset GetParsePos() {
-  return is->lineStartOffset() + (long)(is->ptr - inputLine);
+  return is->lineStartOffset() + (long)(is->inputPtr - inputLine);
 }
 
 LineOffset GetTokenEnd() { return endToken; }

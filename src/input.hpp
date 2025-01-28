@@ -28,7 +28,7 @@ struct InputSource {
   std::shared_ptr<InputSource> next;
   std::string fileName;
   int lineNum;
-  strptr ptr;
+  strptr inputPtr;
 };
 
 struct InputFile : InputSource {

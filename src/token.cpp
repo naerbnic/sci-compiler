@@ -84,7 +84,7 @@ void GetRest(bool error) {
 
   if (error && !is) return;
 
-  ip = is->ptr;
+  ip = is->inputPtr;
   symStr.clear();
   pLevel = 0;
   truncate = False;
@@ -100,7 +100,7 @@ void GetRest(bool error) {
           --pLevel;
         else {
           symType = S_STRING;
-          is->ptr = ip;
+          is->inputPtr = ip;
           SetTokenEnd();
           return;
         }
@@ -116,7 +116,7 @@ void GetRest(bool error) {
           if (!error) EarlyEnd();
           return;
         }
-        ip = is->ptr;
+        ip = is->inputPtr;
         continue;
     }
 
@@ -149,7 +149,7 @@ bool NextToken() {
   }
 
   // Get pointer to input in a register
-  ip = is->ptr;
+  ip = is->inputPtr;
 
   // Scan to the start of the next token.
   while (IsSep(*ip)) {
@@ -162,7 +162,7 @@ bool NextToken() {
 
     if (*ip == '\0' || *ip == '\n') {
       if (is->endInputLine())
-        ip = is->ptr;
+        ip = is->inputPtr;
       else {
         symType = S_END;
         return False;
@@ -187,7 +187,7 @@ bool NextToken() {
   if (IsTok(c)) {
     symStr.push_back(c);
     symType = (sym_t)c;
-    is->ptr = ++ip;
+    is->inputPtr = ++ip;
     SetTokenEnd();
     return True;
   }
@@ -222,7 +222,7 @@ bool NextToken() {
     symStr.push_back(c);
     c = *ip;
   }
-  is->ptr = ip;
+  is->inputPtr = ip;
   SetTokenEnd();
 
   return True;
@@ -393,7 +393,7 @@ static pt GetPreprocessorToken() {
 
   //	find first nonwhite
   const char* cp;
-  for (cp = is->ptr; *cp && (*cp == ' ' || *cp == '\t'); cp++);
+  for (cp = is->inputPtr; *cp && (*cp == ' ' || *cp == '\t'); cp++);
 
   //	has to start with #
   if (!*cp || *cp != '#') return PT_NONE;
@@ -405,7 +405,7 @@ static pt GetPreprocessorToken() {
       //	make sure that the full token matches
       cp += len;
       if (!*cp || *cp == '\n' || *cp == ' ' || *cp == '\t') {
-        is->ptr = cp;
+        is->inputPtr = cp;
         return tokens[i].token;
       }
       break;
@@ -468,7 +468,7 @@ static void ReadNumber(strptr ip) {
 
   setSymVal(val);
 
-  is->ptr = ip;
+  is->inputPtr = ip;
   SetTokenEnd();
 }
 
@@ -496,7 +496,7 @@ static void ReadString(strptr ip) {
       case '\n':
         GetNewLine();
         if (!is) Fatal("Unterminated string");
-        ip = is->ptr;
+        ip = is->inputPtr;
         break;
 
       case '\r':
@@ -516,7 +516,7 @@ static void ReadString(strptr ip) {
           if (c == '\n') {
             GetNewLine();
             if (!is) Fatal("Unterminated string");
-            ip = is->ptr;
+            ip = is->inputPtr;
           }
         }
         break;
@@ -571,7 +571,7 @@ static void ReadString(strptr ip) {
   if (c == '\0') Error("Unterminated string");
 
   if (is) {
-    is->ptr = ip;
+    is->inputPtr = ip;
     SetTokenEnd();
   } else {
     EarlyEnd();
@@ -630,6 +630,6 @@ static void ReadKey(strptr ip) {
       break;
   }
 
-  is->ptr = ip;
+  is->inputPtr = ip;
   SetTokenEnd();
 }
