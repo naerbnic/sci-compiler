@@ -100,8 +100,6 @@ Selector* Class::addSelector(Symbol* sym, int what) {
 void InitSelectors() {
   // Add the selectors to the selector symbol table.
 
-  char selStr[200];
-
   for (Symbol* sym = LookupTok(); !CloseP(symType); sym = LookupTok()) {
     // Make sure that the symbol is not already defined.
     if (sym && symType != S_SELECT) {
@@ -110,7 +108,8 @@ void InitSelectors() {
       if (!IsNumber()) UnGetTok();
       continue;
     }
-    strcpy(selStr, symStr);
+
+    std::string selStr = symStr;
 
     GetNumber("Selector number");
     if (!sym)

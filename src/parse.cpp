@@ -127,14 +127,11 @@ bool Parse() {
 }
 
 void Include() {
-  char fileName[MAX_PATH + 1];
-
   GetToken();
   if (symType != S_IDENT && symType != S_STRING)
     Severe("Need a filename: %s", symStr);
   else {
-    strcpy(fileName, symStr);
-    OpenFileAsInput(fileName, True);
+    OpenFileAsInput(symStr, True);
   }
 }
 

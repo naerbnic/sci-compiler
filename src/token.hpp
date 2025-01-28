@@ -103,7 +103,7 @@ const int MaxTokenLen = 2048;
 
 extern int nestedCondCompile;
 extern int selectorIsVar;
-extern char symStr[];
+extern std::string symStr;
 extern TokenSlot tokSym;
 // The last symbol looked up. via GetSymbol()
 extern Symbol* lookupSym;

@@ -19,7 +19,7 @@
 #define ALT_QUOTE '{'
 
 int nestedCondCompile;
-char symStr[MaxTokenLen];
+std::string symStr;
 TokenSlot tokSym;
 
 static constexpr std::string_view binDigits = "01";
@@ -79,14 +79,13 @@ void GetRest(bool error) {
   //	messages.
 
   strptr ip;
-  char* sp;
   int pLevel;
   bool truncate;
 
   if (error && !is) return;
 
   ip = is->ptr;
-  sp = symStr;
+  symStr.clear();
   pLevel = 0;
   truncate = False;
 
@@ -100,7 +99,6 @@ void GetRest(bool error) {
         if (pLevel > 0)
           --pLevel;
         else {
-          *sp = '\0';
           symType = S_STRING;
           is->ptr = ip;
           SetTokenEnd();
@@ -122,10 +120,10 @@ void GetRest(bool error) {
         continue;
     }
 
-    if (!truncate) *sp++ = *ip;
+    if (!truncate) symStr.push_back(*ip);
     ++ip;
 
-    if (sp >= symStr + MaxTokenLen - 1 && !truncate) {
+    if (symStr.length() >= MaxTokenLen && !truncate) {
       if (!error) Warning("Define too long.  Truncated.");
       truncate = True;
     }
@@ -138,7 +136,6 @@ bool NextToken() {
 
   strptr ip;  // pointer to input line
   ubyte c;    // the character
-  char* sp;
 
   if (haveUnGet) {
     haveUnGet = False;
@@ -185,11 +182,10 @@ bool NextToken() {
   SetTokenStart();
 
   c = *ip;
-  sp = symStr;
+  symStr.clear();
 
   if (IsTok(c)) {
-    *sp = c;
-    *++sp = '\0';
+    symStr.push_back(c);
     symType = (sym_t)c;
     is->ptr = ++ip;
     SetTokenEnd();
@@ -223,11 +219,9 @@ bool NextToken() {
       break;
     }
     if (IsIncl(c)) break;
-    *sp = c;
-    ++sp;
+    symStr.push_back(c);
     c = *ip;
   }
-  *sp = '\0';
   is->ptr = ip;
   SetTokenEnd();
 
@@ -422,29 +416,27 @@ static pt GetPreprocessorToken() {
 }
 
 static void ReadNumber(strptr ip) {
-  char* sp;
   int c;
   int base;
   int sign;
   std::string_view validDigits;
 
   SCIWord val = 0;
-
-  sp = symStr;
+  symStr.clear();
 
   // Determine the sign of the number
   if (*ip != '-')
     sign = 1;
   else {
     sign = -1;
-    *sp++ = *ip++;
+    symStr.push_back(*ip++);
   }
 
   // Determine the base of the number
   base = 10;
   if (*ip == '%' || *ip == '$') {
     base = (*ip == '%') ? 2 : 16;
-    *sp++ = *ip++;
+    symStr.push_back(*ip++);
   }
   switch (base) {
     case 2:
@@ -459,7 +451,7 @@ static void ReadNumber(strptr ip) {
   }
 
   while (!IsTerm(*ip)) {
-    *sp = *ip;
+    auto rawChar = *ip;
     c = absl::ascii_tolower(*ip);
     auto char_index = validDigits.find((char)c);
     if (char_index == std::string_view::npos) {
@@ -469,14 +461,13 @@ static void ReadNumber(strptr ip) {
     }
     val = SCIWord((val * base) + char_index);
     ++ip;
-    ++sp;
+    symStr.push_back(rawChar);
   }
 
   val *= sign;
 
   setSymVal(val);
 
-  *sp = '\0';
   is->ptr = ip;
   SetTokenEnd();
 }
@@ -484,12 +475,11 @@ static void ReadNumber(strptr ip) {
 static void ReadString(strptr ip) {
   char c;
   char open;
-  char* sp;
   bool truncated;
   uint32_t n;
 
   truncated = False;
-  sp = symStr;
+  symStr.clear();
   open = *ip++;
 
   symType = S_STRING;
@@ -513,12 +503,14 @@ static void ReadString(strptr ip) {
         break;
 
       case '_':
-        if (!truncated) *sp++ = ' ';
+        if (!truncated) symStr.push_back(' ');
         break;
 
       case ' ':
       case '\t':
-        if (sp[-1] != '\n' && !truncated) *sp++ = ' ';
+        if (!symStr.empty() && symStr.back() != '\n' && !truncated) {
+          symStr.push_back(' ');
+        }
         while ((c = *ip) == ' ' || c == '\t' || c == '\n') {
           ++ip;
           if (c == '\n') {
@@ -534,19 +526,19 @@ static void ReadString(strptr ip) {
           // Then just use char as is.
           switch (c) {
             case 'n':
-              if (!truncated) *sp++ = '\n';
+              if (!truncated) symStr.push_back('\n');
               break;
             case 't':
-              if (!truncated) *sp++ = '\t';
+              if (!truncated) symStr.push_back('\t');
               break;
             case 'r':
               if (!truncated) {
-                *sp++ = '\r';
-                *sp++ = '\n';
+                symStr.push_back('\r');
+                symStr.push_back('\n');
               }
               break;
             default:
-              if (!truncated) *sp++ = c;
+              if (!truncated) symStr.push_back(c);
               break;
           }
 
@@ -560,17 +552,17 @@ static void ReadString(strptr ip) {
           c = absl::ascii_tolower(c);
           int low_digit = hexDigits.find(c);
           n += (uint32_t)low_digit;
-          if (!truncated) *sp++ = (char)n;
+          if (!truncated) symStr.push_back((char)n);
         }
 
         break;
 
       default:
-        if (!truncated) *sp++ = c;
+        if (!truncated) symStr.push_back(c);
         break;
     }
 
-    if (sp >= symStr + MaxTokenLen - 1 && !truncated) {
+    if (symStr.length() >= MaxTokenLen && !truncated) {
       Error("String too large.");
       truncated = True;
     }
@@ -578,13 +570,12 @@ static void ReadString(strptr ip) {
 
   if (c == '\0') Error("Unterminated string");
 
-  *sp = '\0';
-
   if (is) {
     is->ptr = ip;
     SetTokenEnd();
-  } else
+  } else {
     EarlyEnd();
+  }
 }
 
 static uint32_t altKey[] = {
@@ -594,43 +585,48 @@ static uint32_t altKey[] = {
 };
 
 static void ReadKey(strptr ip) {
-  char* sp;
-
   symType = S_NUM;
 
-  sp = symStr;
-  while (!IsTerm(*ip)) *sp++ = *ip++;
-  *sp = '\0';
+  symStr.clear();
+  while (!IsTerm(*ip)) symStr.push_back(*ip++);
 
-  sp = symStr;
-  switch (*sp) {
-    case '^':
+  char firstChar = symStr[0];
+
+  switch (firstChar) {
+    case '^': {
       // A control key.
-      ++sp;
-      if (isalpha(*sp))
-        setSymVal(toupper(*sp) - 0x40);
+      auto ctrlChar = symStr[1];
+      if (isalpha(ctrlChar))
+        setSymVal(toupper(ctrlChar) - 0x40);
       else
         Error("Not a valid control key: %s", symStr);
       break;
+    }
 
-    case '@':
+    case '@': {
       // An alt-key.
-      ++sp;
-      if (isalpha(*sp))
-        setSymVal(altKey[toupper(*sp) - 'A'] << 8);
+      auto altChar = symStr[1];
+      if (isalpha(altChar))
+        setSymVal(altKey[toupper(altChar) - 'A'] << 8);
       else
         Error("Not a valid alt key: %s", symStr);
       break;
+    }
 
-    case '#':
+    case '#': {
       // A function key.
-      ++sp;
-      setSymVal((atoi(sp) + 58) << 8);
+      int num;
+      if (!absl::SimpleAtoi(std::string_view(symStr).substr(1), &num)) {
+        Error("Not a valid function key: %s", symStr);
+        break;
+      }
+      setSymVal((num + 58) << 8);
       break;
+    }
 
     default:
       // Just a character...
-      setSymVal(*sp);
+      setSymVal(firstChar);
       break;
   }
 
