@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <ranges>
 #include <string>
+#include <memory>
 #include <vector>
 
 struct ANode;

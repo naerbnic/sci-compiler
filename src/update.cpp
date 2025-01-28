@@ -78,7 +78,7 @@ void WriteClassTbl() {
 
   // Write the table out.
   std::string name = ResNameMake(MemResVocab, CLASSTBL_VOCAB);
-  OutputFile out(outDir / name);
+  OutputFile out((outDir / name).string());
   out.Write(resID, 2);
   for (index = 0; index < maxClassNum + 1; ++index) {
     out.WriteWord(classTbl[index].objID);
@@ -99,7 +99,7 @@ void WritePropOffsets() {
   theFile = OpenFileAsInput("offsets.txt", true);
 
   std::string name = ResNameMake(MemResVocab, PROPOFS_VOCAB);
-  OutputFile out(outDir / name);
+  OutputFile out((outDir / name).string());
 
   // Write out the resource header (this will be a vocabulary resource).
   out.Write(resHdr, sizeof resHdr);
@@ -213,7 +213,7 @@ static void WriteSelectorVocab() {
   uint32_t tblLen;
 
   std::string resName = ResNameMake(MemResVocab, SELECTOR_VOCAB);
-  std::string fileName = outDir / resName;
+  std::string fileName = (outDir / resName).string();
 
   // Compute the size of the table needed to hold offsets to all selectors,
   // allocate the table, and initialize it to point to the byte following

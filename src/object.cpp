@@ -109,7 +109,7 @@ void DoClass() {
   if (sn) sn->val = super->num;
 
   theClass->script = script;
-  theClass->file = theFile->fileName;
+  theClass->file = theFile->fileName.string();
 
   // Get any properties, methods, or procedures for this class.
   InstanceBody(theClass);
