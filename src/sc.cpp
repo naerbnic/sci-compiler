@@ -42,11 +42,6 @@ static void ShowInfo();
 static void InstallCommandLineDefine(std::string_view);
 static SciTargetArch GetTargetArchitecture(std::string_view);
 
-//	used by getargs
-static std::string outDirPtr;
-
-#if !defined(WINDOWS)
-
 Compiler::Compiler() {
   hunkList = std::make_unique<CodeList>();
   heapList = std::make_unique<FixupList>();
@@ -57,7 +52,7 @@ int main(int argc, char **argv) {
   absl::InitializeSymbolizer(argv[0]);
   absl::FailureSignalHandlerOptions options;
   absl::InstallFailureSignalHandler(options);
-  argparse::ArgumentParser program("sc");
+  argparse::ArgumentParser program("sc", banner);
   program.add_argument("-a")
       .help("abort compile if database locked")
       .default_value(false)
@@ -122,7 +117,7 @@ int main(int argc, char **argv) {
       .append()
       .nargs(1);
   program.add_argument("files")
-      .default_value(std::vector<std::filesystem::path>())
+      .default_value(std::vector<std::string>())
       .remaining();
 
   try {
@@ -138,7 +133,7 @@ int main(int argc, char **argv) {
   maxVars = program.get<int>("-g");
   listCode = program.get<bool>("-l");
   noAutoName = program.get<bool>("-n");
-  outDirPtr = program.get<std::string>("-o");
+  outDir = program.get<std::string>("-o");
   writeOffsets = program.get<bool>("-O");
   showSelectors = program.get<bool>("-s");
   dontLock = program.get<bool>("-u");
@@ -155,7 +150,6 @@ int main(int argc, char **argv) {
 
   sc = std::make_unique<Compiler>();
 
-  output("%s", banner);
   if (files.empty()) {
     std::cerr << "No input files specified" << std::endl;
     std::cerr << program;
@@ -164,8 +158,6 @@ int main(int argc, char **argv) {
 
   // See if the first file to be compiled exists.  If not, exit.
   if (!FileExists(files[0])) Panic("Can't find %s", files[0]);
-
-  outDir = outDirPtr;
 
   // Set the include path.
   SetIncludePath(cli_include_path);
@@ -204,8 +196,6 @@ int main(int argc, char **argv) {
 
   return totalErrors != 0;
 }
-
-#endif
 
 static void CompileFile(std::string_view fileName) {
   // Do some initialization.
