@@ -397,3 +397,6 @@ build/
 .vscode/
 
 /bazel-*
+
+# Ignore MODULE.bazel.lock, as it changes when working on different platforms.
+/MODULE.bazel.lock
