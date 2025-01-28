@@ -8,6 +8,7 @@
 
 #include <string_view>
 
+#include "absl/strings/str_format.h"
 #include "input.hpp"
 #include "listing.hpp"
 #include "platform.hpp"
@@ -34,8 +35,8 @@ void EarlyEnd() { Fatal("Unexpected end of input."); }
 
 static void beep() { putc('\a', stderr); }
 
-int AssertFail(char* file, int line, char* expression) {
-  printf("Assertion failed in %s(%d): %s\n", file, line, expression);
+int AssertFail(std::string_view file, int line, std::string_view expression) {
+  absl::PrintF("Assertion failed in %s(%d): %s\n", file, line, expression);
   abort();
 
   // Return value is only useful for the way this function is used in

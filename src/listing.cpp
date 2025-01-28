@@ -259,43 +259,44 @@ void ListByte(uint8_t b) {
 }
 
 void ListText(std::string_view s) {
-  char* l;
-  char line[81];
+  std::string line;
 
   ListAsCode("text");
 
-  l = line;
-  *l++ = '"';  // start with a quote
+  line.push_back('"');  // start with a quote
   auto curr_it = s.begin();
   while (1) {
     // Copy from the text until the output line is full.
 
-    while (l < &line[80] && curr_it != s.end() && *curr_it != '\n') {
-      if (*curr_it == '%') *l++ = '%';
-      *l++ = *curr_it++;
+    while (line.length() <= 80 && curr_it != s.end() && *curr_it != '\n') {
+      if (*curr_it == '%') line.push_back('%');
+      line.push_back(*curr_it++);
     }
 
     // If the line is not full, we are done.  Finish with a quote.
 
-    if (l < &line[80]) {
-      *l++ = '"';
-      *l++ = '\n';
-      *l = '\0';
+    if (line.length() <= 80) {
+      line.append("\"\n");
       Listing("%s", line);
       break;
     }
 
     // Scan back in the text to a word break, then print the line.
-
-    while (l > line && *l != ' ') {
-      --l;
-      --curr_it;
+    // FIXME: What happens if there is no break?
+    std::string_view line_view = line;
+    auto last_space_index = line_view.rfind(' ');
+    if (last_space_index == std::string::npos) {
+      line_view = line_view.substr(0, 80);
+      curr_it -= line.length() - 80;
+    } else {
+      line_view = line_view.substr(0, last_space_index);
+      curr_it -= line.length() - last_space_index;
+      ++curr_it;  // point past the space
     }
-    *l = '\0';
-    ++curr_it;  // point past the space
-    Listing("%s", line);
 
-    l = line;
+    Listing("%s", line_view);
+
+    line.clear();
   }
 }
 

@@ -7,6 +7,7 @@
 //	for size_t
 #include <stddef.h>
 #include <stdio.h>
+#include <string_view>
 #include <string.h>
 
 //	establish compiler-dependent types and other information
@@ -45,7 +46,7 @@ inline S Min(S a, T b) {
 //	Normally, it will simply call the msgMgr, but we give it its own
 // function 	so anyone can use assert() without having to drag MSG.HPP
 // around.
-int AssertFail(char* file, int line, char* expression);
+int AssertFail(std::string_view file, int line, std::string_view expression);
 
 // Sufficient MAX_PATH for all platforms
 
