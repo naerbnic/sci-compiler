@@ -4,6 +4,7 @@
 #ifndef LIST_HPP
 #define LIST_HPP
 
+#include <list>
 #include <memory>
 
 class List;
@@ -77,6 +78,91 @@ class List {
   friend ListIter;
   LNode* head;  // head of the list
   LNode* tail;  // tail of the list
+};
+
+template <class T>
+class TList {
+  using BaseList = std::list<std::unique_ptr<T>>;
+
+ public:
+  TList() : list_(std::make_unique<BaseList>()) {}
+
+  // Smart pointer to a list node.
+  class Ref {
+   public:
+    explicit operator bool() const { return iterator_ != parent_->end(); }
+    T* operator->() const { return iterator_->get(); }
+    T* get() const { return iterator_->get(); }
+    T& operator*() const { return *get(); }
+
+    bool operator==(const Ref& other) const {
+      if (!parent_ == other.parent_) return false;
+      return iterator_ == other.iterator_;
+    }
+
+    std::optional<Ref> next() const {
+      auto next_iter = iterator_;
+      ++next_iter;
+      if (next_iter == parent_->end()) {
+        return std::nullopt;
+      }
+      return Ref(parent_, next_iter);
+    }
+
+    std::optional<Ref> prev() const {
+      if (iterator_ == parent_->begin()) {
+        return std::nullopt;
+      }
+      auto prev_iter = iterator_;
+      --prev_iter;
+      return Ref(parent_, prev_iter);
+    }
+
+    // Add node nn before node ln in the list.
+    Ref addBefore(LNode* ln, std::unique_ptr<T> nn) {
+      auto it = parent_->emplace(iterator_, std::move(nn));
+      return Ref(parent_, it);
+    }
+
+    Ref addAfter(std::unique_ptr<T> nn) {
+      auto it = parent_->emplace(iterator_, std::move(nn));
+      ++it;
+      return Ref(parent_, it);
+    }
+
+   private:
+    Ref(BaseList* parent, BaseList::iterator iterator)
+        : parent_(parent), iterator_(iterator) {}
+    friend class TList;
+    BaseList* parent_;
+    // A null element is the end of the list.
+    BaseList::iterator iterator_;
+  };
+
+  // Delete all elements in the list.
+  void clear() { list_->clear(); }
+
+  // Add ln to the tail of the list.
+  Ref add(std::unique_ptr<T> ln) {
+    auto it = list_->emplace(list_.end(), std::move(ln));
+    return Ref(list_.get(), it);
+  }
+
+  // Add ln to the head of the list.
+  Ref addFront(std::unique_ptr<T> ln) {
+    auto it = list_.emplace(list_.begin(), std::move(ln));
+    return Ref(list_.get(), it);
+  }
+
+  Ref contains(T* ln) {
+    auto it = std::ranges::find_if(*list_, [ln](const std::unique_ptr<T>& ptr) {
+      return ptr.get() == ln;
+    });
+    return Ref(list_.get(), it);
+  }
+
+ private:
+  std::unique_ptr<BaseList> list_;
 };
 
 #endif
