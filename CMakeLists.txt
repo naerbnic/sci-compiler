@@ -22,7 +22,10 @@ FetchContent_Declare(absl
 FetchContent_Declare(argparse
   GIT_REPOSITORY https://github.com/p-ranav/argparse.git
   GIT_TAG origin/master)
-FetchContent_MakeAvailable(absl argparse)
+FetchContent_Declare(boost_intrusive
+  GIT_REPOSITORY https://github.com/boostorg/intrusive.git
+  GIT_TAG origin/master)
+FetchContent_MakeAvailable(absl argparse boost_intrusive)
 
 # Add source to this project's executable.
 add_executable (sc

@@ -4,8 +4,10 @@
 #ifndef LIST_HPP
 #define LIST_HPP
 
-#include <list>
+#include <boost/intrusive/list.hpp>
 #include <memory>
+
+#include "casts.hpp"
 
 class List;
 class ListIter;
@@ -80,89 +82,205 @@ class List {
   LNode* tail;  // tail of the list
 };
 
+class TListBase;
+
+class TNode {
+ public:
+  TNode();
+  virtual ~TNode();
+
+ private:
+  friend class TListBase;
+
+  template <class T>
+  friend class TList;
+
+  // A pointer to the next field pointing to this object;
+  //
+  // If this is the head node, this is the next field of the head node.
+  TNode** next_to_this();
+
+  // A pointer to the prev field pointing to this object.j
+  //
+  // If this is the tail node, this is the prev field of the tail node.
+  TNode** prev_to_this();
+
+  bool IsInList();
+  void RemoveFromList();
+  void InsertAfter(TNode* ln);
+  void InsertBefore(TNode* ln);
+  void ReplaceWith(TNode* ln);
+
+  TListBase* list_;
+  TNode* next_;
+  TNode* prev_;
+};
+
+class TListBase {
+ public:
+  TListBase() : head_(nullptr), tail_(nullptr) {}
+
+  // Add ln to the tail of the list.
+  void addBack(TNode* ln);
+
+  // Add ln to the head of the list.
+  void addFront(TNode* ln);
+
+  TNode* front() { return head_; }
+  TNode* back() { return tail_; }
+
+  TNode* removeFront();
+  TNode* removeBack();
+
+  // Returns true if this node is in this list.
+  bool contains(TNode* ln);
+
+ private:
+  friend class TNode;
+
+  TNode* head_;
+  TNode* tail_;
+};
+
 template <class T>
 class TList {
-  using BaseList = std::list<std::unique_ptr<T>>;
+  static_assert(std::convertible_to<T*, TNode*>);
 
  public:
-  TList() : list_(std::make_unique<BaseList>()) {}
+  TList() = default;
 
   // Smart pointer to a list node.
-  class Ref {
+  class iterator {
    public:
-    explicit operator bool() const { return iterator_ != parent_->end(); }
-    T* operator->() const { return iterator_->get(); }
-    T* get() const { return iterator_->get(); }
-    T& operator*() const { return *get(); }
+    using value_type = T;
 
-    bool operator==(const Ref& other) const {
-      if (!parent_ == other.parent_) return false;
-      return iterator_ == other.iterator_;
+    // This should ultimately be unused, as the difference between two
+    // iterators is not O(1), and won't be implemented unless necessary.
+    using difference_type = std::ptrdiff_t;
+    iterator() : parent_(nullptr), curr_item_(nullptr) {}
+
+    T* operator->() const { return curr_item_; }
+    T* get() const { return curr_item_; }
+    T& operator*() const { return *curr_item_; }
+
+    bool operator==(const iterator& other) const {
+      if (parent_ != other.parent_) return false;
+      return curr_item_ == other.curr_item_;
     }
 
-    std::optional<Ref> next() const {
-      auto next_iter = iterator_;
-      ++next_iter;
-      if (next_iter == parent_->end()) {
-        return std::nullopt;
-      }
-      return Ref(parent_, next_iter);
+    bool operator!=(const iterator& other) const { return !(*this == other); }
+
+    iterator& operator++() {
+      advance();
+      return *this;
     }
 
-    std::optional<Ref> prev() const {
-      if (iterator_ == parent_->begin()) {
-        return std::nullopt;
-      }
-      auto prev_iter = iterator_;
-      --prev_iter;
-      return Ref(parent_, prev_iter);
+    iterator operator++(int) {
+      iterator tmp = *this;
+      advance();
+      return tmp;
+    }
+
+    iterator& operator--() {
+      retreat();
+      return *this;
+    }
+
+    iterator operator--(int) {
+      iterator tmp = *this;
+      retreat();
+      return tmp;
     }
 
     // Add node nn before node ln in the list.
-    Ref addBefore(LNode* ln, std::unique_ptr<T> nn) {
-      auto it = parent_->emplace(iterator_, std::move(nn));
-      return Ref(parent_, it);
+    void addBefore(std::unique_ptr<T> nn) {
+      if (curr_item_ == nullptr) {
+        parent_->addBack(nn.release());
+      } else {
+        curr_item_->InsertBefore(nn.release());
+      }
     }
 
-    Ref addAfter(std::unique_ptr<T> nn) {
-      auto it = parent_->emplace(iterator_, std::move(nn));
-      ++it;
-      return Ref(parent_, it);
+    void addAfter(std::unique_ptr<T> nn) {
+      assert(curr_item_);
+      curr_item_->InsertAfter(nn.release());
+    }
+
+    std::unique_ptr<T> remove() {
+      assert(curr_item_);
+      auto* next = curr_item_->next_;
+      curr_item_->RemoveFromList();
+      return std::unique_ptr<T>(curr_item_);
+      curr_item_ = next;
+    }
+
+    std::unique_ptr<T> replaceWith(std::unique_ptr<T> nn) {
+      assert(curr_item_);
+      auto* removed_node = curr_item_;
+      auto* new_node = nn.release();
+      removed_node->ReplaceWith(new_node);
+      curr_item_ = new_node;
+      return std::unique_ptr<T>(curr_item_);
     }
 
    private:
-    Ref(BaseList* parent, BaseList::iterator iterator)
-        : parent_(parent), iterator_(iterator) {}
     friend class TList;
-    BaseList* parent_;
+
+    iterator(TListBase* parent, T* curr_item)
+        : parent_(parent), curr_item_(curr_item) {}
+
+    void advance() {
+      assert(curr_item_);
+      curr_item_ = down_cast<T>(curr_item_->next_);
+    }
+
+    void retreat() {
+      assert(curr_item_ != parent_->front());
+      if (curr_item_ == nullptr) {
+        curr_item_ = down_cast<T>(parent_->back());
+      } else {
+        curr_item_ = down_cast<T>(curr_item_->prev_);
+      }
+    }
+
+    TListBase* parent_;
     // A null element is the end of the list.
-    BaseList::iterator iterator_;
+    T* curr_item_;
   };
 
+  static_assert(std::bidirectional_iterator<iterator>);
+
+  iterator begin() {
+    return iterator(list_.get(), down_cast<T>(list_->front()));
+  }
+  iterator end() { return iterator(list_.get(), nullptr); }
+
   // Delete all elements in the list.
-  void clear() { list_->clear(); }
+  void clear() {
+    TNode* ln = nullptr;
+    while ((ln = list_->removeFront())) {
+      delete ln;
+    }
+  }
 
   // Add ln to the tail of the list.
-  Ref add(std::unique_ptr<T> ln) {
-    auto it = list_->emplace(list_.end(), std::move(ln));
-    return Ref(list_.get(), it);
+  T* addBack(std::unique_ptr<T> ln) {
+    auto* node = ln.release();
+    list_->addBack(node);
+    return node;
   }
 
   // Add ln to the head of the list.
-  Ref addFront(std::unique_ptr<T> ln) {
-    auto it = list_.emplace(list_.begin(), std::move(ln));
-    return Ref(list_.get(), it);
+  T* addFront(std::unique_ptr<T> ln) {
+    auto* node = ln.release();
+    list_->addFront(node);
+    return node;
   }
 
-  Ref contains(T* ln) {
-    auto it = std::ranges::find_if(*list_, [ln](const std::unique_ptr<T>& ptr) {
-      return ptr.get() == ln;
-    });
-    return Ref(list_.get(), it);
-  }
+  bool contains(T* ln) { return list_->contains(ln); }
 
  private:
-  std::unique_ptr<BaseList> list_;
+  std::unique_ptr<TListBase> list_;
 };
 
 #endif
