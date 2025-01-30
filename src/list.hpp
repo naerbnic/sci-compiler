@@ -162,6 +162,8 @@ class TList {
     T* get() const { return curr_item_; }
     T& operator*() const { return *curr_item_; }
 
+    explicit operator bool() const { return curr_item_ != nullptr; }
+
     bool operator==(const iterator& other) const {
       if (parent_ != other.parent_) return false;
       return curr_item_ == other.curr_item_;
