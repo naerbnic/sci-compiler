@@ -103,26 +103,26 @@ uint32_t OptimizeProc(AList* al) {
       case op_pushi: {
         int val = an->value;
         if (val == 0) {
-          it.replaceWith(an, std::make_unique<ANOpCode>(op_push0));
+          it.replaceWith(std::make_unique<ANOpCode>(op_push0));
           ++nOptimizations;
 
         } else if (val == 1) {
-          it.replaceWith(an, std::make_unique<ANOpCode>(op_push1));
+          it.replaceWith(std::make_unique<ANOpCode>(op_push1));
           ++nOptimizations;
 
         } else if (val == 2) {
-          it.replaceWith(an, std::make_unique<ANOpCode>(op_push2));
+          it.replaceWith(std::make_unique<ANOpCode>(op_push2));
           ++nOptimizations;
 
         } else if (accType == IMMEDIATE && accVal == val) {
           // If accumulator already contains this value,
           // just push it.
-          it.replaceWith(an, std::make_unique<ANOpCode>(op_push));
+          it.replaceWith(std::make_unique<ANOpCode>(op_push));
           ++nOptimizations;
 
         } else if (stackType == IMMEDIATE && stackVal == val) {
           // If stack already contains this value, dup it.
-          it.replaceWith(an, std::make_unique<ANOpCode>(op_dup));
+          it.replaceWith(std::make_unique<ANOpCode>(op_dup));
           ++nOptimizations;
         }
 
@@ -144,13 +144,13 @@ uint32_t OptimizeProc(AList* al) {
           stackType = IMMEDIATE;
           stackVal = an->value;
           op = byteOp ? op_pushi | OP_BYTE : op_pushi;
-          it.replaceWith(an, std::make_unique<ANOpSign>(op, stackVal));
+          it.replaceWith(std::make_unique<ANOpSign>(op, stackVal));
           ++nOptimizations;
 
         } else if (accType == IMMEDIATE && accVal == an->value) {
           // If acc already has this value, delete
           // this node.
-          it.remove(an);
+          it.remove();
           ++nOptimizations;
 
         } else {
@@ -207,7 +207,7 @@ uint32_t OptimizeProc(AList* al) {
           if (indexed(op)) stackType = UNKNOWN;
 
         } else if (accType == PROP && accVal == an->value && !indexed(op)) {
-          it.remove(an);
+          it.remove();
           ++nOptimizations;
 
         } else if (indexed(op))
@@ -226,13 +226,13 @@ uint32_t OptimizeProc(AList* al) {
         else if (accType == PROP && an->value == accVal) {
           // Replace a load to the stack with the acc's current
           // value by a push.
-          it.replaceWith(an, std::make_unique<ANOpCode>(op_push));
+          it.replaceWith(std::make_unique<ANOpCode>(op_push));
           ++nOptimizations;
 
         } else if (stackType == PROP && an->value == stackVal) {
           // Replace a load to the stack of its current value
           // with a dup.
-          it.replaceWith(an, std::make_unique<ANOpCode>(op_dup));
+          it.replaceWith(std::make_unique<ANOpCode>(op_dup));
           ++nOptimizations;
 
         } else {
@@ -251,10 +251,9 @@ uint32_t OptimizeProc(AList* al) {
         } else {
           auto op_it = it.findOp(op_send);
           if (op_it) {
-            an = (ANOpSign*)it.replaceWith(an,
-                                           std::make_unique<ANSend>(op_self));
+            an = (ANOpSign*)it.replaceWith(std::make_unique<ANSend>(op_self));
             ((ANSend*)an)->numArgs = ((ANSend*)op_it->get())->numArgs;
-            op_it->remove(op_it->get());
+            op_it->remove();
             ++nOptimizations;
             stackType = accType = UNKNOWN;
 
@@ -282,7 +281,7 @@ uint32_t OptimizeProc(AList* al) {
             an->value == accVal) {
           // Then this just loads the acc with its present value.
           // Remove the node.
-          it.remove(an);
+          it.remove();
           ++nOptimizations;
           break;
         }
@@ -305,7 +304,7 @@ uint32_t OptimizeProc(AList* al) {
         } else if ((op & OP_VAR) == accType && an->value == accVal) {
           // Replace a load to the stack with the acc's current
           // value by a push.
-          it.replaceWith(an, std::make_unique<ANOpCode>(op_push));
+          it.replaceWith(std::make_unique<ANOpCode>(op_push));
           stackType = accType;
           stackVal = accVal;
           ++nOptimizations;
@@ -313,7 +312,7 @@ uint32_t OptimizeProc(AList* al) {
         } else if ((op & OP_VAR) == stackType && an->value == stackVal) {
           // Replace a load to the stack of its current value
           // with a dup.
-          it.replaceWith(an, std::make_unique<ANOpCode>(op_dup));
+          it.replaceWith(std::make_unique<ANOpCode>(op_dup));
           ++nOptimizations;
 
         } else if (indexed(op)) {

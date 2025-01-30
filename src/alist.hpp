@@ -25,8 +25,8 @@ class AListIter {
   ANode* operator->();
 
   AListIter next() const;
-  std::unique_ptr<ANode> remove(ANode* an);
-  ANode* replaceWith(ANode* an, std::unique_ptr<ANode> nn);
+  std::unique_ptr<ANode> remove();
+  ANode* replaceWith(std::unique_ptr<ANode> nn);
 
   // Return a pointer to the next opcode node if it is opcode
   // 'op', NULL if it isn't.

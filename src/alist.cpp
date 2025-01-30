@@ -27,17 +27,11 @@ AListIter AListIter::next() const {
   return it;
 }
 
-std::unique_ptr<ANode> AListIter::remove(ANode* an) {
-  if (an != get()) {
-    throw std::runtime_error("AListIter::replaceWith: an != get()");
-  }
+std::unique_ptr<ANode> AListIter::remove() {
   return std::unique_ptr<ANode>(static_cast<ANode*>(iter_.remove().release()));
 }
 
-ANode* AListIter::replaceWith(ANode* an, std::unique_ptr<ANode> nn) {
-  if (an != get()) {
-    throw std::runtime_error("AListIter::replaceWith: an != get()");
-  }
+ANode* AListIter::replaceWith(std::unique_ptr<ANode> nn) {
   return static_cast<ANode*>(iter_.replaceWith(std::move(nn)));
 }
 
@@ -55,7 +49,7 @@ bool AListIter::removeOp(uint32_t op) {
   auto result = findOp(op);
   if (!result) return false;
 
-  result->remove(result->get());
+  result->remove();
 
   return true;
 }
