@@ -8,51 +8,48 @@ LNode* ListIter::get() { return cur_; }
 void ListIter::advance() { cur_ = cur_->next(); }
 ListIter::operator bool() { return cur_ != nullptr; }
 
-std::unique_ptr<LNode> ListIter::remove(LNode* ln) {
-  bool removing_cur = ln == cur_;
-  auto* prev = ln->prev_;
-  if (!ln->next_)
-    list_->tail = ln->prev_;
+std::unique_ptr<LNode> ListIter::remove() {
+  auto* prev = cur_->prev_;
+  if (!cur_->next_)
+    list_->tail = cur_->prev_;
   else
-    ln->next_->prev_ = ln->prev_;
+    cur_->next_->prev_ = cur_->prev_;
 
-  if (!ln->prev_)
-    list_->head = ln->next_;
+  if (!cur_->prev_)
+    list_->head = cur_->next_;
   else
-    ln->prev_->next_ = ln->next_;
+    cur_->prev_->next_ = cur_->next_;
 
-  if (removing_cur) {
-    if (prev == nullptr) {
-      cur_ = list_->front();
-    } else {
-      cur_ = prev;
-    }
+  auto* old_value = cur_;
+
+  if (prev == nullptr) {
+    cur_ = list_->front();
+  } else {
+    cur_ = prev;
   }
-  return std::unique_ptr<LNode>(ln);
+  return std::unique_ptr<LNode>(old_value);
 }
 
-LNode* ListIter::replaceWith(LNode* ln, std::unique_ptr<LNode> nnp) {
-  if (cur_ == ln) {
-    cur_ = nnp.get();
-  }
+LNode* ListIter::replaceWith(std::unique_ptr<LNode> nnp) {
+  auto* old_value = cur_;
+  cur_ = nnp.release();
   // Take ownership of the node
-  auto* nn = nnp.release();
-  nn->next_ = ln->next_;
-  nn->prev_ = ln->prev_;
+  cur_->next_ = old_value->next_;
+  cur_->prev_ = old_value->prev_;
 
-  if (!nn->next_)
-    list_->tail = nn;
+  if (!cur_->next_)
+    list_->tail = cur_;
   else
-    nn->next_->prev_ = nn;
+    cur_->next_->prev_ = cur_;
 
-  if (!nn->prev_)
-    list_->head = nn;
+  if (!cur_->prev_)
+    list_->head = cur_;
   else
-    nn->prev_->next_ = nn;
+    cur_->prev_->next_ = cur_;
 
-  delete ln;
+  delete old_value;
 
-  return nn;
+  return cur_;
 }
 
 List::List() { head = tail = 0; }

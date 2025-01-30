@@ -34,10 +34,10 @@ class ListIter {
   explicit operator bool();
 
   // Remove node ln from the list. Returns a unique_ptr to the returned node.
-  std::unique_ptr<LNode> remove(LNode* ln);
+  std::unique_ptr<LNode> remove();
 
   // Replace node ln with node nn, return a pointer to node nn.
-  LNode* replaceWith(LNode* ln, std::unique_ptr<LNode> nn);
+  LNode* replaceWith(std::unique_ptr<LNode> nn);
 
  private:
   friend class List;

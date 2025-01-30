@@ -31,15 +31,14 @@ std::unique_ptr<ANode> AListIter::remove(ANode* an) {
   if (an != get()) {
     throw std::runtime_error("AListIter::replaceWith: an != get()");
   }
-  return std::unique_ptr<ANode>(
-      static_cast<ANode*>(iter_.remove(an).release()));
+  return std::unique_ptr<ANode>(static_cast<ANode*>(iter_.remove().release()));
 }
 
 ANode* AListIter::replaceWith(ANode* an, std::unique_ptr<ANode> nn) {
   if (an != get()) {
     throw std::runtime_error("AListIter::replaceWith: an != get()");
   }
-  return static_cast<ANode*>(iter_.replaceWith(an, std::move(nn)));
+  return static_cast<ANode*>(iter_.replaceWith(std::move(nn)));
 }
 
 std::optional<AListIter> AListIter::findOp(uint32_t op) const {
