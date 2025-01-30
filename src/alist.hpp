@@ -119,10 +119,11 @@ struct AList {
   }
 
  protected:
+  friend class FixupList;
   List list_;
 };
 
-class FixupList : public AList {
+class FixupList {
   // A FixupList is an AList which has elements in it which need to be relocated
   // by the interpreter at load time.  It builds a table of offsets needing
   // relocation which is appended to the end of the object code being generated.
@@ -152,15 +153,26 @@ class FixupList : public AList {
   // The word at offset 'ofs' in the object file needs relocation.
   // Add the offset to the fixup table.
 
-  ANode* front() { return down_cast<ANode>(list_.front()); }
+  ANode* front() { return down_cast<ANode>(list_.list_.front()); }
 
   void addAfter(ANode* ln, std::unique_ptr<ANode> nn) {
-    list_.addAfter(ln, std::move(nn));
+    list_.list_.addAfter(ln, std::move(nn));
   }
 
-  bool contains(ANode* ln) { return list_.contains(ln); }
+  bool contains(ANode* ln) { return list_.list_.contains(ln); }
+
+  template <class T, class... Args>
+  T* newNode(Args&&... args) {
+    auto node = std::make_unique<T>(std::forward<Args>(args)...);
+    auto* node_ptr = node.get();
+    list_.list_.addBack(std::move(node));
+    return node_ptr;
+  }
+
+  AList* getList() { return &list_; }
 
  protected:
+  AList list_;
   std::vector<size_t> fixups;  // storage for fixup values
   size_t fixOfs;               // offset of start of fixups
 };

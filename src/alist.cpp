@@ -116,7 +116,7 @@ FixupList::FixupList() {}
 FixupList::~FixupList() { clear(); }
 
 void FixupList::clear() {
-  list_.clear();
+  list_.list_.clear();
   fixups.clear();
 
   // All fixup lists have a word node at the start which is the offset
@@ -125,7 +125,7 @@ void FixupList::clear() {
 }
 
 size_t FixupList::setOffset(size_t ofs) {
-  fixOfs = AList::setOffset(ofs);
+  fixOfs = list_.setOffset(ofs);
   return fixOfs;
 }
 
@@ -133,7 +133,7 @@ void FixupList::initFixups() {
   // Set offset to fixup table.  If the table is on an odd boundary,
   // adjust to an even one.
 
-  ((ANWord*)list_.front())->value = fixOfs + (fixOfs & 1);
+  ((ANWord*)list_.list_.front())->value = fixOfs + (fixOfs & 1);
   fixups.clear();
 }
 
@@ -168,7 +168,7 @@ void FixupList::addFixup(size_t ofs) { fixups.push_back(ofs); }
 
 void FixupList::emit(OutputFile* out) {
   initFixups();
-  AList::emit(out);
+  list_.emit(out);
   emitFixups(out);
 }
 
@@ -177,7 +177,7 @@ void FixupList::emit(OutputFile* out) {
 ///////////////////////////////////////////////////
 
 void CodeList::optimize() {
-  AList::optimize();
+  list_.optimize();
 
   // Make a first pass, resolving offsets and converting to byte offsets
   // where possible.

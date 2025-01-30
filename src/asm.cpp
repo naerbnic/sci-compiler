@@ -49,7 +49,7 @@ void InitAsm() {
   dispTbl->finish();
 
   codeStart = 0;
-  curList = sc->hunkList.get();
+  curList = sc->hunkList->getList();
 }
 
 void Assemble() {
@@ -89,12 +89,12 @@ void Assemble() {
       "----------------------\n"
       "-------- Heap --------\n"
       "----------------------\n");
-  sc->heapList->emit(obj_files.heap.get());
   Listing(
       "\n\n\n\n"
       "----------------------\n"
       "-------- Hunk --------\n"
       "----------------------\n");
+
   sc->hunkList->emit(obj_files.hunk.get());
 
   sc->heapList->clear();
