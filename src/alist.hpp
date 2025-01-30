@@ -102,7 +102,7 @@ struct AList : List {
   T* newNode(Args&&... args) {
     auto node = std::make_unique<T>(std::forward<Args>(args)...);
     auto* node_ptr = node.get();
-    add(std::move(node));
+    addBack(std::move(node));
     return node_ptr;
   }
 

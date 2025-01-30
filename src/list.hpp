@@ -56,7 +56,7 @@ class List {
   void clear();
   // Uses del() to remove each element from the list and delete it.
 
-  void add(std::unique_ptr<LNode> ln);
+  void addBack(std::unique_ptr<LNode> ln);
   // Add ln to the tail of the list.
 
   void addFront(std::unique_ptr<LNode> ln);

@@ -66,7 +66,7 @@ void List::clear() {
   head = tail = nullptr;
 }
 
-void List::add(std::unique_ptr<LNode> lnp) {
+void List::addBack(std::unique_ptr<LNode> lnp) {
   auto* ln = lnp.release();
   ln->next_ = 0;
   ln->prev_ = tail;
@@ -105,7 +105,7 @@ void List::addAfter(LNode* ln, std::unique_ptr<LNode> nnp) {
 
 void List::addBefore(LNode* ln, std::unique_ptr<LNode> nnp) {
   if (!ln) {
-    add(std::move(nnp));
+    addBack(std::move(nnp));
     return;
   }
 
