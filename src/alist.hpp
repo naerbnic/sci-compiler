@@ -70,7 +70,7 @@ class AListIter {
   ListIter iter_;
 };
 
-struct AList : List {
+struct AList {
   // AList (assembly list) is a list of ANodes (assembly nodes).
 
   ANOpCode* nextOp(ANode* start);
@@ -96,13 +96,17 @@ struct AList : List {
   // Do any possible optimizations on this list.  Currently
   // only applies to subclass CodeList.
 
-  AListIter iter() { return AListIter(List::iter()); }
+  AListIter iter() { return AListIter(list_.iter()); }
+
+  void addBefore(ANode* ln, std::unique_ptr<ANode> nn) {
+    list_.addBefore(ln, std::move(nn));
+  }
 
   template <class T, class... Args>
   T* newNode(Args&&... args) {
     auto node = std::make_unique<T>(std::forward<Args>(args)...);
     auto* node_ptr = node.get();
-    addBack(std::move(node));
+    list_.addBack(std::move(node));
     return node_ptr;
   }
 
@@ -110,9 +114,12 @@ struct AList : List {
   T* newNodeBefore(ANode* before, Args&&... args) {
     auto node = std::make_unique<T>(std::forward<Args>(args)...);
     auto node_ptr = node.get();
-    addBefore(before, std::move(node));
+    list_.addBefore(before, std::move(node));
     return node_ptr;
   }
+
+ protected:
+  List list_;
 };
 
 class FixupList : public AList {
@@ -144,6 +151,14 @@ class FixupList : public AList {
   void addFixup(size_t ofs);
   // The word at offset 'ofs' in the object file needs relocation.
   // Add the offset to the fixup table.
+
+  ANode* front() { return down_cast<ANode>(list_.front()); }
+
+  void addAfter(ANode* ln, std::unique_ptr<ANode> nn) {
+    list_.addAfter(ln, std::move(nn));
+  }
+
+  bool contains(ANode* ln) { return list_.contains(ln); }
 
  protected:
   std::vector<size_t> fixups;  // storage for fixup values

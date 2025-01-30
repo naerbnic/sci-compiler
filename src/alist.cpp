@@ -116,7 +116,7 @@ FixupList::FixupList() {}
 FixupList::~FixupList() { clear(); }
 
 void FixupList::clear() {
-  AList::clear();
+  list_.clear();
   fixups.clear();
 
   // All fixup lists have a word node at the start which is the offset
@@ -133,7 +133,7 @@ void FixupList::initFixups() {
   // Set offset to fixup table.  If the table is on an odd boundary,
   // adjust to an even one.
 
-  ((ANWord*)head)->value = fixOfs + (fixOfs & 1);
+  ((ANWord*)list_.front())->value = fixOfs + (fixOfs & 1);
   fixups.clear();
 }
 
