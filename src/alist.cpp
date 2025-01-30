@@ -17,7 +17,7 @@ bool noOptimize;
 ///////////////////////////////////////////////////
 // Class AListIter
 ///////////////////////////////////////////////////
-ANode* AListIter::get() { return (ANode*)iter_.get(); }
+ANode* AListIter::get() const { return (ANode*)iter_.get(); }
 void AListIter::advance() { iter_.advance(); }
 AListIter::operator bool() { return bool(iter_); }
 ANode* AListIter::operator->() { return get(); }
@@ -33,6 +33,14 @@ std::unique_ptr<ANode> AListIter::remove() {
 
 ANode* AListIter::replaceWith(std::unique_ptr<ANode> nn) {
   return static_cast<ANode*>(iter_.replaceWith(std::move(nn)));
+}
+
+bool AListIter::isOp(uint32_t op) const {
+  ANOpCode* nn = (ANOpCode*)get();
+  if (!nn) {
+    return false;
+  }
+  return nn->op == op;
 }
 
 std::optional<AListIter> AListIter::findOp(uint32_t op) const {

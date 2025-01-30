@@ -29,7 +29,7 @@ struct LNode {
 
 class ListIter {
  public:
-  LNode* get();
+  LNode* get() const;
   void advance();
   explicit operator bool();
 

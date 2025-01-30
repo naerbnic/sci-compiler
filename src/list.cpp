@@ -4,7 +4,7 @@
 
 #include <cassert>
 
-LNode* ListIter::get() { return cur_; }
+LNode* ListIter::get() const { return cur_; }
 void ListIter::advance() { cur_ = cur_->next(); }
 ListIter::operator bool() { return cur_ != nullptr; }
 

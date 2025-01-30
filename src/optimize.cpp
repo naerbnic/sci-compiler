@@ -131,22 +131,28 @@ uint32_t OptimizeProc(AList* al) {
         break;
       }
 
-      case op_ret:
+      case op_ret: {
         // Optimize out double returns.
-        if (it.removeOp(op_ret)) ++nOptimizations;
+        auto nextOp = it.next();
+        if (nextOp.isOp(op_ret)) {
+          nextOp.remove();
+          ++nOptimizations;
+        }
         break;
+      }
 
-      case op_loadi:
-        if (it.removeOp(op_push)) {
+      case op_loadi: {
+        auto nextOp = it.next();
+        if (nextOp.isOp(op_push)) {
           // Replace a load immediate followed by a push with
           // a push immediate.
+          nextOp.remove();
           accType = UNKNOWN;
           stackType = IMMEDIATE;
           stackVal = an->value;
           op = byteOp ? op_pushi | OP_BYTE : op_pushi;
           it.replaceWith(std::make_unique<ANOpSign>(op, stackVal));
           ++nOptimizations;
-
         } else if (accType == IMMEDIATE && accVal == an->value) {
           // If acc already has this value, delete
           // this node.
@@ -159,6 +165,7 @@ uint32_t OptimizeProc(AList* al) {
         }
 
         break;
+      }
 
       case op_bt:
       case op_bnt:
@@ -197,8 +204,10 @@ uint32_t OptimizeProc(AList* al) {
         stackType = stackVal = UNKNOWN;
         break;
 
-      case op_pToa:
-        if (it.removeOp(op_push)) {
+      case op_pToa: {
+        auto nextOp = it.next();
+        if (nextOp.isOp(op_push)) {
+          nextOp.remove();
           an->op = byteOp ? op_pTos | OP_BYTE : op_pTos;
           ++nOptimizations;
           stackType = accType;
@@ -218,6 +227,7 @@ uint32_t OptimizeProc(AList* al) {
           accVal = an->value;
         }
         break;
+      }
 
       case op_pTos:
         if (indexed(op))
@@ -242,18 +252,20 @@ uint32_t OptimizeProc(AList* al) {
         }
         break;
 
-      case op_selfID:
-        if (it.removeOp(op_push)) {
+      case op_selfID: {
+        auto nextOp = it.next();
+        if (nextOp.isOp(op_push)) {
+          nextOp.remove();
           an->op = op_pushSelf;
           stackType = SELF;
           ++nOptimizations;
 
         } else {
-          auto op_it = it.findOp(op_send);
-          if (op_it) {
+          auto nextOp = it.next();
+          if (nextOp.isOp(op_send)) {
             an = (ANOpSign*)it.replaceWith(std::make_unique<ANSend>(op_self));
-            ((ANSend*)an)->numArgs = ((ANSend*)op_it->get())->numArgs;
-            op_it->remove();
+            ((ANSend*)an)->numArgs = ((ANSend*)nextOp.get())->numArgs;
+            nextOp.remove();
             ++nOptimizations;
             stackType = accType = UNKNOWN;
 
@@ -261,8 +273,9 @@ uint32_t OptimizeProc(AList* al) {
             accType = UNKNOWN;
         }
         break;
+      }
 
-      default:
+      default: {
         if (!(op & OP_LDST)) break;
 
         // We can only optimize loads -- others just set the value of the
@@ -286,7 +299,10 @@ uint32_t OptimizeProc(AList* al) {
           break;
         }
 
-        if (!toStack(op) && it.removeOp(op_push)) {
+        auto nextOp = it.next();
+
+        if (!toStack(op) && nextOp.isOp(op_push)) {
+          nextOp.remove();
           // Replace a load followed by a push with a load directly
           // to the stack.
           stackType = accType;
@@ -324,6 +340,7 @@ uint32_t OptimizeProc(AList* al) {
           stackVal = an->value;
         }
         break;
+      }
     }
   }
 

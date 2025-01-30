@@ -19,7 +19,7 @@ struct AList;
 class AListIter {
   // AListIter is an iterator for the AList class.
  public:
-  ANode* get();
+  ANode* get() const;
   void advance();
   explicit operator bool();
   ANode* operator->();
@@ -27,6 +27,8 @@ class AListIter {
   AListIter next() const;
   std::unique_ptr<ANode> remove();
   ANode* replaceWith(std::unique_ptr<ANode> nn);
+
+  bool isOp(uint32_t op) const;
 
   // Return a pointer to the next opcode node if it is opcode
   // 'op', NULL if it isn't.
