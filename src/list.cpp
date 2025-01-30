@@ -153,6 +153,7 @@ void TNode::InsertAfter(TNode* ln) {
   assert(!ln->IsInList());
   // Set fields in inserted node
   ln->list_ = list_;
+
   ln->next_ = next_;
   ln->prev_ = this;
 
@@ -231,4 +232,7 @@ TNode* TListBase::removeBack() {
   return node;
 }
 
-bool TListBase::contains(TNode* ln) { return ln->list_ == this; }
+bool TListBase::contains(TNode* ln) {
+  if (!ln) return false;
+  return ln->list_ == this;
+}

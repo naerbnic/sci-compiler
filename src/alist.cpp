@@ -38,7 +38,7 @@ bool ANode::optimize() { return false; }
 // Class AListIter
 ///////////////////////////////////////////////////
 ANode* AListIter::get() const { return (ANode*)iter_.get(); }
-void AListIter::advance() { iter_.advance(); }
+void AListIter::advance() { ++iter_; }
 AListIter::operator bool() { return bool(iter_); }
 ANode* AListIter::operator->() { return get(); }
 AListIter AListIter::next() const {
@@ -52,7 +52,8 @@ std::unique_ptr<ANode> AListIter::remove() {
 }
 
 ANode* AListIter::replaceWith(std::unique_ptr<ANode> nn) {
-  return static_cast<ANode*>(iter_.replaceWith(std::move(nn)));
+  iter_.replaceWith(std::move(nn));
+  return static_cast<ANode*>(iter_.get());
 }
 
 bool AListIter::isOp(uint32_t op) const {
@@ -70,12 +71,15 @@ bool AListIter::isOp(uint32_t op) const {
 ANOpCode* AList::nextOp(ANode* start) {
   assert(start != NULL);
 
-  ANOpCode* nn;
+  for (ANode& node :
+       std::ranges::subrange(list_.findIter(start).next(), list_.end())) {
+    auto* nn = (ANOpCode*)&node;
+    if (nn->op != OP_LABEL) {
+      return nn;
+    }
+  }
 
-  for (nn = (ANOpCode*)start->next(); nn && nn->op == OP_LABEL;
-       nn = (ANOpCode*)nn->next());
-
-  return nn;
+  return nullptr;
 }
 
 size_t AList::size() {
@@ -133,7 +137,7 @@ void FixupList::initFixups() {
   // Set offset to fixup table.  If the table is on an odd boundary,
   // adjust to an even one.
 
-  ((ANWord*)list_.list_.front())->value = fixOfs + (fixOfs & 1);
+  ((ANWord*)list_.list_.frontPtr())->value = fixOfs + (fixOfs & 1);
   fixups.clear();
 }
 

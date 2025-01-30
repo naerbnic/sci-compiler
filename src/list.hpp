@@ -4,8 +4,10 @@
 #ifndef LIST_HPP
 #define LIST_HPP
 
+#include <cassert>
 #include <memory>
 
+#include "absl/strings/str_format.h"
 #include "casts.hpp"
 
 class List;
@@ -136,6 +138,8 @@ class TListBase {
 
  private:
   friend class TNode;
+  template <class T>
+  friend class TList;
 
   TNode* head_;
   TNode* tail_;
@@ -146,7 +150,7 @@ class TList {
   static_assert(std::convertible_to<T*, TNode*>);
 
  public:
-  TList() = default;
+  TList() : list_(std::make_unique<TListBase>()) {}
 
   // Smart pointer to a list node.
   class iterator {
@@ -224,7 +228,7 @@ class TList {
       auto* next = curr_item_->next_;
       curr_item_->RemoveFromList();
       return std::unique_ptr<T>(curr_item_);
-      curr_item_ = next;
+      curr_item_ = down_cast<T>(next);
     }
 
     std::unique_ptr<T> replaceWith(std::unique_ptr<T> nn) {
@@ -268,10 +272,18 @@ class TList {
   }
   iterator end() { return iterator(list_.get(), nullptr); }
 
+  iterator findIter(T* ln) {
+    if (!list_->contains(ln)) return end();
+    return iterator(list_.get(), ln);
+  }
+
+  T* frontPtr() { return down_cast<T>(list_->front()); }
+
   // Delete all elements in the list.
   void clear() {
-    TNode* ln = nullptr;
-    while ((ln = list_->removeFront())) {
+    while (true) {
+      TNode* ln = list_->removeFront();
+      if (!ln) break;
       delete ln;
     }
   }
