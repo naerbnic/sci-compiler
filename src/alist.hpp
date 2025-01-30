@@ -28,14 +28,9 @@ class AListIter {
   std::unique_ptr<ANode> remove();
   ANode* replaceWith(std::unique_ptr<ANode> nn);
 
+  // Return true if the current node is an opcode with the
+  // given opcode.
   bool isOp(uint32_t op) const;
-
-  // Return a pointer to the next opcode node if it is opcode
-  // 'op', NULL if it isn't.
-  std::optional<AListIter> findOp(uint32_t op) const;
-
-  bool removeOp(uint32_t op);
-  // If next opcode in the list is 'op', remove it.
 
  private:
   friend struct AList;

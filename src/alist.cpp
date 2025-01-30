@@ -43,25 +43,6 @@ bool AListIter::isOp(uint32_t op) const {
   return nn->op == op;
 }
 
-std::optional<AListIter> AListIter::findOp(uint32_t op) const {
-  auto it = *this;
-  it.advance();
-  if (!it) return std::nullopt;
-
-  ANOpCode* nn = (ANOpCode*)it.get();
-
-  return nn->op == op ? std::optional(it) : std::nullopt;
-}
-
-bool AListIter::removeOp(uint32_t op) {
-  auto result = findOp(op);
-  if (!result) return false;
-
-  result->remove();
-
-  return true;
-}
-
 ///////////////////////////////////////////////////
 // Class AList
 ///////////////////////////////////////////////////
