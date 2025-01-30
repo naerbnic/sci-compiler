@@ -249,12 +249,12 @@ uint32_t OptimizeProc(AList* al) {
           ++nOptimizations;
 
         } else {
-          ANSend* rn = (ANSend*)it.findOp(op_send);
-          if (rn) {
+          auto op_it = it.findOp(op_send);
+          if (op_it) {
             an = (ANOpSign*)it.replaceWith(an,
                                            std::make_unique<ANSend>(op_self));
-            ((ANSend*)an)->numArgs = rn->numArgs;
-            it.remove(rn);
+            ((ANSend*)an)->numArgs = ((ANSend*)op_it->get())->numArgs;
+            op_it->remove(op_it->get());
             ++nOptimizations;
             stackType = accType = UNKNOWN;
 

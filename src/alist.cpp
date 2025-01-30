@@ -21,29 +21,44 @@ ANode* AListIter::get() { return (ANode*)iter_.get(); }
 void AListIter::advance() { iter_.advance(); }
 AListIter::operator bool() { return bool(iter_); }
 ANode* AListIter::operator->() { return get(); }
+AListIter AListIter::next() const {
+  auto it = *this;
+  it.advance();
+  return it;
+}
 
 std::unique_ptr<ANode> AListIter::remove(ANode* an) {
+  if (an != get()) {
+    throw std::runtime_error("AListIter::replaceWith: an != get()");
+  }
   return std::unique_ptr<ANode>(
       static_cast<ANode*>(iter_.remove(an).release()));
 }
+
 ANode* AListIter::replaceWith(ANode* an, std::unique_ptr<ANode> nn) {
+  if (an != get()) {
+    throw std::runtime_error("AListIter::replaceWith: an != get()");
+  }
   return static_cast<ANode*>(iter_.replaceWith(an, std::move(nn)));
 }
 
-ANOpCode* AListIter::findOp(uint32_t op) {
-  ANOpCode* nn = (ANOpCode*)get()->next();
+std::optional<AListIter> AListIter::findOp(uint32_t op) const {
+  auto it = *this;
+  it.advance();
+  if (!it) return std::nullopt;
 
-  if (nn)
-    return nn->op == op ? nn : 0;
-  else
-    return 0;
+  ANOpCode* nn = (ANOpCode*)it.get();
+
+  return nn->op == op ? std::optional(it) : std::nullopt;
 }
 
 bool AListIter::removeOp(uint32_t op) {
-  ANode* an = findOp(op);
-  if (an) remove(an);
+  auto result = findOp(op);
+  if (!result) return false;
 
-  return an != 0;
+  result->remove(result->get());
+
+  return true;
 }
 
 ///////////////////////////////////////////////////

@@ -23,12 +23,14 @@ class AListIter {
   void advance();
   explicit operator bool();
   ANode* operator->();
+
+  AListIter next() const;
   std::unique_ptr<ANode> remove(ANode* an);
   ANode* replaceWith(ANode* an, std::unique_ptr<ANode> nn);
 
   // Return a pointer to the next opcode node if it is opcode
   // 'op', NULL if it isn't.
-  ANOpCode* findOp(uint32_t op);
+  std::optional<AListIter> findOp(uint32_t op) const;
 
   bool removeOp(uint32_t op);
   // If next opcode in the list is 'op', remove it.

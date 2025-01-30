@@ -2,6 +2,8 @@
 
 #include "list.hpp"
 
+#include <cassert>
+
 LNode* ListIter::get() { return cur_; }
 void ListIter::advance() { cur_ = cur_->next(); }
 ListIter::operator bool() { return cur_ != nullptr; }

@@ -4,7 +4,6 @@
 #ifndef LIST_HPP
 #define LIST_HPP
 
-#include <boost/intrusive/list.hpp>
 #include <memory>
 
 #include "casts.hpp"
@@ -189,6 +188,18 @@ class TList {
     iterator operator--(int) {
       iterator tmp = *this;
       retreat();
+      return tmp;
+    }
+
+    iterator next() const {
+      iterator tmp = *this;
+      tmp.advance();
+      return tmp;
+    }
+
+    iterator prev() const {
+      iterator tmp = *this;
+      tmp.retreat();
       return tmp;
     }
 
