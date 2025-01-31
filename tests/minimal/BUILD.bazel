@@ -1,4 +1,4 @@
-load("//rules:sc.bzl", "sci_build_env", "sci_script", "sci_binary", "sci_headers")
+load("//rules:sci.bzl", "sci_build_env", "sci_script", "sci_binary", "sci_headers")
 
 sci_build_env(
     name = "base_env",

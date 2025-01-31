@@ -1,4 +1,4 @@
-load("//rules:sc.bzl", "sci_headers", "sci_system")
+load("//rules:sci.bzl", "sci_headers", "sci_system")
 
 sci_headers(
     name = "system_headers",
