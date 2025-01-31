@@ -58,9 +58,15 @@ def _sci_system_impl(ctx):
 sci_system = rule(
     implementation = _sci_system_impl,
     attrs = {
-        "target_vm": attr.string(values = ["1.1", "2"], default = "1.1"),
+        "target_vm": attr.string(
+            values = ["1.1", "2"],
+            default = "1.1",
+        ),
         "defines": attr.string_list(),
-        "system_header": attr.label(allow_single_file = True, mandatory = True),
+        "system_header": attr.label(
+            allow_single_file = True,
+            mandatory = True,
+        ),
         "deps": attr.label_list(providers = [_SciHeaderSetInfo]),
     },
 )
@@ -78,10 +84,20 @@ def _sci_build_env_impl(ctx):
 sci_build_env = rule(
     implementation = _sci_build_env_impl,
     attrs = {
-        "selector": attr.label(allow_single_file = True, mandatory = True),
-        "classdef": attr.label(allow_single_file = True),
-        "game_header": attr.label(allow_single_file = [".sh"]),
-        "target_vm": attr.string(values = ["1.1", "2"], default = "1.1"),
+        "selector": attr.label(
+            allow_single_file = True,
+            mandatory = True,
+        ),
+        "classdef": attr.label(
+            allow_single_file = True,
+        ),
+        "game_header": attr.label(
+            allow_single_file = [".sh"],
+        ),
+        "target_vm": attr.string(
+            values = ["1.1", "2"],
+            default = "1.1",
+        ),
     },
 )
 
@@ -102,8 +118,13 @@ def _sci_headers_impl(ctx):
 sci_headers = rule(
     implementation = _sci_headers_impl,
     attrs = {
-        "hdrs": attr.label_list(allow_files = True, mandatory = True),
-        "deps": attr.label_list(providers = [_SciHeaderSetInfo]),
+        "hdrs": attr.label_list(
+            allow_files = True,
+            mandatory = True,
+        ),
+        "deps": attr.label_list(
+            providers = [_SciHeaderSetInfo],
+        ),
     },
 )
 
@@ -194,9 +215,14 @@ def _sci_binary_impl(ctx):
 sci_binary = rule(
     implementation = _sci_binary_impl,
     attrs = {
-        "srcs": attr.label_list(providers = [_SciScriptInfo], mandatory = True),
-        "build_env": attr.label(providers = [_SciBuildEnvInfo], mandatory = True),
-        "_sc_binary": attr.label(executable = True, default = Label("//src:sc"), cfg = "exec"),
+        "srcs": attr.label_list(
+            providers = [_SciScriptInfo],
+            mandatory = True,
+        ),
+        "build_env": attr.label(
+            providers = [_SciBuildEnvInfo],
+            mandatory = True,
+        ),
     },
     toolchains = ["//toolchain:sci_compiler_toolchain_type"],
 )
