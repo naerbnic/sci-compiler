@@ -2,7 +2,7 @@
 
 visibility("public")
 
-_SciSystemInfo = provider(
+SciSystemInfo = provider(
     "Configuration info for a particular SCI system.",
     fields = {
         "target_vm": "The target VM to use, as a string.",
@@ -24,7 +24,7 @@ _SciBuildEnvInfo = provider(
     fields = {
         "selector_file": "The selector file to use.",
         "classdef_file": "The class definition file to use.",
-        "system": "A _SciSystemInfo provider for the system to use.",
+        "target_vm": "A target_vm string to use.",
         "game_header": "A depset of game headers to include.",
     },
 )
@@ -47,7 +47,7 @@ def _sci_system_impl(ctx):
         ],
     )
     return [
-        _SciSystemInfo(
+        SciSystemInfo(
             target_vm = ctx.attr.target_vm,
             defines = ctx.attr.defines,
             system_header = ctx.file.system_header,
@@ -70,7 +70,7 @@ def _sci_build_env_impl(ctx):
         _SciBuildEnvInfo(
             selector_file = ctx.file.selector,
             classdef_file = ctx.file.classdef,
-            system = ctx.attr.system[_SciSystemInfo],
+            target_vm = ctx.attr.target_vm,
             game_header = ctx.file.game_header,
         ),
     ]
@@ -80,7 +80,6 @@ sci_build_env = rule(
     attrs = {
         "selector": attr.label(allow_single_file = True, mandatory = True),
         "classdef": attr.label(allow_single_file = True),
-        "system": attr.label(providers = [_SciSystemInfo], mandatory = True),
         "game_header": attr.label(allow_single_file = [".sh"]),
         "target_vm": attr.string(values = ["1.1", "2"], default = "1.1"),
     },
@@ -130,8 +129,16 @@ sci_script = rule(
 )
 
 def _sci_binary_impl(ctx):
+    sci_toolchain = ctx.toolchains["//toolchain:sci_compiler_toolchain_type"]
     build_env_info = ctx.attr.build_env[_SciBuildEnvInfo]
-    system_info = build_env_info.system
+    possible_systems = [
+        system
+        for system in sci_toolchain.systems
+        if system.target_vm == build_env_info.target_vm
+    ]
+    if len(possible_systems) != 1:
+        fail("Could not find a system for target VM: {0}".format(build_env_info.target_vm))
+    system_info = possible_systems[0]
     out_dir = ctx.actions.declare_directory(ctx.label.name)
     outputs = [out_dir]
     inputs = [
@@ -160,7 +167,7 @@ def _sci_binary_impl(ctx):
     ctx.actions.run(
         inputs = inputs + srcs + hdrs,
         outputs = outputs,
-        executable = ctx.executable._sc_binary,
+        executable = sci_toolchain.scic,
         arguments = [
             ctx.actions.args()
                 .add("-a")
@@ -191,4 +198,5 @@ sci_binary = rule(
         "build_env": attr.label(providers = [_SciBuildEnvInfo], mandatory = True),
         "_sc_binary": attr.label(executable = True, default = Label("//src:sc"), cfg = "exec"),
     },
+    toolchains = ["//toolchain:sci_compiler_toolchain_type"],
 )

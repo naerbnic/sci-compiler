@@ -1,0 +1,25 @@
+load(":toolchain.bzl", "compiled_toolchain_config")
+
+# A toolchain for the Sierra Creative Interpreter compiler.
+#
+# fields:
+#  scic: The file of the SCI compiler.
+#  systems: A list of SCI system providers to support.
+toolchain_type(
+    name = "sci_compiler_toolchain_type",
+    visibility = ["//visibility:public"],
+)
+
+compiled_toolchain_config(
+    name = "compiled_sci_toolchain_config",
+    scic = "//:sc",
+    systems = [
+        "//sci_lib/sci_1_1",
+    ],
+)
+
+toolchain(
+    name = "compiled_sci_compiler_toolchain",
+    toolchain = ":compiled_sci_toolchain_config",
+    toolchain_type = ":sci_compiler_toolchain_type",
+)

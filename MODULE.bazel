@@ -57,3 +57,5 @@ git_override(
     # Replace the commit hash (above) with the latest (https://github.com/hedronvision/bazel-compile-commands-extractor/commits/main).
     # Even better, set up Renovate and let it do the work for you (see "Suggestion: Updates" in the README).
 )
+
+register_toolchains("//toolchain:compiled_sci_compiler_toolchain", dev_dependency = True)
