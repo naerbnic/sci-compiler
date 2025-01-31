@@ -15,35 +15,53 @@ bool shrink;
 bool noOptimize;
 
 ///////////////////////////////////////////////////
+// Class ANode
+///////////////////////////////////////////////////
+
+// The flag addNodesToList is set during the optimization phase so that new
+// nodes to replace old ones are not automatically added to the current list.
+
+size_t ANode::size() { return 0; }
+
+size_t ANode::setOffset(size_t ofs) {
+  offset = ofs;
+  return ofs + size();
+}
+
+void ANode::emit(OutputFile*) {}
+
+void ANode::list() {}
+
+bool ANode::optimize() { return false; }
+
+///////////////////////////////////////////////////
 // Class AListIter
 ///////////////////////////////////////////////////
-ANode* AListIter::get() { return (ANode*)iter_.get(); }
-void AListIter::advance() { iter_.advance(); }
+ANode* AListIter::get() const { return (ANode*)iter_.get(); }
+void AListIter::advance() { ++iter_; }
 AListIter::operator bool() { return bool(iter_); }
 ANode* AListIter::operator->() { return get(); }
-
-std::unique_ptr<ANode> AListIter::remove(ANode* an) {
-  return std::unique_ptr<ANode>(
-      static_cast<ANode*>(iter_.remove(an).release()));
-}
-ANode* AListIter::replaceWith(ANode* an, std::unique_ptr<ANode> nn) {
-  return static_cast<ANode*>(iter_.replaceWith(an, std::move(nn)));
+AListIter AListIter::next() const {
+  auto it = *this;
+  it.advance();
+  return it;
 }
 
-ANOpCode* AListIter::findOp(uint32_t op) {
-  ANOpCode* nn = (ANOpCode*)get()->next();
-
-  if (nn)
-    return nn->op == op ? nn : 0;
-  else
-    return 0;
+std::unique_ptr<ANode> AListIter::remove() {
+  return std::unique_ptr<ANode>(static_cast<ANode*>(iter_.remove().release()));
 }
 
-bool AListIter::removeOp(uint32_t op) {
-  ANode* an = findOp(op);
-  if (an) remove(an);
+ANode* AListIter::replaceWith(std::unique_ptr<ANode> nn) {
+  iter_.replaceWith(std::move(nn));
+  return static_cast<ANode*>(iter_.get());
+}
 
-  return an != 0;
+bool AListIter::isOp(uint32_t op) const {
+  ANOpCode* nn = (ANOpCode*)get();
+  if (!nn) {
+    return false;
+  }
+  return nn->op == op;
 }
 
 ///////////////////////////////////////////////////
@@ -53,12 +71,15 @@ bool AListIter::removeOp(uint32_t op) {
 ANOpCode* AList::nextOp(ANode* start) {
   assert(start != NULL);
 
-  ANOpCode* nn;
+  for (ANode& node :
+       std::ranges::subrange(list_.findIter(start).next(), list_.end())) {
+    auto* nn = (ANOpCode*)&node;
+    if (nn->op != OP_LABEL) {
+      return nn;
+    }
+  }
 
-  for (nn = (ANOpCode*)start->next(); nn && nn->op == OP_LABEL;
-       nn = (ANOpCode*)nn->next());
-
-  return nn;
+  return nullptr;
 }
 
 size_t AList::size() {
@@ -99,7 +120,7 @@ FixupList::FixupList() {}
 FixupList::~FixupList() { clear(); }
 
 void FixupList::clear() {
-  AList::clear();
+  list_.list_.clear();
   fixups.clear();
 
   // All fixup lists have a word node at the start which is the offset
@@ -108,7 +129,7 @@ void FixupList::clear() {
 }
 
 size_t FixupList::setOffset(size_t ofs) {
-  fixOfs = AList::setOffset(ofs);
+  fixOfs = list_.setOffset(ofs);
   return fixOfs;
 }
 
@@ -116,7 +137,7 @@ void FixupList::initFixups() {
   // Set offset to fixup table.  If the table is on an odd boundary,
   // adjust to an even one.
 
-  ((ANWord*)head)->value = fixOfs + (fixOfs & 1);
+  ((ANWord*)list_.list_.frontPtr())->value = fixOfs + (fixOfs & 1);
   fixups.clear();
 }
 
@@ -151,7 +172,7 @@ void FixupList::addFixup(size_t ofs) { fixups.push_back(ofs); }
 
 void FixupList::emit(OutputFile* out) {
   initFixups();
-  AList::emit(out);
+  list_.emit(out);
   emitFixups(out);
 }
 
@@ -160,7 +181,7 @@ void FixupList::emit(OutputFile* out) {
 ///////////////////////////////////////////////////
 
 void CodeList::optimize() {
-  AList::optimize();
+  list_.optimize();
 
   // Make a first pass, resolving offsets and converting to byte offsets
   // where possible.
