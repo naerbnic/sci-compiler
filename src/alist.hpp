@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -45,7 +46,7 @@ struct ANode : TNode {
   // really implemented for each node type yet -- most
   // optimization is done in OptimizeProc() in optimize.cpp.
 
-  size_t offset;  // offset of node in file
+  std::optional<size_t> offset;  // offset of node in file
 };
 
 class AListIter {
