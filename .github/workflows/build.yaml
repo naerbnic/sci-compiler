@@ -26,4 +26,15 @@ jobs:
                 repository-cache: true
             - name: Build for Linux
               run: bazel build //:all
+    build-windows:
+        runs-on: windows-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: bazel-contrib/setup-bazel@0.13.0
+              with:
+                bazelisk-cache: true
+                disk-cache: ${{ github.workflow }}
+                repository-cache: true
+            - name: Build for Windows
+              run: bazel build //:all
             
