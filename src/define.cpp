@@ -250,7 +250,7 @@ void Local() {
       theSym->setVal(size);
       n = InitialValue(localVars, size, 1);
       size += n;
-      if (n == -1 || size > maxVars) {
+      if (n == -1 || (std::size_t)(size) > maxVars) {
         Error(tooManyVars, maxVars);
         break;
       }
