@@ -236,7 +236,7 @@ void Local() {
         }
         n = InitialValue(localVars, size, arraySize);
         size += std::max(n, arraySize);
-        if (n == -1 || size > maxVars) {
+        if (n == -1 || (std::size_t)(size) > maxVars) {
           Error(tooManyVars, maxVars);
           break;
         }
