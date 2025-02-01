@@ -43,7 +43,7 @@ void InitAsm() {
   codeStart = 0;
 }
 
-void Assemble() {
+void Assemble(ListingFile* listFile) {
   // Assemble the list pointed to by asmHead.
 
   auto vars = std::make_unique<ANVars>(script ? localVars : globalVars);
@@ -73,20 +73,21 @@ void Assemble() {
   absl::FPrintF(infoFile, "%s\n", curSourceFile->fileName);
   fclose(infoFile);
 
+  sc->heapList->emit(obj_files.heap.get());
+  sc->hunkList->emit(obj_files.hunk.get());
+
   // Now generate object code.
-  Listing(
+  listFile->Listing(
       "----------------------\n"
       "-------- Heap --------\n"
       "----------------------\n");
-  sc->heapList->emit(obj_files.heap.get());
-
-  Listing(
+  sc->heapList->list(listFile);
+  listFile->Listing(
       "\n\n\n\n"
       "----------------------\n"
       "-------- Hunk --------\n"
       "----------------------\n");
-
-  sc->hunkList->emit(obj_files.hunk.get());
+  sc->hunkList->list(listFile);
 
   sc->heapList->clear();
   sc->hunkList->clear();

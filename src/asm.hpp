@@ -4,12 +4,10 @@
 #if !defined(ASM_HPP)
 #define ASM_HPP
 
-#if !defined(ALIST_HPP)
-#include "alist.hpp"
-#endif
+#include "listing.hpp"
 
 void InitAsm();
-void Assemble();
+void Assemble(ListingFile* listFile);
 
 void Optimize();
 void ShowOptimize();
