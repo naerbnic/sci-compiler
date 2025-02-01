@@ -10,20 +10,8 @@
 #include "output.hpp"
 #include "sc.hpp"
 
-AList* curList;
 bool shrink;
 bool noOptimize;
-
-WithCurList::WithCurList(AList* list) : list(list), oldList(curList) {
-  curList = list;
-}
-
-WithCurList::~WithCurList() noexcept(false) {
-  if (curList != list) {
-    throw std::runtime_error("curList was changed unexpectedly");
-  }
-  curList = oldList;
-}
 
 ///////////////////////////////////////////////////
 // Class ANode

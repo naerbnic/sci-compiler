@@ -41,7 +41,6 @@ void InitAsm() {
   dispTbl = sc->hunkList->newNode<ANTable>("dispatch table");
 
   codeStart = 0;
-  curList = sc->hunkList->getList();
 }
 
 void Assemble() {

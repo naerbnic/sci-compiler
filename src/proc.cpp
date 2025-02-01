@@ -33,7 +33,7 @@ void Procedure() {
       auto theNode = CallDef(S_PROC);
       if (theNode) {
         ExprList(theNode.get(), OPTIONAL);
-        Compile(theNode.get());
+        Compile(sc->hunkList->getList(), theNode.get());
       }
     }
 

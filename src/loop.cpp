@@ -12,7 +12,7 @@
 enum LoopType { LOOP_FOR, LOOP_WHILE, LOOP_REPEAT };
 
 struct Loop {
-  Loop(LoopType t, Symbol* c, Symbol* e);
+  Loop(AList* curList, LoopType t, Symbol* c, Symbol* e);
   ~Loop();
 
   Loop* next;
@@ -26,7 +26,7 @@ struct Loop {
 // to support such things as (break n) and (continue n).
 Loop* loopList;
 
-Loop::Loop(LoopType t, Symbol* c, Symbol* e)
+Loop::Loop(AList* curList, LoopType t, Symbol* c, Symbol* e)
     : next(loopList),
       type(t),
       start(curList->newNode<ANLabel>()),
@@ -41,12 +41,12 @@ Loop::~Loop() {
   loopList = next;
 }
 
-void MakeWhile(PNode* theNode)
+void MakeWhile(AList* curList, PNode* theNode)
 // while ::= 'while' expression statement*
 {
   Symbol cont;
   Symbol end;
-  Loop lp(LOOP_WHILE, &cont, &end);
+  Loop lp(curList, LOOP_WHILE, &cont, &end);
 
   cont.setLoc(lp.start);
 
@@ -56,41 +56,41 @@ void MakeWhile(PNode* theNode)
   // and its corresponding branch.
   PNode* expr = theNode->child_at(0);
   PNode* body = theNode->child_at(1);
-  Compile(expr);
-  MakeBranch(op_bnt, 0, &end);
+  Compile(curList, expr);
+  MakeBranch(curList, op_bnt, 0, &end);
 
   // Compile the statements in the loop
-  if (body) Compile(body);
+  if (body) Compile(curList, body);
 
   // Make the branch back to the loop start.
-  MakeBranch(op_jmp, lp.start, 0);
+  MakeBranch(curList, op_jmp, lp.start, 0);
 
   // Compile the label at the end of the loop
-  MakeLabel(&end);
+  MakeLabel(curList, &end);
 }
 
-void MakeRepeat(PNode* theNode) {
+void MakeRepeat(AList* curList, PNode* theNode) {
   // forever ::= 'forever' statement+
 
   Symbol cont;
   Symbol end;
-  Loop lp(LOOP_REPEAT, &cont, &end);
+  Loop lp(curList, LOOP_REPEAT, &cont, &end);
 
   cont.setLoc(lp.start);
 
   PNode* body = theNode->child_at(0);
 
   // Compile the loop's statements.
-  if (body) Compile(body);
+  if (body) Compile(curList, body);
 
   // Make the branch back to the start of the loop.
-  MakeBranch(op_jmp, lp.start, 0);
+  MakeBranch(curList, op_jmp, lp.start, 0);
 
   // Make the target label for breaks.
-  MakeLabel(&end);
+  MakeLabel(curList, &end);
 }
 
-void MakeFor(PNode* theNode) {
+void MakeFor(AList* curList, PNode* theNode) {
   // for ::=	'for' '(' statement* ')'
   //			expression
   //			'(' statement* ')'
@@ -102,33 +102,33 @@ void MakeFor(PNode* theNode) {
   auto* body = theNode->child_at(3);
 
   // Make the initialization statements.
-  if (init) Compile(init);
+  if (init) Compile(curList, init);
 
   // Make the label at the start of the loop
   Symbol end;
   Symbol cont;
-  Loop lp(LOOP_FOR, &cont, &end);
+  Loop lp(curList, LOOP_FOR, &cont, &end);
 
   // Compile the conditional expression controlling the loop,
   // and its corresponding branch.
-  if (cond) Compile(cond);
-  MakeBranch(op_bnt, 0, &end);
+  if (cond) Compile(curList, cond);
+  MakeBranch(curList, op_bnt, 0, &end);
 
   // Compile the statements in the loop
-  if (body) Compile(body);
+  if (body) Compile(curList, body);
 
   // Compile the re-initialization statements
-  MakeLabel(&cont);
-  if (update) Compile(update);
+  MakeLabel(curList, &cont);
+  if (update) Compile(curList, update);
 
   // Make the branch back to the loop start.
-  MakeBranch(op_jmp, lp.start, 0);
+  MakeBranch(curList, op_jmp, lp.start, 0);
 
   // Compile the label at the end of the loop
-  MakeLabel(&end);
+  MakeLabel(curList, &end);
 }
 
-void MakeBreak(PNode* theNode) {
+void MakeBreak(AList* curList, PNode* theNode) {
   // break ::= 'break' [number]
 
   // Get the number of levels to break from.
@@ -141,17 +141,17 @@ void MakeBreak(PNode* theNode) {
   for (lp = loopList; level > 0; --level)
     if (lp->next) lp = lp->next;
 
-  MakeBranch(op_jmp, 0, lp->end);
+  MakeBranch(curList, op_jmp, 0, lp->end);
 }
 
-void MakeBreakIf(PNode* theNode) {
+void MakeBreakIf(AList* curList, PNode* theNode) {
   // breakif ::= 'break' expression [number]
 
   // Get the number of levels to break from.
   int level = theNode->val - 1;
 
   // Compile the expression which determines whether or not we break.
-  Compile(theNode->first_child());
+  Compile(curList, theNode->first_child());
 
   // Walk through the list of loops until we get to the proper
   // level to break to.  If the requested break level is greater
@@ -160,10 +160,10 @@ void MakeBreakIf(PNode* theNode) {
   for (lp = loopList; level > 0; --level)
     if (lp->next) lp = lp->next;
 
-  MakeBranch(op_bt, 0, lp->end);
+  MakeBranch(curList, op_bt, 0, lp->end);
 }
 
-void MakeContinue(PNode* theNode) {
+void MakeContinue(AList* curList, PNode* theNode) {
   // continue ::= 'continue' [number]
 
   // Get the number of levels to continue at.
@@ -177,19 +177,19 @@ void MakeContinue(PNode* theNode) {
     if (lp->next) lp = lp->next;
 
   if (lp->type == LOOP_FOR)
-    MakeBranch(op_jmp, 0, lp->cont);
+    MakeBranch(curList, op_jmp, 0, lp->cont);
   else
-    MakeBranch(op_jmp, lp->start, 0);
+    MakeBranch(curList, op_jmp, lp->start, 0);
 }
 
-void MakeContIf(PNode* theNode) {
+void MakeContIf(AList* curList, PNode* theNode) {
   // contif ::= 'contif' expression [number]
 
   // Get the number of levels to continue at.
   int level = theNode->val - 1;
 
   // Compile the expression which determines whether or not we continue.
-  Compile(theNode->first_child());
+  Compile(curList, theNode->first_child());
 
   // Walk through the list of loops until we get to the proper
   // level to continue at.  If the requested continue level is greater
@@ -199,7 +199,7 @@ void MakeContIf(PNode* theNode) {
     if (lp->next) lp = lp->next;
 
   if (lp->type == LOOP_FOR)
-    MakeBranch(op_bt, 0, lp->cont);
+    MakeBranch(curList, op_bt, 0, lp->cont);
   else
-    MakeBranch(op_bt, lp->start, 0);
+    MakeBranch(curList, op_bt, lp->start, 0);
 }
