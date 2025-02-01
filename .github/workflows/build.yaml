@@ -18,6 +18,10 @@ jobs:
               with:
                 version: 18
                 env: true
+            - name: List files in the repository
+              run: ls -R
             - name: Build for macOS
               run: bazel build //:all
+              env:
+                BAZEL_LLVM: ./llvm
             
