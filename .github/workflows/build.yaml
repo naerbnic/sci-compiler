@@ -1,0 +1,23 @@
+name: Build For Platforms
+on: [push]
+jobs:
+    build-macos:
+        runs-on: macos-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: bazel-contrib/setup-bazel@0.13.0
+              with:
+                # Avoid downloading Bazel every time.
+                bazelisk-cache: true
+                # Store build cache per workflow.
+                disk-cache: ${{ github.workflow }}
+                # Share repository cache between workflows.
+                repository-cache: true 
+            - name: Install LLVM and Clang
+              uses: KyleMayes/install-llvm-action@v2.0.5
+              with:
+                version: 19
+                env: true
+            - name: Build for macOS
+              run: bazel build //:all
+            
