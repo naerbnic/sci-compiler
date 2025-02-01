@@ -17,14 +17,14 @@ enum {
 #define indexed(op) ((op) & OP_INDEX)
 #define toStack(op) ((op) & OP_STACK)
 
-uint32_t OptimizeProc(AList* al) {
+uint32_t OptimizeProc(AOpList* al) {
   uint32_t accType = UNKNOWN;
   int accVal = 0;
   int stackVal;
   uint32_t stackType = UNKNOWN;
   uint32_t nOptimizations = 0;
 
-  for (auto it = al->iter(); it; it.advance()) {
+  for (auto it = al->iter(); it; ++it) {
     ANOpSign* an = (ANOpSign*)it.get();
     bool byteOp = an->op & OP_BYTE;
     uint32_t op = an->op & ~OP_BYTE;
@@ -134,7 +134,7 @@ uint32_t OptimizeProc(AList* al) {
       case op_ret: {
         // Optimize out double returns.
         auto nextOp = it.next();
-        if (nextOp.isOp(op_ret)) {
+        if (nextOp && nextOp->op == op_ret) {
           nextOp.remove();
           ++nOptimizations;
         }
@@ -143,7 +143,7 @@ uint32_t OptimizeProc(AList* al) {
 
       case op_loadi: {
         auto nextOp = it.next();
-        if (nextOp.isOp(op_push)) {
+        if (nextOp->op == op_push) {
           // Replace a load immediate followed by a push with
           // a push immediate.
           nextOp.remove();
@@ -171,7 +171,7 @@ uint32_t OptimizeProc(AList* al) {
       case op_bnt:
       case op_jmp: {
         // Eliminate branches to branches.
-        ANode* label = ((ANBranch*)an)->target();
+        ANOpCode* label = (ANOpCode*)((ANBranch*)an)->target();
         while (label) {
           // 'label' points to the label to which we are branching.  Search
           // for the first op-code following this label.
@@ -187,7 +187,7 @@ uint32_t OptimizeProc(AList* al) {
           if (tmp->target() == label)
             label = 0;
           else {
-            ((ANBranch*)an)->setTarget(label = tmp->target());
+            ((ANBranch*)an)->setTarget(label = (ANOpCode*)tmp->target());
             ++nOptimizations;
           }
         }
@@ -206,7 +206,7 @@ uint32_t OptimizeProc(AList* al) {
 
       case op_pToa: {
         auto nextOp = it.next();
-        if (nextOp.isOp(op_push)) {
+        if (nextOp->op == op_push) {
           nextOp.remove();
           an->op = byteOp ? op_pTos | OP_BYTE : op_pTos;
           ++nOptimizations;
@@ -254,7 +254,7 @@ uint32_t OptimizeProc(AList* al) {
 
       case op_selfID: {
         auto nextOp = it.next();
-        if (nextOp.isOp(op_push)) {
+        if (nextOp->op == op_push) {
           nextOp.remove();
           an->op = op_pushSelf;
           stackType = SELF;
@@ -262,8 +262,9 @@ uint32_t OptimizeProc(AList* al) {
 
         } else {
           auto nextOp = it.next();
-          if (nextOp.isOp(op_send)) {
-            an = (ANOpSign*)it.replaceWith(std::make_unique<ANSend>(op_self));
+          if (nextOp->op == op_send) {
+            it.replaceWith(std::make_unique<ANSend>(op_self));
+            an = (ANOpSign*)it.get();
             ((ANSend*)an)->numArgs = ((ANSend*)nextOp.get())->numArgs;
             nextOp.remove();
             ++nOptimizations;
@@ -301,7 +302,7 @@ uint32_t OptimizeProc(AList* al) {
 
         auto nextOp = it.next();
 
-        if (!toStack(op) && nextOp.isOp(op_push)) {
+        if (!toStack(op) && nextOp->op == op_push) {
           nextOp.remove();
           // Replace a load followed by a push with a load directly
           // to the stack.

@@ -16,29 +16,29 @@
 #include "sc.hpp"
 #include "text.hpp"
 
-static void MakeAccess(AList* curList, PNode*, uint8_t);
-static void MakeImmediate(AList* curList, int);
-static void MakeString(AList* curList, PNode*);
-static void MakeCall(AList* curList, PNode* pn);
-static void MakeClassID(AList* curList, PNode*);
-static void MakeObjID(AList* curList, PNode*);
-static void MakeSend(AList* curList, PNode*);
-static int MakeMessage(AList* curList, PNode::ChildSpan children);
+static void MakeAccess(AOpList* curList, PNode*, uint8_t);
+static void MakeImmediate(AOpList* curList, int);
+static void MakeString(AOpList* curList, PNode*);
+static void MakeCall(AOpList* curList, PNode* pn);
+static void MakeClassID(AOpList* curList, PNode*);
+static void MakeObjID(AOpList* curList, PNode*);
+static void MakeSend(AOpList* curList, PNode*);
+static int MakeMessage(AOpList* curList, PNode::ChildSpan children);
 static void MakeProc(AList* curList, PNode*);
-static int MakeArgs(AList* curList, PNode::ChildSpan children);
-static void MakeUnary(AList* curList, PNode*);
-static void MakeBinary(AList* curList, PNode*);
-static void MakeNary(AList* curList, PNode*);
-static void MakeAssign(AList* curList, PNode*);
-static void MakeReturn(AList* curList, PNode*);
-static void MakeComp(AList* curList, PNode*);
-static void MakeAnd(AList* curList, PNode::ChildSpan);
-static void MakeOr(AList* curList, PNode::ChildSpan);
-static void MakeIncDec(AList* curList, PNode*);
-static void MakeCompOp(AList* curList, int);
-static void MakeIf(AList* curList, PNode*);
-static void MakeCond(AList* curList, PNode*);
-static void MakeSwitch(AList* curList, PNode*);
+static int MakeArgs(AOpList* curList, PNode::ChildSpan children);
+static void MakeUnary(AOpList* curList, PNode*);
+static void MakeBinary(AOpList* curList, PNode*);
+static void MakeNary(AOpList* curList, PNode*);
+static void MakeAssign(AOpList* curList, PNode*);
+static void MakeReturn(AOpList* curList, PNode*);
+static void MakeComp(AOpList* curList, PNode*);
+static void MakeAnd(AOpList* curList, PNode::ChildSpan);
+static void MakeOr(AOpList* curList, PNode::ChildSpan);
+static void MakeIncDec(AOpList* curList, PNode*);
+static void MakeCompOp(AOpList* curList, int);
+static void MakeIf(AOpList* curList, PNode*);
+static void MakeCond(AOpList* curList, PNode*);
+static void MakeSwitch(AOpList* curList, PNode*);
 
 void CompileProc(AList* curList, PNode* pn) {
   // Recursively compile code for a given node.
@@ -56,7 +56,7 @@ void CompileProc(AList* curList, PNode* pn) {
   }
 }
 
-void CompileExpr(AList* curList, PNode* pn) {
+void CompileExpr(AOpList* curList, PNode* pn) {
   // Recursively compile code for a given node.
 
   if (includeDebugInfo && pn->type != PN_PROC && pn->type != PN_METHOD &&
@@ -161,11 +161,6 @@ void CompileExpr(AList* curList, PNode* pn) {
       MakeIncDec(curList, pn);
       break;
 
-    case PN_PROC:
-    case PN_METHOD:
-      MakeProc(curList, pn);
-      break;
-
       // The following routines are in 'loop.cpp'.
     case PN_WHILE:
       MakeWhile(curList, pn);
@@ -202,7 +197,7 @@ void CompileExpr(AList* curList, PNode* pn) {
   }
 }
 
-static void MakeAccess(AList* curList, PNode* pn, uint8_t theCode) {
+static void MakeAccess(AOpList* curList, PNode* pn, uint8_t theCode) {
   // Compile code to access the variable indicated by pn.  Access
   // is OP_STORE or OP_LOAD
 
@@ -307,15 +302,15 @@ static void MakeAccess(AList* curList, PNode* pn, uint8_t theCode) {
   }
 }
 
-static void MakeImmediate(AList* curList, int val) {
+static void MakeImmediate(AOpList* curList, int val) {
   curList->newNode<ANOpSign>(op_loadi, val);
 }
 
-static void MakeString(AList* curList, PNode* pn) {
+static void MakeString(AOpList* curList, PNode* pn) {
   curList->newNode<ANOpOfs>(pn->val);
 }
 
-static void MakeCall(AList* curList, PNode* pn) {
+static void MakeCall(AOpList* curList, PNode* pn) {
   // Compile a call to a procedure, the kernel, etc.
 
   // Push the number of arguments on the stack (we don't know the
@@ -350,14 +345,14 @@ static void MakeCall(AList* curList, PNode* pn) {
   }
 }
 
-static void MakeClassID(AList* curList, PNode* pn) {
+static void MakeClassID(AOpList* curList, PNode* pn) {
   // Compile a class ID.
 
   ANOpUnsign* an = curList->newNode<ANOpUnsign>(op_class, pn->sym->obj()->num);
   an->sym = pn->sym;
 }
 
-static void MakeObjID(AList* curList, PNode* pn) {
+static void MakeObjID(AOpList* curList, PNode* pn) {
   // Compile an object ID.
 
   if (pn->sym->hasVal(OBJ_SELF))
@@ -376,7 +371,7 @@ static void MakeObjID(AList* curList, PNode* pn) {
   }
 }
 
-static void MakeSend(AList* curList, PNode* pn) {
+static void MakeSend(AOpList* curList, PNode* pn) {
   // Compile code for sending to an object through a handle stored in a
   // variable.
 
@@ -404,7 +399,7 @@ static void MakeSend(AList* curList, PNode* pn) {
   an->numArgs = 2 * numArgs;
 }
 
-static int MakeMessage(AList* curList, PNode::ChildSpan theMsg) {
+static int MakeMessage(AOpList* curList, PNode::ChildSpan theMsg) {
   // Compile code to push a message on the stack.
 
   // Compile the selector.
@@ -422,7 +417,7 @@ static int MakeMessage(AList* curList, PNode::ChildSpan theMsg) {
   return an->value + 2;
 }
 
-static int MakeArgs(AList* curList, PNode::ChildSpan args) {
+static int MakeArgs(AOpList* curList, PNode::ChildSpan args) {
   // Compile code to push the arguments to a call on the stack.
   // Return the number of arguments.
 
@@ -441,7 +436,7 @@ static int MakeArgs(AList* curList, PNode::ChildSpan args) {
   return numArgs;
 }
 
-static void MakeUnary(AList* curList, PNode* pn) {
+static void MakeUnary(AOpList* curList, PNode* pn) {
   // Compile code for unary operators.
 
   // Do the argument to the operator.
@@ -463,7 +458,7 @@ static void MakeUnary(AList* curList, PNode* pn) {
   curList->newNode<ANOpCode>(theCode);
 }
 
-static void MakeBinary(AList* curList, PNode* pn) {
+static void MakeBinary(AOpList* curList, PNode* pn) {
   // Compile code for a binary operator.
 
   // Compile the arguments, putting the first on the stack.
@@ -493,7 +488,7 @@ static void MakeBinary(AList* curList, PNode* pn) {
   curList->newNode<ANOpCode>(theCode);
 }
 
-static void MakeNary(AList* curList, PNode* pn) {
+static void MakeNary(AOpList* curList, PNode* pn) {
   // Compile code for an nary operator (one with any number of arguments).
 
   // Compile the first argument and push its value on the stack.
@@ -529,7 +524,7 @@ static void MakeNary(AList* curList, PNode* pn) {
   }
 }
 
-static void MakeAssign(AList* curList, PNode* pn) {
+static void MakeAssign(AOpList* curList, PNode* pn) {
   // If this is an arithmetic-op assignment, put the value of the
   // target variable on the stack for the operation.
   if (pn->val != A_EQ) {
@@ -578,7 +573,7 @@ static void MakeAssign(AList* curList, PNode* pn) {
   MakeAccess(curList, pn->child_at(0), OP_LDST | OP_STORE);
 }
 
-static void MakeReturn(AList* curList, PNode* pn) {
+static void MakeReturn(AOpList* curList, PNode* pn) {
   // Compile code for a return.
 
   // If there was an argument to the return, compile it.
@@ -588,7 +583,7 @@ static void MakeReturn(AList* curList, PNode* pn) {
   curList->newNode<ANOpCode>(op_ret);
 }
 
-void MakeBranch(AList* curList, uint8_t theCode, ANode* bn, Symbol* dest) {
+void MakeBranch(AOpList* curList, uint8_t theCode, ANode* bn, Symbol* dest) {
   // Compile code for a branch.  The type of branch is in 'theCode', the
   // destination is 'bn'.  If the the destination is not yet defined,
   // 'dest' will point to a the symbol of the destination.
@@ -606,7 +601,7 @@ void MakeBranch(AList* curList, uint8_t theCode, ANode* bn, Symbol* dest) {
     Error("MakeBranch: bad call");
 }
 
-static void MakeComp(AList* curList, PNode* pn) {
+static void MakeComp(AOpList* curList, PNode* pn) {
   // Compile a comparison expression.  These expressions are nary expressions
   // with an early out -- the moment the truth value of the expression is
   // known, we stop evaluating the expression.
@@ -653,7 +648,7 @@ static void MakeComp(AList* curList, PNode* pn) {
   }
 }
 
-static void MakeAnd(AList* curList, PNode::ChildSpan args) {
+static void MakeAnd(AOpList* curList, PNode::ChildSpan args) {
   // Compile code for the '&&' operator.
 
   Symbol earlyOut;
@@ -671,7 +666,7 @@ static void MakeAnd(AList* curList, PNode::ChildSpan args) {
   MakeLabel(curList, &earlyOut);
 }
 
-static void MakeOr(AList* curList, PNode::ChildSpan args) {
+static void MakeOr(AOpList* curList, PNode::ChildSpan args) {
   // Compile code for the '||' operator.
 
   Symbol earlyOut;
@@ -689,7 +684,7 @@ static void MakeOr(AList* curList, PNode::ChildSpan args) {
   MakeLabel(curList, &earlyOut);
 }
 
-static void MakeCompOp(AList* curList, int op) {
+static void MakeCompOp(AOpList* curList, int op) {
   // Compile the opcode corresponding to the comparison operator 'op'.
 
   uint16_t theCode;
@@ -729,7 +724,7 @@ static void MakeCompOp(AList* curList, int op) {
   curList->newNode<ANOpCode>(theCode);
 }
 
-static void MakeIf(AList* curList, PNode* pn) {
+static void MakeIf(AOpList* curList, PNode* pn) {
   // Compile code for an 'if' statement.
 
   // Compile the conditional expression
@@ -758,7 +753,7 @@ static void MakeIf(AList* curList, PNode* pn) {
   }
 }
 
-static void MakeCond(AList* curList, PNode* pn) {
+static void MakeCond(AOpList* curList, PNode* pn) {
   // Compile code for a 'cond' expression.
 
   Symbol done;
@@ -824,7 +819,7 @@ static void MakeCond(AList* curList, PNode* pn) {
   MakeLabel(curList, &done);
 }
 
-static void MakeSwitch(AList* curList, PNode* pn) {
+static void MakeSwitch(AOpList* curList, PNode* pn) {
   // Compile code for the 'switch' statement.
 
   Symbol done;
@@ -905,7 +900,7 @@ static void MakeSwitch(AList* curList, PNode* pn) {
   curList->newNode<ANOpCode>(op_toss);
 }
 
-static void MakeIncDec(AList* curList, PNode* pn) {
+static void MakeIncDec(AOpList* curList, PNode* pn) {
   // Compile code for increment or decrement operators.
 
   uint16_t theCode;
@@ -1058,7 +1053,7 @@ void MakeText() {
   for (Text* tp : text.items()) sc->heapList->newNode<ANText>(tp);
 }
 
-void MakeLabel(AList* curList, Symbol* dest) {
+void MakeLabel(AOpList* curList, Symbol* dest) {
   if (dest->ref()) {
     dest->ref()->backpatch(curList->newNode<ANLabel>());
     dest->setRef(nullptr);

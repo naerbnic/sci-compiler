@@ -5,8 +5,8 @@
 
 #include <cstdint>
 
-struct AList;
+struct AOpList;
 
-uint32_t OptimizeProc(AList* al);
+uint32_t OptimizeProc(AOpList* al);
 
 #endif

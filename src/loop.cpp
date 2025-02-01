@@ -12,7 +12,7 @@
 enum LoopType { LOOP_FOR, LOOP_WHILE, LOOP_REPEAT };
 
 struct Loop {
-  Loop(AList* curList, LoopType t, Symbol* c, Symbol* e);
+  Loop(AOpList* curList, LoopType t, Symbol* c, Symbol* e);
   ~Loop();
 
   Loop* next;
@@ -26,7 +26,7 @@ struct Loop {
 // to support such things as (break n) and (continue n).
 Loop* loopList;
 
-Loop::Loop(AList* curList, LoopType t, Symbol* c, Symbol* e)
+Loop::Loop(AOpList* curList, LoopType t, Symbol* c, Symbol* e)
     : next(loopList),
       type(t),
       start(curList->newNode<ANLabel>()),
@@ -41,7 +41,7 @@ Loop::~Loop() {
   loopList = next;
 }
 
-void MakeWhile(AList* curList, PNode* theNode)
+void MakeWhile(AOpList* curList, PNode* theNode)
 // while ::= 'while' expression statement*
 {
   Symbol cont;
@@ -69,7 +69,7 @@ void MakeWhile(AList* curList, PNode* theNode)
   MakeLabel(curList, &end);
 }
 
-void MakeRepeat(AList* curList, PNode* theNode) {
+void MakeRepeat(AOpList* curList, PNode* theNode) {
   // forever ::= 'forever' statement+
 
   Symbol cont;
@@ -90,7 +90,7 @@ void MakeRepeat(AList* curList, PNode* theNode) {
   MakeLabel(curList, &end);
 }
 
-void MakeFor(AList* curList, PNode* theNode) {
+void MakeFor(AOpList* curList, PNode* theNode) {
   // for ::=	'for' '(' statement* ')'
   //			expression
   //			'(' statement* ')'
@@ -128,7 +128,7 @@ void MakeFor(AList* curList, PNode* theNode) {
   MakeLabel(curList, &end);
 }
 
-void MakeBreak(AList* curList, PNode* theNode) {
+void MakeBreak(AOpList* curList, PNode* theNode) {
   // break ::= 'break' [number]
 
   // Get the number of levels to break from.
@@ -144,7 +144,7 @@ void MakeBreak(AList* curList, PNode* theNode) {
   MakeBranch(curList, op_jmp, 0, lp->end);
 }
 
-void MakeBreakIf(AList* curList, PNode* theNode) {
+void MakeBreakIf(AOpList* curList, PNode* theNode) {
   // breakif ::= 'break' expression [number]
 
   // Get the number of levels to break from.
@@ -163,7 +163,7 @@ void MakeBreakIf(AList* curList, PNode* theNode) {
   MakeBranch(curList, op_bt, 0, lp->end);
 }
 
-void MakeContinue(AList* curList, PNode* theNode) {
+void MakeContinue(AOpList* curList, PNode* theNode) {
   // continue ::= 'continue' [number]
 
   // Get the number of levels to continue at.
@@ -182,7 +182,7 @@ void MakeContinue(AList* curList, PNode* theNode) {
     MakeBranch(curList, op_jmp, lp->start, 0);
 }
 
-void MakeContIf(AList* curList, PNode* theNode) {
+void MakeContIf(AOpList* curList, PNode* theNode) {
   // contif ::= 'contif' expression [number]
 
   // Get the number of levels to continue at.
