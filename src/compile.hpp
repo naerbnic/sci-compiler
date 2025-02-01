@@ -5,26 +5,28 @@
 
 #include <cstdint>
 
+#include "alist.hpp"
+
 struct PNode;
 struct ANode;
 class Symbol;
 struct Object;
 
 //	compile.cpp
-void Compile(PNode* pn);
-void MakeBranch(uint8_t type, ANode*, Symbol* target);
+void Compile(AList* curList, PNode* pn);
+void MakeBranch(AList* curList, uint8_t type, ANode*, Symbol* target);
 void MakeDispatch(int maxNum);
 void MakeObject(Object* theObj);
 void MakeText();
-void MakeLabel(Symbol* sym);
+void MakeLabel(AList* curList, Symbol* sym);
 
 //	loop.cpp
-void MakeWhile(PNode*);
-void MakeRepeat(PNode*);
-void MakeFor(PNode*);
-void MakeBreak(PNode*);
-void MakeBreakIf(PNode*);
-void MakeContinue(PNode*);
-void MakeContIf(PNode*);
+void MakeWhile(AList* curList, PNode*);
+void MakeRepeat(AList* curList, PNode*);
+void MakeFor(AList* curList, PNode*);
+void MakeBreak(AList* curList, PNode*);
+void MakeBreakIf(AList* curList, PNode*);
+void MakeContinue(AList* curList, PNode*);
+void MakeContIf(AList* curList, PNode*);
 
 #endif

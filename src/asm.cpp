@@ -13,7 +13,6 @@
 #include "output.hpp"
 #include "sc.hpp"
 
-bool addNodesToList;
 ANTable* dispTbl;
 int lastLineNum;
 ANWord* numDispTblEntries;
@@ -24,7 +23,6 @@ void InitAsm() {
 
   localVars.kill();
 
-  addNodesToList = true;
   textStart = 0;
 
   sc->heapList->clear();
@@ -41,10 +39,8 @@ void InitAsm() {
 
   numDispTblEntries = sc->hunkList->newNode<ANWord>();
   dispTbl = sc->hunkList->newNode<ANTable>("dispatch table");
-  dispTbl->finish();
 
   codeStart = 0;
-  curList = sc->hunkList->getList();
 }
 
 void Assemble() {
@@ -57,9 +53,7 @@ void Assemble() {
   sc->heapList->setOffset(0);
 
   // Optimize the code, setting all the offsets.
-  addNodesToList = false;
   sc->hunkList->optimize();
-  addNodesToList = true;
 
   // Reset the offsets in the object list to get the current code
   // offsets.

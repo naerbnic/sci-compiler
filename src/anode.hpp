@@ -4,8 +4,8 @@
 #ifndef ANODE_HPP
 #define ANODE_HPP
 
-#include <variant>
 #include <string>
+#include <variant>
 
 #include "alist.hpp"
 
@@ -88,11 +88,9 @@ struct ANTable : ANode
   size_t setOffset(size_t ofs);
   void list();
   void emit(OutputFile*);
-  void finish();
 
   std::string name;  // name of table (values follow)
   AList entries;     // list of entries in the table
-  AList* oldList;    // list active when table was created
 };
 
 struct ANObjTable : ANTable
@@ -142,12 +140,10 @@ struct ANCodeBlk : ANode
   size_t size();
   void emit(OutputFile*);
   size_t setOffset(size_t ofs);
-  void finish();
   bool optimize();
 
   Symbol* sym;
   AList code;
-  AList* oldList;
 };
 
 struct ANMethCode : ANCodeBlk
@@ -204,8 +200,8 @@ struct ANTextProp : ANProp
   ANTextProp(Symbol* sp, int v);
 
   void emit(OutputFile*);
-  std::string_view desc();     // return descriptive string
-  uint32_t value();  // return value of selector
+  std::string_view desc();  // return descriptive string
+  uint32_t value();         // return value of selector
 };
 
 struct ANOfsProp : ANProp
@@ -224,8 +220,8 @@ struct ANMethod : ANProp
 {
   ANMethod(Symbol* sp, ANMethCode* mp);
 
-  std::string_view desc();     // return descriptive string
-  uint32_t value();  // return value of selector
+  std::string_view desc();  // return descriptive string
+  uint32_t value();         // return value of selector
 
   ANMethCode* method;
 };

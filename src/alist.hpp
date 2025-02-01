@@ -184,8 +184,6 @@ struct CodeList : FixupList {
   void optimize();
 };
 
-extern bool addNodesToList;
-extern AList* curList;
 extern bool noOptimize;
 extern bool shrink;
 

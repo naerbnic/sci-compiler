@@ -10,16 +10,12 @@
 #include "output.hpp"
 #include "sc.hpp"
 
-AList* curList;
 bool shrink;
 bool noOptimize;
 
 ///////////////////////////////////////////////////
 // Class ANode
 ///////////////////////////////////////////////////
-
-// The flag addNodesToList is set during the optimization phase so that new
-// nodes to replace old ones are not automatically added to the current list.
 
 size_t ANode::size() { return 0; }
 
