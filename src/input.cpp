@@ -29,7 +29,7 @@ static FILE* FOpen(std::filesystem::path const& path, const char* mode) {
 }
 
 InputSource::InputSource() : fileName(0), lineNum(0) {
-  tokSym.setStr(nullptr);
+  tokSym.setStr("");
   curLine = lineNum;
 }
 
@@ -67,7 +67,7 @@ InputString::InputString(std::string_view str) : InputSource(curFile, curLine) {
   inputPtr = str;
 }
 
-InputString::InputString() { inputPtr = 0; }
+InputString::InputString() { inputPtr = ""; }
 
 InputString& InputString::operator=(InputString& s) {
   InputSource::operator=(s);

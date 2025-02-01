@@ -822,7 +822,7 @@ static void MakeSwitch(PNode* pn) {
   Compile(value);
   curList->newNode<ANOpCode>(op_push);
 
-  int i = 0;
+  std::size_t i = 0;
   while (i < cases.size()) {
     auto* caseClause = cases[i++].get();
     PNode* body = i < cases.size() && cases[i]->type == PN_ELIST

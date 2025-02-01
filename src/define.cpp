@@ -369,7 +369,7 @@ static int InitialValue(VarList& theVars, int offset, int arraySize) {
     return 1;
   }
 
-  if (offset + arraySize > maxVars) return -1;
+  if ((std::size_t)(offset + arraySize) > maxVars) return -1;
 
   if (theVars.values.size() < (std::size_t)(offset + arraySize)) {
     theVars.values.resize(offset + arraySize);

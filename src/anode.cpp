@@ -727,6 +727,7 @@ size_t ANFileName::size() {
     case SciTargetArch::SCI_2:
       return 1 + name.length() + 1;
   }
+  throw std::runtime_error("Invalid target architecture");
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -761,4 +762,5 @@ size_t ANLineNum::size() {
     case SciTargetArch::SCI_2:
       return 1 + sizeof(SCIWord);
   }
+  throw std::runtime_error("Invalid target architecture");
 }
