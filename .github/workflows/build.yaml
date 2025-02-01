@@ -17,11 +17,12 @@ jobs:
               uses: KyleMayes/install-llvm-action@v2.0.5
               with:
                 version: 18
+                directory: ${{ runner.temp }}/llvm
                 env: true
             - name: List files in the repository
               run: ls
             - name: Build for macOS
               run: bazel build //:all --verbose_failures
               env:
-                BAZEL_LLVM: ${{ github.workspace }}/llvm
+                BAZEL_LLVM: ${{ env.LLVM_PATH }}
             
