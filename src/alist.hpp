@@ -195,7 +195,6 @@ class WithCurList {
   AList* oldList;
 };
 
-extern bool addNodesToList;
 extern AList* curList;
 extern bool noOptimize;
 extern bool shrink;

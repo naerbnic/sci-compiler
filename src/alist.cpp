@@ -29,9 +29,6 @@ WithCurList::~WithCurList() noexcept(false) {
 // Class ANode
 ///////////////////////////////////////////////////
 
-// The flag addNodesToList is set during the optimization phase so that new
-// nodes to replace old ones are not automatically added to the current list.
-
 size_t ANode::size() { return 0; }
 
 size_t ANode::setOffset(size_t ofs) {
