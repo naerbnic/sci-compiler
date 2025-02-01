@@ -18,7 +18,7 @@
 
 VarList localVars;
 VarList globalVars;
-int maxVars = 750;
+std::size_t maxVars = 750;
 
 static int InitialValue(VarList& theVars, int offset, int arraySize);
 
@@ -371,7 +371,7 @@ static int InitialValue(VarList& theVars, int offset, int arraySize) {
 
   if (offset + arraySize > maxVars) return -1;
 
-  if (theVars.values.size() < (offset + arraySize)) {
+  if (theVars.values.size() < (std::size_t)(offset + arraySize)) {
     theVars.values.resize(offset + arraySize);
   }
 

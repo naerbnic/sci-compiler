@@ -82,7 +82,7 @@ struct PNode {
   }
 
   PNode* child_at(int i) const {
-    return i < children.size() ? children[i].get() : nullptr;
+    return ((std::size_t)i) < children.size() ? children[i].get() : nullptr;
   }
 
   ChildSpan rest() const { return rest_at(1); }
