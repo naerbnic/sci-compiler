@@ -15,4 +15,15 @@ jobs:
                 repository-cache: true
             - name: Build for macOS
               run: bazel build //:all
+    build-linux:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: bazel-contrib/setup-bazel@0.13.0
+              with:
+                bazelisk-cache: true
+                disk-cache: ${{ github.workflow }}
+                repository-cache: true
+            - name: Build for Linux
+              run: bazel build //:all
             

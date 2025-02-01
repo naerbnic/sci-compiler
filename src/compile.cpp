@@ -751,7 +751,7 @@ static void MakeCond(PNode* pn) {
   // Bodies are always an instance of ELIST, which is used to detect if there
   // is any body for each clause.
 
-  int i = 0;
+  std::size_t i = 0;
   while (i < pn->children.size()) {
     auto* condition = pn->children[i++].get();
     PNode* body = i < pn->children.size() && pn->children[i]->type == PN_ELIST
@@ -822,7 +822,7 @@ static void MakeSwitch(PNode* pn) {
   Compile(value);
   curList->newNode<ANOpCode>(op_push);
 
-  int i = 0;
+  std::size_t i = 0;
   while (i < cases.size()) {
     auto* caseClause = cases[i++].get();
     PNode* body = i < cases.size() && cases[i]->type == PN_ELIST

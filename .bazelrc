@@ -4,6 +4,7 @@ common --enable_platform_specific_config
 
 build:windows --copt /std:c++20 --host_copt /std:c++20
 build:macos --copt --std=c++20 --host_copt --std=c++20
+build:linux --copt --std=c++20 --host_copt --std=c++20
 
 build:asan --strip=never
 build:asan --copt -fsanitize=address

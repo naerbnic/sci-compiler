@@ -76,7 +76,7 @@ void Assemble() {
 
   char infoFileName[MAX_INFO_FILE_NAME];
   if (snprintf(infoFileName, 1024, "%d.inf", (unsigned short)script) >=
-      MAX_INFO_FILE_NAME) {
+      (int)MAX_INFO_FILE_NAME) {
     fprintf(stderr, "Error: info file name too long\n");
     exit(1);
   }

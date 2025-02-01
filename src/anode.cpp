@@ -48,6 +48,7 @@ static int NumArgsSize() {
       return 2;
       break;
   }
+  throw std::runtime_error("Invalid target architecture");
 }
 
 static void ListNumArgs(int n) {
@@ -60,6 +61,7 @@ static void ListNumArgs(int n) {
       ListWord(n);
       break;
   }
+  throw std::runtime_error("Invalid target architecture");
 }
 
 static void WriteNumArgs(OutputFile* out, int n) {
@@ -72,6 +74,7 @@ static void WriteNumArgs(OutputFile* out, int n) {
       out->WriteWord(n);
       break;
   }
+  throw std::runtime_error("Invalid target architecture");
 }
 
 ///////////////////////////////////////////////////
@@ -724,6 +727,7 @@ size_t ANFileName::size() {
     case SciTargetArch::SCI_2:
       return 1 + name.length() + 1;
   }
+  throw std::runtime_error("Invalid target architecture");
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -758,4 +762,5 @@ size_t ANLineNum::size() {
     case SciTargetArch::SCI_2:
       return 1 + sizeof(SCIWord);
   }
+  throw std::runtime_error("Invalid target architecture");
 }

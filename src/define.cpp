@@ -18,7 +18,7 @@
 
 VarList localVars;
 VarList globalVars;
-int maxVars = 750;
+std::size_t maxVars = 750;
 
 static int InitialValue(VarList& theVars, int offset, int arraySize);
 
@@ -236,7 +236,7 @@ void Local() {
         }
         n = InitialValue(localVars, size, arraySize);
         size += std::max(n, arraySize);
-        if (n == -1 || size > maxVars) {
+        if (n == -1 || (std::size_t)(size) > maxVars) {
           Error(tooManyVars, maxVars);
           break;
         }
@@ -250,7 +250,7 @@ void Local() {
       theSym->setVal(size);
       n = InitialValue(localVars, size, 1);
       size += n;
-      if (n == -1 || size > maxVars) {
+      if (n == -1 || (std::size_t)(size) > maxVars) {
         Error(tooManyVars, maxVars);
         break;
       }
@@ -369,9 +369,9 @@ static int InitialValue(VarList& theVars, int offset, int arraySize) {
     return 1;
   }
 
-  if (offset + arraySize > maxVars) return -1;
+  if ((std::size_t)(offset + arraySize) > maxVars) return -1;
 
-  if (theVars.values.size() < (offset + arraySize)) {
+  if (theVars.values.size() < (std::size_t)(offset + arraySize)) {
     theVars.values.resize(offset + arraySize);
   }
 

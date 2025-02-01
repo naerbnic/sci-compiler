@@ -82,7 +82,7 @@ class TokenSlot {
   void setVal(int val) { ref_val_ = val; }
   std::string_view str() const {
     auto* ptr = std::get_if<std::string>(&ref_val_);
-    return ptr ? ptr->c_str() : nullptr;
+    return ptr ? ptr->c_str() : "";
   }
   void setStr(std::string_view str) { ref_val_ = std::string(str); }
   Object* obj() const {
