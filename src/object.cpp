@@ -324,7 +324,7 @@ void MethodDef(Object* obj) {
       else {
         // Compile the code for this method.
         ExprList(node.get(), OPTIONAL);
-        Compile(sc->hunkList->getList(), node.get());
+        CompileProc(sc->hunkList->getList(), node.get());
 
         // Save the pointer to the method code.
         sn->tag = T_LOCAL;

@@ -13,7 +13,8 @@ class Symbol;
 struct Object;
 
 //	compile.cpp
-void Compile(AList* curList, PNode* pn);
+void CompileProc(AList* curList, PNode* pn);
+void CompileExpr(AList* curList, PNode* pn);
 void MakeBranch(AList* curList, uint8_t type, ANode*, Symbol* target);
 void MakeDispatch(int maxNum);
 void MakeObject(Object* theObj);

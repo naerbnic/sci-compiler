@@ -56,11 +56,11 @@ void MakeWhile(AList* curList, PNode* theNode)
   // and its corresponding branch.
   PNode* expr = theNode->child_at(0);
   PNode* body = theNode->child_at(1);
-  Compile(curList, expr);
+  CompileExpr(curList, expr);
   MakeBranch(curList, op_bnt, 0, &end);
 
   // Compile the statements in the loop
-  if (body) Compile(curList, body);
+  if (body) CompileExpr(curList, body);
 
   // Make the branch back to the loop start.
   MakeBranch(curList, op_jmp, lp.start, 0);
@@ -81,7 +81,7 @@ void MakeRepeat(AList* curList, PNode* theNode) {
   PNode* body = theNode->child_at(0);
 
   // Compile the loop's statements.
-  if (body) Compile(curList, body);
+  if (body) CompileExpr(curList, body);
 
   // Make the branch back to the start of the loop.
   MakeBranch(curList, op_jmp, lp.start, 0);
@@ -102,7 +102,7 @@ void MakeFor(AList* curList, PNode* theNode) {
   auto* body = theNode->child_at(3);
 
   // Make the initialization statements.
-  if (init) Compile(curList, init);
+  if (init) CompileExpr(curList, init);
 
   // Make the label at the start of the loop
   Symbol end;
@@ -111,15 +111,15 @@ void MakeFor(AList* curList, PNode* theNode) {
 
   // Compile the conditional expression controlling the loop,
   // and its corresponding branch.
-  if (cond) Compile(curList, cond);
+  if (cond) CompileExpr(curList, cond);
   MakeBranch(curList, op_bnt, 0, &end);
 
   // Compile the statements in the loop
-  if (body) Compile(curList, body);
+  if (body) CompileExpr(curList, body);
 
   // Compile the re-initialization statements
   MakeLabel(curList, &cont);
-  if (update) Compile(curList, update);
+  if (update) CompileExpr(curList, update);
 
   // Make the branch back to the loop start.
   MakeBranch(curList, op_jmp, lp.start, 0);
@@ -151,7 +151,7 @@ void MakeBreakIf(AList* curList, PNode* theNode) {
   int level = theNode->val - 1;
 
   // Compile the expression which determines whether or not we break.
-  Compile(curList, theNode->first_child());
+  CompileExpr(curList, theNode->first_child());
 
   // Walk through the list of loops until we get to the proper
   // level to break to.  If the requested break level is greater
@@ -189,7 +189,7 @@ void MakeContIf(AList* curList, PNode* theNode) {
   int level = theNode->val - 1;
 
   // Compile the expression which determines whether or not we continue.
-  Compile(curList, theNode->first_child());
+  CompileExpr(curList, theNode->first_child());
 
   // Walk through the list of loops until we get to the proper
   // level to continue at.  If the requested continue level is greater

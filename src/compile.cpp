@@ -40,7 +40,23 @@ static void MakeIf(AList* curList, PNode*);
 static void MakeCond(AList* curList, PNode*);
 static void MakeSwitch(AList* curList, PNode*);
 
-void Compile(AList* curList, PNode* pn) {
+void CompileProc(AList* curList, PNode* pn) {
+  // Recursively compile code for a given node.
+
+  switch (pn->type) {
+    case PN_PROC:
+    case PN_METHOD:
+      MakeProc(curList, pn);
+      break;
+
+    // Do nothing for unhandled node types.
+    default:
+      Error("Internal error: unhandled node type in Compile(): %d", pn->type);
+      break;
+  }
+}
+
+void CompileExpr(AList* curList, PNode* pn) {
   // Recursively compile code for a given node.
 
   if (includeDebugInfo && pn->type != PN_PROC && pn->type != PN_METHOD &&
@@ -53,12 +69,12 @@ void Compile(AList* curList, PNode* pn) {
     case PN_ELIST:
       // An expression list.  Compile code for each expression
       // in the list.
-      for (auto const& child : pn->children) Compile(curList, child.get());
+      for (auto const& child : pn->children) CompileExpr(curList, child.get());
       break;
 
     case PN_EXPR:
       // Compile the expression.
-      Compile(curList, pn->first_child());
+      CompileExpr(curList, pn->first_child());
       break;
 
     case PN_ASSIGN:
@@ -201,8 +217,8 @@ static void MakeAccess(AList* curList, PNode* pn, uint8_t theCode) {
     if (theCode == (OP_LDST | OP_STORE))
       curList->newNode<ANOpCode>(
           op_push);  // push the value to store on the stack
-    Compile(curList, pn->children[1].get());     // compile index value
-    if (theCode != op_lea) theCode |= OP_INDEX;  // set the indexing bit
+    CompileExpr(curList, pn->children[1].get());  // compile index value
+    if (theCode != op_lea) theCode |= OP_INDEX;   // set the indexing bit
     theAddr = child->val;
     varType = child->type;
 
@@ -381,7 +397,7 @@ static void MakeSend(AList* curList, PNode* pn) {
   else if (on->type == PN_SUPER)
     an = curList->newNode<ANSuper>(on->sym, on->val);
   else {
-    Compile(curList, on);  // compile the object/class id
+    CompileExpr(curList, on);  // compile the object/class id
     an = curList->newNode<ANSend>(op_send);
   }
 
@@ -392,7 +408,7 @@ static int MakeMessage(AList* curList, PNode::ChildSpan theMsg) {
   // Compile code to push a message on the stack.
 
   // Compile the selector.
-  Compile(curList, theMsg.front().get());
+  CompileExpr(curList, theMsg.front().get());
   curList->newNode<ANOpCode>(op_push);
 
   // Push the number of arguments on the stack (we don't know the
@@ -416,7 +432,7 @@ static int MakeArgs(AList* curList, PNode::ChildSpan args) {
     if (arg->type == PN_REST)
       curList->newNode<ANOpUnsign>(op_rest | OP_BYTE, arg->val);
     else {
-      Compile(curList, arg.get());
+      CompileExpr(curList, arg.get());
       curList->newNode<ANOpCode>(op_push);
       ++numArgs;
     }
@@ -429,7 +445,7 @@ static void MakeUnary(AList* curList, PNode* pn) {
   // Compile code for unary operators.
 
   // Do the argument to the operator.
-  Compile(curList, pn->first_child());
+  CompileExpr(curList, pn->first_child());
 
   // Put out the appropriate opcode.
   uint16_t theCode;
@@ -451,9 +467,9 @@ static void MakeBinary(AList* curList, PNode* pn) {
   // Compile code for a binary operator.
 
   // Compile the arguments, putting the first on the stack.
-  Compile(curList, pn->child_at(0));
+  CompileExpr(curList, pn->child_at(0));
   curList->newNode<ANOpCode>(op_push);
-  Compile(curList, pn->child_at(1));
+  CompileExpr(curList, pn->child_at(1));
 
   // Put out the opcode.
   uint16_t theCode;
@@ -481,14 +497,14 @@ static void MakeNary(AList* curList, PNode* pn) {
   // Compile code for an nary operator (one with any number of arguments).
 
   // Compile the first argument and push its value on the stack.
-  Compile(curList, pn->child_at(0));
+  CompileExpr(curList, pn->child_at(0));
 
   for (auto const& arg : pn->rest()) {
     // Push the previous argument on the stack for combining with the
     // next argument.
     curList->newNode<ANOpCode>(op_push);
     // Compile the next argument.
-    Compile(curList, arg.get());
+    CompileExpr(curList, arg.get());
 
     // Put out the appropriate opcode.
     uint16_t theCode;
@@ -522,7 +538,7 @@ static void MakeAssign(AList* curList, PNode* pn) {
   }
 
   // Compile the value to be assigned.
-  Compile(curList, pn->child_at(1));
+  CompileExpr(curList, pn->child_at(1));
 
   // If this is an arithmetic-op assignment, do the arithmetic operation.
   uint16_t theCode;
@@ -566,7 +582,7 @@ static void MakeReturn(AList* curList, PNode* pn) {
   // Compile code for a return.
 
   // If there was an argument to the return, compile it.
-  if (pn->first_child()) Compile(curList, pn->first_child());
+  if (pn->first_child()) CompileExpr(curList, pn->first_child());
 
   // Put out the return opcode.
   curList->newNode<ANOpCode>(op_ret);
@@ -611,9 +627,9 @@ static void MakeComp(AList* curList, PNode* pn) {
     Symbol earlyOut;
 
     // Compile the first two operands and do the test.
-    Compile(curList, pn->child_at(0));
+    CompileExpr(curList, pn->child_at(0));
     curList->newNode<ANOpCode>(op_push);
-    Compile(curList, pn->child_at(1));
+    CompileExpr(curList, pn->child_at(1));
     MakeCompOp(curList, op);
 
     // If there are no more operands, we're done.  Otherwise we've got
@@ -628,7 +644,7 @@ static void MakeComp(AList* curList, PNode* pn) {
       curList->newNode<ANOpCode>(op_pprev);
 
       // Compile the next argument and test it.
-      Compile(curList, node.get());
+      CompileExpr(curList, node.get());
       MakeCompOp(curList, op);
     }
 
@@ -642,13 +658,13 @@ static void MakeAnd(AList* curList, PNode::ChildSpan args) {
 
   Symbol earlyOut;
 
-  Compile(curList, args[0].get());
+  CompileExpr(curList, args[0].get());
 
   for (auto const& arg : args.subspan(1)) {
     // Make a branch for an early out if the expression is false.
     MakeBranch(curList, op_bnt, 0, &earlyOut);
     // Compile an argument.
-    Compile(curList, arg.get());
+    CompileExpr(curList, arg.get());
   }
 
   // Set the target for any early-out branches.
@@ -660,13 +676,13 @@ static void MakeOr(AList* curList, PNode::ChildSpan args) {
 
   Symbol earlyOut;
 
-  Compile(curList, args[0].get());
+  CompileExpr(curList, args[0].get());
 
   for (auto const& arg : args.subspan(1)) {
     // Make a branch for an early out if the expression is true.
     MakeBranch(curList, op_bt, 0, &earlyOut);
     // Compile code for an argument.
-    Compile(curList, arg.get());
+    CompileExpr(curList, arg.get());
   }
 
   // Make a target for the early-out branches.
@@ -717,14 +733,14 @@ static void MakeIf(AList* curList, PNode* pn) {
   // Compile code for an 'if' statement.
 
   // Compile the conditional expression
-  Compile(curList, pn->child_at(0));
+  CompileExpr(curList, pn->child_at(0));
 
   // Branch to the else code (if there is any) if the expression is false.
   Symbol elseLabel;
   MakeBranch(curList, op_bnt, 0, &elseLabel);
 
   // Compile the code to be executed if expression was true.
-  if (pn->child_at(1)) Compile(curList, pn->child_at(1));
+  if (pn->child_at(1)) CompileExpr(curList, pn->child_at(1));
 
   // If there is no 'else' code, we're done -- backpatch the branch.
   // Otherwise, jump around the else code, backpatch the jump to the
@@ -737,7 +753,7 @@ static void MakeIf(AList* curList, PNode* pn) {
     Symbol doneLabel;
     MakeBranch(curList, op_jmp, 0, &doneLabel);
     MakeLabel(curList, &elseLabel);
-    Compile(curList, pn->child_at(2));
+    CompileExpr(curList, pn->child_at(2));
     MakeLabel(curList, &doneLabel);
   }
 }
@@ -767,7 +783,7 @@ static void MakeCond(AList* curList, PNode* pn) {
       if (elseSeen) Error("Else must come at end of cond statement");
 
       // Compile the condition test.
-      Compile(curList, condition);
+      CompileExpr(curList, condition);
 
       if (atEnd && !body) {
         //	if we're at the end, just break out.
@@ -791,7 +807,7 @@ static void MakeCond(AList* curList, PNode* pn) {
     // Compile the statements to be executed if a condition was
     // satisfied.
     if (body) {
-      Compile(curList, body);
+      CompileExpr(curList, body);
     }
 
     // If we're at the end of the cond clause, we're done.  Otherwise
@@ -821,7 +837,7 @@ static void MakeSwitch(AList* curList, PNode* pn) {
 
   // Compile the expression to be switched on and put the value on
   // the stack.
-  Compile(curList, value);
+  CompileExpr(curList, value);
   curList->newNode<ANOpCode>(op_push);
 
   std::size_t i = 0;
@@ -843,7 +859,7 @@ static void MakeSwitch(AList* curList, PNode* pn) {
       curList->newNode<ANOpCode>(op_dup);
 
       // Compile the test value.
-      Compile(curList, caseClause);
+      CompileExpr(curList, caseClause);
 
       // Test for equality.
       curList->newNode<ANOpCode>(op_eq);
@@ -870,7 +886,7 @@ static void MakeSwitch(AList* curList, PNode* pn) {
 
     // Compile the statements to be executed if a switch matched.
     if (body) {
-      Compile(curList, body);
+      CompileExpr(curList, body);
     }
 
     // If we're at the end of the switch expression, we're done.
@@ -937,7 +953,7 @@ static void MakeProc(AList* curList, PNode* pn) {
   if (pn->val) an->code.newNode<ANOpUnsign>(op_link, pn->val);
 
   // Compile code for the procedure followed by a return.
-  if (pn->child_at(0)) Compile(&an->code, pn->child_at(0));
+  if (pn->child_at(0)) CompileExpr(&an->code, pn->child_at(0));
 
   if (includeDebugInfo) {
     assert(curSourceFile);
