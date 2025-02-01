@@ -5,7 +5,6 @@ jobs:
         runs-on: macos-latest
         steps:
             - uses: actions/checkout@v4
-            - run: sudo xcode-select -s /Library/Developer/CommandLineTools
             - uses: bazel-contrib/setup-bazel@0.13.0
               with:
                 # Avoid downloading Bazel every time.
@@ -14,14 +13,6 @@ jobs:
                 disk-cache: ${{ github.workflow }}
                 # Share repository cache between workflows.
                 repository-cache: true
-            - name: Set SDKROOT
-              run: echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> $GITHUB_ENV
-            - name: List files in the repository
-              run: ls
-            - name: Show current environment variables
-              run: printenv
             - name: Build for macOS
-              run: bazel build //:all --verbose_failures
-              env:
-                BAZEL_LLVM: ${{ env.LLVM_PATH }}
+              run: bazel build //:all
             
