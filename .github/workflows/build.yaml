@@ -19,9 +19,9 @@ jobs:
                 version: 18
                 env: true
             - name: List files in the repository
-              run: ls -R
+              run: ls
             - name: Build for macOS
-              run: bazel build //:all
+              run: bazel build //:all --verbose_failures
               env:
-                BAZEL_LLVM: ./llvm
+                BAZEL_LLVM: ${{ github.workspace }}/llvm
             
