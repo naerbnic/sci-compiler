@@ -22,7 +22,6 @@
 #include "text.hpp"
 
 ANCodeBlk* codeStart;
-size_t curOfs;
 uint32_t textStart;
 
 #define OPTIMIZE_TRANSFERS
@@ -51,14 +50,14 @@ static int NumArgsSize() {
   }
 }
 
-static void ListNumArgs(int n) {
+static void ListNumArgs(std::size_t offset, int n) {
   switch (targetArch) {
     case SciTargetArch::SCI_1_1:
-      ListByte(n);
+      ListByte(offset, n);
       break;
 
     case SciTargetArch::SCI_2:
-      ListWord(n);
+      ListWord(offset, n);
       break;
 
     default:
@@ -104,16 +103,14 @@ void ANReference::backpatch(ANode* dest) {
 ///////////////////////////////////////////////////
 
 void ANDispatch::list() {
-  size_t oldOfs = curOfs;
+  std::size_t curOfs = *offset;
 
   if (target() && sym)
-    ListAsCode("dispatch\t$%-4x\t(%s)", target()->offset, sym->name());
+    ListAsCode(curOfs, "dispatch\t$%-4x\t(%s)", *target()->offset, sym->name());
   else if (sym)
-    ListAsCode("dispatch\t----\t(%s)", sym->name());
+    ListAsCode(curOfs, "dispatch\t----\t(%s)", sym->name());
   else
-    ListAsCode("dispatch\t----");
-
-  curOfs = oldOfs;
+    ListAsCode(curOfs, "dispatch\t----");
 }
 
 size_t ANDispatch::size() { return 2; }
@@ -122,9 +119,9 @@ void ANDispatch::emit(OutputFile* out) {
   // If the destination of this dispatch entry is in the heap (i.e.
   // an object rather than code), it must be fixed up.
 
-  if (sc->heapList->contains(target())) sc->hunkList->addFixup(offset);
+  if (sc->heapList->contains(target())) sc->hunkList->addFixup(*offset);
 
-  out->WriteWord((uint32_t)(target() && sym ? target()->offset : 0));
+  out->WriteWord((uint32_t)(target() && sym ? *target()->offset : 0));
 }
 
 ///////////////////////////////////////////////////
@@ -135,7 +132,7 @@ ANWord::ANWord(int v) : value(v) {}
 
 size_t ANWord::size() { return 2; }
 
-void ANWord::list() { ListWord(value); }
+void ANWord::list() { ListWord(*offset, value); }
 
 void ANWord::emit(OutputFile* out) { out->WriteWord(value); }
 
@@ -177,7 +174,7 @@ size_t ANText::size() { return text->str.size() + 1; }
 
 void ANText::list() {
   if (textStart == offset) Listing("\n\n");
-  ListText(text->str);
+  ListText(*offset, text->str);
 }
 
 void ANText::emit(OutputFile* out) {
@@ -238,7 +235,8 @@ ANProp::ANProp(Symbol* sp, int v) : sym(sp), val(v) {}
 size_t ANProp::size() { return 2; }
 
 void ANProp::list() {
-  ListAsCode("%-6s$%-4x\t(%s)", desc(), (SCIUWord)value(), sym->name());
+  ListAsCode(*offset, "%-6s$%-4x\t(%s)", desc(), (SCIUWord)value(),
+             sym->name());
 }
 
 void ANProp::emit(OutputFile* out) { out->WriteWord(value()); }
@@ -250,7 +248,7 @@ uint32_t ANIntProp::value() { return val; }
 ANTextProp::ANTextProp(Symbol* sp, int v) : ANProp(sp, v) {}
 
 void ANTextProp::emit(OutputFile* out) {
-  sc->heapList->addFixup(offset);
+  sc->heapList->addFixup(*offset);
   ANProp::emit(out);
 }
 
@@ -260,13 +258,13 @@ uint32_t ANTextProp::value() { return val + textStart; }
 
 std::string_view ANOfsProp::desc() { return "ofs"; }
 
-uint32_t ANOfsProp::value() { return target->offset; }
+uint32_t ANOfsProp::value() { return *target->offset; }
 
 ANMethod::ANMethod(Symbol* sp, ANMethCode* mp) : ANProp(sp, 0), method(mp) {}
 
 std::string_view ANMethod::desc() { return "local"; }
 
-uint32_t ANMethod::value() { return method->offset; }
+uint32_t ANMethod::value() { return *method->offset; }
 
 ///////////////////////////////////////////////////
 // Class ANOpCode
@@ -276,7 +274,7 @@ ANOpCode::ANOpCode(uint32_t o) : op(o) {}
 
 size_t ANOpCode::size() { return 1; }
 
-void ANOpCode::list() { ListOp(op); }
+void ANOpCode::list() { ListOp(*offset, op); }
 
 void ANOpCode::emit(OutputFile* out) { out->WriteOp(op); }
 
@@ -314,7 +312,7 @@ ANOpUnsign::ANOpUnsign(uint32_t o, uint32_t v) {
 size_t ANOpUnsign::size() { return op & OP_BYTE ? 2 : 3; }
 
 void ANOpUnsign::list() {
-  ListOp(op);
+  ListOp(*offset, op);
   if (!sym)
     ListArg("$%-4x", (SCIUWord)value);
   else
@@ -342,7 +340,7 @@ ANOpSign::ANOpSign(uint32_t o, int v) {
 size_t ANOpSign::size() { return op & OP_BYTE ? 2 : 3; }
 
 void ANOpSign::list() {
-  ListOp(op);
+  ListOp(*offset, op);
   if (!sym)
     ListArg("$%-4x", (SCIUWord)value);
   else
@@ -391,7 +389,7 @@ size_t ANOpExtern::size() {
 }
 
 void ANOpExtern::list() {
-  ListOp(op);
+  ListOp(*offset, op);
   switch (op & ~OP_BYTE) {
     case op_callk:
     case op_callb:
@@ -400,7 +398,7 @@ void ANOpExtern::list() {
     case op_calle:
       ListArg("$%x/%x\t(%s)", (SCIUWord)module, (SCIUWord)entry, sym->name());
   }
-  ListNumArgs(numArgs);
+  ListNumArgs(*offset + 1, numArgs);
 }
 
 void ANOpExtern::emit(OutputFile* out) {
@@ -426,7 +424,6 @@ void ANOpExtern::emit(OutputFile* out) {
 ANCall::ANCall(Symbol* s) {
   sym = s;
   op = op_call;
-  offset = curOfs;
 }
 
 size_t ANCall::size() {
@@ -437,7 +434,7 @@ size_t ANCall::size() {
   else if (!sym->loc() || target()->offset == UNDEFINED)
     return 3 + arg_size;
 #if defined(OPTIMIZE_TRANSFERS)
-  else if (canOptimizeTransfer(target()->offset, offset + 5)) {
+  else if (canOptimizeTransfer(*target()->offset, *offset + 5)) {
     op |= OP_BYTE;
     return 2 + arg_size;
   }
@@ -449,10 +446,10 @@ size_t ANCall::size() {
 }
 
 void ANCall::list() {
-  ListOp(op_call);
-  ListArg("$%-4x\t(%s)", SCIUWord(target()->offset - (offset + size())),
+  ListOp(*offset, op_call);
+  ListArg("$%-4x\t(%s)", SCIUWord(*target()->offset - (*offset + size())),
           sym->name());
-  ListNumArgs(numArgs);
+  ListNumArgs(*offset + 1, numArgs);
 }
 
 void ANCall::emit(OutputFile* out) {
@@ -461,7 +458,7 @@ void ANCall::emit(OutputFile* out) {
     return;
   }
 
-  int n = target()->offset - (offset + size());
+  int n = *target()->offset - (*offset + size());
   out->WriteOp(op);
   if (op & OP_BYTE)
     out->WriteByte(n);
@@ -482,7 +479,7 @@ size_t ANBranch::size() {
   else if (!target() || target()->offset == UNDEFINED)
     return 3;
 #if defined(OPTIMIZE_TRANSFERS)
-  else if (canOptimizeTransfer(target()->offset, offset + 4)) {
+  else if (canOptimizeTransfer(*target()->offset, *offset + 4)) {
     op |= OP_BYTE;
     return 2;
   }
@@ -494,13 +491,13 @@ size_t ANBranch::size() {
 }
 
 void ANBranch::list() {
-  ListOp(op);
-  ListArg("$%-4x\t(.%d)", SCIUWord(target()->offset - (offset + size())),
+  ListOp(*offset, op);
+  ListArg("$%-4x\t(.%d)", SCIUWord(*target()->offset - (*offset + size())),
           ((ANLabel*)target())->number);
 }
 
 void ANBranch::emit(OutputFile* out) {
-  int n = target()->offset - (offset + size());
+  int n = *target()->offset - (*offset + size());
 
   out->WriteOp(op);
   if (op & OP_BYTE)
@@ -520,7 +517,7 @@ ANVarAccess::ANVarAccess(uint32_t o, uint32_t a) : addr(a) {
 size_t ANVarAccess::size() { return op & OP_BYTE ? 2 : 3; }
 
 void ANVarAccess::list() {
-  ListOp(op);
+  ListOp(*offset, op);
   if (sym)
     ListArg("$%-4x\t(%s)", addr, sym->name());
   else
@@ -544,13 +541,13 @@ ANOpOfs::ANOpOfs(uint32_t o) : ANOpCode(op_lofsa), ofs(o) {}
 size_t ANOpOfs::size() { return WORDSIZE; }
 
 void ANOpOfs::list() {
-  ListOp(op);
+  ListOp(*offset, op);
   ListArg("$%-4x", textStart + ofs);
 }
 
 void ANOpOfs::emit(OutputFile* out) {
   out->WriteOp(op);
-  sc->hunkList->addFixup(offset + 1);
+  sc->hunkList->addFixup(*offset + 1);
   out->WriteWord(textStart + ofs);
 }
 
@@ -563,8 +560,8 @@ ANObjID::ANObjID(Symbol* s) : ANOpCode(op_lofsa) { sym = s; }
 size_t ANObjID::size() { return WORDSIZE; }
 
 void ANObjID::list() {
-  ListOp(op);
-  ListArg("$%-4x\t(%s)", target()->offset, sym->name());
+  ListOp(*offset, op);
+  ListArg("$%-4x\t(%s)", *target()->offset, sym->name());
 }
 
 void ANObjID::emit(OutputFile* out) {
@@ -574,8 +571,8 @@ void ANObjID::emit(OutputFile* out) {
   }
 
   out->WriteOp(op);
-  sc->hunkList->addFixup(offset + 1);
-  out->WriteWord(target()->offset);
+  sc->hunkList->addFixup(*offset + 1);
+  out->WriteWord(*target()->offset);
 }
 
 ///////////////////////////////////////////////////
@@ -588,7 +585,7 @@ ANEffctAddr::ANEffctAddr(uint32_t o, uint32_t a, uint32_t t)
 size_t ANEffctAddr::size() { return op & OP_BYTE ? 3 : 5; }
 
 void ANEffctAddr::list() {
-  ListOp(op);
+  ListOp(*offset, op);
   ListArg("$%-4x\t(%s)", addr, sym->name());
 }
 
@@ -613,8 +610,8 @@ ANSend::ANSend(uint32_t o) : ANOpCode(o) {}
 size_t ANSend::size() { return 1 + NumArgsSize(); }
 
 void ANSend::list() {
-  ListOp(op);
-  ListNumArgs(numArgs);
+  ListOp(*offset, op);
+  ListNumArgs(*offset + 1, numArgs);
 }
 
 void ANSend::emit(OutputFile* out) {
@@ -634,9 +631,9 @@ ANSuper::ANSuper(Symbol* s, uint32_t c)
 size_t ANSuper::size() { return (op & OP_BYTE ? 2 : 3) + NumArgsSize(); }
 
 void ANSuper::list() {
-  ListOp(op);
+  ListOp(*offset, op);
   ListArg("$%-4x\t(%s)", classNum, sym->name());
-  ListNumArgs(numArgs);
+  ListNumArgs(*offset + 1, numArgs);
 }
 
 void ANSuper::emit(OutputFile* out) {
@@ -657,24 +654,24 @@ ANVars::ANVars(VarList& theVars) : theVars(theVars) {}
 size_t ANVars::size() { return 2 * (theVars.values.size() + 1); }
 
 void ANVars::list() {
-  size_t oldOfs = curOfs;
+  // FIXME: I don't know why we're saving/restoring the variable.
+  std::size_t curOfs = *offset;
 
   Listing("\n\nVariables:");
-  ListWord(theVars.values.size());
+  ListWord(curOfs, theVars.values.size());
   curOfs += 2;
 
   for (Var const& var : theVars.values) {
     int n = var.value;
     if (var.type == S_STRING) n += textStart;
-    ListWord(n);
+    ListWord(curOfs, n);
     curOfs += 2;
   }
   Listing("\n");
-
-  curOfs = oldOfs;
 }
 
 void ANVars::emit(OutputFile* out) {
+  int curOfs = *offset;
   out->WriteWord(theVars.values.size());
   curOfs += 2;
 
@@ -699,7 +696,7 @@ void ANFileName::list() {
     case SciTargetArch::SCI_1_1:
       break;
     case SciTargetArch::SCI_2:
-      ListOffset();
+      ListOffset(*offset);
       Listing("file");
       break;
 

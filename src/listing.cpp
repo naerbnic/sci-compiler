@@ -120,10 +120,11 @@ void ListingImpl(absl::FunctionRef<bool(FILE*)> print_func) {
   }
 }
 
-void ListAsCodeImpl(absl::FunctionRef<bool(FILE*)> print_func) {
+void ListAsCodeImpl(std::size_t offset,
+                    absl::FunctionRef<bool(FILE*)> print_func) {
   if (!listCode || !listFile) return;
 
-  ListOffset();
+  ListOffset(offset);
 
   ListingImpl(print_func);
 }
@@ -169,7 +170,7 @@ void CloseListFile() {
 
 void DeleteListFile() { DeletePath(listName); }
 
-void ListOp(uint8_t theOp) {
+void ListOp(std::size_t offset, uint8_t theOp) {
   OpStr* oPtr;
   std::string_view op;
   std::string scratch;
@@ -178,7 +179,7 @@ void ListOp(uint8_t theOp) {
 
   if (!listCode || !listFile) return;
 
-  ListOffset();
+  ListOffset(offset);
 
   if (!(theOp & OP_LDST)) {
     oPtr = &theOpCodes[(theOp & ~OP_BYTE) / 2];
@@ -246,22 +247,22 @@ void ListOp(uint8_t theOp) {
     Listing("%s", op);
 }
 
-void ListWord(uint16_t w) {
+void ListWord(std::size_t offset, uint16_t w) {
   if (!listCode || !listFile) return;
 
-  ListAsCode("word\t$%x", (SCIUWord)w);
+  ListAsCode(offset, "word\t$%x", (SCIUWord)w);
 }
 
-void ListByte(uint8_t b) {
+void ListByte(std::size_t offset, uint8_t b) {
   if (!listCode || !listFile) return;
 
-  ListAsCode("byte\t$%x", b);
+  ListAsCode(offset, "byte\t$%x", b);
 }
 
-void ListText(std::string_view s) {
+void ListText(std::size_t offset, std::string_view s) {
   std::string line;
 
-  ListAsCode("text");
+  ListAsCode(offset, "text");
 
   line.push_back('"');  // start with a quote
   auto curr_it = s.begin();
@@ -300,10 +301,10 @@ void ListText(std::string_view s) {
   }
 }
 
-void ListOffset() {
+void ListOffset(std::size_t offset) {
   if (!listCode || !listFile) return;
 
-  ListingNoCRLF("\t\t%5x\t", curOfs);
+  ListingNoCRLF("\t\t%5x\t", offset);
 }
 
 void ListSourceLine(int num) {

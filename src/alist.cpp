@@ -86,7 +86,7 @@ size_t AList::size() {
 
 void AList::emit(OutputFile* out) {
   for (auto it = iter(); it; it.advance()) {
-    curOfs = it->offset;
+    // curOfs = it->offset;
     if (listCode) it->list();
     it->emit(out);
   }
@@ -138,19 +138,19 @@ void FixupList::initFixups() {
 }
 
 void FixupList::listFixups() {
-  curOfs = fixOfs;
+  std::size_t curOfs = fixOfs;
 
   if (curOfs & 1) {
-    ListByte(0);
+    ListByte(curOfs, 0);
     ++curOfs;
   }
 
   Listing("\n\nFixups:");
-  ListWord(fixups.size());
+  ListWord(curOfs, fixups.size());
   curOfs += 2;
 
   for (size_t fixup : fixups) {
-    ListWord(fixup);
+    ListWord(curOfs, fixup);
     curOfs += 2;
   }
 }

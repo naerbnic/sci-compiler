@@ -474,7 +474,6 @@ struct ANLineNum : ANOpCode {
 };
 
 extern ANCodeBlk* codeStart;
-extern size_t curOfs;
 extern uint32_t textStart;
 
 #endif
