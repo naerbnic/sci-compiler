@@ -73,8 +73,6 @@ class TListBase {
 
 template <class T>
 class TList {
-  static_assert(std::convertible_to<T*, TNode*>);
-
  public:
   TList() : list_(std::make_unique<TListBase>()) {}
 

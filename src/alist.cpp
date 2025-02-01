@@ -43,13 +43,11 @@ AListIter AListIter::next() const {
   return it;
 }
 
-std::unique_ptr<ANode> AListIter::remove() {
-  return std::unique_ptr<ANode>(static_cast<ANode*>(iter_.remove().release()));
-}
+std::unique_ptr<ANOpCode> AListIter::remove() { return iter_.remove(); }
 
-ANode* AListIter::replaceWith(std::unique_ptr<ANode> nn) {
+ANOpCode* AListIter::replaceWith(std::unique_ptr<ANOpCode> nn) {
   iter_.replaceWith(std::move(nn));
-  return static_cast<ANode*>(iter_.get());
+  return iter_.get();
 }
 
 bool AListIter::isOp(uint32_t op) const {
@@ -64,7 +62,31 @@ bool AListIter::isOp(uint32_t op) const {
 // Class AList
 ///////////////////////////////////////////////////
 
-ANOpCode* AList::nextOp(ANode* start) {
+size_t AList::size() {
+  size_t s = 0;
+  for (auto it = iter(); it; ++it) s += it->size();
+  return s;
+}
+
+void AList::emit(OutputFile* out) {
+  for (auto it = iter(); it; ++it) {
+    curOfs = it->offset;
+    if (listCode) it->list();
+    it->emit(out);
+  }
+}
+
+size_t AList::setOffset(size_t ofs) {
+  for (auto it = iter(); it; ++it) ofs = it->setOffset(ofs);
+
+  return ofs;
+}
+
+///////////////////////////////////////////////////
+// Class AList
+///////////////////////////////////////////////////
+
+ANOpCode* AOpList::nextOp(ANOpCode* start) {
   assert(start != NULL);
 
   for (ANode& node :
@@ -78,13 +100,13 @@ ANOpCode* AList::nextOp(ANode* start) {
   return nullptr;
 }
 
-size_t AList::size() {
+size_t AOpList::size() {
   size_t s = 0;
   for (auto it = iter(); it; it.advance()) s += it->size();
   return s;
 }
 
-void AList::emit(OutputFile* out) {
+void AOpList::emit(OutputFile* out) {
   for (auto it = iter(); it; it.advance()) {
     // curOfs = it->offset;
     if (listCode) it->list();
@@ -92,19 +114,10 @@ void AList::emit(OutputFile* out) {
   }
 }
 
-size_t AList::setOffset(size_t ofs) {
+size_t AOpList::setOffset(size_t ofs) {
   for (auto it = iter(); it; it.advance()) ofs = it->setOffset(ofs);
 
   return ofs;
-}
-
-void AList::optimize() {
-  // Scan the assembly nodes, doing some peephole-like optimization.
-
-  if (noOptimize) return;
-
-  for (auto it = iter(); it; it.advance())
-    while (it->optimize());
 }
 
 ///////////////////////////////////////////////////
@@ -177,7 +190,10 @@ void FixupList::emit(OutputFile* out) {
 ///////////////////////////////////////////////////
 
 void CodeList::optimize() {
-  list_.optimize();
+  if (!noOptimize) {
+    for (auto it = list_.iter(); it; ++it)
+      while (it->optimize());
+  }
 
   // Make a first pass, resolving offsets and converting to byte offsets
   // where possible.

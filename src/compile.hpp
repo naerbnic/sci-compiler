@@ -14,20 +14,20 @@ struct Object;
 
 //	compile.cpp
 void CompileProc(AList* curList, PNode* pn);
-void CompileExpr(AList* curList, PNode* pn);
-void MakeBranch(AList* curList, uint8_t type, ANode*, Symbol* target);
+void CompileExpr(AOpList* curList, PNode* pn);
+void MakeBranch(AOpList* curList, uint8_t type, ANode*, Symbol* target);
 void MakeDispatch(int maxNum);
 void MakeObject(Object* theObj);
 void MakeText();
-void MakeLabel(AList* curList, Symbol* sym);
+void MakeLabel(AOpList* curList, Symbol* sym);
 
 //	loop.cpp
-void MakeWhile(AList* curList, PNode*);
-void MakeRepeat(AList* curList, PNode*);
-void MakeFor(AList* curList, PNode*);
-void MakeBreak(AList* curList, PNode*);
-void MakeBreakIf(AList* curList, PNode*);
-void MakeContinue(AList* curList, PNode*);
-void MakeContIf(AList* curList, PNode*);
+void MakeWhile(AOpList* curList, PNode*);
+void MakeRepeat(AOpList* curList, PNode*);
+void MakeFor(AOpList* curList, PNode*);
+void MakeBreak(AOpList* curList, PNode*);
+void MakeBreakIf(AOpList* curList, PNode*);
+void MakeContinue(AOpList* curList, PNode*);
+void MakeContIf(AOpList* curList, PNode*);
 
 #endif

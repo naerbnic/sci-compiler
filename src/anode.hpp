@@ -143,7 +143,7 @@ struct ANCodeBlk : ANode
   bool optimize();
 
   Symbol* sym;
-  AList code;
+  AOpList code;
 };
 
 struct ANMethCode : ANCodeBlk
@@ -224,21 +224,6 @@ struct ANMethod : ANProp
   uint32_t value();         // return value of selector
 
   ANMethCode* method;
-};
-
-struct ANOpCode : ANode
-// This is the generic class for an opcode taking no parameters.  Opcodes
-// requiring parameters are subclassed from this.  The property 'op' contains
-// the opcode.
-{
-  ANOpCode() = default;
-  ANOpCode(uint32_t o);
-
-  size_t size();
-  void list();
-  void emit(OutputFile*);
-
-  uint32_t op;  // type of operator
 };
 
 class ANLabel : public ANOpCode

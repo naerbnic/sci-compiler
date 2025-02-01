@@ -17,7 +17,7 @@ enum {
 #define indexed(op) ((op) & OP_INDEX)
 #define toStack(op) ((op) & OP_STACK)
 
-uint32_t OptimizeProc(AList* al) {
+uint32_t OptimizeProc(AOpList* al) {
   uint32_t accType = UNKNOWN;
   int accVal = 0;
   int stackVal;
@@ -171,7 +171,7 @@ uint32_t OptimizeProc(AList* al) {
       case op_bnt:
       case op_jmp: {
         // Eliminate branches to branches.
-        ANode* label = ((ANBranch*)an)->target();
+        ANOpCode* label = (ANOpCode*)((ANBranch*)an)->target();
         while (label) {
           // 'label' points to the label to which we are branching.  Search
           // for the first op-code following this label.
@@ -187,7 +187,7 @@ uint32_t OptimizeProc(AList* al) {
           if (tmp->target() == label)
             label = 0;
           else {
-            ((ANBranch*)an)->setTarget(label = tmp->target());
+            ((ANBranch*)an)->setTarget(label = (ANOpCode*)tmp->target());
             ++nOptimizations;
           }
         }
