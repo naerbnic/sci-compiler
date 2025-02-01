@@ -31,93 +31,19 @@ void ANode::list() {}
 bool ANode::optimize() { return false; }
 
 ///////////////////////////////////////////////////
-// Class AListIter
-///////////////////////////////////////////////////
-ANode* AListIter::get() const { return (ANode*)iter_.get(); }
-void AListIter::advance() { ++iter_; }
-AListIter::operator bool() { return bool(iter_); }
-ANode* AListIter::operator->() { return get(); }
-AListIter AListIter::next() const {
-  auto it = *this;
-  it.advance();
-  return it;
-}
-
-std::unique_ptr<ANOpCode> AListIter::remove() { return iter_.remove(); }
-
-ANOpCode* AListIter::replaceWith(std::unique_ptr<ANOpCode> nn) {
-  iter_.replaceWith(std::move(nn));
-  return iter_.get();
-}
-
-bool AListIter::isOp(uint32_t op) const {
-  ANOpCode* nn = (ANOpCode*)get();
-  if (!nn) {
-    return false;
-  }
-  return nn->op == op;
-}
-
-///////////////////////////////////////////////////
-// Class AList
-///////////////////////////////////////////////////
-
-size_t AList::size() {
-  size_t s = 0;
-  for (auto it = iter(); it; ++it) s += it->size();
-  return s;
-}
-
-void AList::emit(OutputFile* out) {
-  for (auto it = iter(); it; ++it) {
-    curOfs = it->offset;
-    if (listCode) it->list();
-    it->emit(out);
-  }
-}
-
-size_t AList::setOffset(size_t ofs) {
-  for (auto it = iter(); it; ++it) ofs = it->setOffset(ofs);
-
-  return ofs;
-}
-
-///////////////////////////////////////////////////
-// Class AList
+// Class AOpList
 ///////////////////////////////////////////////////
 
 ANOpCode* AOpList::nextOp(ANOpCode* start) {
   assert(start != NULL);
 
-  for (ANode& node :
-       std::ranges::subrange(list_.findIter(start).next(), list_.end())) {
-    auto* nn = (ANOpCode*)&node;
-    if (nn->op != OP_LABEL) {
-      return nn;
+  for (auto& opcode : std::ranges::subrange(find(start).next(), end())) {
+    if (opcode.op != OP_LABEL) {
+      return &opcode;
     }
   }
 
   return nullptr;
-}
-
-size_t AOpList::size() {
-  size_t s = 0;
-  for (auto it = iter(); it; it.advance()) s += it->size();
-  return s;
-}
-
-void AOpList::emit(OutputFile* out) {
-  for (auto it = iter(); it; it.advance()) {
-    // curOfs = it->offset;
-    if (listCode) it->list();
-    it->emit(out);
-  }
-}
-
-size_t AOpList::setOffset(size_t ofs) {
-  for (auto it = iter(); it; it.advance()) ofs = it->setOffset(ofs);
-
-  return ofs;
 }
 
 ///////////////////////////////////////////////////
