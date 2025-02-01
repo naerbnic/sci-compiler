@@ -39,13 +39,8 @@ void InitAsm() {
   // space to indicate whether script has far text (dummy)
   sc->hunkList->newNode<ANWord>();
 
-  if (curList) {
-    numDispTblEntries = curList->newNode<ANWord>();
-    dispTbl = curList->newNodeBefore<ANTable>(nullptr, "dispatch table");
-  } else {
-    numDispTblEntries = new ANWord();
-    dispTbl = new ANTable("dispatch table");
-  }
+  numDispTblEntries = sc->hunkList->newNode<ANWord>();
+  dispTbl = sc->hunkList->newNode<ANTable>("dispatch table");
   dispTbl->finish();
 
   codeStart = 0;
