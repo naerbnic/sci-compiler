@@ -22,6 +22,8 @@ jobs:
                 env: true
             - name: List files in the repository
               run: ls
+            - name: Show current environment variables
+              run: printenv
             - name: Build for macOS
               run: bazel build //:all --verbose_failures
               env:
