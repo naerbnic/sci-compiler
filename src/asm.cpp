@@ -78,6 +78,8 @@ void Assemble() {
       "----------------------\n"
       "-------- Heap --------\n"
       "----------------------\n");
+  sc->heapList->emit(obj_files.heap.get());
+
   Listing(
       "\n\n\n\n"
       "----------------------\n"
