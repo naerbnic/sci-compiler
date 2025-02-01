@@ -911,6 +911,8 @@ static void MakeProc(PNode* pn) {
   ANCodeBlk* an = pn->type == PN_PROC
                       ? (ANCodeBlk*)curList->newNode<ANProcCode>(pn->sym)
                       : (ANCodeBlk*)curList->newNode<ANMethCode>(pn->sym);
+
+  WithCurList withCurList(&an->code);
   an->sym->type = (sym_t)(pn->type == PN_PROC ? S_PROC : S_SELECT);
 
   // If any nodes already compiled have this procedure as a target,
@@ -941,8 +943,6 @@ static void MakeProc(PNode* pn) {
     curList->newNode<ANLineNum>(curSourceFile->lineNum);
   }
   curList->newNode<ANOpCode>(op_ret);
-
-  an->finish();
 }
 
 void MakeDispatch(int maxEntry) {

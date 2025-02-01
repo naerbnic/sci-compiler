@@ -198,8 +198,6 @@ void ANObject::list() { Listing("\nObject: %-20s", sym->name()); }
 
 ANCodeBlk::ANCodeBlk(Symbol* s) : sym(s) {
   ANLabel::reset();
-  oldList = curList;
-  curList = &code;
 
   if (!codeStart) codeStart = this;
 }
@@ -212,8 +210,6 @@ size_t ANCodeBlk::setOffset(size_t ofs) {
   offset = ofs;
   return code.setOffset(ofs);
 }
-
-void ANCodeBlk::finish() { curList = oldList; }
 
 bool ANCodeBlk::optimize() { return OptimizeProc(&code); }
 

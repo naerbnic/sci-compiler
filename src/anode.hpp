@@ -141,12 +141,10 @@ struct ANCodeBlk : ANode
   size_t size();
   void emit(OutputFile*);
   size_t setOffset(size_t ofs);
-  void finish();
   bool optimize();
 
   Symbol* sym;
   AList code;
-  AList* oldList;
 };
 
 struct ANMethCode : ANCodeBlk
