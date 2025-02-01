@@ -20,6 +20,8 @@ jobs:
                 version: 18
                 directory: ${{ runner.temp }}/llvm
                 env: true
+            - name: Set SDKROOT
+              run: echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> $GITHUB_ENV
             - name: List files in the repository
               run: ls
             - name: Show current environment variables
