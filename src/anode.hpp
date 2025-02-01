@@ -88,7 +88,6 @@ struct ANTable : ANode
   size_t setOffset(size_t ofs);
   void list();
   void emit(OutputFile*);
-  void finish();
 
   std::string name;  // name of table (values follow)
   AList entries;     // list of entries in the table

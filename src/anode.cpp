@@ -143,9 +143,7 @@ void ANWord::emit(OutputFile* out) { out->WriteWord(value); }
 // Class ANTable
 ///////////////////////////////////////////////////
 
-ANTable::ANTable(std::string nameStr) : name(nameStr), oldList(curList) {
-  curList = &entries;
-}
+ANTable::ANTable(std::string nameStr) : name(nameStr) {}
 
 size_t ANTable::size() { return entries.size(); }
 
@@ -157,8 +155,6 @@ size_t ANTable::setOffset(size_t ofs) {
 void ANTable::list() { Listing("\t\t(%s)", name); }
 
 void ANTable::emit(OutputFile* out) { entries.emit(out); }
-
-void ANTable::finish() { curList = oldList; }
 
 ///////////////////////////////////////////////////
 // Class ANObjTable

@@ -948,8 +948,7 @@ static void MakeProc(PNode* pn) {
 void MakeDispatch(int maxEntry) {
   // Compile the dispatch table which goes at the start of this script.
 
-  AList* oldList = curList;
-  curList = &dispTbl->entries;
+  WithCurList withCurList(&dispTbl->entries);
 
   // Now cycle through the publicly declared procedures/objects,
   // creating asmNodes for a table of their offsets.
@@ -960,80 +959,85 @@ void MakeDispatch(int maxEntry) {
       // Add this to the backpatch list of the symbol.
       an->addBackpatch(an->sym);
   }
-
-  curList = oldList;
 }
 
 void MakeObject(Object* theObj) {
-  AList* oldList = curList;
-  curList = sc->heapList->getList();
+  ANOfsProp* pDict = nullptr;
+  ANOfsProp* mDict = nullptr;
 
-  // Create the object ID node.
-  ANObject* obj =
-      curList->newNodeBefore<ANObject>(nullptr, theObj->sym, theObj->num);
-  theObj->an = obj;
+  {
+    WithCurList withCurList(sc->heapList->getList());
 
-  // Create the table of properties.
-  ANTable* props = curList->newNodeBefore<ANTable>(nullptr, "properties");
-  ANOfsProp* pDict = 0;
-  ANOfsProp* mDict = 0;
+    // Create the object ID node.
+    ANObject* obj =
+        curList->newNodeBefore<ANObject>(nullptr, theObj->sym, theObj->num);
+    theObj->an = obj;
 
-  for (auto* sp : theObj->selectors())
-    if (IsProperty(sp)) {
-      switch (sp->tag) {
-        case T_PROP:
-          curList->newNode<ANIntProp>(sp->sym, sp->val);
-          break;
+    // Create the table of properties.
+    ANTable* props = curList->newNodeBefore<ANTable>(nullptr, "properties");
 
-        case T_TEXT:
-          curList->newNode<ANTextProp>(sp->sym, sp->val);
-          break;
+    {
+      WithCurList withCurList(&props->entries);
 
-        case T_PROPDICT:
-          pDict = curList->newNode<ANOfsProp>(sp->sym);
-          break;
+      for (auto* sp : theObj->selectors())
+        if (IsProperty(sp)) {
+          switch (sp->tag) {
+            case T_PROP:
+              curList->newNode<ANIntProp>(sp->sym, sp->val);
+              break;
 
-        case T_METHDICT:
-          mDict = curList->newNode<ANOfsProp>(sp->sym);
-          break;
-      }
+            case T_TEXT:
+              curList->newNode<ANTextProp>(sp->sym, sp->val);
+              break;
+
+            case T_PROPDICT:
+              pDict = curList->newNode<ANOfsProp>(sp->sym);
+              break;
+
+            case T_METHDICT:
+              mDict = curList->newNode<ANOfsProp>(sp->sym);
+              break;
+          }
+        }
     }
-  props->finish();
 
-  // If any nodes already compiled have this object as a target, they
-  // will be on a list hanging off the object's symbol table entry.
-  // Let all nodes know where this one is.
-  if (obj->sym->ref()) obj->sym->ref()->backpatch(props);
-  obj->sym->setLoc(props);
+    // If any nodes already compiled have this object as a target, they
+    // will be on a list hanging off the object's symbol table entry.
+    // Let all nodes know where this one is.
+    if (obj->sym->ref()) obj->sym->ref()->backpatch(props);
+    obj->sym->setLoc(props);
+  }
 
+  WithCurList withCurList(sc->hunkList->getList());
   // The rest of the object goes into hunk, as it never changes.
-  curList = sc->hunkList->getList();
   curList->newNodeBefore<ANObject>(codeStart, theObj->sym, theObj->num);
 
   // If this a class, add the property dictionary.
   ANObjTable* propDict =
       curList->newNodeBefore<ANObjTable>(codeStart, "property dictionary");
-  if (theObj->num != OBJECTNUM) {
-    for (auto* sp : theObj->selectors())
-      if (IsProperty(sp)) curList->newNode<ANWord>(sp->sym->val());
+  {
+    WithCurList withCurList(&propDict->entries);
+    if (theObj->num != OBJECTNUM) {
+      for (auto* sp : theObj->selectors())
+        if (IsProperty(sp)) curList->newNode<ANWord>(sp->sym->val());
+    }
   }
-  propDict->finish();
   if (pDict) pDict->target = propDict;
 
   ANObjTable* methDict =
       curList->newNodeBefore<ANObjTable>(codeStart, "method dictionary");
-  ANWord* numMeth = curList->newNode<ANWord>((short)0);
-  for (auto* sp : theObj->selectors())
-    if (sp->tag == T_LOCAL) {
-      curList->newNode<ANWord>(sp->sym->val());
-      curList->newNode<ANMethod>(sp->sym, (ANMethCode*)sp->an);
-      sp->sym->setLoc(nullptr);
-      ++numMeth->value;
-    }
-  methDict->finish();
+  {
+    WithCurList withCurList(&methDict->entries);
+    ANWord* numMeth = curList->newNode<ANWord>((short)0);
+    for (auto* sp : theObj->selectors())
+      if (sp->tag == T_LOCAL) {
+        curList->newNode<ANWord>(sp->sym->val());
+        curList->newNode<ANMethod>(sp->sym, (ANMethCode*)sp->an);
+        sp->sym->setLoc(nullptr);
+        ++numMeth->value;
+      }
+  }
   if (mDict) mDict->target = methDict;
-
-  curList = oldList;
 }
 
 void MakeText() {

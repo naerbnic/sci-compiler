@@ -184,6 +184,17 @@ struct CodeList : FixupList {
   void optimize();
 };
 
+// RAII class for managing curList
+class WithCurList {
+ public:
+  explicit WithCurList(AList* list);
+  ~WithCurList() noexcept(false);
+
+ private:
+  AList* list;
+  AList* oldList;
+};
+
 extern bool addNodesToList;
 extern AList* curList;
 extern bool noOptimize;
