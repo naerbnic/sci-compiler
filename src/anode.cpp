@@ -431,7 +431,7 @@ size_t ANCall::size() {
 
   if (!shrink)
     return (op & OP_BYTE ? 2 : 3) + arg_size;
-  else if (!sym->loc() || target()->offset == UNDEFINED)
+  else if (!sym->loc() || !target()->offset.has_value())
     return 3 + arg_size;
 #if defined(OPTIMIZE_TRANSFERS)
   else if (canOptimizeTransfer(*target()->offset, *offset + 5)) {
@@ -476,7 +476,7 @@ ANBranch::ANBranch(uint32_t o) { op = o; }
 size_t ANBranch::size() {
   if (!shrink)
     return op & OP_BYTE ? 2 : 3;
-  else if (!target() || target()->offset == UNDEFINED)
+  else if (!target() || !target()->offset.has_value())
     return 3;
 #if defined(OPTIMIZE_TRANSFERS)
   else if (canOptimizeTransfer(*target()->offset, *offset + 4)) {

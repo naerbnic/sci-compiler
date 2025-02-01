@@ -25,9 +25,8 @@ uint32_t OptimizeProc(AOpList* al) {
   uint32_t nOptimizations = 0;
 
   for (auto it = al->iter(); it; ++it) {
-    ANOpSign* an = (ANOpSign*)it.get();
-    bool byteOp = an->op & OP_BYTE;
-    uint32_t op = an->op & ~OP_BYTE;
+    bool byteOp = it->op & OP_BYTE;
+    uint32_t op = it->op & ~OP_BYTE;
 
     switch (op) {
       case op_bnot:
@@ -101,7 +100,7 @@ uint32_t OptimizeProc(AOpList* al) {
         break;
 
       case op_pushi: {
-        int val = an->value;
+        int val = down_cast<ANOpSign>(it.get())->value;
         if (val == 0) {
           it.replaceWith(std::make_unique<ANOpCode>(op_push0));
           ++nOptimizations;
@@ -142,6 +141,7 @@ uint32_t OptimizeProc(AOpList* al) {
       }
 
       case op_loadi: {
+        auto* an = down_cast<ANOpSign>(it.get());
         auto nextOp = it.next();
         if (nextOp->op == op_push) {
           // Replace a load immediate followed by a push with
@@ -171,7 +171,7 @@ uint32_t OptimizeProc(AOpList* al) {
       case op_bnt:
       case op_jmp: {
         // Eliminate branches to branches.
-        ANOpCode* label = (ANOpCode*)((ANBranch*)an)->target();
+        ANOpCode* label = (ANOpCode*)((ANBranch*)it.get())->target();
         while (label) {
           // 'label' points to the label to which we are branching.  Search
           // for the first op-code following this label.
@@ -180,14 +180,14 @@ uint32_t OptimizeProc(AOpList* al) {
           // If the first op-code following the label is not a jump or
           // a branch of the same sense, no more optimization is possible.
           uint32_t opType = tmp->op & ~OP_BYTE;
-          if (opType != op_jmp && opType != (an->op & ~OP_BYTE)) break;
+          if (opType != op_jmp && opType != (it->op & ~OP_BYTE)) break;
 
           // We're pointing to another jump.  Make its label ou
           // destination and keep trying to optimize.
           if (tmp->target() == label)
             label = 0;
           else {
-            ((ANBranch*)an)->setTarget(label = (ANOpCode*)tmp->target());
+            ((ANBranch*)it.get())->setTarget(label = (ANOpCode*)tmp->target());
             ++nOptimizations;
           }
         }
@@ -205,6 +205,7 @@ uint32_t OptimizeProc(AOpList* al) {
         break;
 
       case op_pToa: {
+        auto* an = down_cast<ANOpSign>(it.get());
         auto nextOp = it.next();
         if (nextOp->op == op_push) {
           nextOp.remove();
@@ -229,11 +230,12 @@ uint32_t OptimizeProc(AOpList* al) {
         break;
       }
 
-      case op_pTos:
-        if (indexed(op))
+      case op_pTos: {
+        auto* an = down_cast<ANOpSign>(it.get());
+        if (indexed(op)) {
           stackType = stackVal = UNKNOWN;
 
-        else if (accType == PROP && an->value == accVal) {
+        } else if (accType == PROP && an->value == accVal) {
           // Replace a load to the stack with the acc's current
           // value by a push.
           it.replaceWith(std::make_unique<ANOpCode>(op_push));
@@ -251,12 +253,13 @@ uint32_t OptimizeProc(AOpList* al) {
           stackVal = an->value;
         }
         break;
+      }
 
       case op_selfID: {
         auto nextOp = it.next();
         if (nextOp->op == op_push) {
           nextOp.remove();
-          an->op = op_pushSelf;
+          it->op = op_pushSelf;
           stackType = SELF;
           ++nOptimizations;
 
@@ -264,7 +267,7 @@ uint32_t OptimizeProc(AOpList* al) {
           auto nextOp = it.next();
           if (nextOp->op == op_send) {
             it.replaceWith(std::make_unique<ANSend>(op_self));
-            an = (ANOpSign*)it.get();
+            auto* an = (ANOpSign*)it.get();
             ((ANSend*)an)->numArgs = ((ANSend*)nextOp.get())->numArgs;
             nextOp.remove();
             ++nOptimizations;
@@ -278,6 +281,8 @@ uint32_t OptimizeProc(AOpList* al) {
 
       default: {
         if (!(op & OP_LDST)) break;
+
+        auto* an = down_cast<ANOpSign>(it.get());
 
         // We can only optimize loads -- others just set the value of the
         // accumulator.
