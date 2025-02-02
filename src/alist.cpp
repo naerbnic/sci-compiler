@@ -26,7 +26,7 @@ size_t ANode::setOffset(size_t ofs) {
 
 void ANode::emit(OutputFile*) {}
 
-void ANode::list() {}
+void ANode::list(ListingFile* listFile) {}
 
 bool ANode::optimize() { return false; }
 
@@ -76,27 +76,25 @@ void FixupList::initFixups() {
   fixups.clear();
 }
 
-void FixupList::listFixups() {
+void FixupList::listFixups(ListingFile* listFile) {
   std::size_t curOfs = fixOfs;
 
   if (curOfs & 1) {
-    ListByte(curOfs, 0);
+    listFile->ListByte(curOfs, 0);
     ++curOfs;
   }
 
-  Listing("\n\nFixups:");
-  ListWord(curOfs, fixups.size());
+  listFile->Listing("\n\nFixups:");
+  listFile->ListWord(curOfs, fixups.size());
   curOfs += 2;
 
   for (size_t fixup : fixups) {
-    ListWord(curOfs, fixup);
+    listFile->ListWord(curOfs, fixup);
     curOfs += 2;
   }
 }
 
 void FixupList::emitFixups(OutputFile* out) {
-  if (listCode) listFixups();
-
   if (fixOfs & 1) out->WriteByte(0);
 
   out->WriteWord(fixups.size());
@@ -104,6 +102,13 @@ void FixupList::emitFixups(OutputFile* out) {
 }
 
 void FixupList::addFixup(size_t ofs) { fixups.push_back(ofs); }
+
+void FixupList::list(ListingFile* listFile) {
+  for (auto& node : list_.list_) {
+    node.list(listFile);
+  }
+  listFixups(listFile);
+}
 
 void FixupList::emit(OutputFile* out) {
   initFixups();

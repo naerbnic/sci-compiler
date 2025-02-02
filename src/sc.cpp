@@ -37,7 +37,7 @@ SciTargetArch targetArch = SciTargetArch::SCI_2;
 
 static int totalErrors;
 
-static void CompileFile(std::string_view);
+static void CompileFile(std::string_view, bool listCode);
 static void ShowInfo();
 static void InstallCommandLineDefine(std::string_view);
 static SciTargetArch GetTargetArchitecture(std::string_view);
@@ -131,7 +131,7 @@ int main(int argc, char **argv) {
   abortIfLocked = program.get<bool>("-a");
   includeDebugInfo = program.get<bool>("-d");
   maxVars = program.get<int>("-g");
-  listCode = program.get<bool>("-l");
+  bool listCode = program.get<bool>("-l");
   noAutoName = program.get<bool>("-n");
   outDir = program.get<std::string>("-o");
   writeOffsets = program.get<bool>("-O");
@@ -186,7 +186,7 @@ int main(int argc, char **argv) {
 
   // Compile the files.
   for (auto const &src_file : files) {
-    CompileFile(src_file.c_str());
+    CompileFile(src_file.c_str(), listCode);
   }
 
   // Write out the class table and unlock the class database.
@@ -197,7 +197,7 @@ int main(int argc, char **argv) {
   return totalErrors != 0;
 }
 
-static void CompileFile(std::string_view fileName) {
+static void CompileFile(std::string_view fileName, bool listCode) {
   // Do some initialization.
   script = -1;
   errors = warnings = 0;
@@ -225,8 +225,9 @@ static void CompileFile(std::string_view fileName) {
   if (script == -1)
     Error("No script number specified.  Can't write output files.");
   else {
-    OpenListFile(sourceFileName);
-    Assemble();
+    auto listFile =
+        listCode ? ListingFile::Open(sourceFileName) : ListingFile::Null();
+    Assemble(listFile.get());
   }
   totalErrors += errors;
 
@@ -236,10 +237,6 @@ static void CompileFile(std::string_view fileName) {
 
   // Show information.
   ShowInfo();
-  if (listCode)
-    CloseListFile();
-  else
-    DeleteListFile();
 
   // Delete any free symbol tables.
   syms.delFreeTbls();

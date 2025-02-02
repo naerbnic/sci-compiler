@@ -50,14 +50,14 @@ static int NumArgsSize() {
   }
 }
 
-static void ListNumArgs(std::size_t offset, int n) {
+static void ListNumArgs(ListingFile* listFile, std::size_t offset, int n) {
   switch (targetArch) {
     case SciTargetArch::SCI_1_1:
-      ListByte(offset, n);
+      listFile->ListByte(offset, n);
       break;
 
     case SciTargetArch::SCI_2:
-      ListWord(offset, n);
+      listFile->ListWord(offset, n);
       break;
 
     default:
@@ -102,15 +102,16 @@ void ANReference::backpatch(ANode* dest) {
 // Class ANDispatch
 ///////////////////////////////////////////////////
 
-void ANDispatch::list() {
+void ANDispatch::list(ListingFile* listFile) {
   std::size_t curOfs = *offset;
 
   if (target() && sym)
-    ListAsCode(curOfs, "dispatch\t$%-4x\t(%s)", *target()->offset, sym->name());
+    listFile->ListAsCode(curOfs, "dispatch\t$%-4x\t(%s)", *target()->offset,
+                         sym->name());
   else if (sym)
-    ListAsCode(curOfs, "dispatch\t----\t(%s)", sym->name());
+    listFile->ListAsCode(curOfs, "dispatch\t----\t(%s)", sym->name());
   else
-    ListAsCode(curOfs, "dispatch\t----");
+    listFile->ListAsCode(curOfs, "dispatch\t----");
 }
 
 size_t ANDispatch::size() { return 2; }
@@ -132,7 +133,7 @@ ANWord::ANWord(int v) : value(v) {}
 
 size_t ANWord::size() { return 2; }
 
-void ANWord::list() { ListWord(*offset, value); }
+void ANWord::list(ListingFile* listFile) { listFile->ListWord(*offset, value); }
 
 void ANWord::emit(OutputFile* out) { out->WriteWord(value); }
 
@@ -149,7 +150,10 @@ size_t ANTable::setOffset(size_t ofs) {
   return entries.setOffset(ofs);
 }
 
-void ANTable::list() { Listing("\t\t(%s)", name); }
+void ANTable::list(ListingFile* listFile) {
+  listFile->Listing("\t\t(%s)", name);
+  for (auto& entry : entries) entry.list(listFile);
+}
 
 void ANTable::emit(OutputFile* out) { entries.emit(out); }
 
@@ -172,9 +176,9 @@ size_t ANText::setOffset(size_t ofs) {
 
 size_t ANText::size() { return text->str.size() + 1; }
 
-void ANText::list() {
-  if (textStart == offset) Listing("\n\n");
-  ListText(*offset, text->str);
+void ANText::list(ListingFile* listFile) {
+  if (textStart == offset) listFile->Listing("\n\n");
+  listFile->ListText(*offset, text->str);
 }
 
 void ANText::emit(OutputFile* out) {
@@ -187,7 +191,9 @@ void ANText::emit(OutputFile* out) {
 
 ANObject::ANObject(Symbol* s, int n) : sym(s), num(n) {}
 
-void ANObject::list() { Listing("\nObject: %-20s", sym->name()); }
+void ANObject::list(ListingFile* listFile) {
+  listFile->Listing("\nObject: %-20s", sym->name());
+}
 
 ///////////////////////////////////////////////////
 // Class ANCodeBlk
@@ -208,13 +214,18 @@ size_t ANCodeBlk::setOffset(size_t ofs) {
   return code.setOffset(ofs);
 }
 
+void ANCodeBlk::list(ListingFile* listFile) { code.list(listFile); }
+
 bool ANCodeBlk::optimize() { return OptimizeProc(&code); }
 
 ///////////////////////////////////////////////////
 // Class ANProcCode
 ///////////////////////////////////////////////////
 
-void ANProcCode::list() { Listing("\n\nProcedure: (%s)\n", sym->name()); }
+void ANProcCode::list(ListingFile* listFile) {
+  listFile->Listing("\n\nProcedure: (%s)\n", sym->name());
+  ANCodeBlk::list(listFile);
+}
 
 ///////////////////////////////////////////////////
 // Class ANMethCode
@@ -222,8 +233,9 @@ void ANProcCode::list() { Listing("\n\nProcedure: (%s)\n", sym->name()); }
 
 ANMethCode::ANMethCode(Symbol* s) : ANCodeBlk(s), objSym(curObj->sym) {}
 
-void ANMethCode::list() {
-  Listing("\n\nMethod: (%s %s)\n", objSym->name(), sym->name());
+void ANMethCode::list(ListingFile* listFile) {
+  listFile->Listing("\n\nMethod: (%s %s)\n", objSym->name(), sym->name());
+  ANCodeBlk::list(listFile);
 }
 
 ///////////////////////////////////////////////////
@@ -234,9 +246,9 @@ ANProp::ANProp(Symbol* sp, int v) : sym(sp), val(v) {}
 
 size_t ANProp::size() { return 2; }
 
-void ANProp::list() {
-  ListAsCode(*offset, "%-6s$%-4x\t(%s)", desc(), (SCIUWord)value(),
-             sym->name());
+void ANProp::list(ListingFile* listFile) {
+  listFile->ListAsCode(*offset, "%-6s$%-4x\t(%s)", desc(), (SCIUWord)value(),
+                       sym->name());
 }
 
 void ANProp::emit(OutputFile* out) { out->WriteWord(value()); }
@@ -274,7 +286,7 @@ ANOpCode::ANOpCode(uint32_t o) : op(o) {}
 
 size_t ANOpCode::size() { return 1; }
 
-void ANOpCode::list() { ListOp(*offset, op); }
+void ANOpCode::list(ListingFile* listFile) { listFile->ListOp(*offset, op); }
 
 void ANOpCode::emit(OutputFile* out) { out->WriteOp(op); }
 
@@ -288,7 +300,7 @@ ANLabel::ANLabel() : ANOpCode(OP_LABEL), number(nextLabel++) {}
 
 size_t ANLabel::size() { return 0; }
 
-void ANLabel::list() { Listing(".%d", number); }
+void ANLabel::list(ListingFile* listFile) { listFile->Listing(".%d", number); }
 
 void ANLabel::emit(OutputFile*) {}
 
@@ -311,12 +323,12 @@ ANOpUnsign::ANOpUnsign(uint32_t o, uint32_t v) {
 
 size_t ANOpUnsign::size() { return op & OP_BYTE ? 2 : 3; }
 
-void ANOpUnsign::list() {
-  ListOp(*offset, op);
+void ANOpUnsign::list(ListingFile* listFile) {
+  listFile->ListOp(*offset, op);
   if (!sym)
-    ListArg("$%-4x", (SCIUWord)value);
+    listFile->ListArg("$%-4x", (SCIUWord)value);
   else
-    ListArg("$%-4x\t(%s)", (SCIUWord)value, sym->name());
+    listFile->ListArg("$%-4x\t(%s)", (SCIUWord)value, sym->name());
 }
 
 void ANOpUnsign::emit(OutputFile* out) {
@@ -339,12 +351,12 @@ ANOpSign::ANOpSign(uint32_t o, int v) {
 
 size_t ANOpSign::size() { return op & OP_BYTE ? 2 : 3; }
 
-void ANOpSign::list() {
-  ListOp(*offset, op);
+void ANOpSign::list(ListingFile* listFile) {
+  listFile->ListOp(*offset, op);
   if (!sym)
-    ListArg("$%-4x", (SCIUWord)value);
+    listFile->ListArg("$%-4x", (SCIUWord)value);
   else
-    ListArg("$%-4x\t(%s)", (SCIUWord)value, sym->name());
+    listFile->ListArg("$%-4x\t(%s)", (SCIUWord)value, sym->name());
 }
 
 void ANOpSign::emit(OutputFile* out) {
@@ -388,17 +400,18 @@ size_t ANOpExtern::size() {
   }
 }
 
-void ANOpExtern::list() {
-  ListOp(*offset, op);
+void ANOpExtern::list(ListingFile* listFile) {
+  listFile->ListOp(*offset, op);
   switch (op & ~OP_BYTE) {
     case op_callk:
     case op_callb:
-      ListArg("$%-4x\t(%s)", (SCIUWord)entry, sym->name());
+      listFile->ListArg("$%-4x\t(%s)", (SCIUWord)entry, sym->name());
       break;
     case op_calle:
-      ListArg("$%x/%x\t(%s)", (SCIUWord)module, (SCIUWord)entry, sym->name());
+      listFile->ListArg("$%x/%x\t(%s)", (SCIUWord)module, (SCIUWord)entry,
+                        sym->name());
   }
-  ListNumArgs(*offset + 1, numArgs);
+  ListNumArgs(listFile, *offset + 1, numArgs);
 }
 
 void ANOpExtern::emit(OutputFile* out) {
@@ -445,11 +458,12 @@ size_t ANCall::size() {
   }
 }
 
-void ANCall::list() {
-  ListOp(*offset, op_call);
-  ListArg("$%-4x\t(%s)", SCIUWord(*target()->offset - (*offset + size())),
-          sym->name());
-  ListNumArgs(*offset + 1, numArgs);
+void ANCall::list(ListingFile* listFile) {
+  listFile->ListOp(*offset, op_call);
+  listFile->ListArg("$%-4x\t(%s)",
+                    SCIUWord(*target()->offset - (*offset + size())),
+                    sym->name());
+  ListNumArgs(listFile, *offset + 1, numArgs);
 }
 
 void ANCall::emit(OutputFile* out) {
@@ -490,10 +504,11 @@ size_t ANBranch::size() {
   }
 }
 
-void ANBranch::list() {
-  ListOp(*offset, op);
-  ListArg("$%-4x\t(.%d)", SCIUWord(*target()->offset - (*offset + size())),
-          ((ANLabel*)target())->number);
+void ANBranch::list(ListingFile* listFile) {
+  listFile->ListOp(*offset, op);
+  listFile->ListArg("$%-4x\t(.%d)",
+                    SCIUWord(*target()->offset - (*offset + size())),
+                    ((ANLabel*)target())->number);
 }
 
 void ANBranch::emit(OutputFile* out) {
@@ -516,12 +531,12 @@ ANVarAccess::ANVarAccess(uint32_t o, uint32_t a) : addr(a) {
 
 size_t ANVarAccess::size() { return op & OP_BYTE ? 2 : 3; }
 
-void ANVarAccess::list() {
-  ListOp(*offset, op);
+void ANVarAccess::list(ListingFile* listFile) {
+  listFile->ListOp(*offset, op);
   if (sym)
-    ListArg("$%-4x\t(%s)", addr, sym->name());
+    listFile->ListArg("$%-4x\t(%s)", addr, sym->name());
   else
-    ListArg("$%-4x", addr);
+    listFile->ListArg("$%-4x", addr);
 }
 
 void ANVarAccess::emit(OutputFile* out) {
@@ -540,9 +555,9 @@ ANOpOfs::ANOpOfs(uint32_t o) : ANOpCode(op_lofsa), ofs(o) {}
 
 size_t ANOpOfs::size() { return WORDSIZE; }
 
-void ANOpOfs::list() {
-  ListOp(*offset, op);
-  ListArg("$%-4x", textStart + ofs);
+void ANOpOfs::list(ListingFile* listFile) {
+  listFile->ListOp(*offset, op);
+  listFile->ListArg("$%-4x", textStart + ofs);
 }
 
 void ANOpOfs::emit(OutputFile* out) {
@@ -559,9 +574,9 @@ ANObjID::ANObjID(Symbol* s) : ANOpCode(op_lofsa) { sym = s; }
 
 size_t ANObjID::size() { return WORDSIZE; }
 
-void ANObjID::list() {
-  ListOp(*offset, op);
-  ListArg("$%-4x\t(%s)", *target()->offset, sym->name());
+void ANObjID::list(ListingFile* listFile) {
+  listFile->ListOp(*offset, op);
+  listFile->ListArg("$%-4x\t(%s)", *target()->offset, sym->name());
 }
 
 void ANObjID::emit(OutputFile* out) {
@@ -584,9 +599,9 @@ ANEffctAddr::ANEffctAddr(uint32_t o, uint32_t a, uint32_t t)
 
 size_t ANEffctAddr::size() { return op & OP_BYTE ? 3 : 5; }
 
-void ANEffctAddr::list() {
-  ListOp(*offset, op);
-  ListArg("$%-4x\t(%s)", addr, sym->name());
+void ANEffctAddr::list(ListingFile* listFile) {
+  listFile->ListOp(*offset, op);
+  listFile->ListArg("$%-4x\t(%s)", addr, sym->name());
 }
 
 void ANEffctAddr::emit(OutputFile* out) {
@@ -609,9 +624,9 @@ ANSend::ANSend(uint32_t o) : ANOpCode(o) {}
 
 size_t ANSend::size() { return 1 + NumArgsSize(); }
 
-void ANSend::list() {
-  ListOp(*offset, op);
-  ListNumArgs(*offset + 1, numArgs);
+void ANSend::list(ListingFile* listFile) {
+  listFile->ListOp(*offset, op);
+  ListNumArgs(listFile, *offset + 1, numArgs);
 }
 
 void ANSend::emit(OutputFile* out) {
@@ -630,10 +645,10 @@ ANSuper::ANSuper(Symbol* s, uint32_t c)
 
 size_t ANSuper::size() { return (op & OP_BYTE ? 2 : 3) + NumArgsSize(); }
 
-void ANSuper::list() {
-  ListOp(*offset, op);
-  ListArg("$%-4x\t(%s)", classNum, sym->name());
-  ListNumArgs(*offset + 1, numArgs);
+void ANSuper::list(ListingFile* listFile) {
+  listFile->ListOp(*offset, op);
+  listFile->ListArg("$%-4x\t(%s)", classNum, sym->name());
+  ListNumArgs(listFile, *offset + 1, numArgs);
 }
 
 void ANSuper::emit(OutputFile* out) {
@@ -653,21 +668,21 @@ ANVars::ANVars(VarList& theVars) : theVars(theVars) {}
 
 size_t ANVars::size() { return 2 * (theVars.values.size() + 1); }
 
-void ANVars::list() {
+void ANVars::list(ListingFile* listFile) {
   // FIXME: I don't know why we're saving/restoring the variable.
   std::size_t curOfs = *offset;
 
-  Listing("\n\nVariables:");
-  ListWord(curOfs, theVars.values.size());
+  listFile->Listing("\n\nVariables:");
+  listFile->ListWord(curOfs, theVars.values.size());
   curOfs += 2;
 
   for (Var const& var : theVars.values) {
     int n = var.value;
     if (var.type == S_STRING) n += textStart;
-    ListWord(curOfs, n);
+    listFile->ListWord(curOfs, n);
     curOfs += 2;
   }
-  Listing("\n");
+  listFile->Listing("\n");
 }
 
 void ANVars::emit(OutputFile* out) {
@@ -691,13 +706,13 @@ void ANVars::emit(OutputFile* out) {
 
 ANFileName::ANFileName(std::string name) : ANOpCode(op_fileName), name(name) {}
 
-void ANFileName::list() {
+void ANFileName::list(ListingFile* listFile) {
   switch (targetArch) {
     case SciTargetArch::SCI_1_1:
       break;
     case SciTargetArch::SCI_2:
-      ListOffset(*offset);
-      Listing("file");
+      listFile->ListOffset(*offset);
+      listFile->Listing("file");
       break;
 
     default:
@@ -734,12 +749,12 @@ size_t ANFileName::size() {
 
 ANLineNum::ANLineNum(int num) : ANOpCode(op_lineNum), num(num) {}
 
-void ANLineNum::list() {
+void ANLineNum::list(ListingFile* listFile) {
   switch (targetArch) {
     case SciTargetArch::SCI_1_1:
       break;
     case SciTargetArch::SCI_2:
-      ListSourceLine(num);
+      listFile->ListSourceLine(num);
       break;
 
     default:

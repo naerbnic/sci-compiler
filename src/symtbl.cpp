@@ -172,9 +172,7 @@ void SymTbls::deactivate(SymTbl* tbl) {
   std::unique_ptr<SymTbl> owned_tbl = std::move(*it);
   activeList.erase(it);
 
-  if (listCode) {
-    inactiveList.push_front(std::move(owned_tbl));
-  }
+  inactiveList.push_front(std::move(owned_tbl));
 }
 
 std::ostream& operator<<(std::ostream& os, const SymTbls& symtbl) {

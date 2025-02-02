@@ -25,7 +25,7 @@ namespace {
 
 void ListingOutput(std::string_view str) {
   error_impl::WriteOutput(str);
-  Listing("%s", str);
+  // Listing("%s", str);
 }
 
 }  // namespace
@@ -60,7 +60,6 @@ void WriteError(std::string_view text) {
 
   beep();
 
-  CloseListFile();
   Unlock();
   exit(3);
 }
@@ -116,7 +115,6 @@ void WriteWarning(std::string_view text) {
 
   beep();
 
-  CloseListFile();
   Unlock();
   exit(3);
 }

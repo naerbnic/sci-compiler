@@ -56,7 +56,7 @@ struct ANDispatch : ANode,
 // the 'dispTbl' dispatch table, set up in InitAsm().
 {
   size_t size();
-  void list();
+  void list(ListingFile* listFile);
   void emit(OutputFile*);
 };
 
@@ -68,7 +68,7 @@ struct ANWord : ANode
   ANWord(int v = 0);
 
   size_t size();
-  void list();
+  void list(ListingFile* listFile);
   void emit(OutputFile*);
 
   int value;
@@ -86,7 +86,7 @@ struct ANTable : ANode
 
   size_t size();
   size_t setOffset(size_t ofs);
-  void list();
+  void list(ListingFile* listFile);
   void emit(OutputFile*);
 
   std::string name;  // name of table (values follow)
@@ -109,7 +109,7 @@ struct ANText : ANode
 
   size_t setOffset(size_t ofs);  // set offset to ofs, return new ofs
   size_t size();
-  void list();
+  void list(ListingFile* listFile);
   void emit(OutputFile*);
 
   Text* text;
@@ -122,7 +122,7 @@ struct ANObject : ANode
 {
   ANObject(Symbol* s, int n);
 
-  void list();
+  void list(ListingFile* listFile);
 
   Symbol* sym;
   int num;
@@ -140,6 +140,7 @@ struct ANCodeBlk : ANode
   size_t size();
   void emit(OutputFile*);
   size_t setOffset(size_t ofs);
+  void list(ListingFile* listFile);
   bool optimize();
 
   Symbol* sym;
@@ -152,7 +153,7 @@ struct ANMethCode : ANCodeBlk
 {
   ANMethCode(Symbol* s);
 
-  void list();
+  void list(ListingFile* listFile);
 
   Symbol* objSym;  // pointer to symbol of object which this is a
                    // method for
@@ -164,7 +165,7 @@ struct ANProcCode : ANCodeBlk
 {
   ANProcCode(Symbol* s) : ANCodeBlk(s) {}
 
-  void list();
+  void list(ListingFile* listFile);
 };
 
 struct ANProp : ANode
@@ -178,7 +179,7 @@ struct ANProp : ANode
   virtual uint32_t value() = 0;         // return value of selector
 
   size_t size();
-  void list();
+  void list(ListingFile* listFile);
   void emit(OutputFile*);
 
   Symbol* sym;  // pointer to selector's symbol
@@ -241,7 +242,7 @@ class ANLabel : public ANOpCode
   ANLabel();
 
   size_t size();
-  void list();
+  void list(ListingFile* listFile);
   void emit(OutputFile*);
 
   uint32_t number;  // label number
@@ -259,7 +260,7 @@ struct ANOpUnsign : ANOpCode
   ANOpUnsign(uint32_t o, uint32_t v);
 
   size_t size();
-  void list();
+  void list(ListingFile* listFile);
   void emit(OutputFile*);
 
   uint32_t value;
@@ -273,7 +274,7 @@ struct ANOpSign : ANOpCode
   ANOpSign(uint32_t o, int v);
 
   size_t size();
-  void list();
+  void list(ListingFile* listFile);
   void emit(OutputFile*);
 
   int value;
@@ -286,7 +287,7 @@ struct ANOpExtern : ANOpCode
   ANOpExtern(Symbol* s, int32_t m, uint32_t e);
 
   size_t size();
-  void list();
+  void list(ListingFile* listFile);
   void emit(OutputFile*);
 
   int32_t module;    // module # of destination
@@ -302,7 +303,7 @@ struct ANCall : ANOpCode,
   ANCall(Symbol* s);
 
   size_t size();
-  void list();
+  void list(ListingFile* listFile);
   void emit(OutputFile*);
 
   uint32_t numArgs;  // number of arguments
@@ -317,7 +318,7 @@ struct ANBranch : ANOpCode,
   ANBranch(uint32_t o);
 
   size_t size();
-  void list();
+  void list(ListingFile* listFile);
   void emit(OutputFile*);
 };
 
@@ -330,7 +331,7 @@ struct ANVarAccess : ANOpCode
   ANVarAccess(uint32_t o, uint32_t a);
 
   size_t size();
-  void list();
+  void list(ListingFile* listFile);
   void emit(OutputFile*);
 
   uint32_t addr;  // variable address
@@ -344,7 +345,7 @@ struct ANOpOfs : ANOpCode
   ANOpOfs(uint32_t o);
 
   size_t size();
-  void list();
+  void list(ListingFile* listFile);
   void emit(OutputFile*);
 
   size_t ofs;  // the offset
@@ -360,7 +361,7 @@ struct ANObjID : ANOpCode,
   ANObjID(Symbol* sym);
 
   size_t size();
-  void list();
+  void list(ListingFile* listFile);
   void emit(OutputFile*);
 };
 
@@ -372,7 +373,7 @@ struct ANEffctAddr : ANVarAccess
   ANEffctAddr(uint32_t o, uint32_t a, uint32_t t);
 
   size_t size();
-  void list();
+  void list(ListingFile* listFile);
   void emit(OutputFile*);
 
   uint32_t eaType;  // type of access
@@ -384,7 +385,7 @@ struct ANSend : ANOpCode
   ANSend(uint32_t o);
 
   size_t size();
-  void list();
+  void list(ListingFile* listFile);
   void emit(OutputFile*);
 
   uint32_t numArgs;
@@ -397,7 +398,7 @@ struct ANSuper : ANSend
   ANSuper(Symbol* s, uint32_t c);
 
   size_t size();
-  void list();
+  void list(ListingFile* listFile);
   void emit(OutputFile*);
 
   uint32_t classNum;
@@ -414,7 +415,7 @@ class ANVars : public ANode
   ANVars(VarList&);
 
   size_t size();
-  void list();
+  void list(ListingFile* listFile);
   void emit(OutputFile*);
 
  protected:
@@ -428,7 +429,7 @@ struct ANFixup : ANode {
   ANFixup(AList* list);
 
   size_t size();
-  void list();
+  void list(ListingFile* listFile);
   void emit(OutputFile*);
 };
 
@@ -437,7 +438,7 @@ struct ANFileName : ANOpCode {
 
   ANFileName(std::string name);
 
-  void list();
+  void list(ListingFile* listFile);
   void emit(OutputFile*);
   size_t size();
 
@@ -450,7 +451,7 @@ struct ANLineNum : ANOpCode {
 
   ANLineNum(int num);
 
-  void list();
+  void list(ListingFile* listFile);
   void emit(OutputFile*);
   size_t size();
 

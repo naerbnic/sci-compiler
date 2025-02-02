@@ -18,13 +18,6 @@
 #include "sc.hpp"
 #include "sol.hpp"
 
-bool listCode;
-
-static FILE* listFile;
-static std::string listName;
-static FILE* sourceFile;
-static int sourceLineNum;
-
 #define JUST_OP 0  // Only operator -- no arguments
 #define OP_ARGS 1  // Operator takes arguments
 #define OP_SIZE 2  // Operator takes a size
@@ -110,209 +103,232 @@ struct OpStr {
     {"pushSelf", JUST_OP},
 };
 
-namespace listing_impl {
+namespace {
+class ListingFileImpl : public ListingFile {
+ public:
+  explicit ListingFileImpl(absl::Nonnull<FILE*> listFile,
+                           absl::Nullable<FILE*> sourceFile)
+      : sourceLineNum_(0), listFile_(listFile), sourceFile_(sourceFile) {}
 
-void ListingImpl(absl::FunctionRef<bool(FILE*)> print_func) {
-  if (!listCode || !listFile) return;
-
-  if (!print_func(listFile) || putc('\n', listFile) == EOF) {
-    Panic("Error writing list file");
+  ~ListingFileImpl() override {
+    fclose(listFile_);
+    if (sourceFile_) {
+      fclose(sourceFile_);
+    };
   }
-}
 
-void ListAsCodeImpl(std::size_t offset,
-                    absl::FunctionRef<bool(FILE*)> print_func) {
-  if (!listCode || !listFile) return;
+  void ListOp(std::size_t offset, uint8_t theOp) override {
+    OpStr* oPtr;
+    std::string_view op;
+    std::string scratch;
+    bool hasArgs;
+    bool addSize;
 
-  ListOffset(offset);
+    ListOffset(offset);
 
-  ListingImpl(print_func);
-}
+    if (!(theOp & OP_LDST)) {
+      oPtr = &theOpCodes[(theOp & ~OP_BYTE) / 2];
+      hasArgs = oPtr->info & OP_ARGS;
+      addSize = oPtr->info & OP_SIZE;
+      if (addSize) {
+        scratch = std::string(oPtr->str);
+        absl::StrAppend(&scratch, (theOp & OP_BYTE) ? ".b" : ".w");
+        op = scratch;
+      } else {
+        op = oPtr->str;
+      }
 
-void ListingNoCRLFImpl(absl::FunctionRef<bool(FILE*)> print_func) {
-  if (!listCode || !listFile) return;
+    } else {
+      switch (theOp & OP_TYPE) {
+        case OP_LOAD:
+          scratch.push_back('l');
+          break;
 
-  if (!print_func(listFile)) {
-    Panic("Error writing list file");
+        case OP_STORE:
+          scratch.push_back('s');
+          break;
+
+        case OP_INC:
+          scratch.push_back('+');
+          break;
+
+        case OP_DEC:
+          scratch.push_back('-');
+          break;
+      }
+
+      if (theOp & OP_STACK)
+        scratch.push_back('s');
+      else
+        scratch.push_back('a');
+
+      switch (theOp & OP_VAR) {
+        case OP_GLOBAL:
+          scratch.push_back('g');
+          break;
+
+        case OP_LOCAL:
+          scratch.push_back('l');
+          break;
+
+        case OP_TMP:
+          scratch.push_back('t');
+          break;
+
+        case OP_PARM:
+          scratch.push_back('p');
+          break;
+      }
+
+      if (theOp & OP_INDEX) scratch.push_back('i');
+
+      op = scratch;
+      addSize = hasArgs = true;
+    }
+
+    if (hasArgs)
+      ListingNoCRLF("%-5s", op);
+    else
+      Listing("%s", op);
   }
-}
 
-}  // namespace listing_impl
+  void ListWord(std::size_t offset, uint16_t w) override {
+    ListAsCode(offset, "word\t$%x", (SCIUWord)w);
+  }
 
-void OpenListFile(std::string_view sourceFileName) {
-  if (!listCode) return;
+  void ListByte(std::size_t offset, uint8_t b) override {
+    ListAsCode(offset, "byte\t$%x", b);
+  }
 
+  void ListOffset(std::size_t offset) override {
+    ListingNoCRLF("\t\t%5x\t", offset);
+  }
+
+  void ListText(std::size_t offset, std::string_view s) override {
+    std::string line;
+
+    ListAsCode(offset, "text");
+
+    line.push_back('"');  // start with a quote
+    auto curr_it = s.begin();
+    while (1) {
+      // Copy from the text until the output line is full.
+
+      while (line.length() <= 80 && curr_it != s.end() && *curr_it != '\n') {
+        if (*curr_it == '%') line.push_back('%');
+        line.push_back(*curr_it++);
+      }
+
+      // If the line is not full, we are done.  Finish with a quote.
+
+      if (line.length() <= 80) {
+        line.append("\"\n");
+        Listing("%s", line);
+        break;
+      }
+
+      // Scan back in the text to a word break, then print the line.
+      // FIXME: What happens if there is no break?
+      std::string_view line_view = line;
+      auto last_space_index = line_view.rfind(' ');
+      if (last_space_index == std::string::npos) {
+        line_view = line_view.substr(0, 80);
+        curr_it -= line.length() - 80;
+      } else {
+        line_view = line_view.substr(0, last_space_index);
+        curr_it -= line.length() - last_space_index;
+        ++curr_it;  // point past the space
+      }
+
+      Listing("%s", line_view);
+
+      line.clear();
+    }
+  }
+
+  void ListSourceLine(int num) override {
+    if (!sourceFile_) return;
+    char buf[512];
+    for (; sourceLineNum_ < num; sourceLineNum_++) {
+      if (!fgets(buf, sizeof buf, sourceFile_)) {
+        Panic("Can't read source line %d", sourceLineNum_);
+      }
+    }
+    ListingNoCRLF("%s", buf);
+  }
+
+ protected:
+  void ListingImpl(absl::FunctionRef<bool(FILE*)> print_func) override {
+    if (!print_func(listFile_) || putc('\n', listFile_) == EOF) {
+      throw std::runtime_error("Error writing list file");
+    }
+  }
+  void ListAsCodeImpl(std::size_t offset,
+                      absl::FunctionRef<bool(FILE*)> print_func) override {
+    ListOffset(offset);
+
+    ListingImpl(print_func);
+  }
+  void ListingNoCRLFImpl(absl::FunctionRef<bool(FILE*)> print_func) override {
+    if (!print_func(listFile_)) {
+      throw std::runtime_error("Error writing list file");
+    }
+  }
+
+ private:
+  int sourceLineNum_;
+  absl::Nonnull<FILE*> listFile_;
+  absl::Nullable<FILE*> sourceFile_;
+};
+
+class NullListingFileImpl : public ListingFile {
+ public:
+  NullListingFileImpl() = default;
+  void ListOp(std::size_t offset, uint8_t theOp) override {}
+
+  void ListWord(std::size_t offset, uint16_t) override {}
+
+  void ListByte(std::size_t offset, uint8_t) override {}
+
+  void ListOffset(std::size_t offset) override {}
+
+  void ListText(std::size_t offset, std::string_view s) override {}
+
+  void ListSourceLine(int num) override {}
+
+ protected:
+  void ListingImpl(absl::FunctionRef<bool(FILE*)> print_func) override {}
+  void ListAsCodeImpl(std::size_t offset,
+                      absl::FunctionRef<bool(FILE*)> print_func) override {}
+  void ListingNoCRLFImpl(absl::FunctionRef<bool(FILE*)> print_func) override {}
+};
+}  // namespace
+
+std::unique_ptr<ListingFile> ListingFile::Open(
+    std::string_view sourceFileName) {
   auto listName = outDir / absl::StrFormat("%d.sl", script);
+  FILE* listFile = nullptr;
+  FILE* sourceFile = nullptr;
 
-  if (!(listFile = fopen(listName.string().c_str(), "wt")))
+  if (!(listFile = fopen(listName.string().c_str(), "wt"))) {
     Panic("Can't open %s for listing", listName.string());
+  }
 
   if (includeDebugInfo) {
     if (!(sourceFile = fopen(std::string(sourceFileName).c_str(), "rt")))
       Panic("Can't open %s for source lines in listing", sourceFileName);
-    sourceLineNum = 0;
   }
 
-  Listing("\n\t\t\t\tListing of %s:\t[script %d]\n\n", sourceFileName,
-          (SCIUWord)script);
-  Listing("LINE/\tOFFSET\tCODE\t\t\t\tNAME");
-  Listing("LABEL\t(HEX)\n");
+  auto result = std::make_unique<ListingFileImpl>(listFile, sourceFile);
+
+  result->Listing("\n\t\t\t\tListing of %s:\t[script %d]\n\n", sourceFileName,
+                  (SCIUWord)script);
+  result->Listing("LINE/\tOFFSET\tCODE\t\t\t\tNAME");
+  result->Listing("LABEL\t(HEX)\n");
+
+  return result;
 }
 
-void CloseListFile() {
-  fclose(listFile);
-  listFile = 0;
-  if (sourceFile) {
-    fclose(sourceFile);
-    sourceFile = 0;
-  }
-}
-
-void DeleteListFile() { DeletePath(listName); }
-
-void ListOp(std::size_t offset, uint8_t theOp) {
-  OpStr* oPtr;
-  std::string_view op;
-  std::string scratch;
-  bool hasArgs;
-  bool addSize;
-
-  if (!listCode || !listFile) return;
-
-  ListOffset(offset);
-
-  if (!(theOp & OP_LDST)) {
-    oPtr = &theOpCodes[(theOp & ~OP_BYTE) / 2];
-    hasArgs = oPtr->info & OP_ARGS;
-    addSize = oPtr->info & OP_SIZE;
-    if (addSize) {
-      scratch = std::string(oPtr->str);
-      absl::StrAppend(&scratch, (theOp & OP_BYTE) ? ".b" : ".w");
-      op = scratch;
-    } else {
-      op = oPtr->str;
-    }
-
-  } else {
-    switch (theOp & OP_TYPE) {
-      case OP_LOAD:
-        scratch.push_back('l');
-        break;
-
-      case OP_STORE:
-        scratch.push_back('s');
-        break;
-
-      case OP_INC:
-        scratch.push_back('+');
-        break;
-
-      case OP_DEC:
-        scratch.push_back('-');
-        break;
-    }
-
-    if (theOp & OP_STACK)
-      scratch.push_back('s');
-    else
-      scratch.push_back('a');
-
-    switch (theOp & OP_VAR) {
-      case OP_GLOBAL:
-        scratch.push_back('g');
-        break;
-
-      case OP_LOCAL:
-        scratch.push_back('l');
-        break;
-
-      case OP_TMP:
-        scratch.push_back('t');
-        break;
-
-      case OP_PARM:
-        scratch.push_back('p');
-        break;
-    }
-
-    if (theOp & OP_INDEX) scratch.push_back('i');
-
-    op = scratch;
-    addSize = hasArgs = true;
-  }
-
-  if (hasArgs)
-    ListingNoCRLF("%-5s", op);
-  else
-    Listing("%s", op);
-}
-
-void ListWord(std::size_t offset, uint16_t w) {
-  if (!listCode || !listFile) return;
-
-  ListAsCode(offset, "word\t$%x", (SCIUWord)w);
-}
-
-void ListByte(std::size_t offset, uint8_t b) {
-  if (!listCode || !listFile) return;
-
-  ListAsCode(offset, "byte\t$%x", b);
-}
-
-void ListText(std::size_t offset, std::string_view s) {
-  std::string line;
-
-  ListAsCode(offset, "text");
-
-  line.push_back('"');  // start with a quote
-  auto curr_it = s.begin();
-  while (1) {
-    // Copy from the text until the output line is full.
-
-    while (line.length() <= 80 && curr_it != s.end() && *curr_it != '\n') {
-      if (*curr_it == '%') line.push_back('%');
-      line.push_back(*curr_it++);
-    }
-
-    // If the line is not full, we are done.  Finish with a quote.
-
-    if (line.length() <= 80) {
-      line.append("\"\n");
-      Listing("%s", line);
-      break;
-    }
-
-    // Scan back in the text to a word break, then print the line.
-    // FIXME: What happens if there is no break?
-    std::string_view line_view = line;
-    auto last_space_index = line_view.rfind(' ');
-    if (last_space_index == std::string::npos) {
-      line_view = line_view.substr(0, 80);
-      curr_it -= line.length() - 80;
-    } else {
-      line_view = line_view.substr(0, last_space_index);
-      curr_it -= line.length() - last_space_index;
-      ++curr_it;  // point past the space
-    }
-
-    Listing("%s", line_view);
-
-    line.clear();
-  }
-}
-
-void ListOffset(std::size_t offset) {
-  if (!listCode || !listFile) return;
-
-  ListingNoCRLF("\t\t%5x\t", offset);
-}
-
-void ListSourceLine(int num) {
-  char buf[512];
-  for (; sourceLineNum < num; sourceLineNum++) {
-    if (!fgets(buf, sizeof buf, sourceFile)) {
-      Panic("Can't read source line %d", sourceLineNum);
-    }
-  }
-  ListingNoCRLF("%s", buf);
+std::unique_ptr<ListingFile> ListingFile::Null() {
+  return std::make_unique<NullListingFileImpl>();
 }
