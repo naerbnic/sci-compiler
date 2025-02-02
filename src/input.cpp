@@ -199,23 +199,3 @@ static void SetInputSource(const std::shared_ptr<InputSource>& nis) {
   nis->next = is;
   is = nis;
 }
-
-////////////////////////////////////////////////////////////////////////////
-
-static LineOffset startToken;
-static LineOffset endToken;
-static LineOffset startParse;
-
-void SetTokenStart() { startToken = GetParsePos(); }
-
-void SetParseStart() { startParse = startToken; }
-
-LineOffset GetParseStart() { return startParse; }
-
-LineOffset GetParsePos() {
-  return is->lineStartOffset() + (long)(is->inputPtr.data() - inputLine);
-}
-
-LineOffset GetTokenEnd() { return endToken; }
-
-void SetTokenEnd() { endToken = GetParsePos() - 1; }

@@ -62,13 +62,6 @@ void SetStringInput(std::string_view);
 void SetInputToCurrentLine();
 void RestoreInput();
 
-void SetTokenStart();
-void SetParseStart();
-LineOffset GetParseStart();
-LineOffset GetParsePos();
-LineOffset GetTokenEnd();
-void SetTokenEnd();
-
 struct StrList;
 
 extern std::filesystem::path curFile;

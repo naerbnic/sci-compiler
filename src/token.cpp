@@ -122,7 +122,6 @@ void GetRest(bool error) {
         else {
           symType = S_STRING;
           is->inputPtr = ip;
-          SetTokenEnd();
           return;
         }
         break;
@@ -204,8 +203,6 @@ bool NextToken() {
   // If we encounter a '\0' in the scan, it does not terminate the
   // character, but simply causes us to move to another input source.
 
-  SetTokenStart();
-
   c = ip[0];
   symStr.clear();
 
@@ -213,7 +210,6 @@ bool NextToken() {
     symStr.push_back(c);
     symType = (sym_t)c;
     is->inputPtr = ip.substr(1);
-    SetTokenEnd();
     return true;
   }
 
@@ -251,7 +247,6 @@ bool NextToken() {
     c = ip[0];
   }
   is->inputPtr = ip;
-  SetTokenEnd();
 
   return true;
 }
@@ -500,7 +495,6 @@ static void ReadNumber(std::string_view ip) {
   setSymVal(val);
 
   is->inputPtr = ip;
-  SetTokenEnd();
 }
 
 static void ReadString(std::string_view ip) {
@@ -603,7 +597,6 @@ static void ReadString(std::string_view ip) {
 
   if (is) {
     is->inputPtr = ip;
-    SetTokenEnd();
   } else {
     EarlyEnd();
   }
@@ -662,5 +655,4 @@ static void ReadKey(std::string_view ip) {
   }
 
   is->inputPtr = ip;
-  SetTokenEnd();
 }
