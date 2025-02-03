@@ -95,7 +95,10 @@ int main(int argc, char **argv) {
       .help("output words high-byte first (for M68000)")
       .default_value(false)
       .flag();
-  program.add_argument("-z").help("turn off optimization").default_value(false);
+  program.add_argument("-z")
+      .help("turn off optimization")
+      .default_value(false)
+      .flag();
   program.add_argument("-t")
       .help("Set the target architecture. Valid values are: SCI_1_1, SCI_2")
       .default_value(std::string{"SCI_2"});

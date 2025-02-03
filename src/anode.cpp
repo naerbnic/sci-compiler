@@ -394,7 +394,7 @@ size_t ANOpExtern::size() {
     case op_callb:
       return (op & OP_BYTE ? 2 : 3) + arg_size;
     case op_calle:
-      return (op & OP_BYTE ? 3 : 4) + arg_size;
+      return (op & OP_BYTE ? 3 : 5) + arg_size;
     default:
       return 0;
   }

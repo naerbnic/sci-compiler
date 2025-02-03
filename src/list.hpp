@@ -161,7 +161,7 @@ class TList {
       auto* new_node = nn.release();
       removed_node->ReplaceWith(new_node);
       curr_item_ = new_node;
-      return std::unique_ptr<T>(curr_item_);
+      return std::unique_ptr<T>(removed_node);
     }
 
    private:
