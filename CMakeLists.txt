@@ -18,7 +18,7 @@ option(ABSL_PROPAGATE_CXX_STD
 
 FetchContent_Declare(absl
   GIT_REPOSITORY https://github.com/abseil/abseil-cpp.git
-  GIT_TAG origin/lts_2023_01_25)
+  GIT_TAG origin/lts_2025_01_27)
 FetchContent_Declare(argparse
   GIT_REPOSITORY https://github.com/p-ranav/argparse.git
   GIT_TAG origin/master)
@@ -44,6 +44,7 @@ src/loop.cpp
 src/object.cpp
 src/optimize.cpp
 src/output.cpp
+src/platform.cpp
 src/parse.cpp
 src/pnode.cpp
 src/proc.cpp
@@ -61,7 +62,16 @@ src/sc.cpp
 
 target_include_directories(sc PRIVATE src/)
 set_target_properties(sc PROPERTIES COMPILE_WARNING_AS_ERROR ON)
-target_link_libraries(sc absl::strings absl::str_format absl::flat_hash_map absl::btree argparse)
+target_link_libraries(sc
+  absl::strings
+  absl::str_format
+  absl::flat_hash_map
+  absl::btree
+  absl::base
+  absl::debugging
+  absl::failure_signal_handler
+  argparse
+)
 
 if(MSVC)
   target_compile_options(sc PRIVATE /W4 /WX)
