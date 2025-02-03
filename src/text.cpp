@@ -4,7 +4,10 @@
 
 TextList text;
 
-void TextList::init() { textList.clear(); }
+void TextList::init() {
+  textList.clear();
+  size = 0;
+}
 
 uint32_t TextList::find(std::string_view str) {
   // The value of a string is its offset in string space.
