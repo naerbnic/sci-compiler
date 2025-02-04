@@ -18,26 +18,19 @@ static FILE* FOpen(std::filesystem::path const& path, const char* mode) {
   return fopen(path.string().c_str(), mode);
 }
 
-InputSource::InputSource() : lineNum(0), fileName("") {
-  gInputState.curLine = lineNum;
-}
+InputSource::InputSource() : lineNum(0), fileName("") {}
 
 InputSource::InputSource(std::filesystem::path fileName, int lineNum)
-    : lineNum(lineNum), fileName(fileName) {
-  gInputState.curLine = lineNum;
-}
+    : lineNum(lineNum), fileName(fileName) {}
 
 InputSource& InputSource::operator=(InputSource& s) {
   fileName = s.fileName;
   lineNum = s.lineNum;
-  gInputState.curLine = lineNum;
   return *this;
 }
 
 InputFile::InputFile(FILE* fp, std::filesystem::path name)
-    : InputSource(name), file(fp) {
-  gInputState.curFile = fileName;
-}
+    : InputSource(name), file(fp) {}
 
 InputFile::~InputFile() { fclose(file); }
 
@@ -64,8 +57,9 @@ bool InputFile::ReadNextLine() {
 
 InputString::InputString() : line_(), wasRead_(true) { inputPtr = ""; }
 
-InputString::InputString(std::string_view str)
-    : InputSource(gInputState.curFile, gInputState.curLine),
+InputString::InputString(std::filesystem::path fileName, int lineNum,
+                         std::string_view str)
+    : InputSource(std::move(fileName), lineNum),
       line_(std::string(str)),
       wasRead_(false) {
   inputPtr = "";
@@ -111,14 +105,14 @@ bool InputState::GetNewInputLine() {
 
   if (inputSource) {
     ++inputSource->lineNum;
-    ++curLine;
   }
 
   return (bool)inputSource;
 }
 
 void InputState::SetStringInput(std::string_view str) {
-  auto nis = std::make_shared<InputString>(str);
+  auto nis =
+      std::make_shared<InputString>(GetCurrFileName(), GetCurrLineNum(), str);
   nis->next_ = inputSource;
   inputSource = nis;
 }
@@ -184,11 +178,6 @@ bool InputState::CloseInputSource() {
     inputSource = next;
   }
 
-  if (inputSource) {
-    curFile = inputSource->fileName;
-    curLine = inputSource->lineNum;
-  }
-
   return (bool)inputSource;
 }
 
@@ -205,6 +194,14 @@ std::string InputState::GetTopLevelFileName() {
   }
 
   return curSourceFile->fileName.string();
+}
+
+int InputState::GetCurrLineNum() {
+  if (!inputSource) {
+    return 0;
+  }
+
+  return inputSource->lineNum;
 }
 
 int InputState::GetTopLevelLineNum() {

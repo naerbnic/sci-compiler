@@ -53,7 +53,8 @@ struct InputFile : InputSource {
 
 struct InputString : InputSource {
   InputString();
-  InputString(std::string_view str);
+  InputString(std::filesystem::path fileName, int lineNum,
+              std::string_view str);
 
   InputString& operator=(InputString&);
 
@@ -67,9 +68,6 @@ struct InputString : InputSource {
 
 class InputState {
  public:
-  // The name of the currently parsing source file.
-  std::filesystem::path curFile;
-  int curLine;
   // The current base source file, independent of current input stack.
   std::shared_ptr<InputSource> inputSource;
 
@@ -84,6 +82,7 @@ class InputState {
 
   std::string GetCurrFileName();
   std::string GetTopLevelFileName();
+  int GetCurrLineNum();
   int GetTopLevelLineNum();
   bool IsDone();
   std::string_view GetRemainingLine();

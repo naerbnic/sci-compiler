@@ -10,7 +10,7 @@
 Symbol::Symbol(std::string_view name, sym_t type)
     : name_(!name.empty() ? std::optional(std::string(name)) : std::nullopt),
       type(type),
-      lineNum(gInputState.curLine) {}
+      lineNum(gInputState.GetCurrLineNum()) {}
 
 int Symbol::val() const { return std::get<0>(ref_val_); }
 bool Symbol::hasVal(int val) const {
