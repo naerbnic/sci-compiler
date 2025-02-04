@@ -59,9 +59,11 @@ src/token.cpp
 src/toktypes.cpp
 src/update.cpp
 src/sc.cpp
+src/io/buffer.cpp
 )
 
 target_include_directories(sc PRIVATE src/)
+
 set_target_properties(sc PROPERTIES COMPILE_WARNING_AS_ERROR ON)
 target_link_libraries(sc
   absl::strings

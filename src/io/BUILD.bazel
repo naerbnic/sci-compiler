@@ -1,0 +1,23 @@
+package(
+    default_visibility = ["//src:__subpackages__"],
+)
+
+cc_test(
+    name = "buffer_test",
+    srcs = ["buffer_test.cpp"],
+    deps = [
+        ":buffer",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "buffer",
+    srcs = ["buffer.cpp"],
+    hdrs = ["buffer.hpp"],
+    deps = [
+        "//src:platform",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)

@@ -8,6 +8,7 @@ module(
 bazel_dep(name = "platforms", version = "0.0.11")
 bazel_dep(name = "argparse", version = "3.0.0")
 bazel_dep(name = "abseil-cpp", version = "20240116.1")
+bazel_dep(name = "googletest", version = "1.15.2")
 
 bazel_dep(name = "rules_cc", version = "0.1.0", dev_dependency = True)
 
@@ -22,8 +23,8 @@ use_repo(cc_configure_extension, "local_config_cc")
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 git_override(
     module_name = "hedron_compile_commands",
-    remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
-    commit = "4f28899228fb3ad0126897876f147ca15026151e",
+    remote = "https://github.com/mikael-s-persson/bazel-compile-commands-extractor",
+    commit = "f5fbd4cee671d8d908f37c83abaf70fba5928fc7"
     # Replace the commit hash (above) with the latest (https://github.com/hedronvision/bazel-compile-commands-extractor/commits/main).
     # Even better, set up Renovate and let it do the work for you (see "Suggestion: Updates" in the README).
 )
