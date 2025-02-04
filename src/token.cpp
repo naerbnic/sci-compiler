@@ -9,6 +9,8 @@
 #include <string_view>
 
 #include "absl/strings/ascii.h"
+#include "absl/strings/escaping.h"
+#include "absl/strings/str_format.h"
 #include "chartype.hpp"
 #include "error.hpp"
 #include "input.hpp"
@@ -132,7 +134,11 @@ void GetRest(bool error) {
       }
     }
 
-    if (!truncate) gSymStr.push_back(currCharAndAdvance(ip));
+    if (!truncate) {
+      gSymStr.push_back(currCharAndAdvance(ip));
+    } else {
+      advance(ip);
+    }
 
     if (gSymStr.length() >= MaxTokenLen && !truncate) {
       if (!error) Warning("Define too long.  Truncated.");
@@ -520,8 +526,7 @@ static void ReadString(std::string_view ip) {
   while ((c = currCharAndAdvance(ip)) != open && c != '\0') {
     switch (c) {
       case '\n':
-        gInputState.GetNewInputLine();
-        if (!gInputState.inputSource) Fatal("Unterminated string");
+        if (!gInputState.GetNewInputLine()) Fatal("Unterminated string");
         ip = gInputState.inputSource->inputPtr;
         break;
 
@@ -540,8 +545,7 @@ static void ReadString(std::string_view ip) {
         while ((c = currChar(ip)) == ' ' || c == '\t' || c == '\n') {
           advance(ip);
           if (c == '\n') {
-            gInputState.GetNewInputLine();
-            if (!gInputState.inputSource) Fatal("Unterminated string");
+            if (!gInputState.GetNewInputLine()) Fatal("Unterminated string");
             ip = gInputState.inputSource->inputPtr;
           }
         }

@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -23,6 +24,8 @@ struct InputSource {
   virtual bool endInputLine() = 0;
   virtual LineOffset lineStartOffset() = 0;
 
+  virtual bool ReadNextLine(std::string* line) = 0;
+
   std::filesystem::path fileName;
   int lineNum;
   std::string_view inputPtr;
@@ -38,6 +41,7 @@ struct InputFile : InputSource {
 
   bool endInputLine() override;
   LineOffset lineStartOffset() override { return this->lineStart; }
+  bool ReadNextLine(std::string* line) override;
 
   FILE* file;
   LineOffset lineStart;
@@ -51,6 +55,10 @@ struct InputString : InputSource {
 
   bool endInputLine() override;
   LineOffset lineStartOffset() override { return 0; }
+  bool ReadNextLine(std::string* line) override;
+
+ private:
+  std::optional<std::string> line_;
 };
 
 class InputState {

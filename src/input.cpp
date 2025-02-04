@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <memory>
 
+#include "absl/strings/escaping.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
 #include "error.hpp"
@@ -15,13 +16,13 @@
 
 InputState gInputState;
 
-static char inputLine[512];
+static std::string inputLine;
 
 static FILE* FOpen(std::filesystem::path const& path, const char* mode) {
   return fopen(path.string().c_str(), mode);
 }
 
-InputSource::InputSource() : fileName(0), lineNum(0) {
+InputSource::InputSource() : fileName(""), lineNum(0) {
   gTokSym.setStr("");
   gInputState.curLine = lineNum;
 }
@@ -48,12 +49,30 @@ InputFile::~InputFile() { fclose(file); }
 
 bool InputFile::endInputLine() { return GetNewLine(); }
 
-InputString::InputString(std::string_view str)
-    : InputSource(gInputState.curFile, gInputState.curLine) {
-  inputPtr = str;
+bool InputFile::ReadNextLine(std::string* line) {
+  std::array<char, 512> inputLine;
+
+  if (!fgets(inputLine.data(), inputLine.size(), file)) {
+    if (feof(file)) {
+      return false;
+    }
+    int error = ferror(file);
+    throw std::runtime_error(
+        absl::StrFormat("I/O error reading file %s: %d", fileName, error));
+  }
+
+  line->clear();
+  line->append(inputLine.data());
+  return true;
 }
 
-InputString::InputString() { inputPtr = ""; }
+InputString::InputString() : line_() { inputPtr = ""; }
+
+InputString::InputString(std::string_view str)
+    : InputSource(gInputState.curFile, gInputState.curLine),
+      line_(std::string(str)) {
+  inputPtr = *line_;
+}
 
 InputString& InputString::operator=(InputString& s) {
   InputSource::operator=(s);
@@ -63,6 +82,15 @@ InputString& InputString::operator=(InputString& s) {
 
 bool InputString::endInputLine() { return gInputState.CloseInputSource(); }
 
+bool InputString::ReadNextLine(std::string* line) {
+  if (!line_) {
+    return false;
+  }
+  *line = std::move(line_).value();
+  line_ = std::nullopt;
+  return true;
+}
+
 // -------------
 // InputState
 
@@ -71,8 +99,7 @@ bool InputState::GetNewInputLine() {
   // file, close the file, shifting input to the next source in the queue.
 
   while (inputSource) {
-    if (fgets(inputLine, sizeof inputLine,
-              ((InputFile*)inputSource.get())->file)) {
+    if (inputSource->ReadNextLine(&inputLine)) {
       inputSource->inputPtr = inputLine;
       break;
     }
@@ -138,7 +165,8 @@ void InputState::SetInputToCurrentLine() {
   //	set the current input line as the input source
 
   saveIs_ = inputSource;
-  curLineInput_ = std::make_shared<InputString>(inputLine);
+  auto curLineInput = std::make_shared<InputString>(inputLine);
+  curLineInput_ = std::move(curLineInput);
   inputSource = curLineInput_;
 }
 
