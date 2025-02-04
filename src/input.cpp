@@ -8,7 +8,6 @@
 #include <filesystem>
 #include <memory>
 
-#include "absl/strings/escaping.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
 #include "error.hpp"
@@ -159,22 +158,6 @@ void InputState::OpenFileAsInput(std::filesystem::path const& fileName,
   inputSource = theFile;
   this->theFile = theFile;
   GetNewLine();
-}
-
-void InputState::SetInputToCurrentLine() {
-  //	set the current input line as the input source
-
-  saveIs_ = inputSource;
-  auto curLineInput = std::make_shared<InputString>(inputLine);
-  curLineInput_ = std::move(curLineInput);
-  inputSource = curLineInput_;
-}
-
-void InputState::RestoreInput() {
-  if (saveIs_) {
-    inputSource = saveIs_;
-    saveIs_ = nullptr;
-  }
 }
 
 bool InputState::CloseInputSource() {

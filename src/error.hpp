@@ -4,7 +4,6 @@
 #define ERROR_HPP
 
 #include "absl/strings/str_format.h"
-#include "sc.hpp"
 
 void EarlyEnd();
 

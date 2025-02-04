@@ -9,7 +9,6 @@
 #include <string_view>
 
 #include "absl/strings/ascii.h"
-#include "absl/strings/escaping.h"
 #include "absl/strings/str_format.h"
 #include "chartype.hpp"
 #include "error.hpp"
@@ -280,9 +279,7 @@ bool GetNewLine() {
 compiling:
   while (1) {
     //	if input was limited to the current line before, unlimit it
-    gInputState.RestoreInput();
     if (!gInputState.GetNewInputLine()) return false;
-    gInputState.SetInputToCurrentLine();
 
     switch (GetPreprocessorToken()) {
       case PT_IF:
@@ -325,7 +322,6 @@ compiling:
         break;
 
       default:
-        gInputState.RestoreInput();
         return true;
     }
   }
@@ -334,9 +330,7 @@ notCompiling:
   level = 0;
 
   while (1) {
-    gInputState.RestoreInput();
     if (!gInputState.GetNewInputLine()) return false;
-    gInputState.SetInputToCurrentLine();
 
     switch (GetPreprocessorToken()) {
       case PT_IF:
@@ -382,9 +376,7 @@ gettingEndif:
   level = 0;
 
   while (1) {
-    gInputState.RestoreInput();
     if (!gInputState.GetNewInputLine()) return false;
-    gInputState.SetInputToCurrentLine();
 
     switch (GetPreprocessorToken()) {
       case PT_IF:

@@ -77,9 +77,6 @@ class InputState {
   void SetIncludePath(std::vector<std::string> const& extra_paths);
   void OpenFileAsInput(std::filesystem::path const& fileName, bool required);
 
-  void SetInputToCurrentLine();
-  void RestoreInput();
-
   bool CloseInputSource();
 
  private:
