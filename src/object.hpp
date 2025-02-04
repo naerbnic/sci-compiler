@@ -122,13 +122,13 @@ void InitSelectors();
 Symbol* InstallSelector(std::string_view name, int value);
 int NewSelectorNum();
 
-extern Class* classes[];
-extern Object* curObj;
-extern int maxClassNum;
-extern int maxSelector;
-extern Symbol* nameSymbol;
-extern bool noAutoName;
-extern Object* receiver;
-extern bool showSelectors;
+extern Class* gClasses[];
+extern Object* gCurObj;
+extern int gMaxClassNum;
+extern int gMaxSelector;
+extern Symbol* gNameSymbol;
+extern bool gNoAutoName;
+extern Object* gReceiver;
+extern bool gShowSelectors;
 
 #endif

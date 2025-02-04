@@ -59,10 +59,10 @@ void CompileProc(AList* curList, PNode* pn) {
 void CompileExpr(AOpList* curList, PNode* pn) {
   // Recursively compile code for a given node.
 
-  if (includeDebugInfo && pn->type != PN_PROC && pn->type != PN_METHOD &&
-      pn->lineNum > lastLineNum) {
+  if (gIncludeDebugInfo && pn->type != PN_PROC && pn->type != PN_METHOD &&
+      pn->lineNum > gLastLineNum) {
     curList->newNode<ANLineNum>(pn->lineNum);
-    lastLineNum = pn->lineNum;
+    gLastLineNum = pn->lineNum;
   }
 
   switch (pn->type) {
@@ -364,7 +364,7 @@ static void MakeObjID(AOpList* curList, PNode* pn) {
 
     // If the object is not defined yet, add this node to the list
     // of those waiting for the definition.
-    if (!sym->obj() || sym->obj() == curObj)
+    if (!sym->obj() || sym->obj() == gCurObj)
       an->addBackpatch(sym);
     else
       an->setTarget(sym->obj()->an);
@@ -938,9 +938,9 @@ static void MakeProc(AList* curList, PNode* pn) {
 
   //	procedures and methods get special treatment:  the line number
   //	and file name are set here
-  if (includeDebugInfo) {
+  if (gIncludeDebugInfo) {
     an->code.newNode<ANLineNum>(pn->lineNum);
-    lastLineNum = pn->lineNum;
+    gLastLineNum = pn->lineNum;
   }
 
   // If there are to be any temporary variables, add a link node to
@@ -950,9 +950,9 @@ static void MakeProc(AList* curList, PNode* pn) {
   // Compile code for the procedure followed by a return.
   if (pn->child_at(0)) CompileExpr(&an->code, pn->child_at(0));
 
-  if (includeDebugInfo) {
-    assert(curSourceFile);
-    an->code.newNode<ANLineNum>(curSourceFile->lineNum);
+  if (gIncludeDebugInfo) {
+    assert(gCurSourceFile);
+    an->code.newNode<ANLineNum>(gCurSourceFile->lineNum);
   }
   an->code.newNode<ANOpCode>(op_ret);
 }
@@ -962,9 +962,9 @@ void MakeDispatch(int maxEntry) {
 
   // Now cycle through the publicly declared procedures/objects,
   // creating asmNodes for a table of their offsets.
-  numDispTblEntries->value = maxEntry + 1;
+  gNumDispTblEntries->value = maxEntry + 1;
   for (int i = 0; i <= maxEntry; ++i) {
-    ANDispatch* an = dispTbl->entries.newNode<ANDispatch>();
+    ANDispatch* an = gDispTbl->entries.newNode<ANDispatch>();
     if ((an->sym = FindPublic(i)))
       // Add this to the backpatch list of the symbol.
       an->addBackpatch(an->sym);
@@ -977,32 +977,32 @@ void MakeObject(Object* theObj) {
 
   {
     // Create the object ID node.
-    ANObject* obj = sc->heapList->getList()->newNodeBefore<ANObject>(
+    ANObject* obj = gSc->heapList->getList()->newNodeBefore<ANObject>(
         nullptr, theObj->sym, theObj->num);
     theObj->an = obj;
 
     // Create the table of properties.
     ANTable* props =
-        sc->heapList->getList()->newNodeBefore<ANTable>(nullptr, "properties");
+        gSc->heapList->getList()->newNodeBefore<ANTable>(nullptr, "properties");
 
     {
       for (auto* sp : theObj->selectors())
         if (IsProperty(sp)) {
           switch (sp->tag) {
             case T_PROP:
-              sc->heapList->getList()->newNode<ANIntProp>(sp->sym, sp->val);
+              gSc->heapList->getList()->newNode<ANIntProp>(sp->sym, sp->val);
               break;
 
             case T_TEXT:
-              sc->heapList->getList()->newNode<ANTextProp>(sp->sym, sp->val);
+              gSc->heapList->getList()->newNode<ANTextProp>(sp->sym, sp->val);
               break;
 
             case T_PROPDICT:
-              pDict = sc->heapList->getList()->newNode<ANOfsProp>(sp->sym);
+              pDict = gSc->heapList->getList()->newNode<ANOfsProp>(sp->sym);
               break;
 
             case T_METHDICT:
-              mDict = sc->heapList->getList()->newNode<ANOfsProp>(sp->sym);
+              mDict = gSc->heapList->getList()->newNode<ANOfsProp>(sp->sym);
               break;
           }
         }
@@ -1016,12 +1016,12 @@ void MakeObject(Object* theObj) {
   }
 
   // The rest of the object goes into hunk, as it never changes.
-  sc->hunkList->getList()->newNodeBefore<ANObject>(codeStart, theObj->sym,
+  gSc->hunkList->getList()->newNodeBefore<ANObject>(gCodeStart, theObj->sym,
                                                    theObj->num);
 
   // If this a class, add the property dictionary.
-  ANObjTable* propDict = sc->hunkList->getList()->newNodeBefore<ANObjTable>(
-      codeStart, "property dictionary");
+  ANObjTable* propDict = gSc->hunkList->getList()->newNodeBefore<ANObjTable>(
+      gCodeStart, "property dictionary");
   {
     if (theObj->num != OBJECTNUM) {
       for (auto* sp : theObj->selectors())
@@ -1030,8 +1030,8 @@ void MakeObject(Object* theObj) {
   }
   if (pDict) pDict->target = propDict;
 
-  ANObjTable* methDict = sc->hunkList->getList()->newNodeBefore<ANObjTable>(
-      codeStart, "method dictionary");
+  ANObjTable* methDict = gSc->hunkList->getList()->newNodeBefore<ANObjTable>(
+      gCodeStart, "method dictionary");
   {
     ANWord* numMeth = methDict->entries.newNode<ANWord>((short)0);
     for (auto* sp : theObj->selectors())
@@ -1049,8 +1049,8 @@ void MakeText() {
   // Add text strings to the assembled code.
 
   // terminate the object portion of the heap with a null word
-  sc->heapList->newNode<ANWord>();
-  for (Text* tp : text.items()) sc->heapList->newNode<ANText>(tp);
+  gSc->heapList->newNode<ANWord>();
+  for (Text* tp : gText.items()) gSc->heapList->newNode<ANText>(tp);
 }
 
 void MakeLabel(AOpList* curList, Symbol* dest) {

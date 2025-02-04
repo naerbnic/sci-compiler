@@ -2,7 +2,7 @@
 
 #include "text.hpp"
 
-TextList text;
+TextList gText;
 
 void TextList::init() {
   textList.clear();

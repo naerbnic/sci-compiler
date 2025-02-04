@@ -17,7 +17,7 @@
 #include "sc.hpp"
 #include "sol.hpp"
 
-bool highByteFirst;
+bool gHighByteFirst;
 
 OutputFile::OutputFile(std::string fileName) : fileName(fileName) {
   fp = CreateOutputFile(fileName);
@@ -49,7 +49,7 @@ void OutputFile::WriteWord(int16_t w) {
   uint16_t u = w;
 
   std::endian targetEndian =
-      highByteFirst ? std::endian::big : std::endian::little;
+      gHighByteFirst ? std::endian::big : std::endian::little;
 
   if (std::endian::native != targetEndian) {
     // Swap the bytes.
@@ -80,8 +80,8 @@ ObjFiles OpenObjFiles() {
 }
 
 static std::string MakeObjFileName(MemType type) {
-  std::string resName = ResNameMake(type, script);
-  std::string dest = (outDir / resName).string();
+  std::string resName = ResNameMake(type, gScript);
+  std::string dest = (gOutDir / resName).string();
   DeletePath(dest);
   return dest;
 }

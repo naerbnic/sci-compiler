@@ -16,8 +16,8 @@
 #include "symbol.hpp"
 #include "token.hpp"
 
-int errors;
-int warnings;
+int gNumErrors;
+int gNumWarnings;
 
 static void beep();
 
@@ -37,9 +37,9 @@ static void beep() { putc('\a', stderr); };
 namespace error_impl {
 
 void WriteError(std::string_view text) {
-  ++errors;
+  ++gNumErrors;
 
-  ListingOutput(absl::StrFormat("Error: %s, line %d\n\t", curFile, curLine));
+  ListingOutput(absl::StrFormat("Error: %s, line %d\n\t", gCurFile, gCurLine));
   ListingOutput(text);
   ListingOutput("\n");
 
@@ -50,11 +50,11 @@ void WriteError(std::string_view text) {
 
   // Beep on first error/warning.
 
-  if (warnings + errors == 1) beep();
+  if (gNumWarnings + gNumErrors == 1) beep();
 }
 
 [[noreturn]] void WriteFatal(std::string_view text) {
-  ListingOutput(absl::StrFormat("Fatal: %s, line %d\n\t", curFile, curLine));
+  ListingOutput(absl::StrFormat("Fatal: %s, line %d\n\t", gCurFile, gCurLine));
   ListingOutput(text);
   ListingOutput("\n");
 
@@ -65,7 +65,7 @@ void WriteError(std::string_view text) {
 }
 
 void WriteInfo(std::string_view text) {
-  ListingOutput(absl::StrFormat("Info: %s, line %d\n\t", curFile, curLine));
+  ListingOutput(absl::StrFormat("Info: %s, line %d\n\t", gCurFile, gCurLine));
   ListingOutput(text);
   ListingOutput("\n");
 }
@@ -80,9 +80,9 @@ void WriteOutput(std::string_view str) {
 }
 
 void WriteSevere(std::string_view text) {
-  ++errors;
+  ++gNumErrors;
 
-  ListingOutput(absl::StrFormat("Error: %s, line %d\n\t", curFile, curLine));
+  ListingOutput(absl::StrFormat("Error: %s, line %d\n\t", gCurFile, gCurLine));
   ListingOutput(text);
   ListingOutput("\n");
 
@@ -93,19 +93,19 @@ void WriteSevere(std::string_view text) {
 
   // Beep on first error/warning.
 
-  if (warnings + errors == 1) beep();
+  if (gNumWarnings + gNumErrors == 1) beep();
 }
 
 void WriteWarning(std::string_view text) {
-  ++warnings;
+  ++gNumWarnings;
 
-  ListingOutput(absl::StrFormat("Warning: %s, line %d\n\t", curFile, curLine));
+  ListingOutput(absl::StrFormat("Warning: %s, line %d\n\t", gCurFile, gCurLine));
   ListingOutput(text);
   ListingOutput("\n");
 
   // Beep on first error/warning.
 
-  if (warnings + errors == 1) beep();
+  if (gNumWarnings + gNumErrors == 1) beep();
 }
 
 [[noreturn]] void WritePanic(std::string_view text) {

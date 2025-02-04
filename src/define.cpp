@@ -16,9 +16,9 @@
 #include "symtbl.hpp"
 #include "token.hpp"
 
-VarList localVars;
-VarList globalVars;
-std::size_t maxVars = 750;
+VarList gLocalVars;
+VarList gGlobalVars;
+std::size_t gMaxVars = 750;
 
 static int InitialValue(VarList& theVars, int offset, int arraySize);
 
@@ -38,14 +38,14 @@ void Define() {
 
   if (NextToken()) {
     if (symType != S_IDENT) {
-      Severe("Identifier required: %s", symStr);
+      Severe("Identifier required: %s", gSymStr);
       return;
     }
 
-    Symbol* sym = syms.lookup(symStr);
+    Symbol* sym = gSyms.lookup(gSymStr);
     bool newSym = sym == 0;
     if (newSym)
-      sym = syms.installLocal(symStr, S_DEFINE);
+      sym = gSyms.installLocal(gSymStr, S_DEFINE);
     else if (sym->type != S_DEFINE)
       // This isn't just a re-'define' of the symbol, it's a change
       // in symbol type.
@@ -54,7 +54,7 @@ void Define() {
     GetRest();
 
     if (!newSym) {
-      std::string_view newString = absl::StripAsciiWhitespace(symStr);
+      std::string_view newString = absl::StripAsciiWhitespace(gSymStr);
       std::string_view oldString = absl::StripAsciiWhitespace(sym->str());
 
       if (newString != oldString) {
@@ -64,7 +64,7 @@ void Define() {
       }
     }
 
-    if (newSym) sym->setStr(symStr);
+    if (newSym) sym->setStr(gSymStr);
   }
 }
 
@@ -78,7 +78,7 @@ void Enum() {
       val = symVal;
 
     else if (IsUndefinedIdent()) {
-      Symbol* theSym = syms.installLocal(symStr, S_DEFINE);
+      Symbol* theSym = gSyms.installLocal(gSymStr, S_DEFINE);
 
       //	initializer expression?
       LookupTok();
@@ -101,16 +101,16 @@ void GlobalDecl() {
 
   for (GetToken(); !CloseP(symType); GetToken()) {
     if (!IsIdent()) {
-      Severe("Global variable name expected. Got: %s", symStr);
+      Severe("Global variable name expected. Got: %s", gSymStr);
       break;
     }
-    std::string varName = symStr;
+    std::string varName = gSymStr;
     if (!GetNumber("Variable #")) break;
 
     // We only install into the symbol table for globals. We do not add
-    // global variables to the globalVars list. That still has to be
+    // global variables to the gGlobalVars list. That still has to be
     // done by Script0.
-    Symbol* theSym = syms.lookup(varName.c_str());
+    Symbol* theSym = gSyms.lookup(varName.c_str());
     if (theSym) {
       if (theSym->type != S_GLOBAL) {
         Error("Redefinition of %s as a global.", theSym->name());
@@ -126,7 +126,7 @@ void GlobalDecl() {
       }
     } else {
       // Install the symbol.
-      theSym = syms.installLocal(varName.c_str(), S_GLOBAL);
+      theSym = gSyms.installLocal(varName.c_str(), S_GLOBAL);
       theSym->setVal(symVal);
     }
   }
@@ -144,7 +144,7 @@ void Global() {
   int n;
   int offset;
 
-  if (script) {
+  if (gScript) {
     Error("Globals only allowed in script 0.");
     return;
   }
@@ -156,11 +156,11 @@ void Global() {
     if (OpenP(symType))
       Definition();
     else if (IsIdent()) {
-      std::string varName = symStr;
+      std::string varName = gSymStr;
       if (!GetNumber("Variable #")) break;
 
       // Try to get the symbol from the symbol table.
-      Symbol* theSym = syms.lookup(varName.c_str());
+      Symbol* theSym = gSyms.lookup(varName.c_str());
       if (theSym) {
         if (theSym->type != S_GLOBAL) {
           Error("Redefinition of %s as a global.", theSym->name());
@@ -176,23 +176,23 @@ void Global() {
         }
       } else {
         // Install the symbol.
-        theSym = syms.installLocal(varName.c_str(), S_GLOBAL);
+        theSym = gSyms.installLocal(varName.c_str(), S_GLOBAL);
         theSym->setVal(symVal);
       }
       offset = theSym->val();
 
       // Get the initial value(s) of the variable and expand the size
       // of the block if more than one value is encountered.
-      n = InitialValue(globalVars, offset, 1);
-      if (n == -1 || globalVars.values.size() > maxVars) {
-        Error(tooManyVars, maxVars);
+      n = InitialValue(gGlobalVars, offset, 1);
+      if (n == -1 || gGlobalVars.values.size() > gMaxVars) {
+        Error(tooManyVars, gMaxVars);
         break;
       }
     }
   }
 
   // Put the information back in the variable structure.
-  globalVars.type = VAR_GLOBAL;
+  gGlobalVars.type = VAR_GLOBAL;
 
   UnGetTok();
 }
@@ -210,12 +210,12 @@ void Local() {
   int n;
   int arraySize;
 
-  if (!script) {
+  if (!gScript) {
     Error("Only globals allowed in script 0.");
     return;
   }
 
-  if (!localVars.values.empty()) {
+  if (!gLocalVars.values.empty()) {
     Error("Only one local statement allowed");
     return;
   }
@@ -225,7 +225,7 @@ void Local() {
   for (GetToken(); !CloseP(symType); GetToken()) {
     if (symType == S_OPEN_BRACKET) {
       if (GetIdent()) {
-        theSym = syms.installLocal(symStr, S_LOCAL);
+        theSym = gSyms.installLocal(gSymStr, S_LOCAL);
         theSym->setVal(size);
         if (!GetNumber("Array size")) break;
         arraySize = symVal;
@@ -234,10 +234,10 @@ void Local() {
           Severe("no closing ']' in array declaration");
           break;
         }
-        n = InitialValue(localVars, size, arraySize);
+        n = InitialValue(gLocalVars, size, arraySize);
         size += std::max(n, arraySize);
-        if (n == -1 || (std::size_t)(size) > maxVars) {
-          Error(tooManyVars, maxVars);
+        if (n == -1 || (std::size_t)(size) > gMaxVars) {
+          Error(tooManyVars, gMaxVars);
           break;
         }
       }
@@ -246,19 +246,19 @@ void Local() {
       Definition();
 
     else if (IsUndefinedIdent()) {
-      theSym = syms.installLocal(symStr, S_LOCAL);
+      theSym = gSyms.installLocal(gSymStr, S_LOCAL);
       theSym->setVal(size);
-      n = InitialValue(localVars, size, 1);
+      n = InitialValue(gLocalVars, size, 1);
       size += n;
-      if (n == -1 || (std::size_t)(size) > maxVars) {
-        Error(tooManyVars, maxVars);
+      if (n == -1 || (std::size_t)(size) > gMaxVars) {
+        Error(tooManyVars, gMaxVars);
         break;
       }
     }
   }
 
   // Put the information back in the variable structure.
-  localVars.type = VAR_LOCAL;
+  gLocalVars.type = VAR_LOCAL;
 
   UnGetTok();
 }
@@ -275,7 +275,7 @@ void Definition() {
       break;
 
     default:
-      Severe("define or enum expected: %s", symStr);
+      Severe("define or enum expected: %s", gSymStr);
   }
   CloseBlock();
 }
@@ -289,9 +289,9 @@ void Extern() {
     else {
       // Install the symbol in both the symbol table and the
       // externals list.
-      Symbol* theSym = syms.lookup(symStr);
+      Symbol* theSym = gSyms.lookup(gSymStr);
       if (!theSym) {
-        theSym = syms.installLocal(symStr, S_EXTERN);
+        theSym = gSyms.installLocal(gSymStr, S_EXTERN);
       }
       auto entry = std::make_unique<Public>(theSym);
       auto* theEntry = entry.get();
@@ -322,8 +322,8 @@ void DoPublic() {
   for (GetToken(); !CloseP(symType); GetToken()) {
     // Install the symbol in both the symbol table and the
     // publics list.
-    if (!(theSym = syms.lookup(symStr)) || theSym->type == S_EXTERN)
-      theSym = syms.installModule(symStr, (sym_t)(!theSym ? S_OBJ : S_IDENT));
+    if (!(theSym = gSyms.lookup(gSymStr)) || theSym->type == S_EXTERN)
+      theSym = gSyms.installModule(gSymStr, (sym_t)(!theSym ? S_OBJ : S_IDENT));
     auto theEntry = std::make_unique<Public>(theSym);
     auto* entryPtr = theEntry.get();
     publicList.push_front(std::move(theEntry));
@@ -369,7 +369,7 @@ static int InitialValue(VarList& theVars, int offset, int arraySize) {
     return 1;
   }
 
-  if ((std::size_t)(offset + arraySize) > maxVars) return -1;
+  if ((std::size_t)(offset + arraySize) > gMaxVars) return -1;
 
   if (theVars.values.size() < (std::size_t)(offset + arraySize)) {
     theVars.values.resize(offset + arraySize);

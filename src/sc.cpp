@@ -29,11 +29,11 @@
 #include "text.hpp"
 #include "update.hpp"
 
-bool includeDebugInfo;
-std::unique_ptr<Compiler> sc;
-int script;
-bool verbose;
-SciTargetArch targetArch = SciTargetArch::SCI_2;
+bool gIncludeDebugInfo;
+std::unique_ptr<Compiler> gSc;
+int gScript;
+bool gVerbose;
+SciTargetArch gTargetArch = SciTargetArch::SCI_2;
 
 static int totalErrors;
 
@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
   absl::InitializeSymbolizer(argv[0]);
   absl::FailureSignalHandlerOptions options;
   absl::InstallFailureSignalHandler(options);
-  argparse::ArgumentParser program("sc", banner);
+  argparse::ArgumentParser program("sc", gBanner);
   program.add_argument("-a")
       .help("abort compile if database locked")
       .default_value(false)
@@ -131,19 +131,19 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  abortIfLocked = program.get<bool>("-a");
-  includeDebugInfo = program.get<bool>("-d");
-  maxVars = program.get<int>("-g");
+  gAbortIfLocked = program.get<bool>("-a");
+  gIncludeDebugInfo = program.get<bool>("-d");
+  gMaxVars = program.get<int>("-g");
   bool listCode = program.get<bool>("-l");
-  noAutoName = program.get<bool>("-n");
-  outDir = program.get<std::string>("-o");
-  writeOffsets = program.get<bool>("-O");
-  showSelectors = program.get<bool>("-s");
-  dontLock = program.get<bool>("-u");
-  verbose = program.get<bool>("-v");
-  highByteFirst = program.get<bool>("-w");
-  noOptimize = program.get<bool>("-z");
-  targetArch = GetTargetArchitecture(program.get<std::string>("-t"));
+  gNoAutoName = program.get<bool>("-n");
+  gOutDir = program.get<std::string>("-o");
+  gWriteOffsets = program.get<bool>("-O");
+  gShowSelectors = program.get<bool>("-s");
+  gDontLock = program.get<bool>("-u");
+  gVerbose = program.get<bool>("-v");
+  gHighByteFirst = program.get<bool>("-w");
+  gNoOptimize = program.get<bool>("-z");
+  gTargetArch = GetTargetArchitecture(program.get<std::string>("-t"));
   auto selector_file = program.get<std::string>("--selector_file");
   auto classdef_file = program.get<std::string>("--classdef_file");
   auto system_header = program.get<std::string>("--system_header");
@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
   auto cli_include_path = program.get<std::vector<std::string>>("-I");
   auto files = program.get<std::vector<std::string>>("files");
 
-  sc = std::make_unique<Compiler>();
+  gSc = std::make_unique<Compiler>();
 
   if (files.empty()) {
     std::cerr << "No input files specified" << std::endl;
@@ -171,21 +171,21 @@ int main(int argc, char **argv) {
   InstallBuiltIns();
   InstallObjects();
   Lock();
-  errors = warnings = 0;
-  theFile = OpenFileAsInput(selector_file, true);
+  gNumErrors = gNumWarnings = 0;
+  gTheFile = OpenFileAsInput(selector_file, true);
   Parse();
   if (FileExists(classdef_file)) {
-    theFile = OpenFileAsInput(classdef_file, true);
+    gTheFile = OpenFileAsInput(classdef_file, true);
     Parse();
   }
 
-  theFile = OpenFileAsInput(system_header, true);
+  gTheFile = OpenFileAsInput(system_header, true);
   Parse();
 
-  theFile = OpenFileAsInput(game_header, false);
-  if (theFile) Parse();
+  gTheFile = OpenFileAsInput(game_header, false);
+  if (gTheFile) Parse();
 
-  totalErrors += errors;
+  totalErrors += gNumErrors;
 
   // Compile the files.
   for (auto const &src_file : files) {
@@ -194,7 +194,7 @@ int main(int argc, char **argv) {
 
   // Write out the class table and unlock the class database.
   WriteClassTbl();
-  if (writeOffsets) WritePropOffsets();
+  if (gWriteOffsets) WritePropOffsets();
   Unlock();
 
   return totalErrors != 0;
@@ -202,37 +202,37 @@ int main(int argc, char **argv) {
 
 static void CompileFile(std::string_view fileName, bool listCode) {
   // Do some initialization.
-  script = -1;
-  errors = warnings = 0;
+  gScript = -1;
+  gNumErrors = gNumWarnings = 0;
   InitPublics();
-  text.init();
+  gText.init();
 
   // Delete any free symbol tables.
-  syms.delFreeTbls();
+  gSyms.delFreeTbls();
 
   // Look up the symbol for 'name', as it will be used in object.c.
-  nameSymbol = syms.selectorSymTbl->lookup("name");
+  gNameSymbol = gSyms.selectorSymTbl->lookup("name");
 
   // Open the source file.
 
   std::string sourceFileName(fileName);
 
   output("%s\n", sourceFileName);
-  theFile = OpenFileAsInput(sourceFileName, true);
-  curSourceFile = theFile;
+  gTheFile = OpenFileAsInput(sourceFileName, true);
+  gCurSourceFile = gTheFile;
 
   // Parse the file (don't lock the symbol tables), then assemble it.
-  syms.moduleSymTbl = syms.add(ST_MEDIUM);
+  gSyms.moduleSymTbl = gSyms.add(ST_MEDIUM);
   Parse();
   MakeText();  // Add text to the assembly code
-  if (script == -1)
+  if (gScript == -1)
     Error("No script number specified.  Can't write output files.");
   else {
     auto listFile =
         listCode ? ListingFile::Open(sourceFileName) : ListingFile::Null();
     Assemble(listFile.get());
   }
-  totalErrors += errors;
+  totalErrors += gNumErrors;
 
   // Write out class/selector information only if there have been no
   // errors to this point.
@@ -242,12 +242,12 @@ static void CompileFile(std::string_view fileName, bool listCode) {
   ShowInfo();
 
   // Delete any free symbol tables.
-  syms.delFreeTbls();
+  gSyms.delFreeTbls();
 }
 
 static void ShowInfo() {
-  if (errors)
-    output("\t%d error%s.\n", errors, errors == 1 ? "" : "s");
+  if (gNumErrors)
+    output("\t%d error%s.\n", gNumErrors, gNumErrors == 1 ? "" : "s");
   else
     output("\tNo errors.\n");
 }
@@ -267,9 +267,9 @@ static void InstallCommandLineDefine(std::string_view str) {
     value = str.substr(eq_index + 1);
   }
 
-  if (syms.lookup(token)) Panic("'%s' has already been defined", token);
+  if (gSyms.lookup(token)) Panic("'%s' has already been defined", token);
 
-  Symbol *sym = syms.installGlobal(token, S_DEFINE);
+  Symbol *sym = gSyms.installGlobal(token, S_DEFINE);
   sym->setStr(std::string(value));
 }
 

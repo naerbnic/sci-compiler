@@ -64,11 +64,11 @@ void RestoreInput();
 
 struct StrList;
 
-extern std::filesystem::path curFile;
-extern int curLine;
-extern std::shared_ptr<InputSource> curSourceFile;
-extern std::vector<std::filesystem::path> includePath;
-extern std::shared_ptr<InputSource> is;
-extern std::shared_ptr<InputSource> theFile;
+extern std::filesystem::path gCurFile;
+extern int gCurLine;
+extern std::shared_ptr<InputSource> gCurSourceFile;
+extern std::vector<std::filesystem::path> gIncludePath;
+extern std::shared_ptr<InputSource> gInputSource;
+extern std::shared_ptr<InputSource> gTheFile;
 
 #endif

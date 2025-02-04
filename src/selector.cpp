@@ -9,8 +9,8 @@
 #include "token.hpp"
 #include "update.hpp"
 
-int maxSelector;
-bool showSelectors;
+int gMaxSelector;
+bool gShowSelectors;
 
 const int MAXSELECTOR = 8192;
 const int BITS_PER_ENTRY = 16;
@@ -49,7 +49,7 @@ Selector* Object::findSelectorByNum(int val) {
 Selector* Object::findSelector(std::string_view name) {
   // Return a pointer to the selector node which has the name 'name'.
 
-  Symbol* sym = syms.lookup(name);
+  Symbol* sym = gSyms.lookup(name);
   return sym ? findSelectorByNum(sym->val()) : 0;
 }
 
@@ -100,13 +100,13 @@ void InitSelectors() {
   for (Symbol* sym = LookupTok(); !CloseP(symType); sym = LookupTok()) {
     // Make sure that the symbol is not already defined.
     if (sym && symType != S_SELECT) {
-      Error("Redefinition of %s.", symStr);
+      Error("Redefinition of %s.", gSymStr);
       GetToken();  // eat selector number
       if (!IsNumber()) UnGetTok();
       continue;
     }
 
-    std::string selStr = symStr;
+    std::string selStr = gSymStr;
 
     GetNumber("Selector number");
     if (!sym)
@@ -119,7 +119,7 @@ void InitSelectors() {
 
   // The selectors just added were read from the file 'selector'.  Thus
   // there is no reason to rewrite that file.
-  selectorAdded = false;
+  gSelectorAdded = false;
 }
 
 Symbol* InstallSelector(std::string_view name, int value) {
@@ -129,10 +129,10 @@ Symbol* InstallSelector(std::string_view name, int value) {
   ClaimSelectorNum(value);
 
   // Since this is a new selector, we'll need to rewrite the file 'selector'.
-  selectorAdded = true;
+  gSelectorAdded = true;
 
   // Install the selector in the selector symbol table.
-  Symbol* sym = syms.installSelector(name);
+  Symbol* sym = gSyms.installSelector(name);
   sym->setVal(value);
 
   return sym;
@@ -171,48 +171,48 @@ Symbol* GetSelector(Symbol* obj) {
 
   // Look up the identifier.  If it is not currently defined, define it as
   // the next selector number.
-  if (!(msgSel = syms.lookup(symStr))) {
-    InstallSelector(symStr, NewSelectorNum());
-    msgSel = syms.lookup(symStr);
-    if (showSelectors) Info("%s is being installed as a selector.", symStr);
+  if (!(msgSel = gSyms.lookup(gSymStr))) {
+    InstallSelector(gSymStr, NewSelectorNum());
+    msgSel = gSyms.lookup(gSymStr);
+    if (gShowSelectors) Info("%s is being installed as a selector.", gSymStr);
   }
-  tokSym.SaveSymbol(*msgSel);
+  gTokSym.SaveSymbol(*msgSel);
 
   // The symbol must be either a variable or a selector.
   if (symType != S_SELECT && !IsVar()) {
-    Severe("Selector required: %s", symStr);
+    Severe("Selector required: %s", gSymStr);
     return 0;
   }
 
   // Complain if the symbol is a variable, but a selector of the same name
   //	exists.
   if (IsVar() && symType != S_PROP && symType != S_SELECT &&
-      syms.selectorSymTbl->lookup(symStr)) {
-    Error("%s is both a selector and a variable.", symStr);
+      gSyms.selectorSymTbl->lookup(gSymStr)) {
+    Error("%s is both a selector and a variable.", gSymStr);
     return 0;
   }
 
   // The selector must be a selector for the object 'obj', if that
   // object is known.
-  receiver = 0;
+  gReceiver = 0;
   if (!IsVar() && obj && (obj->type == S_OBJ || obj->type == S_CLASS) &&
       obj->obj()) {
     if (obj->hasVal(OBJ_SELF)) {
-      receiver = curObj;
+      gReceiver = gCurObj;
     } else if (obj->hasVal(OBJ_SUPER)) {
       /* Dont try to find super of RootObj */
-      if (curObj->super >= 0)
-        receiver = classes[curObj->super];
+      if (gCurObj->super >= 0)
+        gReceiver = gClasses[gCurObj->super];
       else {
-        receiver = curObj;
+        gReceiver = gCurObj;
         Severe("RootObj has no super.");
       }
     } else {
-      receiver = obj->obj();
+      gReceiver = obj->obj();
     }
 
-    if (!receiver->findSelectorByNum(tokSym.val())) {
-      Error("Not a selector for %s: %s", obj->name(), tokSym.name());
+    if (!gReceiver->findSelectorByNum(gTokSym.val())) {
+      Error("Not a selector for %s: %s", obj->name(), gTokSym.name());
       return 0;
     }
   }
@@ -227,5 +227,5 @@ static void ClaimSelectorNum(uint16_t n) {
 
   selTbl[n / BITS_PER_ENTRY] |= uint16_t(0x8000 >> (n % BITS_PER_ENTRY));
 
-  if (n > maxSelector) maxSelector = n;
+  if (n > gMaxSelector) gMaxSelector = n;
 }

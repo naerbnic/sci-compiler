@@ -13,9 +13,9 @@
 #include "text.hpp"
 #include "token.hpp"
 
-extern int curLine;
+extern int gCurLine;
 
-static int loopNest;
+static int gLoopNest;
 
 static bool _Expression(PNode*);
 static bool Return(PNode*);
@@ -106,7 +106,7 @@ bool Expression(PNode* theNode, bool required) {
       case S_IDENT:
         // Assume that all unknown identifiers are objects,
         // and fall through to object handling.
-        theSym = syms.installModule(symStr, S_OBJ);
+        theSym = gSyms.installModule(gSymStr, S_OBJ);
         theSym->clearAn();
         theSym->setObj(NULL);
         symType = S_OBJ;
@@ -123,8 +123,8 @@ bool Expression(PNode* theNode, bool required) {
       case S_CLASS:
         pn = theNode->newChild(PN_CLASS);
         if ((uint32_t)symType == OBJ_SUPER) {
-          pn->sym = classes[curObj->super]->sym;
-          pn->val = classes[curObj->super]->num;
+          pn->sym = gClasses[gCurObj->super]->sym;
+          pn->val = gClasses[gCurObj->super]->num;
         } else {
           pn->sym = theSym;
           pn->val = theSym->obj()->num;
@@ -133,7 +133,7 @@ bool Expression(PNode* theNode, bool required) {
         break;
 
       case S_STRING:
-        theNode->newChild(PN_STRING)->val = text.find(symStr);
+        theNode->newChild(PN_STRING)->val = gText.find(gSymStr);
         isExpr = true;
         break;
 
@@ -144,7 +144,7 @@ bool Expression(PNode* theNode, bool required) {
 
       default:
         if (required)
-          Severe("Expression required: %s", symStr);
+          Severe("Expression required: %s", gSymStr);
         else
           UnGetTok();
         isExpr = false;
@@ -182,8 +182,8 @@ static bool _Expression(PNode* theNode) {
   Symbol* theSym;
   bool oldSelectVar;
 
-  oldSelectVar = selectorIsVar;
-  selectorIsVar = true;
+  oldSelectVar = gSelectorIsVar;
+  gSelectorIsVar = true;
 
   theSym = LookupTok();
 
@@ -295,21 +295,21 @@ static bool _Expression(PNode* theNode) {
           case K_PROC:
             // Oops!  Got out of synch!
             Error("Mismatched parentheses!");
-            longjmp(recoverBuf, 1);
+            longjmp(gRecoverBuf, 1);
 
           default:
-            Severe("Expected an expression here: %s", symStr);
+            Severe("Expected an expression here: %s", gSymStr);
             retVal = true;
         }
         break;
 
       default:
-        Severe("Expected an expression here: %s", symStr);
+        Severe("Expected an expression here: %s", gSymStr);
         retVal = true;
     }
   }
 
-  selectorIsVar = oldSelectVar;
+  gSelectorIsVar = oldSelectVar;
   return retVal;
 }
 
@@ -371,15 +371,15 @@ static bool Send(PNode* theNode, Symbol* theSym) {
   // the destination of the send.
   if (symType == S_CLASS && symHasVal(OBJ_SUPER)) {
     dn = pn->newChild(PN_SUPER);
-    dn->sym = classes[curObj->super]->sym;
-    dn->val = classes[curObj->super]->num;
+    dn->sym = gClasses[gCurObj->super]->sym;
+    dn->val = gClasses[gCurObj->super]->num;
     objName = "super";
 
   } else {
     if (theSym && theSym->type == S_IDENT) {
       // If the symbol has not been previously defined, define it as
       // an undefined object in the global symbol table.
-      theSym = syms.installModule(symStr, S_OBJ);
+      theSym = gSyms.installModule(gSymStr, S_OBJ);
       theSym->clearAn();
       theSym->setObj(nullptr);
     }
@@ -409,8 +409,8 @@ static bool Message(PNode* theNode, Symbol* theSym) {
   PNode* node;
 
   // A variable can be a selector
-  oldSelectVar = selectorIsVar;
-  selectorIsVar = true;
+  oldSelectVar = gSelectorIsVar;
+  gSelectorIsVar = true;
 
   // Get the message selector.  If there is none (we hit a closing paren),
   // we're at the end of a series of sends -- return false.
@@ -432,7 +432,7 @@ static bool Message(PNode* theNode, Symbol* theSym) {
     }
 
     //	save off the receiver of these messages
-    Object* curReceiver = receiver;
+    Object* curReceiver = gReceiver;
 
     // Collect the arguments of the message.
     int nArgs;
@@ -451,7 +451,7 @@ static bool Message(PNode* theNode, Symbol* theSym) {
     retVal = true;
   }
 
-  selectorIsVar = oldSelectVar;
+  gSelectorIsVar = oldSelectVar;
 
   return retVal;
 }
@@ -469,9 +469,9 @@ static bool While(PNode* theNode) {
   // Increment the loop nesting count, then get the statements to be
   // executed in the loop.  Set the loop nesting count back down when
   // we're done.
-  ++loopNest;
+  ++gLoopNest;
   ExprList(pn.get(), OPTIONAL);
-  --loopNest;
+  --gLoopNest;
 
   theNode->addChild(std::move(pn));
   return true;
@@ -487,9 +487,9 @@ static bool Repeat(PNode* theNode) {
   // Increment the loop nesting count, then get the statements to be
   // executed in the loop.  Set the loop nesting count back down when
   // we're done.
-  ++loopNest;
+  ++gLoopNest;
   ExprList(pn, OPTIONAL);
-  --loopNest;
+  --gLoopNest;
 
   return true;
 }
@@ -527,9 +527,9 @@ static bool For(PNode* theNode) {
   // Increment the loop nesting count, then get the statements to be
   // executed in the loop.  Set the loop nesting count back down when
   // we're done.
-  ++loopNest;
+  ++gLoopNest;
   ExprList(pn.get(), OPTIONAL);
-  --loopNest;
+  --gLoopNest;
 
   theNode->addChild(std::move(pn));
   return true;
@@ -550,7 +550,7 @@ static bool Break(PNode* theNode) {
     pn->val = 1;
   }
 
-  if (pn->val > loopNest)
+  if (pn->val > gLoopNest)
     Warning("Break level greater than loop nesting count.");
 
   return true;
@@ -576,7 +576,7 @@ static bool BreakIf(PNode* theNode) {
     pn->val = 1;
   }
 
-  if (pn->val > loopNest)
+  if (pn->val > gLoopNest)
     Warning("Break level greater than loop nesting count.");
 
   theNode->addChild(std::move(pn));
@@ -598,7 +598,7 @@ static bool Continue(PNode* theNode) {
     pn->val = 1;
   }
 
-  if (pn->val > loopNest)
+  if (pn->val > gLoopNest)
     Warning("Continue level greater than loop nesting count.");
 
   return true;
@@ -624,7 +624,7 @@ static bool ContIf(PNode* theNode) {
     pn->val = 1;
   }
 
-  if (pn->val > loopNest)
+  if (pn->val > gLoopNest)
     Warning("Continue level greater than loop nesting count.");
 
   theNode->addChild(std::move(pn));
@@ -779,7 +779,7 @@ static bool Variable(PNode* theNode) {
   if (symType == S_OPEN_BRACKET) return Array(theNode);
 
   if (!IsVar()) {
-    Severe("Variable name expected: %s.", symStr);
+    Severe("Variable name expected: %s.", gSymStr);
     return false;
   }
   pn = theNode->newChild(PNType(symType));
@@ -795,7 +795,7 @@ static bool Array(PNode* theNode) {
   Symbol* lookupSym = GetSymbol();
   if (lookupSym->type != S_GLOBAL && lookupSym->type != S_LOCAL &&
       lookupSym->type != S_PARM && lookupSym->type != S_TMP) {
-    Severe("Array name expected: %s.", symStr);
+    Severe("Array name expected: %s.", gSymStr);
     return false;
   }
 
@@ -811,7 +811,7 @@ static bool Array(PNode* theNode) {
 
   GetToken();
   if (symType != (sym_t)']') {
-    Error("Expected closing ']': %s.", symStr);
+    Error("Expected closing ']': %s.", gSymStr);
     return false;
   }
 
@@ -822,7 +822,7 @@ static bool Array(PNode* theNode) {
 static bool Rest(PNode* theNode) {
   LookupTok();
   if (!IsVar() || symType != S_PARM) {
-    Severe("Variable name expected: %s.", symStr);
+    Severe("Variable name expected: %s.", gSymStr);
     return false;
   }
   theNode->newChild(PN_REST)->val = symVal;

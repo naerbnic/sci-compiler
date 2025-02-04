@@ -13,14 +13,14 @@
 
 #define MAXCLASSES 512  // Maximum number of classes
 
-Class* classes[MAXCLASSES];
-int maxClassNum = -1;
+Class* gClasses[MAXCLASSES];
+int gMaxClassNum = -1;
 
 static void DefClassItems(Class* theClass, int what);
 
 void InstallObjects() {
   // Install 'RootObj' as the root of the class system.
-  Symbol* sym = syms.installClass("RootObj");
+  Symbol* sym = gSyms.installClass("RootObj");
   auto rootClassOwned = std::make_unique<Class>();
   auto* rootClass = rootClassOwned.get();
   sym->setObj(std::move(rootClassOwned));
@@ -31,40 +31,40 @@ void InstallObjects() {
   // Install the root class' selectors in the symbol table and add them
   // to the root class.
   InstallSelector("-objID-", SEL_OBJID);
-  if ((sym = syms.lookup("-objID-")))
+  if ((sym = gSyms.lookup("-objID-")))
     rootClass->addSelector(sym, T_PROP)->val = 0x1234;
 
   InstallSelector("-size-", SEL_SIZE);
-  if ((sym = syms.lookup("-size-"))) rootClass->addSelector(sym, T_PROP);
+  if ((sym = gSyms.lookup("-size-"))) rootClass->addSelector(sym, T_PROP);
 
   InstallSelector("-propDict-", SEL_PROPDICT);
-  if ((sym = syms.lookup("-propDict-"))) {
+  if ((sym = gSyms.lookup("-propDict-"))) {
     rootClass->addSelector(sym, T_PROPDICT);
   }
 
   InstallSelector("-methDict-", SEL_METHDICT);
-  if ((sym = syms.lookup("-methDict-")))
+  if ((sym = gSyms.lookup("-methDict-")))
     rootClass->addSelector(sym, T_METHDICT);
 
   InstallSelector("-classScript-", SEL_CLASS_SCRIPT);
-  if ((sym = syms.lookup("-classScript-")))
+  if ((sym = gSyms.lookup("-classScript-")))
     rootClass->addSelector(sym, T_PROP)->val = 0;
 
   InstallSelector("-script-", SEL_SCRIPT);
-  if ((sym = syms.lookup("-script-"))) rootClass->addSelector(sym, T_PROP);
+  if ((sym = gSyms.lookup("-script-"))) rootClass->addSelector(sym, T_PROP);
 
   InstallSelector("-super-", SEL_SUPER);
-  if ((sym = syms.lookup("-super-")))
+  if ((sym = gSyms.lookup("-super-")))
     rootClass->addSelector(sym, T_PROP)->val = -1;
 
   InstallSelector("-info-", SEL_INFO);
-  if ((sym = syms.lookup("-info-")))
+  if ((sym = gSyms.lookup("-info-")))
     rootClass->addSelector(sym, T_PROP)->val = CLASSBIT;
 
   // Install 'self' and 'super' as objects.
-  sym = syms.installGlobal("self", S_OBJ);
+  sym = gSyms.installGlobal("self", S_OBJ);
   sym->setVal((int)OBJ_SELF);
-  sym = syms.installGlobal("super", S_CLASS);
+  sym = gSyms.installGlobal("super", S_CLASS);
   sym->setVal((int)OBJ_SUPER);
 }
 
@@ -78,14 +78,14 @@ void DefineClass() {
   // later.
   Symbol* sym = LookupTok();
   if (!sym)
-    sym = syms.installClass(symStr);
+    sym = gSyms.installClass(gSymStr);
 
   else if (symType == S_IDENT || symType == S_OBJ) {
-    syms.del(symStr);
-    sym = syms.installClass(symStr);
+    gSyms.del(gSymStr);
+    sym = gSyms.installClass(gSymStr);
 
   } else {
-    Severe("Redefinition of %s.", symStr);
+    Severe("Redefinition of %s.", gSymStr);
     return;
   }
 
@@ -101,7 +101,7 @@ void DefineClass() {
   int superNum = symVal;
   GetKeyword(K_FILE);
   GetString("File name");
-  std::string_view superFile = symStr;
+  std::string_view superFile = gSymStr;
 
   Class* super = FindClass(superNum);
   if (!super) Fatal("Can't find superclass for %s\n", sym->name());
@@ -113,11 +113,11 @@ void DefineClass() {
   theClass->num = classNum;
   theClass->sym = sym;
   theClass->file = superFile;
-  if (classNum > maxClassNum) maxClassNum = classNum;
-  if (classNum >= 0 && classes[classNum] == 0)
-    classes[classNum] = theClass;
+  if (classNum > gMaxClassNum) gMaxClassNum = classNum;
+  if (classNum >= 0 && gClasses[classNum] == 0)
+    gClasses[classNum] = theClass;
   else {
-    Severe("%s is already class #%d.", classes[classNum]->sym->name(),
+    Severe("%s is already class #%d.", gClasses[classNum]->sym->name(),
            classNum);
     return;
   }
@@ -135,7 +135,7 @@ void DefineClass() {
         break;
 
       default:
-        Severe("Only properties or methods allowed in 'class': %s", symStr);
+        Severe("Only properties or methods allowed in 'class': %s", gSymStr);
     }
     CloseBlock();
   }
@@ -152,7 +152,7 @@ void DefClassItems(Class* theClass, int what) {
   for (Symbol* sym = LookupTok(); !CloseP(symType); sym = LookupTok()) {
     // Make sure the symbol has been defined as a selector.
     if (!sym || symType != S_SELECT) {
-      Error("Not a selector: %s", symStr);
+      Error("Not a selector: %s", gSymStr);
       if (PropTag(what)) {
         // Eat the property initialization value.
         GetToken();
@@ -165,7 +165,7 @@ void DefClassItems(Class* theClass, int what) {
     Selector* tn = theClass->findSelectorByNum(sym->val());
     if (tn && PropTag(what) != IsProperty(tn)) {
       Error("Already defined as %s: %s", IsProperty(tn) ? "property" : "method",
-            symStr);
+            gSymStr);
       if (PropTag(what)) {
         GetToken();
         if (!IsNumber()) UnGetTok();
@@ -203,9 +203,9 @@ int GetClassNumber(Class* theClass) {
   // Return the first free class number.
 
   for (int i = 0; i < MAXCLASSES; ++i)
-    if (classes[i] == NULL) {
-      classes[i] = theClass;
-      if (i > maxClassNum) maxClassNum = i;
+    if (gClasses[i] == NULL) {
+      gClasses[i] = theClass;
+      if (i > gMaxClassNum) gMaxClassNum = i;
       return i;
     }
 
@@ -216,7 +216,7 @@ int GetClassNumber(Class* theClass) {
 }
 
 Class* FindClass(int n) {
-  for (auto* sp : syms.classSymTbl->symbols())
+  for (auto* sp : gSyms.classSymTbl->symbols())
     if (sp->obj() && sp->obj()->num == n) return (Class*)sp->obj();
 
   return 0;
@@ -230,7 +230,7 @@ Class* NextClass(int n) {
 
   cp = 0;
   m = 0x7fff;
-  for (auto* sp : syms.classSymTbl->symbols())
+  for (auto* sp : gSyms.classSymTbl->symbols())
     if (sp->obj()->num > n && sp->obj()->num < m) {
       cp = sp->obj();
       m = cp->num;

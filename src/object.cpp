@@ -16,10 +16,10 @@
 #include "token.hpp"
 #include "update.hpp"
 
-Object* curObj;
-Object* receiver;
-Symbol* nameSymbol;
-bool noAutoName;
+Object* gCurObj;
+Object* gReceiver;
+Symbol* gNameSymbol;
+bool gNoAutoName;
 
 static void Declaration(Object*, int);
 static void InstanceBody(Object*);
@@ -41,7 +41,7 @@ void DoClass() {
   Class* theClass;
 
   // Since we're defining a class, we'll need to rewrite the classdef file.
-  classAdded = true;
+  gClassAdded = true;
 
   int classNum = OBJECTNUM;
   int superNum = OBJECTNUM;
@@ -49,10 +49,10 @@ void DoClass() {
   Symbol* sym = LookupTok();
 
   if (!sym)
-    sym = syms.installClass(symStr);
+    sym = gSyms.installClass(gSymStr);
 
   else if (symType != S_CLASS && symType != S_OBJ) {
-    Severe("Redefinition of %s.", symStr);
+    Severe("Redefinition of %s.", gSymStr);
     return;
 
   } else {
@@ -71,9 +71,9 @@ void DoClass() {
 
     //	make sure the symbol is in the class symbol table
     if (sym->type != S_CLASS) {
-      auto symOwned = syms.remove(sym->name());
+      auto symOwned = gSyms.remove(sym->name());
       symOwned->type = S_CLASS;
-      syms.classSymTbl->add(std::move(symOwned));
+      gSyms.classSymTbl->add(std::move(symOwned));
     }
   }
 
@@ -83,7 +83,7 @@ void DoClass() {
   // Get the super-class and create this class as an instance of it.
   Symbol* superSym = LookupTok();
   if (!superSym || symType != S_CLASS) {
-    Severe("%s is not a class.", symStr);
+    Severe("%s is not a class.", gSymStr);
     return;
   }
 
@@ -101,15 +101,15 @@ void DoClass() {
         classNum == OBJECTNUM ? GetClassNumber(theClass) : classNum;
     theClass->sym = sym;
     sym->setObj(std::move(theClassOwned));
-    classes[classNum] = theClass;
+    gClasses[classNum] = theClass;
   }
 
   // Set the super-class number for this class.
   Selector* sn = theClass->findSelector("-super-");
   if (sn) sn->val = super->num;
 
-  theClass->script = script;
-  theClass->file = theFile->fileName.string();
+  theClass->script = gScript;
+  theClass->file = gTheFile->fileName.string();
 
   // Get any properties, methods, or procedures for this class.
   InstanceBody(theClass);
@@ -122,12 +122,12 @@ void Instance() {
   // Get the symbol for the object.
   Symbol* objSym = LookupTok();
   if (!objSym)
-    objSym = syms.installLocal(symStr, S_OBJ);
+    objSym = gSyms.installLocal(gSymStr, S_OBJ);
   else if (symType == S_IDENT || symType == S_OBJ) {
     objSym->type = symType = S_OBJ;
     if (objSym->obj()) Error("Duplicate instance name: %s", objSym->name());
   } else {
-    Severe("Redefinition of %s.", symStr);
+    Severe("Redefinition of %s.", gSymStr);
     return;
   }
 
@@ -137,7 +137,7 @@ void Instance() {
   // Get the class of which this object is an instance.
   Symbol* sym = LookupTok();
   if (!sym || sym->type != S_CLASS) {
-    Severe("%s is not a class.", symStr);
+    Severe("%s is not a class.", gSymStr);
     return;
   }
   Class* super = (Class*)sym->obj();
@@ -160,20 +160,20 @@ void Instance() {
 static void InstanceBody(Object* obj) {
   // instance-body ::= (property-list | method-def | procedure)*
 
-  SymTbl* symTbl = syms.add(ST_MINI);
+  SymTbl* symTbl = gSyms.add(ST_MINI);
 
   jmp_buf savedBuf;
-  memcpy(savedBuf, recoverBuf, sizeof(jmp_buf));
+  memcpy(savedBuf, gRecoverBuf, sizeof(jmp_buf));
 
   // Get a pointer to the 'name' selector for this object and zero
   // out the property.
-  Selector* nameSelector = obj->findSelectorByNum(nameSymbol->val());
+  Selector* nameSelector = obj->findSelectorByNum(gNameSymbol->val());
   if (nameSelector) nameSelector->val = -1;
 
   // Get any property or method definitions.
-  curObj = obj;
+  gCurObj = obj;
   for (GetToken(); OpenP(symType); GetToken()) {
-    setjmp(recoverBuf);
+    setjmp(gRecoverBuf);
     GetToken();
     switch (Keyword()) {
       case K_PROPLIST:
@@ -204,11 +204,11 @@ static void InstanceBody(Object* obj) {
       case K_INSTANCE:
         // Oops!  Got out of synch!
         Error("Mismatched parentheses!");
-        memcpy(recoverBuf, savedBuf, sizeof(jmp_buf));
-        longjmp(recoverBuf, 1);
+        memcpy(gRecoverBuf, savedBuf, sizeof(jmp_buf));
+        longjmp(gRecoverBuf, 1);
 
       default:
-        Severe("Only property and method definitions allowed: %s.", symStr);
+        Severe("Only property and method definitions allowed: %s.", gSymStr);
         break;
     }
 
@@ -217,13 +217,13 @@ static void InstanceBody(Object* obj) {
 
   UnGetTok();
 
-  memcpy(recoverBuf, savedBuf, sizeof(jmp_buf));
+  memcpy(gRecoverBuf, savedBuf, sizeof(jmp_buf));
 
   // If 'name' has not been given a value, give it the
   // name of the symbol.
-  if (!noAutoName && nameSelector && nameSelector->val == -1) {
+  if (!gNoAutoName && nameSelector && nameSelector->val == -1) {
     nameSelector->tag = T_TEXT;
-    nameSelector->val = text.find(obj->sym->name());
+    nameSelector->val = gText.find(obj->sym->name());
   }
 
   // The CLASSBIT of the '-info-' property is set for a class.  If this
@@ -243,9 +243,9 @@ static void InstanceBody(Object* obj) {
 
   // Compile code for the object.
   MakeObject(obj);
-  curObj = 0;
+  gCurObj = 0;
 
-  syms.deactivate(symTbl);
+  gSyms.deactivate(symTbl);
 }
 
 static void Declaration(Object* obj, int type) {
@@ -257,12 +257,12 @@ static void Declaration(Object* obj, int type) {
       continue;
     }
 
-    Symbol* sym = syms.lookup(symStr);
+    Symbol* sym = gSyms.lookup(gSymStr);
     if (!sym && obj->num != OBJECTNUM) {
       // If the symbol is not currently defined, define it as
       // the next selector number.
-      InstallSelector(symStr, NewSelectorNum());
-      sym = syms.lookup(symStr);
+      InstallSelector(gSymStr, NewSelectorNum());
+      sym = gSyms.lookup(gSymStr);
     }
 
     // If this selector is not in the current class, add it.
@@ -281,7 +281,7 @@ static void Declaration(Object* obj, int type) {
 
     if (sym->type != S_SELECT || (type == T_PROP && !IsProperty(sn)) ||
         (type == T_METHOD && IsProperty(sn))) {
-      Error("Not a %s: %s.", type == T_PROP ? "property" : "method", symStr);
+      Error("Not a %s: %s.", type == T_PROP ? "property" : "method", gSymStr);
       GetToken();
       if (IsNumber()) UnGetTok();
       continue;
@@ -298,7 +298,7 @@ static void Declaration(Object* obj, int type) {
           sn->tag = T_TEXT;
           break;
         default:
-          Fatal("Invalid property type: %s, %d", symStr, type);
+          Fatal("Invalid property type: %s, %d", gSymStr, type);
           break;
       }
     }
@@ -310,7 +310,7 @@ static void Declaration(Object* obj, int type) {
 void MethodDef(Object* obj) {
   // _method-def ::= 'method' call-def expression*
 
-  SymTbl* symTbl = syms.add(ST_MINI);
+  SymTbl* symTbl = gSyms.add(ST_MINI);
   {
     auto node = CallDef(S_SELECT);
     if (node) {
@@ -324,7 +324,7 @@ void MethodDef(Object* obj) {
       else {
         // Compile the code for this method.
         ExprList(node.get(), OPTIONAL);
-        CompileProc(sc->hunkList->getList(), node.get());
+        CompileProc(gSc->hunkList->getList(), node.get());
 
         // Save the pointer to the method code.
         sn->tag = T_LOCAL;
@@ -332,5 +332,5 @@ void MethodDef(Object* obj) {
       }
     }
   }
-  syms.deactivate(symTbl);
+  gSyms.deactivate(symTbl);
 }

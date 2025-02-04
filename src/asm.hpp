@@ -15,8 +15,8 @@ void ShowOptimize();
 struct ANTable;
 struct ANWord;
 
-extern int lastLineNum;
-extern ANTable* dispTbl;
-extern ANWord* numDispTblEntries;
+extern int gLastLineNum;
+extern ANTable* gDispTbl;
+extern ANWord* gNumDispTblEntries;
 
 #endif

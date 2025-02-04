@@ -97,7 +97,7 @@ void InstallBuiltIns() {
   // Install the builtin symbol table.
 
   for (BuiltIn const& builtIn : builtIns) {
-    Symbol* sp = syms.installGlobal(builtIn.name, builtIn.type);
+    Symbol* sp = gSyms.installGlobal(builtIn.name, builtIn.type);
     sp->setVal(builtIn.val);
   }
 }

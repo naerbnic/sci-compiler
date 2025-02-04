@@ -29,8 +29,8 @@ void Warning(absl::FormatSpec<Args...> const&, Args const&... args);
 template <class... Args>
 [[noreturn]] void Panic(absl::FormatSpec<Args...> const&, Args const&... args);
 
-extern int errors;
-extern int warnings;
+extern int gNumErrors;
+extern int gNumWarnings;
 
 // Implementation Below
 

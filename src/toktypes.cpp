@@ -9,7 +9,7 @@
 #include "symtbl.hpp"
 #include "token.hpp"
 
-int selectorIsVar;
+int gSelectorIsVar;
 
 static Symbol* Immediate();
 static bool GetNumberOrStringToken(std::string_view errStr, bool stringOK);
@@ -25,23 +25,23 @@ Symbol* LookupTok() {
 
   if (symType == (sym_t)'#') return Immediate();
 
-  if (symType == S_IDENT && (theSym = syms.lookup(symStr))) {
-    tokSym.SaveSymbol(*theSym);
-    tokSym.clearName();
+  if (symType == S_IDENT && (theSym = gSyms.lookup(gSymStr))) {
+    gTokSym.SaveSymbol(*theSym);
+    gTokSym.clearName();
   } else
     theSym = 0;
 
   if (symType == S_SELECT) {
-    if (curObj && !curObj->selectors().empty()) {
+    if (gCurObj && !gCurObj->selectors().empty()) {
       // If the symbol is a property and we're in a method definition,
       //	access the symbol as a local variable.
 
       // A selector list is in effect -- check that the selector
       //	reference is legal (i.e. it is a property in the current
       //	selector list).
-      auto* sn = curObj->findSelectorByNum(theSym->val());
+      auto* sn = gCurObj->findSelectorByNum(theSym->val());
       if (!sn) {
-        if (!inParmList) {
+        if (!gInParmList) {
           Error("Not a selector for current class/object: %s", theSym->name());
           theSym = 0;
         }
@@ -60,8 +60,8 @@ Symbol* GetSymbol() {
   // Get a token that is in the symbol table.
   Symbol* theSym;
   GetToken();
-  if (!(theSym = syms.lookup(symStr))) {
-    Severe("%s not defined.", symStr);
+  if (!(theSym = gSyms.lookup(gSymStr))) {
+    Severe("%s not defined.", gSymStr);
     return nullptr;
   }
 
@@ -83,7 +83,7 @@ bool GetDefineSymbol() {
     Error("Defined symbol expected");
     return false;
   }
-  Symbol* sym = syms.lookup(symStr);
+  Symbol* sym = gSyms.lookup(gSymStr);
   if (!sym) return false;
   if (sym->type != S_DEFINE) {
     Error("Define expected");
@@ -94,7 +94,7 @@ bool GetDefineSymbol() {
 
 bool IsIdent() {
   if (symType != S_IDENT) {
-    Severe("Identifier required: %s", symStr);
+    Severe("Identifier required: %s", gSymStr);
     return false;
   }
 
@@ -104,7 +104,7 @@ bool IsIdent() {
 bool IsUndefinedIdent() {
   if (!IsIdent()) return false;
 
-  if (syms.lookup(symStr)) Warning("Redefinition of %s.", symStr);
+  if (gSyms.lookup(gSymStr)) Warning("Redefinition of %s.", gSymStr);
 
   return true;
 }
@@ -156,7 +156,7 @@ bool GetString(std::string_view errStr) {
 
   GetToken();
   if (symType != S_STRING) {
-    Severe("%s required: %s", errStr, symStr);
+    Severe("%s required: %s", errStr, gSymStr);
     return false;
   }
 
@@ -166,7 +166,7 @@ bool GetString(std::string_view errStr) {
 keyword_t Keyword() {
   Symbol* theSym;
 
-  if (!(theSym = syms.lookup(symStr)) || theSym->type != S_KEYWORD)
+  if (!(theSym = gSyms.lookup(gSymStr)) || theSym->type != S_KEYWORD)
     return K_UNDEFINED;
   else {
     symType = S_KEYWORD;
@@ -217,8 +217,8 @@ bool IsVar() {
       return true;
 
     case S_SELECT:
-      return curObj && selectorIsVar &&
-             (sn = curObj->findSelectorByNum(tokSym.val())) &&
+      return gCurObj && gSelectorIsVar &&
+             (sn = gCurObj->findSelectorByNum(gTokSym.val())) &&
              sn->tag == T_PROP;
 
     default:
@@ -245,12 +245,12 @@ static Symbol* Immediate() {
 
   GetToken();
   if (symType == S_IDENT) {
-    if (!(theSym = syms.lookup(symStr)) || theSym->type != S_SELECT) {
-      Error("Selector required: %s", symStr);
+    if (!(theSym = gSyms.lookup(gSymStr)) || theSym->type != S_SELECT) {
+      Error("Selector required: %s", gSymStr);
       return 0;
     }
-    tokSym.SaveSymbol(*theSym);
-    tokSym.type = S_NUM;
+    gTokSym.SaveSymbol(*theSym);
+    gTokSym.type = S_NUM;
   }
   return theSym;
 }

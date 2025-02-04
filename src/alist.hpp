@@ -197,7 +197,7 @@ struct CodeList : FixupList {
   void optimize();
 };
 
-extern bool noOptimize;
-extern bool shrink;
+extern bool gNoOptimize;
+extern bool gShrink;
 
 #endif

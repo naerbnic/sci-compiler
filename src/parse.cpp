@@ -15,29 +15,29 @@
 #include "symtbl.hpp"
 #include "token.hpp"
 
-jmp_buf recoverBuf;
+jmp_buf gRecoverBuf;
 
 PNode::PNode(pn_t t)
     : sym(0),
       val(0),
       type(t),
-      lineNum(curSourceFile ? curSourceFile->lineNum : 0) {}
+      lineNum(gCurSourceFile ? gCurSourceFile->lineNum : 0) {}
 
 bool Parse() {
   InitAsm();
 
-  syms.clearAsmPtrs();
+  gSyms.clearAsmPtrs();
 
   while (NewToken()) {
     // We require an opening parenthesis at this level.
     // Keep reading until we get one.
     if (!OpenP(symType)) {
-      Error("Opening parenthesis expected: %s", symStr);
+      Error("Opening parenthesis expected: %s", gSymStr);
       while (!OpenP(symType) && symType != S_END) NewToken();
       if (symType == S_END) break;
     }
 
-    setjmp(recoverBuf);
+    setjmp(gRecoverBuf);
 
     // The next token must be a keyword.  Dispatch to the appropriate
     // routines for the keyword.
@@ -46,10 +46,10 @@ bool Parse() {
     switch (Keyword()) {
       case K_SCRIPTNUM:
         if (GetNumber("Script #")) {
-          if (script != -1)
-            Severe("Script # already defined to be %d.", script);
+          if (gScript != -1)
+            Severe("Script # already defined to be %d.", gScript);
           else
-            script = symVal;
+            gScript = symVal;
         }
         break;
 
@@ -106,27 +106,27 @@ bool Parse() {
         break;
 
       case K_UNDEFINED:
-        Severe("Keyword required: %s", symStr);
+        Severe("Keyword required: %s", gSymStr);
         break;
 
       default:
-        Severe("Not a top-level keyword: %s.", symStr);
+        Severe("Not a top-level keyword: %s.", gSymStr);
     }
 
     CloseBlock();
   }
 
-  if (nestedCondCompile) Error("#if without #endif");
+  if (gNestedCondCompile) Error("#if without #endif");
 
-  return !errors;
+  return !gNumErrors;
 }
 
 void Include() {
   GetToken();
   if (symType != S_IDENT && symType != S_STRING)
-    Severe("Need a filename: %s", symStr);
+    Severe("Need a filename: %s", gSymStr);
   else {
-    OpenFileAsInput(symStr, true);
+    OpenFileAsInput(gSymStr, true);
   }
 }
 
@@ -140,7 +140,7 @@ bool CloseBlock() {
   if (symType == CLOSE_P)
     return true;
   else {
-    Severe("Expected closing parenthesis: %s", symStr);
+    Severe("Expected closing parenthesis: %s", gSymStr);
     return false;
   }
 }

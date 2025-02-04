@@ -11,8 +11,8 @@
 #include "error.hpp"
 #include "platform.hpp"
 
-bool abortIfLocked;
-bool dontLock;
+bool gAbortIfLocked;
+bool gDontLock;
 
 static int haveLock;
 static char lockFile[] = "$$$sc.lck";
@@ -26,11 +26,11 @@ void Lock() {
   time_t now;
   time_t then;
 
-  if (dontLock) return;
+  if (gDontLock) return;
 
   // Create the semaphore file.  If we can't do so, loop until we can.
   if (!fileLock->LockFile()) {
-    if (abortIfLocked) Panic("Access to database denied");
+    if (gAbortIfLocked) Panic("Access to database denied");
     fprintf(stderr, "Waiting for access to class database");
     time(&then);
     while (!fileLock->LockFile()) {

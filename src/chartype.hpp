@@ -19,15 +19,15 @@
 #define C_TERM 0x0040   // terminates an identifier
 #define C_INCL 0x0080   // terminates ident, but included
 
-#define IsSep(c) (cType[static_cast<uint8_t>(c)] & C_SEP)
-#define IsTok(c) (cType[static_cast<uint8_t>(c)] & C_TOK)
-#define IsDigit(c) (cType[static_cast<uint8_t>(c)] & C_DIGIT)
-#define IsBin(c) (cType[static_cast<uint8_t>(c)] & C_BIN)
-#define IsDec(c) (cType[static_cast<uint8_t>(c)] & C_DEC)
-#define IsHex(c) (cType[static_cast<uint8_t>(c)] & C_HEX)
-#define IsTerm(c) (cType[static_cast<uint8_t>(c)] & C_TERM)
-#define IsIncl(c) (cType[static_cast<uint8_t>(c)] & C_INCL)
+#define IsSep(c) (gCType[static_cast<uint8_t>(c)] & C_SEP)
+#define IsTok(c) (gCType[static_cast<uint8_t>(c)] & C_TOK)
+#define IsDigit(c) (gCType[static_cast<uint8_t>(c)] & C_DIGIT)
+#define IsBin(c) (gCType[static_cast<uint8_t>(c)] & C_BIN)
+#define IsDec(c) (gCType[static_cast<uint8_t>(c)] & C_DEC)
+#define IsHex(c) (gCType[static_cast<uint8_t>(c)] & C_HEX)
+#define IsTerm(c) (gCType[static_cast<uint8_t>(c)] & C_TERM)
+#define IsIncl(c) (gCType[static_cast<uint8_t>(c)] & C_INCL)
 
-extern uint8_t cType[];
+extern uint8_t gCType[];
 
 #endif

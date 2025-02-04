@@ -20,10 +20,10 @@
 #include "token.hpp"
 #include "vocab.hpp"
 
-bool classAdded;
-bool selectorAdded;
-std::filesystem::path outDir;
-bool writeOffsets;
+bool gClassAdded;
+bool gSelectorAdded;
+std::filesystem::path gOutDir;
+bool gWriteOffsets;
 
 static uint8_t resHdr[] = {MemResVocab, 0};
 
@@ -34,17 +34,17 @@ static void WriteSelectorVocab();
 static void PrintSubClasses(Class* op, int level, FILE* fp);
 
 void UpdateDataBase() {
-  if (selectorAdded) {
+  if (gSelectorAdded) {
     WriteSelector();
     WriteSelectorVocab();
   }
 
-  if (classAdded) {
+  if (gClassAdded) {
     WriteClassDefs();
     WriteClasses();
   }
 
-  selectorAdded = classAdded = false;
+  gSelectorAdded = gClassAdded = false;
 }
 
 void WriteClassTbl() {
@@ -64,12 +64,12 @@ void WriteClassTbl() {
 
   // Allocate storage for the class table.
   std::vector<ClassTblEntry> classTbl;
-  classTbl.resize(maxClassNum + 1);
+  classTbl.resize(gMaxClassNum + 1);
 
   // Now walk through the class symbol table, entering the script
   // number of each class in its proper place in the table.
   int index;
-  for (auto* sym : syms.classSymTbl->symbols()) {
+  for (auto* sym : gSyms.classSymTbl->symbols()) {
     if (sym->obj()->num != -1) {
       classTbl[sym->obj()->num].objID = 0;
       classTbl[sym->obj()->num].scriptNum = SCIUWord(sym->obj()->script);
@@ -78,9 +78,9 @@ void WriteClassTbl() {
 
   // Write the table out.
   std::string name = ResNameMake(MemResVocab, CLASSTBL_VOCAB);
-  OutputFile out((outDir / name).string());
+  OutputFile out((gOutDir / name).string());
   out.Write(resID, 2);
-  for (index = 0; index < maxClassNum + 1; ++index) {
+  for (index = 0; index < gMaxClassNum + 1; ++index) {
     out.WriteWord(classTbl[index].objID);
     out.WriteWord(classTbl[index].scriptNum);
   }
@@ -96,24 +96,24 @@ void WritePropOffsets() {
   Selector* sel;
   Symbol* theSym;
 
-  theFile = OpenFileAsInput("offsets.txt", true);
+  gTheFile = OpenFileAsInput("offsets.txt", true);
 
   std::string name = ResNameMake(MemResVocab, PROPOFS_VOCAB);
-  OutputFile out((outDir / name).string());
+  OutputFile out((gOutDir / name).string());
 
   // Write out the resource header (this will be a vocabulary resource).
   out.Write(resHdr, sizeof resHdr);
 
   while (NewToken()) {
-    theSym = syms.lookup(symStr);
+    theSym = gSyms.lookup(gSymStr);
     if (theSym->type != S_CLASS) {
-      Error("Not a class: %s", symStr);
+      Error("Not a class: %s", gSymStr);
       GetToken();
       continue;
     }
     cp = theSym->obj();
-    if (!LookupTok() || !(sel = cp->findSelectorByNum(tokSym.val()))) {
-      Error("Not a selector for class %s: %s", cp->sym->name(), symStr);
+    if (!LookupTok() || !(sel = cp->findSelectorByNum(gTokSym.val()))) {
+      Error("Not a selector for class %s: %s", cp->sym->name(), gSymStr);
       continue;
     }
 
@@ -130,7 +130,7 @@ static void WriteSelector() {
   fseek(fp, 0L, SEEK_SET);
 
   absl::FPrintF(fp, "(selectors\n");
-  for (auto* sp : syms.selectorSymTbl->symbols())
+  for (auto* sp : gSyms.selectorSymTbl->symbols())
     absl::FPrintF(fp, "\t%-20s %d\n", sp->name(), sp->val());
 
   absl::FPrintF(fp, ")\n");
@@ -189,7 +189,7 @@ static void WriteClasses() {
   if (!(fp = fopen("classes", "w"))) Panic("Can't open 'classes' for output.");
 
   // Print the classes in heirarchical order.
-  PrintSubClasses(classes[0], 0, fp);
+  PrintSubClasses(gClasses[0], 0, fp);
 
   // Close the file.
   if (fclose(fp) == EOF) Panic("Error writing 'classes'");
@@ -213,16 +213,16 @@ static void WriteSelectorVocab() {
   uint32_t tblLen;
 
   std::string resName = ResNameMake(MemResVocab, SELECTOR_VOCAB);
-  std::string fileName = (outDir / resName).string();
+  std::string fileName = (gOutDir / resName).string();
 
   // Compute the size of the table needed to hold offsets to all selectors,
   // allocate the table, and initialize it to point to the byte following
   // the table so that un-implemented selector values will have a string.
-  tblLen = sizeof(SCIUWord) * (maxSelector + 2);
+  tblLen = sizeof(SCIUWord) * (gMaxSelector + 2);
   auto tbl = std::make_unique<SCIUWord[]>(tblLen / sizeof(SCIUWord));
   ofs = tblLen;
-  tbl[0] = SCIUWord(maxSelector);
-  for (int i = 1; i <= maxSelector + 1; ++i) tbl[i] = SCIUWord(ofs);
+  tbl[0] = SCIUWord(gMaxSelector);
+  for (int i = 1; i <= gMaxSelector + 1; ++i) tbl[i] = SCIUWord(ofs);
 
   OutputFile out(fileName);
 
@@ -236,7 +236,7 @@ static void WriteSelectorVocab() {
 
   // Now write out the names of all the other selectors and put their
   // offsets into the table.
-  for (auto* sp : syms.selectorSymTbl->symbols()) {
+  for (auto* sp : gSyms.selectorSymTbl->symbols()) {
     tbl[sp->val() + 1] = SCIUWord(ofs);
     ofs += out.Write(sp->name());
   }

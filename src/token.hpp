@@ -80,19 +80,17 @@ class TokenSlot {
   RefVal ref_val_;
 };
 
-#define symObj tokSym.obj()
-#define symType tokSym.type
-#define symVal tokSym.val()
-#define symHasVal(x) tokSym.hasVal(x)
-#define setSymVal(x) tokSym.setVal(x)
+#define symObj gTokSym.obj()
+#define symType gTokSym.type
+#define symVal gTokSym.val()
+#define symHasVal(x) gTokSym.hasVal(x)
+#define setSymVal(x) gTokSym.setVal(x)
 
 const int MaxTokenLen = 2048;
 
-extern int nestedCondCompile;
-extern int selectorIsVar;
-extern std::string symStr;
-extern TokenSlot tokSym;
-// The last symbol looked up. via GetSymbol()
-extern Symbol* lookupSym;
+extern int gNestedCondCompile;
+extern int gSelectorIsVar;
+extern std::string gSymStr;
+extern TokenSlot gTokSym;
 
 #endif

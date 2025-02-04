@@ -10,8 +10,8 @@
 #include "output.hpp"
 #include "sc.hpp"
 
-bool shrink;
-bool noOptimize;
+bool gShrink;
+bool gNoOptimize;
 
 ///////////////////////////////////////////////////
 // Class ANode
@@ -121,14 +121,14 @@ void FixupList::emit(OutputFile* out) {
 ///////////////////////////////////////////////////
 
 void CodeList::optimize() {
-  if (!noOptimize) {
+  if (!gNoOptimize) {
     for (auto it = list_.iter(); it; ++it)
       while (it->optimize());
   }
 
   // Make a first pass, resolving offsets and converting to byte offsets
   // where possible.
-  shrink = true;
+  gShrink = true;
   setOffset(0);
 
   // Continue resolving and converting to byte offsets until we've shrunk
@@ -141,7 +141,7 @@ void CodeList::optimize() {
 
   // Now stabilize the code and offsets by resolving without allowing
   // conversion to byte offsets.
-  shrink = false;
+  gShrink = false;
   do {
     oldLen = curLen;
     curLen = setOffset(0);

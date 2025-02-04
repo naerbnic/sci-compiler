@@ -7,8 +7,8 @@ void UpdateDataBase();
 void WriteClassTbl();
 void WritePropOffsets();
 
-extern bool classAdded;
-extern bool selectorAdded;
-extern bool writeOffsets;
+extern bool gClassAdded;
+extern bool gSelectorAdded;
+extern bool gWriteOffsets;
 
 #endif

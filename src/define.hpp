@@ -57,8 +57,8 @@ void Extern();
 void InitPublics();
 void Definition();
 
-extern VarList globalVars;
-extern VarList localVars;
-extern std::size_t maxVars;
+extern VarList gGlobalVars;
+extern VarList gLocalVars;
+extern std::size_t gMaxVars;
 
 #endif

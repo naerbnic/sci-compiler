@@ -8,7 +8,7 @@
 #include "listing.hpp"
 #include "object.hpp"
 
-SymTbls syms;
+SymTbls gSyms;
 
 SymTbl::SymTbl(int size, bool keep) : keep(keep) {}
 

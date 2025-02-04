@@ -23,7 +23,7 @@ struct Compiler {
   std::unique_ptr<CodeList> hunkList;
 };
 
-extern std::unique_ptr<Compiler> sc;
+extern std::unique_ptr<Compiler> gSc;
 
 // The target SCI architecture for the scripts.
 enum class SciTargetArch {
@@ -31,10 +31,10 @@ enum class SciTargetArch {
   SCI_2,
 };
 
-extern bool includeDebugInfo;
-extern std::filesystem::path outDir;
-extern int script;
-extern bool verbose;
-extern SciTargetArch targetArch;
+extern bool gIncludeDebugInfo;
+extern std::filesystem::path gOutDir;
+extern int gScript;
+extern bool gVerbose;
+extern SciTargetArch gTargetArch;
 
 #endif

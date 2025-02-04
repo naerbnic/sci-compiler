@@ -21,8 +21,8 @@
 #include "symbol.hpp"
 #include "text.hpp"
 
-ANCodeBlk* codeStart;
-uint32_t textStart;
+ANCodeBlk* gCodeStart;
+uint32_t gTextStart;
 
 #define OPTIMIZE_TRANSFERS
 
@@ -38,7 +38,7 @@ static bool canOptimizeTransfer(size_t a, size_t b) {
 // architecture differences out.
 
 static int NumArgsSize() {
-  switch (targetArch) {
+  switch (gTargetArch) {
     case SciTargetArch::SCI_1_1:
       return 1;
 
@@ -51,7 +51,7 @@ static int NumArgsSize() {
 }
 
 static void ListNumArgs(ListingFile* listFile, std::size_t offset, int n) {
-  switch (targetArch) {
+  switch (gTargetArch) {
     case SciTargetArch::SCI_1_1:
       listFile->ListByte(offset, n);
       break;
@@ -66,7 +66,7 @@ static void ListNumArgs(ListingFile* listFile, std::size_t offset, int n) {
 }
 
 static void WriteNumArgs(OutputFile* out, int n) {
-  switch (targetArch) {
+  switch (gTargetArch) {
     case SciTargetArch::SCI_1_1:
       out->WriteByte(n);
       break;
@@ -120,7 +120,7 @@ void ANDispatch::emit(OutputFile* out) {
   // If the destination of this dispatch entry is in the heap (i.e.
   // an object rather than code), it must be fixed up.
 
-  if (sc->heapList->contains(target())) sc->hunkList->addFixup(*offset);
+  if (gSc->heapList->contains(target())) gSc->hunkList->addFixup(*offset);
 
   out->WriteWord((uint32_t)(target() && sym ? *target()->offset : 0));
 }
@@ -170,14 +170,14 @@ ANObjTable::ANObjTable(std::string nameStr) : ANTable(nameStr) {}
 ANText::ANText(Text* tp) : text(tp) {}
 
 size_t ANText::setOffset(size_t ofs) {
-  if (!textStart) textStart = ofs;
+  if (!gTextStart) gTextStart = ofs;
   return ANode::setOffset(ofs);
 }
 
 size_t ANText::size() { return text->str.size() + 1; }
 
 void ANText::list(ListingFile* listFile) {
-  if (textStart == offset) listFile->Listing("\n\n");
+  if (gTextStart == offset) listFile->Listing("\n\n");
   listFile->ListText(*offset, text->str);
 }
 
@@ -202,7 +202,7 @@ void ANObject::list(ListingFile* listFile) {
 ANCodeBlk::ANCodeBlk(Symbol* s) : sym(s) {
   ANLabel::reset();
 
-  if (!codeStart) codeStart = this;
+  if (!gCodeStart) gCodeStart = this;
 }
 
 size_t ANCodeBlk::size() { return code.size(); }
@@ -231,7 +231,7 @@ void ANProcCode::list(ListingFile* listFile) {
 // Class ANMethCode
 ///////////////////////////////////////////////////
 
-ANMethCode::ANMethCode(Symbol* s) : ANCodeBlk(s), objSym(curObj->sym) {}
+ANMethCode::ANMethCode(Symbol* s) : ANCodeBlk(s), objSym(gCurObj->sym) {}
 
 void ANMethCode::list(ListingFile* listFile) {
   listFile->Listing("\n\nMethod: (%s %s)\n", objSym->name(), sym->name());
@@ -260,13 +260,13 @@ uint32_t ANIntProp::value() { return val; }
 ANTextProp::ANTextProp(Symbol* sp, int v) : ANProp(sp, v) {}
 
 void ANTextProp::emit(OutputFile* out) {
-  sc->heapList->addFixup(*offset);
+  gSc->heapList->addFixup(*offset);
   ANProp::emit(out);
 }
 
 std::string_view ANTextProp::desc() { return "text"; }
 
-uint32_t ANTextProp::value() { return val + textStart; }
+uint32_t ANTextProp::value() { return val + gTextStart; }
 
 std::string_view ANOfsProp::desc() { return "ofs"; }
 
@@ -442,7 +442,7 @@ ANCall::ANCall(Symbol* s) {
 size_t ANCall::size() {
   int arg_size = NumArgsSize();
 
-  if (!shrink)
+  if (!gShrink)
     return (op & OP_BYTE ? 2 : 3) + arg_size;
   else if (!sym->loc() || !target()->offset.has_value())
     return 3 + arg_size;
@@ -488,7 +488,7 @@ void ANCall::emit(OutputFile* out) {
 ANBranch::ANBranch(uint32_t o) { op = o; }
 
 size_t ANBranch::size() {
-  if (!shrink)
+  if (!gShrink)
     return op & OP_BYTE ? 2 : 3;
   else if (!target() || !target()->offset.has_value())
     return 3;
@@ -557,13 +557,13 @@ size_t ANOpOfs::size() { return WORDSIZE; }
 
 void ANOpOfs::list(ListingFile* listFile) {
   listFile->ListOp(*offset, op);
-  listFile->ListArg("$%-4x", textStart + ofs);
+  listFile->ListArg("$%-4x", gTextStart + ofs);
 }
 
 void ANOpOfs::emit(OutputFile* out) {
   out->WriteOp(op);
-  sc->hunkList->addFixup(*offset + 1);
-  out->WriteWord(textStart + ofs);
+  gSc->hunkList->addFixup(*offset + 1);
+  out->WriteWord(gTextStart + ofs);
 }
 
 ///////////////////////////////////////////////////
@@ -586,7 +586,7 @@ void ANObjID::emit(OutputFile* out) {
   }
 
   out->WriteOp(op);
-  sc->hunkList->addFixup(*offset + 1);
+  gSc->hunkList->addFixup(*offset + 1);
   out->WriteWord(*target()->offset);
 }
 
@@ -678,7 +678,7 @@ void ANVars::list(ListingFile* listFile) {
 
   for (Var const& var : theVars.values) {
     int n = var.value;
-    if (var.type == S_STRING) n += textStart;
+    if (var.type == S_STRING) n += gTextStart;
     listFile->ListWord(curOfs, n);
     curOfs += 2;
   }
@@ -693,8 +693,8 @@ void ANVars::emit(OutputFile* out) {
   for (Var const& var : theVars.values) {
     int n = var.value;
     if (var.type == S_STRING) {
-      n += textStart;
-      sc->heapList->addFixup(curOfs);
+      n += gTextStart;
+      gSc->heapList->addFixup(curOfs);
     }
     out->WriteWord(n);
     curOfs += 2;
@@ -707,7 +707,7 @@ void ANVars::emit(OutputFile* out) {
 ANFileName::ANFileName(std::string name) : ANOpCode(op_fileName), name(name) {}
 
 void ANFileName::list(ListingFile* listFile) {
-  switch (targetArch) {
+  switch (gTargetArch) {
     case SciTargetArch::SCI_1_1:
       break;
     case SciTargetArch::SCI_2:
@@ -721,7 +721,7 @@ void ANFileName::list(ListingFile* listFile) {
 }
 
 void ANFileName::emit(OutputFile* out) {
-  switch (targetArch) {
+  switch (gTargetArch) {
     case SciTargetArch::SCI_1_1:
       break;
     case SciTargetArch::SCI_2:
@@ -735,7 +735,7 @@ void ANFileName::emit(OutputFile* out) {
 }
 
 size_t ANFileName::size() {
-  switch (targetArch) {
+  switch (gTargetArch) {
     case SciTargetArch::SCI_1_1:
       return 0;
     case SciTargetArch::SCI_2:
@@ -750,7 +750,7 @@ size_t ANFileName::size() {
 ANLineNum::ANLineNum(int num) : ANOpCode(op_lineNum), num(num) {}
 
 void ANLineNum::list(ListingFile* listFile) {
-  switch (targetArch) {
+  switch (gTargetArch) {
     case SciTargetArch::SCI_1_1:
       break;
     case SciTargetArch::SCI_2:
@@ -763,7 +763,7 @@ void ANLineNum::list(ListingFile* listFile) {
 }
 
 void ANLineNum::emit(OutputFile* out) {
-  switch (targetArch) {
+  switch (gTargetArch) {
     case SciTargetArch::SCI_1_1:
       break;
     case SciTargetArch::SCI_2:
@@ -777,7 +777,7 @@ void ANLineNum::emit(OutputFile* out) {
 }
 
 size_t ANLineNum::size() {
-  switch (targetArch) {
+  switch (gTargetArch) {
     case SciTargetArch::SCI_1_1:
       return 0;
     case SciTargetArch::SCI_2:

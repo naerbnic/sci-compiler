@@ -17,9 +17,9 @@
 
 #define ALT_QUOTE '{'
 
-int nestedCondCompile;
-std::string symStr;
-TokenSlot tokSym;
+int gNestedCondCompile;
+std::string gSymStr;
+TokenSlot gTokSym;
 
 static constexpr std::string_view binDigits = "01";
 static constexpr std::string_view decDigits = "0123456789";
@@ -64,7 +64,7 @@ void GetToken() {
 
   // Save the token type and value returned, in case we want to 'unget'
   // the token after changing them.
-  lastTok = tokSym;
+  lastTok = gTokSym;
 }
 
 bool NewToken() {
@@ -73,7 +73,7 @@ bool NewToken() {
   Symbol* theSym;
 
   if (NextToken()) {
-    if (symType == S_IDENT && (theSym = syms.lookup(symStr)) &&
+    if (symType == S_IDENT && (theSym = gSyms.lookup(gSymStr)) &&
         theSym->type == S_DEFINE) {
       SetStringInput(theSym->str());
       NewToken();
@@ -93,21 +93,21 @@ void GetRest(bool error) {
   int pLevel;
   bool truncate;
 
-  if (error && !is) return;
+  if (error && !gInputSource) return;
 
-  std::string_view ip = is->inputPtr;
-  symStr.clear();
+  std::string_view ip = gInputSource->inputPtr;
+  gSymStr.clear();
   pLevel = 0;
   truncate = false;
 
   while (1) {
     if (ip.empty()) {
       CloseInputSource();
-      if (!is) {
+      if (!gInputSource) {
         if (!error) EarlyEnd();
         return;
       }
-      ip = is->inputPtr;
+      ip = gInputSource->inputPtr;
       continue;
     }
 
@@ -121,19 +121,19 @@ void GetRest(bool error) {
           --pLevel;
         else {
           symType = S_STRING;
-          is->inputPtr = ip;
+          gInputSource->inputPtr = ip;
           return;
         }
         break;
 
       case '\n':
-        if (!is->incrementPastNewLine(ip)) EarlyEnd();
+        if (!gInputSource->incrementPastNewLine(ip)) EarlyEnd();
         continue;
     }
 
-    if (!truncate) symStr.push_back(currCharAndAdvance(ip));
+    if (!truncate) gSymStr.push_back(currCharAndAdvance(ip));
 
-    if (symStr.length() >= MaxTokenLen && !truncate) {
+    if (gSymStr.length() >= MaxTokenLen && !truncate) {
       if (!error) Warning("Define too long.  Truncated.");
       truncate = true;
     }
@@ -148,23 +148,23 @@ bool NextToken() {
 
   if (haveUnGet) {
     haveUnGet = false;
-    tokSym = lastTok;
+    gTokSym = lastTok;
     return true;
   }
 
-  if (!is) {
+  if (!gInputSource) {
     symType = S_END;
     return false;
   }
 
   // Get pointer to input in a register
-  std::string_view ip = is->inputPtr;
+  std::string_view ip = gInputSource->inputPtr;
 
   // Scan to the start of the next token.
   while (1) {
     if (ip.empty() || ip[0] == '\n') {
-      if (is->endInputLine()) {
-        ip = is->inputPtr;
+      if (gInputSource->endInputLine()) {
+        ip = gInputSource->inputPtr;
         continue;
       } else {
         symType = S_END;
@@ -204,12 +204,12 @@ bool NextToken() {
   // character, but simply causes us to move to another input source.
 
   c = ip[0];
-  symStr.clear();
+  gSymStr.clear();
 
   if (IsTok(c)) {
-    symStr.push_back(c);
+    gSymStr.push_back(c);
     symType = (sym_t)c;
-    is->inputPtr = ip.substr(1);
+    gInputSource->inputPtr = ip.substr(1);
     return true;
   }
 
@@ -240,13 +240,13 @@ bool NextToken() {
       break;
     }
     if (IsIncl(c)) break;
-    symStr.push_back(c);
+    gSymStr.push_back(c);
     if (ip.empty()) {
       break;
     }
     c = ip[0];
   }
-  is->inputPtr = ip;
+  gInputSource->inputPtr = ip;
 
   return true;
 }
@@ -280,41 +280,41 @@ compiling:
     switch (GetPreprocessorToken()) {
       case PT_IF:
         if (!GetNumber("Constant expression")) setSymVal(0);
-        ++nestedCondCompile;
+        ++gNestedCondCompile;
         if (!symVal) goto notCompiling;
         break;
 
       case PT_IFDEF:
-        ++nestedCondCompile;
+        ++gNestedCondCompile;
         if (!GetDefineSymbol()) goto notCompiling;
         break;
 
       case PT_IFNDEF:
-        ++nestedCondCompile;
+        ++gNestedCondCompile;
         if (GetDefineSymbol()) goto notCompiling;
         break;
 
       case PT_ELIF:
-        if (!nestedCondCompile) Error("#elif without corresponding #if");
+        if (!gNestedCondCompile) Error("#elif without corresponding #if");
         goto gettingEndif;
 
       case PT_ELIFDEF:
-        if (!nestedCondCompile) Error("#elifdef without corresponding #if");
+        if (!gNestedCondCompile) Error("#elifdef without corresponding #if");
         goto gettingEndif;
 
       case PT_ELIFNDEF:
-        if (!nestedCondCompile) Error("#elifndef without corresponding #if");
+        if (!gNestedCondCompile) Error("#elifndef without corresponding #if");
         goto gettingEndif;
 
       case PT_ELSE:
-        if (!nestedCondCompile) Error("#else without corresponding #if");
+        if (!gNestedCondCompile) Error("#else without corresponding #if");
         goto gettingEndif;
 
       case PT_ENDIF:
-        if (!nestedCondCompile)
+        if (!gNestedCondCompile)
           Error("#endif without corresponding #if");
         else
-          --nestedCondCompile;
+          --gNestedCondCompile;
         break;
 
       default:
@@ -359,7 +359,7 @@ notCompiling:
 
       case PT_ENDIF:
         if (!level) {
-          --nestedCondCompile;
+          --gNestedCondCompile;
           goto compiling;
         }
         --level;
@@ -388,7 +388,7 @@ gettingEndif:
 
       case PT_ENDIF:
         if (!level) {
-          --nestedCondCompile;
+          --gNestedCondCompile;
           goto compiling;
         }
         --level;
@@ -415,7 +415,7 @@ static pt GetPreprocessorToken() {
                 {"#else", PT_ELSE},         {"#endif", PT_ENDIF}};
 
   //	find first nonwhite
-  std::string_view cp = is->inputPtr;
+  std::string_view cp = gInputSource->inputPtr;
   auto first_non_whitespace = cp.find_first_not_of(" \t");
   if (first_non_whitespace != std::string_view::npos) {
     cp.remove_prefix(first_non_whitespace);
@@ -432,7 +432,7 @@ static pt GetPreprocessorToken() {
       //	make sure that the full token matches
       cp.remove_prefix(tokens[i].text.length());
       if (cp.empty() || cp[0] == '\n' || cp[0] == ' ' || cp[0] == '\t') {
-        is->inputPtr = cp;
+        gInputSource->inputPtr = cp;
         return tokens[i].token;
       }
       break;
@@ -449,21 +449,21 @@ static void ReadNumber(std::string_view ip) {
   std::string_view validDigits;
 
   SCIWord val = 0;
-  symStr.clear();
+  gSymStr.clear();
 
   // Determine the sign of the number
   if (currChar(ip) != '-')
     sign = 1;
   else {
     sign = -1;
-    symStr.push_back(currCharAndAdvance(ip));
+    gSymStr.push_back(currCharAndAdvance(ip));
   }
 
   // Determine the base of the number
   base = 10;
   if (currChar(ip) == '%' || currChar(ip) == '$') {
     base = (currChar(ip) == '%') ? 2 : 16;
-    symStr.push_back(currCharAndAdvance(ip));
+    gSymStr.push_back(currCharAndAdvance(ip));
   }
   switch (base) {
     case 2:
@@ -487,14 +487,14 @@ static void ReadNumber(std::string_view ip) {
     }
     val = SCIWord((val * base) + char_index);
     advance(ip);
-    symStr.push_back(rawChar);
+    gSymStr.push_back(rawChar);
   }
 
   val *= sign;
 
   setSymVal(val);
 
-  is->inputPtr = ip;
+  gInputSource->inputPtr = ip;
 }
 
 static void ReadString(std::string_view ip) {
@@ -504,7 +504,7 @@ static void ReadString(std::string_view ip) {
   uint32_t n;
 
   truncated = false;
-  symStr.clear();
+  gSymStr.clear();
   open = currCharAndAdvance(ip);
 
   symType = S_STRING;
@@ -520,28 +520,28 @@ static void ReadString(std::string_view ip) {
     switch (c) {
       case '\n':
         GetNewLine();
-        if (!is) Fatal("Unterminated string");
-        ip = is->inputPtr;
+        if (!gInputSource) Fatal("Unterminated string");
+        ip = gInputSource->inputPtr;
         break;
 
       case '\r':
         break;
 
       case '_':
-        if (!truncated) symStr.push_back(' ');
+        if (!truncated) gSymStr.push_back(' ');
         break;
 
       case ' ':
       case '\t':
-        if (!symStr.empty() && symStr.back() != '\n' && !truncated) {
-          symStr.push_back(' ');
+        if (!gSymStr.empty() && gSymStr.back() != '\n' && !truncated) {
+          gSymStr.push_back(' ');
         }
         while ((c = currChar(ip)) == ' ' || c == '\t' || c == '\n') {
           advance(ip);
           if (c == '\n') {
             GetNewLine();
-            if (!is) Fatal("Unterminated string");
-            ip = is->inputPtr;
+            if (!gInputSource) Fatal("Unterminated string");
+            ip = gInputSource->inputPtr;
           }
         }
         break;
@@ -551,19 +551,19 @@ static void ReadString(std::string_view ip) {
           // Then just use char as is.
           switch (c) {
             case 'n':
-              if (!truncated) symStr.push_back('\n');
+              if (!truncated) gSymStr.push_back('\n');
               break;
             case 't':
-              if (!truncated) symStr.push_back('\t');
+              if (!truncated) gSymStr.push_back('\t');
               break;
             case 'r':
               if (!truncated) {
-                symStr.push_back('\r');
-                symStr.push_back('\n');
+                gSymStr.push_back('\r');
+                gSymStr.push_back('\n');
               }
               break;
             default:
-              if (!truncated) symStr.push_back(c);
+              if (!truncated) gSymStr.push_back(c);
               break;
           }
 
@@ -577,17 +577,17 @@ static void ReadString(std::string_view ip) {
           c = absl::ascii_tolower(c);
           int low_digit = hexDigits.find(c);
           n += (uint32_t)low_digit;
-          if (!truncated) symStr.push_back((char)n);
+          if (!truncated) gSymStr.push_back((char)n);
         }
 
         break;
 
       default:
-        if (!truncated) symStr.push_back(c);
+        if (!truncated) gSymStr.push_back(c);
         break;
     }
 
-    if (symStr.length() >= MaxTokenLen && !truncated) {
+    if (gSymStr.length() >= MaxTokenLen && !truncated) {
       Error("String too large.");
       truncated = true;
     }
@@ -595,8 +595,8 @@ static void ReadString(std::string_view ip) {
 
   if (c == '\0') Error("Unterminated string");
 
-  if (is) {
-    is->inputPtr = ip;
+  if (gInputSource) {
+    gInputSource->inputPtr = ip;
   } else {
     EarlyEnd();
   }
@@ -611,37 +611,37 @@ static uint32_t altKey[] = {
 static void ReadKey(std::string_view ip) {
   symType = S_NUM;
 
-  symStr.clear();
-  while (!IsTerm(currChar(ip))) symStr.push_back(currCharAndAdvance(ip));
+  gSymStr.clear();
+  while (!IsTerm(currChar(ip))) gSymStr.push_back(currCharAndAdvance(ip));
 
-  char firstChar = symStr[0];
+  char firstChar = gSymStr[0];
 
   switch (firstChar) {
     case '^': {
       // A control key.
-      auto ctrlChar = symStr[1];
+      auto ctrlChar = gSymStr[1];
       if (isalpha(ctrlChar))
         setSymVal(toupper(ctrlChar) - 0x40);
       else
-        Error("Not a valid control key: %s", symStr);
+        Error("Not a valid control key: %s", gSymStr);
       break;
     }
 
     case '@': {
       // An alt-key.
-      auto altChar = symStr[1];
+      auto altChar = gSymStr[1];
       if (isalpha(altChar))
         setSymVal(altKey[toupper(altChar) - 'A'] << 8);
       else
-        Error("Not a valid alt key: %s", symStr);
+        Error("Not a valid alt key: %s", gSymStr);
       break;
     }
 
     case '#': {
       // A function key.
       int num;
-      if (!absl::SimpleAtoi(std::string_view(symStr).substr(1), &num)) {
-        Error("Not a valid function key: %s", symStr);
+      if (!absl::SimpleAtoi(std::string_view(gSymStr).substr(1), &num)) {
+        Error("Not a valid function key: %s", gSymStr);
         break;
       }
       setSymVal((num + 58) << 8);
@@ -654,5 +654,5 @@ static void ReadKey(std::string_view ip) {
       break;
   }
 
-  is->inputPtr = ip;
+  gInputSource->inputPtr = ip;
 }

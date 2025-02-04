@@ -8,7 +8,7 @@
 #include "symtbl.hpp"
 #include "token.hpp"
 
-bool inParmList;
+bool gInParmList;
 
 static std::unique_ptr<PNode> _CallDef(sym_t theType);
 static int ParameterList();
@@ -27,22 +27,22 @@ void Procedure() {
   UnGetTok();
   if (symType == OPEN_P) {
     // Then a procedure definition.
-    theSymTbl = syms.add(ST_MINI);
+    theSymTbl = gSyms.add(ST_MINI);
 
     {
       auto theNode = CallDef(S_PROC);
       if (theNode) {
         ExprList(theNode.get(), OPTIONAL);
-        CompileProc(sc->hunkList->getList(), theNode.get());
+        CompileProc(gSc->hunkList->getList(), theNode.get());
       }
     }
 
-    syms.deactivate(theSymTbl);
+    gSyms.deactivate(theSymTbl);
 
   } else {
     // A procedure declaration.
     for (GetToken(); !CloseP(symType); GetToken()) {
-      if (symType == S_IDENT) theSym = syms.installLocal(symStr, S_PROC);
+      if (symType == S_IDENT) theSym = gSyms.installLocal(gSymStr, S_PROC);
       theSym->setVal(UNDEFINED);
     }
     UnGetTok();
@@ -71,14 +71,14 @@ static std::unique_ptr<PNode> _CallDef(sym_t theType) {
   Selector* sn;
 
   GetToken();
-  theProc = syms.lookup(symStr);
+  theProc = gSyms.lookup(gSymStr);
   switch (theType) {
     case S_PROC:
       if (!theProc)
-        theProc = syms.installModule(symStr, theType);
+        theProc = gSyms.installModule(gSymStr, theType);
 
       else if (theProc->type != S_PROC || theProc->val() != UNDEFINED) {
-        Severe("%s is already defined.", symStr);
+        Severe("%s is already defined.", gSymStr);
         return 0;
       }
 
@@ -86,9 +86,9 @@ static std::unique_ptr<PNode> _CallDef(sym_t theType) {
       break;
 
     case S_SELECT:
-      if (!theProc || !(sn = curObj->findSelectorByNum(theProc->val())) ||
+      if (!theProc || !(sn = gCurObj->findSelectorByNum(theProc->val())) ||
           IsProperty(sn)) {
-        Severe("%s is not a method for class %s", symStr, curObj->sym->name());
+        Severe("%s is not a method for class %s", gSymStr, gCurObj->sym->name());
         return 0;
       }
       break;
@@ -115,7 +115,7 @@ static int ParameterList() {
   parmOfs = 1;
   parmType = S_PARM;
 
-  inParmList = true;
+  gInParmList = true;
   for (LookupTok(); !CloseP(symType); LookupTok()) {
     if (symType == S_KEYWORD && symVal == K_TMP) {
       // Now defining temporaries -- set 'rest of argument' value.
@@ -135,23 +135,23 @@ static int ParameterList() {
       parmOfs += symVal;
       GetToken();
       if (symType != (sym_t)']') {
-        Error("expecting closing ']': %s.", symStr);
+        Error("expecting closing ']': %s.", gSymStr);
         UnGetTok();
       }
 
     } else if (symType == S_SELECT) {
-      if (curObj && curObj->findSelectorByNum(tokSym.val()))
-        Error("%s is a selector for current object.", symStr);
+      if (gCurObj && gCurObj->findSelectorByNum(gTokSym.val()))
+        Error("%s is a selector for current object.", gSymStr);
       else
-        syms.installLocal(symStr, parmType)->setVal(parmOfs++);
+        gSyms.installLocal(gSymStr, parmType)->setVal(parmOfs++);
 
     } else
-      Error("Non-identifier in parameter list: %s", symStr);
+      Error("Non-identifier in parameter list: %s", gSymStr);
   }
 
   if (parmType == S_PARM) AddRest(parmOfs);
 
-  inParmList = false;
+  gInParmList = false;
 
   UnGetTok();
 
@@ -162,14 +162,14 @@ static int ParameterList() {
 static void NewParm(int n, sym_t type) {
   Symbol* theSym;
 
-  if (syms.lookup(symStr)) Warning("Redefinition of '%s'.", symStr);
-  theSym = syms.installLocal(symStr, type);
+  if (gSyms.lookup(gSymStr)) Warning("Redefinition of '%s'.", gSymStr);
+  theSym = gSyms.installLocal(gSymStr, type);
   theSym->setVal(n);
 }
 
 static void AddRest(int ofs) {
   Symbol* theSym;
 
-  theSym = syms.installLocal("&rest", S_REST);
+  theSym = gSyms.installLocal("&rest", S_REST);
   theSym->setVal(ofs);
 }

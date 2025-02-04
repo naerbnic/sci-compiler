@@ -13,12 +13,12 @@
 #include "error.hpp"
 #include "token.hpp"
 
-std::filesystem::path curFile;
-int curLine;
-std::shared_ptr<InputSource> curSourceFile;
-std::vector<std::filesystem::path> includePath;
-std::shared_ptr<InputSource> is;
-std::shared_ptr<InputSource> theFile;
+std::filesystem::path gCurFile;
+int gCurLine;
+std::shared_ptr<InputSource> gCurSourceFile;
+std::vector<std::filesystem::path> gIncludePath;
+std::shared_ptr<InputSource> gInputSource;
+std::shared_ptr<InputSource> gTheFile;
 
 static char inputLine[512];
 
@@ -29,33 +29,33 @@ static FILE* FOpen(std::filesystem::path const& path, const char* mode) {
 }
 
 InputSource::InputSource() : fileName(0), lineNum(0) {
-  tokSym.setStr("");
-  curLine = lineNum;
+  gTokSym.setStr("");
+  gCurLine = lineNum;
 }
 
 InputSource::InputSource(std::filesystem::path fileName, int lineNum)
     : fileName(fileName), lineNum(lineNum) {
-  tokSym.setStr(symStr);
-  curLine = lineNum;
+  gTokSym.setStr(gSymStr);
+  gCurLine = lineNum;
 }
 
 InputSource& InputSource::operator=(InputSource& s) {
   fileName = s.fileName;
   lineNum = s.lineNum;
-  curLine = lineNum;
+  gCurLine = lineNum;
   return *this;
 }
 
 InputFile::InputFile(FILE* fp, std::filesystem::path name)
     : InputSource(name), file(fp) {
-  curFile = fileName;
+  gCurFile = fileName;
 }
 
 InputFile::~InputFile() { fclose(file); }
 
 bool InputFile::incrementPastNewLine(std::string_view& ip) {
   if (GetNewLine()) {
-    ip = is->inputPtr;
+    ip = gInputSource->inputPtr;
     return true;
   }
   return false;
@@ -63,7 +63,7 @@ bool InputFile::incrementPastNewLine(std::string_view& ip) {
 
 bool InputFile::endInputLine() { return GetNewLine(); }
 
-InputString::InputString(std::string_view str) : InputSource(curFile, curLine) {
+InputString::InputString(std::string_view str) : InputSource(gCurFile, gCurLine) {
   inputPtr = str;
 }
 
@@ -90,7 +90,7 @@ std::shared_ptr<InputSource> OpenFileAsInput(
   // the directories in the include path.
   FILE* file = FOpen(fileName, "r");
   if (!file && fileName.is_relative()) {
-    for (auto const& path : includePath) {
+    for (auto const& path : gIncludePath) {
       file = FOpen(path / fileName, "r");
     }
   }
@@ -121,17 +121,17 @@ bool CloseInputSource() {
 
   std::shared_ptr<InputSource> ois;
 
-  if ((ois = is)) {
-    std::shared_ptr<InputSource> next = is->next;
-    is = next;
+  if ((ois = gInputSource)) {
+    std::shared_ptr<InputSource> next = gInputSource->next;
+    gInputSource = next;
   }
 
-  if (is) {
-    curFile = is->fileName;
-    curLine = is->lineNum;
+  if (gInputSource) {
+    gCurFile = gInputSource->fileName;
+    gCurLine = gInputSource->lineNum;
   }
 
-  return (bool)is;
+  return (bool)gInputSource;
 }
 
 void SetStringInput(std::string_view str) {
@@ -142,20 +142,20 @@ bool GetNewInputLine() {
   // Read a new line in from the current input file.  If we're at end of
   // file, close the file, shifting input to the next source in the queue.
 
-  while (is) {
-    if (fgets(inputLine, sizeof inputLine, ((InputFile*)is.get())->file)) {
-      is->inputPtr = inputLine;
+  while (gInputSource) {
+    if (fgets(inputLine, sizeof inputLine, ((InputFile*)gInputSource.get())->file)) {
+      gInputSource->inputPtr = inputLine;
       break;
     }
     CloseInputSource();
   }
 
-  if (is) {
-    ++is->lineNum;
-    ++curLine;
+  if (gInputSource) {
+    ++gInputSource->lineNum;
+    ++gCurLine;
   }
 
-  return (bool)is;
+  return (bool)gInputSource;
 }
 
 void SetIncludePath(std::vector<std::string> const& extra_paths) {
@@ -163,15 +163,15 @@ void SetIncludePath(std::vector<std::string> const& extra_paths) {
 
   if (t) {
     // Successively copy each element of the path into 'path',
-    // and add it to the includePath chain.
+    // and add it to the gIncludePath chain.
     for (auto path : absl::StrSplit(t, ';')) {
-      // Now allocate a node to keep this path on in the includePath chain
+      // Now allocate a node to keep this path on in the gIncludePath chain
       // and link it into the list.
-      includePath.emplace_back(path);
+      gIncludePath.emplace_back(path);
     }
   }
 
-  std::ranges::copy(extra_paths, std::back_inserter(includePath));
+  std::ranges::copy(extra_paths, std::back_inserter(gIncludePath));
 }
 
 static std::shared_ptr<InputSource> saveIs;
@@ -180,14 +180,14 @@ static std::shared_ptr<InputString> curLineInput;
 void SetInputToCurrentLine() {
   //	set the current input line as the input source
 
-  saveIs = is;
+  saveIs = gInputSource;
   curLineInput = std::make_shared<InputString>(inputLine);
-  is = curLineInput;
+  gInputSource = curLineInput;
 }
 
 void RestoreInput() {
   if (saveIs) {
-    is = saveIs;
+    gInputSource = saveIs;
     saveIs = 0;
   }
 }
@@ -196,6 +196,6 @@ static void SetInputSource(const std::shared_ptr<InputSource>& nis) {
   // Link a new input source (pointed to by 'nis') in at the head of the input
   // source queue.
 
-  nis->next = is;
-  is = nis;
+  nis->next = gInputSource;
+  gInputSource = nis;
 }

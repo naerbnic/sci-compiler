@@ -121,7 +121,7 @@ bool Expression(PNode*, bool);
 void Procedure();
 std::unique_ptr<PNode> CallDef(sym_t);
 
-extern bool inParmList;
-extern jmp_buf recoverBuf;
+extern bool gInParmList;
+extern jmp_buf gRecoverBuf;
 
 #endif

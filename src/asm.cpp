@@ -13,82 +13,82 @@
 #include "output.hpp"
 #include "sc.hpp"
 
-ANTable* dispTbl;
-int lastLineNum;
-ANWord* numDispTblEntries;
+ANTable* gDispTbl;
+int gLastLineNum;
+ANWord* gNumDispTblEntries;
 
 void InitAsm() {
   // Initialize the assembly list: dispose of any old list, then add nodes
   // for the number of local variables.
 
-  localVars.kill();
+  gLocalVars.kill();
 
-  textStart = 0;
+  gTextStart = 0;
 
-  sc->heapList->clear();
-  sc->hunkList->clear();
+  gSc->heapList->clear();
+  gSc->hunkList->clear();
 
   //	setup the debugging info
-  lastLineNum = 0;
+  gLastLineNum = 0;
 
   // space for addr of heap component of resource
-  sc->hunkList->newNode<ANWord>();
+  gSc->hunkList->newNode<ANWord>();
 
   // space to indicate whether script has far text (dummy)
-  sc->hunkList->newNode<ANWord>();
+  gSc->hunkList->newNode<ANWord>();
 
-  numDispTblEntries = sc->hunkList->newNode<ANWord>();
-  dispTbl = sc->hunkList->newNode<ANTable>("dispatch table");
+  gNumDispTblEntries = gSc->hunkList->newNode<ANWord>();
+  gDispTbl = gSc->hunkList->newNode<ANTable>("dispatch table");
 
-  codeStart = 0;
+  gCodeStart = 0;
 }
 
 void Assemble(ListingFile* listFile) {
   // Assemble the list pointed to by asmHead.
 
-  auto vars = std::make_unique<ANVars>(script ? localVars : globalVars);
-  sc->heapList->addAfter(sc->heapList->front(), std::move(vars));
+  auto vars = std::make_unique<ANVars>(gScript ? gLocalVars : gGlobalVars);
+  gSc->heapList->addAfter(gSc->heapList->front(), std::move(vars));
 
   // Set the offsets in the object list.
-  sc->heapList->setOffset(0);
+  gSc->heapList->setOffset(0);
 
   // Optimize the code, setting all the offsets.
-  sc->hunkList->optimize();
+  gSc->hunkList->optimize();
 
   // Reset the offsets in the object list to get the current code
   // offsets.
-  sc->heapList->setOffset(0);
+  gSc->heapList->setOffset(0);
 
   ObjFiles obj_files = OpenObjFiles();
 
   const std::size_t MAX_INFO_FILE_NAME = 1024;
 
   char infoFileName[MAX_INFO_FILE_NAME];
-  if (snprintf(infoFileName, 1024, "%d.inf", (unsigned short)script) >=
+  if (snprintf(infoFileName, 1024, "%d.inf", (unsigned short)gScript) >=
       (int)MAX_INFO_FILE_NAME) {
     fprintf(stderr, "Error: info file name too long\n");
     exit(1);
   }
   FILE* infoFile = fopen(infoFileName, "wb");
-  absl::FPrintF(infoFile, "%s\n", curSourceFile->fileName);
+  absl::FPrintF(infoFile, "%s\n", gCurSourceFile->fileName);
   fclose(infoFile);
 
-  sc->heapList->emit(obj_files.heap.get());
-  sc->hunkList->emit(obj_files.hunk.get());
+  gSc->heapList->emit(obj_files.heap.get());
+  gSc->hunkList->emit(obj_files.hunk.get());
 
   // Now generate object code.
   listFile->Listing(
       "----------------------\n"
       "-------- Heap --------\n"
       "----------------------\n");
-  sc->heapList->list(listFile);
+  gSc->heapList->list(listFile);
   listFile->Listing(
       "\n\n\n\n"
       "----------------------\n"
       "-------- Hunk --------\n"
       "----------------------\n");
-  sc->hunkList->list(listFile);
+  gSc->hunkList->list(listFile);
 
-  sc->heapList->clear();
-  sc->hunkList->clear();
+  gSc->heapList->clear();
+  gSc->hunkList->clear();
 }

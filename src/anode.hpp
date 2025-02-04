@@ -459,7 +459,7 @@ struct ANLineNum : ANOpCode {
   int num;
 };
 
-extern ANCodeBlk* codeStart;
-extern uint32_t textStart;
+extern ANCodeBlk* gCodeStart;
+extern uint32_t gTextStart;
 
 #endif
