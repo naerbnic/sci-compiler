@@ -185,7 +185,7 @@ int main(int argc, char **argv) {
   Parse();
 
   gInputState.OpenFileAsInput(game_header, false);
-  if (gInputState.inputSource) Parse();
+  if (!gInputState.IsDone()) Parse();
 
   totalErrors += gNumErrors;
 

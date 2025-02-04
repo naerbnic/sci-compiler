@@ -82,6 +82,10 @@ class InputState {
 
   bool CloseInputSource();
 
+  bool IsDone();
+  std::string_view GetRemainingLine();
+  void SetRemainingLine(std::string_view line);
+
  private:
   std::vector<std::filesystem::path> includePath_;
   std::shared_ptr<InputSource> saveIs_;

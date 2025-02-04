@@ -94,9 +94,9 @@ void GetRest(bool error) {
   int pLevel;
   bool truncate;
 
-  if (error && !gInputState.inputSource) return;
+  if (error && gInputState.IsDone()) return;
 
-  std::string_view ip = gInputState.inputSource->inputPtr;
+  std::string_view ip = gInputState.GetRemainingLine();
   gSymStr.clear();
   pLevel = 0;
   truncate = false;
@@ -107,7 +107,7 @@ void GetRest(bool error) {
         if (!error) EarlyEnd();
         return;
       }
-      ip = gInputState.inputSource->inputPtr;
+      ip = gInputState.GetRemainingLine();
       continue;
     }
 
@@ -121,7 +121,7 @@ void GetRest(bool error) {
           --pLevel;
         else {
           symType = S_STRING;
-          gInputState.inputSource->inputPtr = ip;
+          gInputState.SetRemainingLine(ip);
           return;
         }
         break;
@@ -158,19 +158,19 @@ bool NextToken() {
     return true;
   }
 
-  if (!gInputState.inputSource) {
+  if (gInputState.IsDone()) {
     symType = S_END;
     return false;
   }
 
   // Get pointer to input in a register
-  std::string_view ip = gInputState.inputSource->inputPtr;
+  std::string_view ip = gInputState.GetRemainingLine();
 
   // Scan to the start of the next token.
   while (1) {
     if (ip.empty()) {
       if (GetNewLine()) {
-        ip = gInputState.inputSource->inputPtr;
+        ip = gInputState.GetRemainingLine();
         continue;
       } else {
         symType = S_END;
@@ -224,7 +224,7 @@ bool NextToken() {
   if (IsTok(c)) {
     gSymStr.push_back(c);
     symType = (sym_t)c;
-    gInputState.inputSource->inputPtr = ip.substr(1);
+    gInputState.SetRemainingLine(ip.substr(1));
     return true;
   }
 
@@ -261,7 +261,7 @@ bool NextToken() {
     }
     c = ip[0];
   }
-  gInputState.inputSource->inputPtr = ip;
+  gInputState.SetRemainingLine(ip);
 
   return true;
 }
@@ -423,7 +423,7 @@ static pt GetPreprocessorToken() {
                 {"#else", PT_ELSE},         {"#endif", PT_ENDIF}};
 
   //	find first nonwhite
-  std::string_view cp = gInputState.inputSource->inputPtr;
+  std::string_view cp = gInputState.GetRemainingLine();
   auto first_non_whitespace = cp.find_first_not_of(" \t");
   if (first_non_whitespace != std::string_view::npos) {
     cp.remove_prefix(first_non_whitespace);
@@ -440,7 +440,7 @@ static pt GetPreprocessorToken() {
       //	make sure that the full token matches
       cp.remove_prefix(tokens[i].text.length());
       if (cp.empty() || cp[0] == '\n' || cp[0] == ' ' || cp[0] == '\t') {
-        gInputState.inputSource->inputPtr = cp;
+        gInputState.SetRemainingLine(cp);
         return tokens[i].token;
       }
       break;
@@ -502,7 +502,7 @@ static void ReadNumber(std::string_view ip) {
 
   setSymVal(val);
 
-  gInputState.inputSource->inputPtr = ip;
+  gInputState.SetRemainingLine(ip);
 }
 
 static void ReadString(std::string_view ip) {
@@ -528,7 +528,7 @@ static void ReadString(std::string_view ip) {
     switch (c) {
       case '\n':
         if (!gInputState.GetNewInputLine()) Fatal("Unterminated string");
-        ip = gInputState.inputSource->inputPtr;
+        ip = gInputState.GetRemainingLine();
         break;
 
       case '\r':
@@ -547,7 +547,7 @@ static void ReadString(std::string_view ip) {
           advance(ip);
           if (c == '\n') {
             if (!gInputState.GetNewInputLine()) Fatal("Unterminated string");
-            ip = gInputState.inputSource->inputPtr;
+            ip = gInputState.GetRemainingLine();
           }
         }
         break;
@@ -601,8 +601,8 @@ static void ReadString(std::string_view ip) {
 
   if (c == '\0') Error("Unterminated string");
 
-  if (gInputState.inputSource) {
-    gInputState.inputSource->inputPtr = ip;
+  if (!gInputState.IsDone()) {
+    gInputState.SetRemainingLine(ip);
   } else {
     EarlyEnd();
   }
@@ -660,5 +660,5 @@ static void ReadKey(std::string_view ip) {
       break;
   }
 
-  gInputState.inputSource->inputPtr = ip;
+  gInputState.SetRemainingLine(ip);
 }

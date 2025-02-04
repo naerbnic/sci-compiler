@@ -182,3 +182,37 @@ bool InputState::CloseInputSource() {
 
   return (bool)inputSource;
 }
+
+bool InputState::IsDone() { return !inputSource; }
+
+std::string_view InputState::GetRemainingLine() {
+  if (!inputSource) {
+    return "";
+  }
+  return inputSource->inputPtr;
+}
+
+void InputState::SetRemainingLine(std::string_view str) {
+  if (!inputSource) {
+    throw std::runtime_error(
+        "Unexpeted setting of remaining line after closing");
+  }
+
+  if (!str.empty()) {
+    // Enforce that this must be a part of the current line's
+    // memory range.
+    auto currInput = inputSource->inputPtr;
+    auto const* low_ptr = &currInput[0];
+    auto const* high_ptr = &currInput[currInput.size()];
+    auto const* str_start = &str[0];
+    auto const* str_end = &str[str.size()];
+    bool start_in_range = str_start >= low_ptr || str_start <= high_ptr;
+    bool end_in_range = str_end >= low_ptr || str_end <= high_ptr;
+    if (!start_in_range || !end_in_range) {
+      throw new std::runtime_error(
+          "Updated line out of bounds of original line");
+    }
+  }
+
+  inputSource->inputPtr = str;
+}
