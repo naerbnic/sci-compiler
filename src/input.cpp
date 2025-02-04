@@ -141,7 +141,7 @@ void InputState::SetIncludePath(std::vector<std::string> const& extra_paths) {
 
 void InputState::OpenFileAsInput(std::filesystem::path const& fileName,
                                  bool required) {
-  std::shared_ptr<InputSource> theFile;
+  std::shared_ptr<InputSource> localFile;
 
   // Try to open the file.  If we can't, try opening it in each of
   // the directories in the include path.
@@ -157,11 +157,10 @@ void InputState::OpenFileAsInput(std::filesystem::path const& fileName,
     if (required) Panic("Can't open \"%s\"", fileName);
   }
 
-  theFile = std::make_shared<InputFile>(file, fileName);
+  localFile = std::make_shared<InputFile>(file, fileName);
 
-  theFile->next_ = inputSource;
-  inputSource = theFile;
-  this->theFile = theFile;
+  localFile->next_ = inputSource;
+  inputSource = localFile;
 }
 
 bool InputState::CloseInputSource() {

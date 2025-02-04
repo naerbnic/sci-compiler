@@ -72,7 +72,6 @@ class InputState {
   // The current base source file, independent of current input stack.
   std::shared_ptr<InputSource> curSourceFile;
   std::shared_ptr<InputSource> inputSource;
-  std::shared_ptr<InputSource> theFile;
 
   bool GetNewInputLine();
   void SetStringInput(std::string_view);
