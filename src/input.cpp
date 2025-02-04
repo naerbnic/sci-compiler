@@ -18,12 +18,12 @@ static FILE* FOpen(std::filesystem::path const& path, const char* mode) {
   return fopen(path.string().c_str(), mode);
 }
 
-InputSource::InputSource() : fileName(""), lineNum(0) {
+InputSource::InputSource() : lineNum(0), fileName("") {
   gInputState.curLine = lineNum;
 }
 
 InputSource::InputSource(std::filesystem::path fileName, int lineNum)
-    : fileName(fileName), lineNum(lineNum) {
+    : lineNum(lineNum), fileName(fileName) {
   gInputState.curLine = lineNum;
 }
 
@@ -182,6 +182,19 @@ bool InputState::CloseInputSource() {
   return (bool)inputSource;
 }
 
+std::string InputState::GetCurrFileName() {
+  if (!inputSource) {
+    return "<unknown>";
+  }
+  return inputSource->fileName.string();
+}
+std::string InputState::GetTopLevelFileName() {
+  if (!curSourceFile) {
+    return "<unknown>";
+  }
+
+  return curSourceFile->fileName.string();
+}
 bool InputState::IsDone() { return !inputSource; }
 
 std::string_view InputState::GetRemainingLine() {

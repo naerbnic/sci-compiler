@@ -27,9 +27,11 @@ struct InputSource {
   // If true, the line is stored in inputPtr;
   virtual bool ReadNextLine() = 0;
 
-  std::filesystem::path fileName;
   int lineNum;
+
+ protected:
   std::string_view inputPtr;
+  std::filesystem::path fileName;
 
  private:
   friend class InputState;
@@ -81,6 +83,8 @@ class InputState {
 
   bool CloseInputSource();
 
+  std::string GetCurrFileName();
+  std::string GetTopLevelFileName();
   bool IsDone();
   std::string_view GetRemainingLine();
   void SetRemainingLine(std::string_view line);

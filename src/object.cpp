@@ -109,7 +109,7 @@ void DoClass() {
   if (sn) sn->val = super->num;
 
   theClass->script = gScript;
-  theClass->file = gInputState.inputSource->fileName.string();
+  theClass->file = gInputState.GetCurrFileName();
 
   // Get any properties, methods, or procedures for this class.
   InstanceBody(theClass);

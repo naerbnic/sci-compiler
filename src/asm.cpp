@@ -70,7 +70,7 @@ void Assemble(ListingFile* listFile) {
     exit(1);
   }
   FILE* infoFile = fopen(infoFileName, "wb");
-  absl::FPrintF(infoFile, "%s\n", gInputState.curSourceFile->fileName);
+  absl::FPrintF(infoFile, "%s\n", gInputState.GetTopLevelFileName());
   fclose(infoFile);
 
   gSc->heapList->emit(obj_files.heap.get());
