@@ -386,3 +386,11 @@ build/
 
 # Ignore MODULE.bazel.lock, as it changes when working on different platforms.
 /MODULE.bazel.lock
+
+# These are sometimes necessary during manual debugging
+/$$$sc.lck
+/*.hep
+/*.inf
+/*.sl
+/*.voc
+/*.scr
