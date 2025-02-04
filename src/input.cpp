@@ -11,7 +11,6 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
 #include "error.hpp"
-#include "token.hpp"
 
 InputState gInputState;
 
@@ -20,13 +19,11 @@ static FILE* FOpen(std::filesystem::path const& path, const char* mode) {
 }
 
 InputSource::InputSource() : fileName(""), lineNum(0) {
-  gTokSym.setStr("");
   gInputState.curLine = lineNum;
 }
 
 InputSource::InputSource(std::filesystem::path fileName, int lineNum)
     : fileName(fileName), lineNum(lineNum) {
-  gTokSym.setStr(gSymStr);
   gInputState.curLine = lineNum;
 }
 
@@ -165,7 +162,6 @@ void InputState::OpenFileAsInput(std::filesystem::path const& fileName,
   theFile->next_ = inputSource;
   inputSource = theFile;
   this->theFile = theFile;
-  GetNewLine();
 }
 
 bool InputState::CloseInputSource() {
