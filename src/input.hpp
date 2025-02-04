@@ -24,10 +24,13 @@ struct InputSource {
   virtual bool endInputLine() = 0;
   virtual LineOffset lineStartOffset() = 0;
 
-  std::shared_ptr<InputSource> next;
   std::filesystem::path fileName;
   int lineNum;
   std::string_view inputPtr;
+
+ private:
+  friend class InputState;
+  std::shared_ptr<InputSource> next_;
 };
 
 struct InputFile : InputSource {

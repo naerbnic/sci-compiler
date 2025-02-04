@@ -102,7 +102,7 @@ bool InputState::GetNewInputLine() {
 
 void InputState::SetStringInput(std::string_view str) {
   auto nis = std::make_shared<InputString>(str);
-  nis->next = inputSource;
+  nis->next_ = inputSource;
   inputSource = nis;
 }
 
@@ -141,7 +141,7 @@ void InputState::OpenFileAsInput(std::filesystem::path const& fileName,
 
   theFile = std::make_shared<InputFile>(file, fileName);
 
-  theFile->next = inputSource;
+  theFile->next_ = inputSource;
   inputSource = theFile;
   this->theFile = theFile;
   GetNewLine();
@@ -169,7 +169,7 @@ bool InputState::CloseInputSource() {
   std::shared_ptr<InputSource> ois;
 
   if ((ois = inputSource)) {
-    std::shared_ptr<InputSource> next = inputSource->next;
+    std::shared_ptr<InputSource> next = inputSource->next_;
     inputSource = next;
   }
 
