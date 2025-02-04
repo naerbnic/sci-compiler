@@ -88,8 +88,6 @@ class InputState {
 
  private:
   std::vector<std::filesystem::path> includePath_;
-  std::shared_ptr<InputSource> saveIs_;
-  std::shared_ptr<InputString> curLineInput_;
 };
 
 extern InputState gInputState;
