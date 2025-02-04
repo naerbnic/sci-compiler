@@ -12,11 +12,9 @@
 #include "absl/base/nullability.h"
 #include "absl/functional/function_ref.h"
 #include "absl/strings/str_cat.h"
-#include "anode.hpp"
 #include "config.hpp"
 #include "error.hpp"
 #include "opcodes.hpp"
-#include "platform.hpp"
 #include "sc.hpp"
 #include "sol.hpp"
 

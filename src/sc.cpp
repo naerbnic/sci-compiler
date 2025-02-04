@@ -22,7 +22,6 @@
 #include "input.hpp"
 #include "listing.hpp"
 #include "object.hpp"
-#include "output.hpp"
 #include "parse.hpp"
 #include "platform.hpp"
 #include "share.hpp"
@@ -166,7 +165,7 @@ int main(int argc, char **argv) {
   if (!FileExists(files[0])) Panic("Can't find %s", files[0]);
 
   // Set the include path.
-  SetIncludePath(cli_include_path);
+  gInputState.SetIncludePath(cli_include_path);
 
   // Install the built-in symbols then read in and install
   // the definitions.  Lock the class database so that we're the only
@@ -175,18 +174,18 @@ int main(int argc, char **argv) {
   InstallObjects();
   Lock();
   gNumErrors = gNumWarnings = 0;
-  gTheFile = OpenFileAsInput(selector_file, true);
+  gInputState.OpenFileAsInput(selector_file, true);
   Parse();
   if (FileExists(classdef_file)) {
-    gTheFile = OpenFileAsInput(classdef_file, true);
+    gInputState.OpenFileAsInput(classdef_file, true);
     Parse();
   }
 
-  gTheFile = OpenFileAsInput(system_header, true);
+  gInputState.OpenFileAsInput(system_header, true);
   Parse();
 
-  gTheFile = OpenFileAsInput(game_header, false);
-  if (gTheFile) Parse();
+  gInputState.OpenFileAsInput(game_header, false);
+  if (gInputState.inputSource) Parse();
 
   totalErrors += gNumErrors;
 
@@ -221,8 +220,8 @@ static void CompileFile(std::string_view fileName, bool listCode) {
   std::string sourceFileName(fileName);
 
   output("%s\n", sourceFileName);
-  gTheFile = OpenFileAsInput(sourceFileName, true);
-  gCurSourceFile = gTheFile;
+  gInputState.OpenFileAsInput(sourceFileName, true);
+  gInputState.curSourceFile = gInputState.theFile;
 
   // Parse the file (don't lock the symbol tables), then assemble it.
   gSyms.moduleSymTbl = gSyms.add(ST_MEDIUM);

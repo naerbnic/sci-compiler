@@ -53,22 +53,33 @@ struct InputString : InputSource {
   LineOffset lineStartOffset() override { return 0; }
 };
 
-bool CloseInputSource();
-bool GetNewInputLine();
-std::shared_ptr<InputSource> OpenFileAsInput(
-    std::filesystem::path const& fileName, bool);
-void SetIncludePath(std::vector<std::string> const& extra_paths);
-void SetStringInput(std::string_view);
-void SetInputToCurrentLine();
-void RestoreInput();
+class InputState {
+ public:
+  // The name of the currently parsing source file.
+  std::filesystem::path curFile;
+  int curLine;
+  // The current base source file, independent of current input stack.
+  std::shared_ptr<InputSource> curSourceFile;
+  std::shared_ptr<InputSource> inputSource;
+  std::shared_ptr<InputSource> theFile;
 
-struct StrList;
+  bool GetNewInputLine();
+  void SetStringInput(std::string_view);
 
-extern std::filesystem::path gCurFile;
-extern int gCurLine;
-extern std::shared_ptr<InputSource> gCurSourceFile;
-extern std::vector<std::filesystem::path> gIncludePath;
-extern std::shared_ptr<InputSource> gInputSource;
-extern std::shared_ptr<InputSource> gTheFile;
+  void SetIncludePath(std::vector<std::string> const& extra_paths);
+  void OpenFileAsInput(std::filesystem::path const& fileName, bool required);
+
+  void SetInputToCurrentLine();
+  void RestoreInput();
+
+  bool CloseInputSource();
+
+ private:
+  std::vector<std::filesystem::path> includePath_;
+  std::shared_ptr<InputSource> saveIs_;
+  std::shared_ptr<InputString> curLineInput_;
+};
+
+extern InputState gInputState;
 
 #endif

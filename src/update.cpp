@@ -15,7 +15,6 @@
 #include "object.hpp"
 #include "output.hpp"
 #include "resource.hpp"
-#include "sc.hpp"
 #include "sol.hpp"
 #include "symtbl.hpp"
 #include "token.hpp"
@@ -95,7 +94,7 @@ void WritePropOffsets() {
   Selector* sel;
   Symbol* theSym;
 
-  gTheFile = OpenFileAsInput("offsets.txt", true);
+  gInputState.OpenFileAsInput("offsets.txt", true);
 
   std::string name = ResNameMake(MemResVocab, PROPOFS_VOCAB);
   OutputFile out((gConfig->outDir / name).string());

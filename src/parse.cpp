@@ -21,7 +21,8 @@ PNode::PNode(pn_t t)
     : sym(0),
       val(0),
       type(t),
-      lineNum(gCurSourceFile ? gCurSourceFile->lineNum : 0) {}
+      lineNum(gInputState.curSourceFile ? gInputState.curSourceFile->lineNum
+                                        : 0) {}
 
 bool Parse() {
   InitAsm();
@@ -126,7 +127,7 @@ void Include() {
   if (symType != S_IDENT && symType != S_STRING)
     Severe("Need a filename: %s", gSymStr);
   else {
-    OpenFileAsInput(gSymStr, true);
+    gInputState.OpenFileAsInput(gSymStr, true);
   }
 }
 

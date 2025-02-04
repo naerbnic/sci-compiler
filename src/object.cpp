@@ -109,7 +109,10 @@ void DoClass() {
   if (sn) sn->val = super->num;
 
   theClass->script = gScript;
-  theClass->file = gTheFile->fileName.string();
+  if (gInputState.theFile.get() != gInputState.inputSource.get()) {
+    throw std::runtime_error("Desync of files");
+  }
+  theClass->file = gInputState.inputSource->fileName.string();
 
   // Get any properties, methods, or procedures for this class.
   InstanceBody(theClass);

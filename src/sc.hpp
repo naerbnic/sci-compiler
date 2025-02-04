@@ -4,7 +4,6 @@
 #ifndef SC_HPP
 #define SC_HPP
 
-#include <filesystem>
 #include <memory>
 
 #define REQUIRED 1

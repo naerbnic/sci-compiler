@@ -13,8 +13,6 @@
 #include "text.hpp"
 #include "token.hpp"
 
-extern int gCurLine;
-
 static int gLoopNest;
 
 static bool _Expression(PNode*);

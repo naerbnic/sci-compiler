@@ -39,7 +39,7 @@ namespace error_impl {
 void WriteError(std::string_view text) {
   ++gNumErrors;
 
-  ListingOutput(absl::StrFormat("Error: %s, line %d\n\t", gCurFile, gCurLine));
+  ListingOutput(absl::StrFormat("Error: %s, line %d\n\t", gInputState.curFile, gInputState.curLine));
   ListingOutput(text);
   ListingOutput("\n");
 
@@ -54,7 +54,7 @@ void WriteError(std::string_view text) {
 }
 
 [[noreturn]] void WriteFatal(std::string_view text) {
-  ListingOutput(absl::StrFormat("Fatal: %s, line %d\n\t", gCurFile, gCurLine));
+  ListingOutput(absl::StrFormat("Fatal: %s, line %d\n\t", gInputState.curFile, gInputState.curLine));
   ListingOutput(text);
   ListingOutput("\n");
 
@@ -65,7 +65,7 @@ void WriteError(std::string_view text) {
 }
 
 void WriteInfo(std::string_view text) {
-  ListingOutput(absl::StrFormat("Info: %s, line %d\n\t", gCurFile, gCurLine));
+  ListingOutput(absl::StrFormat("Info: %s, line %d\n\t", gInputState.curFile, gInputState.curLine));
   ListingOutput(text);
   ListingOutput("\n");
 }
@@ -82,7 +82,7 @@ void WriteOutput(std::string_view str) {
 void WriteSevere(std::string_view text) {
   ++gNumErrors;
 
-  ListingOutput(absl::StrFormat("Error: %s, line %d\n\t", gCurFile, gCurLine));
+  ListingOutput(absl::StrFormat("Error: %s, line %d\n\t", gInputState.curFile, gInputState.curLine));
   ListingOutput(text);
   ListingOutput("\n");
 
@@ -99,7 +99,7 @@ void WriteSevere(std::string_view text) {
 void WriteWarning(std::string_view text) {
   ++gNumWarnings;
 
-  ListingOutput(absl::StrFormat("Warning: %s, line %d\n\t", gCurFile, gCurLine));
+  ListingOutput(absl::StrFormat("Warning: %s, line %d\n\t", gInputState.curFile, gInputState.curLine));
   ListingOutput(text);
   ListingOutput("\n");
 

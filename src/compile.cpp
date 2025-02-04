@@ -952,8 +952,8 @@ static void MakeProc(AList* curList, PNode* pn) {
   if (pn->child_at(0)) CompileExpr(&an->code, pn->child_at(0));
 
   if (gConfig->includeDebugInfo) {
-    assert(gCurSourceFile);
-    an->code.newNode<ANLineNum>(gCurSourceFile->lineNum);
+    assert(gInputState.curSourceFile);
+    an->code.newNode<ANLineNum>(gInputState.curSourceFile->lineNum);
   }
   an->code.newNode<ANOpCode>(op_ret);
 }
