@@ -139,6 +139,16 @@ void InputState::SetIncludePath(std::vector<std::string> const& extra_paths) {
   std::ranges::copy(extra_paths, std::back_inserter(includePath_));
 }
 
+void InputState::OpenTopLevelFile(std::filesystem::path const& fileName,
+                                  bool required) {
+  if (inputSource != nullptr) {
+    Warning("Top level file specified with other input sources open");
+  }
+
+  OpenFileAsInput(fileName, required);
+  curSourceFile = inputSource;
+}
+
 void InputState::OpenFileAsInput(std::filesystem::path const& fileName,
                                  bool required) {
   std::shared_ptr<InputSource> localFile;
@@ -188,6 +198,7 @@ std::string InputState::GetCurrFileName() {
   }
   return inputSource->fileName.string();
 }
+
 std::string InputState::GetTopLevelFileName() {
   if (!curSourceFile) {
     return "<unknown>";
@@ -195,6 +206,15 @@ std::string InputState::GetTopLevelFileName() {
 
   return curSourceFile->fileName.string();
 }
+
+int InputState::GetTopLevelLineNum() {
+  if (!curSourceFile) {
+    return 0;
+  }
+
+  return curSourceFile->lineNum;
+}
+
 bool InputState::IsDone() { return !inputSource; }
 
 std::string_view InputState::GetRemainingLine() {

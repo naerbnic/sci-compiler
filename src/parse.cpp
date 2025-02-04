@@ -18,11 +18,7 @@
 jmp_buf gRecoverBuf;
 
 PNode::PNode(pn_t t)
-    : sym(0),
-      val(0),
-      type(t),
-      lineNum(gInputState.curSourceFile ? gInputState.curSourceFile->lineNum
-                                        : 0) {}
+    : sym(0), val(0), type(t), lineNum(gInputState.GetTopLevelLineNum()) {}
 
 bool Parse() {
   InitAsm();

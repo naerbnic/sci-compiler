@@ -220,8 +220,7 @@ static void CompileFile(std::string_view fileName, bool listCode) {
   std::string sourceFileName(fileName);
 
   output("%s\n", sourceFileName);
-  gInputState.OpenFileAsInput(sourceFileName, true);
-  gInputState.curSourceFile = gInputState.inputSource;
+  gInputState.OpenTopLevelFile(sourceFileName, true);
 
   // Parse the file (don't lock the symbol tables), then assemble it.
   gSyms.moduleSymTbl = gSyms.add(ST_MEDIUM);

@@ -27,9 +27,8 @@ struct InputSource {
   // If true, the line is stored in inputPtr;
   virtual bool ReadNextLine() = 0;
 
-  int lineNum;
-
  protected:
+  int lineNum;
   std::string_view inputPtr;
   std::filesystem::path fileName;
 
@@ -72,25 +71,27 @@ class InputState {
   std::filesystem::path curFile;
   int curLine;
   // The current base source file, independent of current input stack.
-  std::shared_ptr<InputSource> curSourceFile;
   std::shared_ptr<InputSource> inputSource;
 
   bool GetNewInputLine();
   void SetStringInput(std::string_view);
 
   void SetIncludePath(std::vector<std::string> const& extra_paths);
+  void OpenTopLevelFile(std::filesystem::path const& fileName, bool required);
   void OpenFileAsInput(std::filesystem::path const& fileName, bool required);
 
   bool CloseInputSource();
 
   std::string GetCurrFileName();
   std::string GetTopLevelFileName();
+  int GetTopLevelLineNum();
   bool IsDone();
   std::string_view GetRemainingLine();
   void SetRemainingLine(std::string_view line);
 
  private:
   std::vector<std::filesystem::path> includePath_;
+  std::shared_ptr<InputSource> curSourceFile;
 };
 
 extern InputState gInputState;
