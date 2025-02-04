@@ -127,7 +127,7 @@ bool Expression(PNode* theNode, bool required) {
           pn->val = classes[curObj->super]->num;
         } else {
           pn->sym = theSym;
-          pn->val = symObj->num;
+          pn->val = theSym->obj()->num;
         }
         isExpr = true;
         break;

@@ -35,7 +35,7 @@ bool IsNumber();
 // This keeps track of the current token value.
 class TokenSlot {
  public:
-  using RefVal = std::variant<int, std::string, Object*, Public*>;
+  using RefVal = std::variant<int, std::string>;
 
   TokenSlot() : type(S_END), ref_val_(0) {};
   TokenSlot(TokenSlot const& tok) = default;
@@ -54,17 +54,6 @@ class TokenSlot {
       case 1:
         ref_val_ = std::string(sym.str());
         break;
-
-      case 2:
-        ref_val_ = sym.obj();
-        break;
-
-      case 3:
-        ref_val_ = sym.ext();
-        break;
-
-      default:
-        throw std::bad_variant_access();
     }
   }
 
@@ -85,10 +74,6 @@ class TokenSlot {
     return ptr ? ptr->c_str() : "";
   }
   void setStr(std::string_view str) { ref_val_ = std::string(str); }
-  Object* obj() const {
-    auto* ptr = std::get_if<Object*>(&ref_val_);
-    return ptr ? *ptr : nullptr;
-  }
 
  private:
   std::string name_;
