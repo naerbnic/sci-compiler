@@ -9,6 +9,5 @@ void WritePropOffsets();
 
 extern bool gClassAdded;
 extern bool gSelectorAdded;
-extern bool gWriteOffsets;
 
 #endif

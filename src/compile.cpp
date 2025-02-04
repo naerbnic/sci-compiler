@@ -7,6 +7,7 @@
 
 #include "anode.hpp"
 #include "asm.hpp"
+#include "config.hpp"
 #include "define.hpp"
 #include "error.hpp"
 #include "input.hpp"
@@ -59,8 +60,8 @@ void CompileProc(AList* curList, PNode* pn) {
 void CompileExpr(AOpList* curList, PNode* pn) {
   // Recursively compile code for a given node.
 
-  if (gIncludeDebugInfo && pn->type != PN_PROC && pn->type != PN_METHOD &&
-      pn->lineNum > gLastLineNum) {
+  if (gConfig->includeDebugInfo && pn->type != PN_PROC &&
+      pn->type != PN_METHOD && pn->lineNum > gLastLineNum) {
     curList->newNode<ANLineNum>(pn->lineNum);
     gLastLineNum = pn->lineNum;
   }
@@ -938,7 +939,7 @@ static void MakeProc(AList* curList, PNode* pn) {
 
   //	procedures and methods get special treatment:  the line number
   //	and file name are set here
-  if (gIncludeDebugInfo) {
+  if (gConfig->includeDebugInfo) {
     an->code.newNode<ANLineNum>(pn->lineNum);
     gLastLineNum = pn->lineNum;
   }
@@ -950,7 +951,7 @@ static void MakeProc(AList* curList, PNode* pn) {
   // Compile code for the procedure followed by a return.
   if (pn->child_at(0)) CompileExpr(&an->code, pn->child_at(0));
 
-  if (gIncludeDebugInfo) {
+  if (gConfig->includeDebugInfo) {
     assert(gCurSourceFile);
     an->code.newNode<ANLineNum>(gCurSourceFile->lineNum);
   }
@@ -1017,7 +1018,7 @@ void MakeObject(Object* theObj) {
 
   // The rest of the object goes into hunk, as it never changes.
   gSc->hunkList->getList()->newNodeBefore<ANObject>(gCodeStart, theObj->sym,
-                                                   theObj->num);
+                                                    theObj->num);
 
   // If this a class, add the property dictionary.
   ANObjTable* propDict = gSc->hunkList->getList()->newNodeBefore<ANObjTable>(

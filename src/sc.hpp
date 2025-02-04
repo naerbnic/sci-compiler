@@ -25,16 +25,6 @@ struct Compiler {
 
 extern std::unique_ptr<Compiler> gSc;
 
-// The target SCI architecture for the scripts.
-enum class SciTargetArch {
-  SCI_1_1,
-  SCI_2,
-};
-
-extern bool gIncludeDebugInfo;
-extern std::filesystem::path gOutDir;
 extern int gScript;
-extern bool gVerbose;
-extern SciTargetArch gTargetArch;
 
 #endif

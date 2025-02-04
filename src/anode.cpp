@@ -9,6 +9,7 @@
 #include <algorithm>
 
 #include "asm.hpp"
+#include "config.hpp"
 #include "define.hpp"
 #include "error.hpp"
 #include "listing.hpp"
@@ -38,7 +39,7 @@ static bool canOptimizeTransfer(size_t a, size_t b) {
 // architecture differences out.
 
 static int NumArgsSize() {
-  switch (gTargetArch) {
+  switch (gConfig->targetArch) {
     case SciTargetArch::SCI_1_1:
       return 1;
 
@@ -51,7 +52,7 @@ static int NumArgsSize() {
 }
 
 static void ListNumArgs(ListingFile* listFile, std::size_t offset, int n) {
-  switch (gTargetArch) {
+  switch (gConfig->targetArch) {
     case SciTargetArch::SCI_1_1:
       listFile->ListByte(offset, n);
       break;
@@ -66,7 +67,7 @@ static void ListNumArgs(ListingFile* listFile, std::size_t offset, int n) {
 }
 
 static void WriteNumArgs(OutputFile* out, int n) {
-  switch (gTargetArch) {
+  switch (gConfig->targetArch) {
     case SciTargetArch::SCI_1_1:
       out->WriteByte(n);
       break;
@@ -707,7 +708,7 @@ void ANVars::emit(OutputFile* out) {
 ANFileName::ANFileName(std::string name) : ANOpCode(op_fileName), name(name) {}
 
 void ANFileName::list(ListingFile* listFile) {
-  switch (gTargetArch) {
+  switch (gConfig->targetArch) {
     case SciTargetArch::SCI_1_1:
       break;
     case SciTargetArch::SCI_2:
@@ -721,7 +722,7 @@ void ANFileName::list(ListingFile* listFile) {
 }
 
 void ANFileName::emit(OutputFile* out) {
-  switch (gTargetArch) {
+  switch (gConfig->targetArch) {
     case SciTargetArch::SCI_1_1:
       break;
     case SciTargetArch::SCI_2:
@@ -735,7 +736,7 @@ void ANFileName::emit(OutputFile* out) {
 }
 
 size_t ANFileName::size() {
-  switch (gTargetArch) {
+  switch (gConfig->targetArch) {
     case SciTargetArch::SCI_1_1:
       return 0;
     case SciTargetArch::SCI_2:
@@ -750,7 +751,7 @@ size_t ANFileName::size() {
 ANLineNum::ANLineNum(int num) : ANOpCode(op_lineNum), num(num) {}
 
 void ANLineNum::list(ListingFile* listFile) {
-  switch (gTargetArch) {
+  switch (gConfig->targetArch) {
     case SciTargetArch::SCI_1_1:
       break;
     case SciTargetArch::SCI_2:
@@ -763,7 +764,7 @@ void ANLineNum::list(ListingFile* listFile) {
 }
 
 void ANLineNum::emit(OutputFile* out) {
-  switch (gTargetArch) {
+  switch (gConfig->targetArch) {
     case SciTargetArch::SCI_1_1:
       break;
     case SciTargetArch::SCI_2:
@@ -777,7 +778,7 @@ void ANLineNum::emit(OutputFile* out) {
 }
 
 size_t ANLineNum::size() {
-  switch (gTargetArch) {
+  switch (gConfig->targetArch) {
     case SciTargetArch::SCI_1_1:
       return 0;
     case SciTargetArch::SCI_2:

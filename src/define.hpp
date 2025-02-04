@@ -4,8 +4,8 @@
 #ifndef DEFINE_HPP
 #define DEFINE_HPP
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 #include <vector>
 
 #include "symtypes.hpp"
@@ -59,6 +59,5 @@ void Definition();
 
 extern VarList gGlobalVars;
 extern VarList gLocalVars;
-extern std::size_t gMaxVars;
 
 #endif

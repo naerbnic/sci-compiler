@@ -5,13 +5,13 @@
 #include <cassert>
 
 #include "anode.hpp"
+#include "config.hpp"
 #include "listing.hpp"
 #include "opcodes.hpp"
 #include "output.hpp"
 #include "sc.hpp"
 
 bool gShrink;
-bool gNoOptimize;
 
 ///////////////////////////////////////////////////
 // Class ANode
@@ -121,7 +121,7 @@ void FixupList::emit(OutputFile* out) {
 ///////////////////////////////////////////////////
 
 void CodeList::optimize() {
-  if (!gNoOptimize) {
+  if (!gConfig->noOptimize) {
     for (auto it = list_.iter(); it; ++it)
       while (it->optimize());
   }

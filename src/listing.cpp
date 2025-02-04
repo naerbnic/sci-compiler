@@ -9,10 +9,11 @@
 
 #include <string_view>
 
-#include "absl/functional/function_ref.h"
 #include "absl/base/nullability.h"
+#include "absl/functional/function_ref.h"
 #include "absl/strings/str_cat.h"
 #include "anode.hpp"
+#include "config.hpp"
 #include "error.hpp"
 #include "opcodes.hpp"
 #include "platform.hpp"
@@ -307,7 +308,7 @@ class NullListingFileImpl : public ListingFile {
 
 std::unique_ptr<ListingFile> ListingFile::Open(
     std::string_view sourceFileName) {
-  auto listName = gOutDir / absl::StrFormat("%d.sl", gScript);
+  auto listName = gConfig->outDir / absl::StrFormat("%d.sl", gScript);
   FILE* listFile = nullptr;
   FILE* sourceFile = nullptr;
 
@@ -315,7 +316,7 @@ std::unique_ptr<ListingFile> ListingFile::Open(
     Panic("Can't open %s for listing", listName.string());
   }
 
-  if (gIncludeDebugInfo) {
+  if (gConfig->includeDebugInfo) {
     if (!(sourceFile = fopen(std::string(sourceFileName).c_str(), "rt")))
       Panic("Can't open %s for source lines in listing", sourceFileName);
   }

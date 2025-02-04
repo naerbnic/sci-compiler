@@ -6,7 +6,4 @@
 void Lock();
 void Unlock();
 
-extern bool gAbortIfLocked;
-extern bool gDontLock;
-
 #endif

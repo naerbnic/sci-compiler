@@ -10,14 +10,13 @@
 
 #include <cstddef>
 
+#include "config.hpp"
 #include "error.hpp"
 #include "memtype.hpp"
 #include "platform.hpp"
 #include "resource.hpp"
 #include "sc.hpp"
 #include "sol.hpp"
-
-bool gHighByteFirst;
 
 OutputFile::OutputFile(std::string fileName) : fileName(fileName) {
   fp = CreateOutputFile(fileName);
@@ -49,7 +48,7 @@ void OutputFile::WriteWord(int16_t w) {
   uint16_t u = w;
 
   std::endian targetEndian =
-      gHighByteFirst ? std::endian::big : std::endian::little;
+      gConfig->highByteFirst ? std::endian::big : std::endian::little;
 
   if (std::endian::native != targetEndian) {
     // Swap the bytes.
@@ -81,7 +80,7 @@ ObjFiles OpenObjFiles() {
 
 static std::string MakeObjFileName(MemType type) {
   std::string resName = ResNameMake(type, gScript);
-  std::string dest = (gOutDir / resName).string();
+  std::string dest = (gConfig->outDir / resName).string();
   DeletePath(dest);
   return dest;
 }

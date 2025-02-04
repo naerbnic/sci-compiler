@@ -9,6 +9,7 @@
 #include <filesystem>
 
 #include "absl/strings/str_format.h"
+#include "config.hpp"
 #include "error.hpp"
 #include "input.hpp"
 #include "object.hpp"
@@ -22,8 +23,6 @@
 
 bool gClassAdded;
 bool gSelectorAdded;
-std::filesystem::path gOutDir;
-bool gWriteOffsets;
 
 static uint8_t resHdr[] = {MemResVocab, 0};
 
@@ -78,7 +77,7 @@ void WriteClassTbl() {
 
   // Write the table out.
   std::string name = ResNameMake(MemResVocab, CLASSTBL_VOCAB);
-  OutputFile out((gOutDir / name).string());
+  OutputFile out((gConfig->outDir / name).string());
   out.Write(resID, 2);
   for (index = 0; index < gMaxClassNum + 1; ++index) {
     out.WriteWord(classTbl[index].objID);
@@ -99,7 +98,7 @@ void WritePropOffsets() {
   gTheFile = OpenFileAsInput("offsets.txt", true);
 
   std::string name = ResNameMake(MemResVocab, PROPOFS_VOCAB);
-  OutputFile out((gOutDir / name).string());
+  OutputFile out((gConfig->outDir / name).string());
 
   // Write out the resource header (this will be a vocabulary resource).
   out.Write(resHdr, sizeof resHdr);
@@ -213,7 +212,7 @@ static void WriteSelectorVocab() {
   uint32_t tblLen;
 
   std::string resName = ResNameMake(MemResVocab, SELECTOR_VOCAB);
-  std::string fileName = (gOutDir / resName).string();
+  std::string fileName = (gConfig->outDir / resName).string();
 
   // Compute the size of the table needed to hold offsets to all selectors,
   // allocate the table, and initialize it to point to the byte following

@@ -6,6 +6,7 @@
 #include <setjmp.h>
 
 #include "compile.hpp"
+#include "config.hpp"
 #include "define.hpp"
 #include "error.hpp"
 #include "input.hpp"
@@ -19,7 +20,6 @@
 Object* gCurObj;
 Object* gReceiver;
 Symbol* gNameSymbol;
-bool gNoAutoName;
 
 static void Declaration(Object*, int);
 static void InstanceBody(Object*);
@@ -221,7 +221,7 @@ static void InstanceBody(Object* obj) {
 
   // If 'name' has not been given a value, give it the
   // name of the symbol.
-  if (!gNoAutoName && nameSelector && nameSelector->val == -1) {
+  if (!gConfig->noAutoName && nameSelector && nameSelector->val == -1) {
     nameSelector->tag = T_TEXT;
     nameSelector->val = gText.find(obj->sym->name());
   }

@@ -5,9 +5,9 @@
 #define OBJECT_HPP
 
 #include <cstdint>
+#include <memory>
 #include <ranges>
 #include <string>
-#include <memory>
 #include <vector>
 
 struct ANode;
@@ -127,8 +127,6 @@ extern Object* gCurObj;
 extern int gMaxClassNum;
 extern int gMaxSelector;
 extern Symbol* gNameSymbol;
-extern bool gNoAutoName;
 extern Object* gReceiver;
-extern bool gShowSelectors;
 
 #endif

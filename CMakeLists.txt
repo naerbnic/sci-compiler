@@ -26,6 +26,7 @@ FetchContent_MakeAvailable(absl argparse)
 
 # Add source to this project's executable.
 add_executable (sc
+src/config.cpp
 src/alist.cpp
 src/anode.cpp
 src/asm.cpp

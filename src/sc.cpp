@@ -16,6 +16,7 @@
 #include "banner.hpp"
 #include "builtins.hpp"
 #include "compile.hpp"
+#include "config.hpp"
 #include "define.hpp"
 #include "error.hpp"
 #include "input.hpp"
@@ -29,11 +30,8 @@
 #include "text.hpp"
 #include "update.hpp"
 
-bool gIncludeDebugInfo;
 std::unique_ptr<Compiler> gSc;
 int gScript;
-bool gVerbose;
-SciTargetArch gTargetArch = SciTargetArch::SCI_2;
 
 static int totalErrors;
 
@@ -131,19 +129,24 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  gAbortIfLocked = program.get<bool>("-a");
-  gIncludeDebugInfo = program.get<bool>("-d");
-  gMaxVars = program.get<int>("-g");
+  ToolConfig config = {
+      .abortIfLocked = program.get<bool>("-a"),
+      .includeDebugInfo = program.get<bool>("-d"),
+      .maxVars = program.get<int>("-g"),
+      .noAutoName = program.get<bool>("-n"),
+      .outDir = program.get<std::string>("-o"),
+      .writeOffsets = program.get<bool>("-O"),
+      .showSelectors = program.get<bool>("-s"),
+      .dontLock = program.get<bool>("-u"),
+      .verbose = program.get<bool>("-v"),
+      .highByteFirst = program.get<bool>("-w"),
+      .noOptimize = program.get<bool>("-z"),
+      .targetArch = GetTargetArchitecture(program.get<std::string>("-t")),
+  };
+
+  gConfig = &config;
+
   bool listCode = program.get<bool>("-l");
-  gNoAutoName = program.get<bool>("-n");
-  gOutDir = program.get<std::string>("-o");
-  gWriteOffsets = program.get<bool>("-O");
-  gShowSelectors = program.get<bool>("-s");
-  gDontLock = program.get<bool>("-u");
-  gVerbose = program.get<bool>("-v");
-  gHighByteFirst = program.get<bool>("-w");
-  gNoOptimize = program.get<bool>("-z");
-  gTargetArch = GetTargetArchitecture(program.get<std::string>("-t"));
   auto selector_file = program.get<std::string>("--selector_file");
   auto classdef_file = program.get<std::string>("--classdef_file");
   auto system_header = program.get<std::string>("--system_header");
@@ -194,7 +197,7 @@ int main(int argc, char **argv) {
 
   // Write out the class table and unlock the class database.
   WriteClassTbl();
-  if (gWriteOffsets) WritePropOffsets();
+  if (gConfig->writeOffsets) WritePropOffsets();
   Unlock();
 
   return totalErrors != 0;

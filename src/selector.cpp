@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 
+#include "config.hpp"
 #include "error.hpp"
 #include "object.hpp"
 #include "symtbl.hpp"
@@ -10,7 +11,6 @@
 #include "update.hpp"
 
 int gMaxSelector;
-bool gShowSelectors;
 
 const int MAXSELECTOR = 8192;
 const int BITS_PER_ENTRY = 16;
@@ -174,7 +174,8 @@ Symbol* GetSelector(Symbol* obj) {
   if (!(msgSel = gSyms.lookup(gSymStr))) {
     InstallSelector(gSymStr, NewSelectorNum());
     msgSel = gSyms.lookup(gSymStr);
-    if (gShowSelectors) Info("%s is being installed as a selector.", gSymStr);
+    if (gConfig->showSelectors)
+      Info("%s is being installed as a selector.", gSymStr);
   }
   gTokSym.SaveSymbol(*msgSel);
 

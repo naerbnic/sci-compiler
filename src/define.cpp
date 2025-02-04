@@ -10,6 +10,7 @@
 #include "absl/strings/ascii.h"
 #include "anode.hpp"
 #include "compile.hpp"
+#include "config.hpp"
 #include "error.hpp"
 #include "parse.hpp"
 #include "sc.hpp"
@@ -18,7 +19,6 @@
 
 VarList gLocalVars;
 VarList gGlobalVars;
-std::size_t gMaxVars = 750;
 
 static int InitialValue(VarList& theVars, int offset, int arraySize);
 
@@ -184,8 +184,8 @@ void Global() {
       // Get the initial value(s) of the variable and expand the size
       // of the block if more than one value is encountered.
       n = InitialValue(gGlobalVars, offset, 1);
-      if (n == -1 || gGlobalVars.values.size() > gMaxVars) {
-        Error(tooManyVars, gMaxVars);
+      if (n == -1 || gGlobalVars.values.size() > gConfig->maxVars) {
+        Error(tooManyVars, gConfig->maxVars);
         break;
       }
     }
@@ -236,8 +236,8 @@ void Local() {
         }
         n = InitialValue(gLocalVars, size, arraySize);
         size += std::max(n, arraySize);
-        if (n == -1 || (std::size_t)(size) > gMaxVars) {
-          Error(tooManyVars, gMaxVars);
+        if (n == -1 || (std::size_t)(size) > gConfig->maxVars) {
+          Error(tooManyVars, gConfig->maxVars);
           break;
         }
       }
@@ -250,8 +250,8 @@ void Local() {
       theSym->setVal(size);
       n = InitialValue(gLocalVars, size, 1);
       size += n;
-      if (n == -1 || (std::size_t)(size) > gMaxVars) {
-        Error(tooManyVars, gMaxVars);
+      if (n == -1 || (std::size_t)(size) > gConfig->maxVars) {
+        Error(tooManyVars, gConfig->maxVars);
         break;
       }
     }
@@ -369,7 +369,7 @@ static int InitialValue(VarList& theVars, int offset, int arraySize) {
     return 1;
   }
 
-  if ((std::size_t)(offset + arraySize) > gMaxVars) return -1;
+  if ((std::size_t)(offset + arraySize) > gConfig->maxVars) return -1;
 
   if (theVars.values.size() < (std::size_t)(offset + arraySize)) {
     theVars.values.resize(offset + arraySize);

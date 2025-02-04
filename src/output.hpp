@@ -35,6 +35,4 @@ struct ObjFiles {
 
 ObjFiles OpenObjFiles();
 
-extern bool gHighByteFirst;
-
 #endif
