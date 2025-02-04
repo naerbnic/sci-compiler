@@ -519,7 +519,7 @@ static void ReadString(std::string_view ip) {
   while ((c = currCharAndAdvance(ip)) != open && c != '\0') {
     switch (c) {
       case '\n':
-        GetNewLine();
+        gInputState.GetNewInputLine();
         if (!gInputState.inputSource) Fatal("Unterminated string");
         ip = gInputState.inputSource->inputPtr;
         break;
@@ -539,7 +539,7 @@ static void ReadString(std::string_view ip) {
         while ((c = currChar(ip)) == ' ' || c == '\t' || c == '\n') {
           advance(ip);
           if (c == '\n') {
-            GetNewLine();
+            gInputState.GetNewInputLine();
             if (!gInputState.inputSource) Fatal("Unterminated string");
             ip = gInputState.inputSource->inputPtr;
           }
