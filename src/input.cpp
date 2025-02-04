@@ -15,8 +15,6 @@
 
 InputState gInputState;
 
-static std::string inputLine;
-
 static FILE* FOpen(std::filesystem::path const& path, const char* mode) {
   return fopen(path.string().c_str(), mode);
 }
@@ -46,13 +44,12 @@ InputFile::InputFile(FILE* fp, std::filesystem::path name)
 
 InputFile::~InputFile() { fclose(file); }
 
-bool InputFile::endInputLine() { return GetNewLine(); }
-
-bool InputFile::ReadNextLine(std::string* line) {
+bool InputFile::ReadNextLine() {
   std::array<char, 512> inputLine;
 
   if (!fgets(inputLine.data(), inputLine.size(), file)) {
     if (feof(file)) {
+      inputPtr = "";
       return false;
     }
     int error = ferror(file);
@@ -60,17 +57,21 @@ bool InputFile::ReadNextLine(std::string* line) {
         absl::StrFormat("I/O error reading file %s: %d", fileName, error));
   }
 
-  line->clear();
-  line->append(inputLine.data());
+  curr_line_.clear();
+  curr_line_.append(inputLine.data());
+
+  inputPtr = curr_line_;
+
   return true;
 }
 
-InputString::InputString() : line_() { inputPtr = ""; }
+InputString::InputString() : line_(), wasRead_(true) { inputPtr = ""; }
 
 InputString::InputString(std::string_view str)
     : InputSource(gInputState.curFile, gInputState.curLine),
-      line_(std::string(str)) {
-  inputPtr = *line_;
+      line_(std::string(str)),
+      wasRead_(false) {
+  inputPtr = "";
 }
 
 InputString& InputString::operator=(InputString& s) {
@@ -79,14 +80,12 @@ InputString& InputString::operator=(InputString& s) {
   return *this;
 }
 
-bool InputString::endInputLine() { return gInputState.CloseInputSource(); }
-
-bool InputString::ReadNextLine(std::string* line) {
-  if (!line_) {
+bool InputString::ReadNextLine() {
+  if (wasRead_) {
     return false;
   }
-  *line = std::move(line_).value();
-  line_ = std::nullopt;
+  inputPtr = line_;
+  wasRead_ = true;
   return true;
 }
 
@@ -97,9 +96,17 @@ bool InputState::GetNewInputLine() {
   // Read a new line in from the current input file.  If we're at end of
   // file, close the file, shifting input to the next source in the queue.
 
-  while (inputSource) {
-    if (inputSource->ReadNextLine(&inputLine)) {
-      inputSource->inputPtr = inputLine;
+  // This now observes if inputSources have an empty input. We only go back
+  // far enough to find a source with input.
+  //
+  // To ensure we don't just wait at the current source forever, we
+  // set the current input to empty.
+  if (inputSource) {
+    inputSource->inputPtr = "";
+  }
+
+  while (inputSource && inputSource->inputPtr.empty()) {
+    if (inputSource->ReadNextLine()) {
       break;
     }
     CloseInputSource();
@@ -145,6 +152,7 @@ void InputState::OpenFileAsInput(std::filesystem::path const& fileName,
   if (!file && fileName.is_relative()) {
     for (auto const& path : includePath_) {
       file = FOpen(path / fileName, "r");
+      if (file) break;
     }
   }
 

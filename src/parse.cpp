@@ -124,11 +124,21 @@ bool Parse() {
 
 void Include() {
   GetToken();
-  if (symType != S_IDENT && symType != S_STRING)
+  if (symType != S_IDENT && symType != S_STRING) {
     Severe("Need a filename: %s", gSymStr);
-  else {
-    gInputState.OpenFileAsInput(gSymStr, true);
+    return;
   }
+  std::string filename = gSymStr;
+  // We need to put this at the right syntactic level, so we GetToken to grab
+  // the remaining parent before opening the file.
+  GetToken();
+  if (symType != CLOSE_P) {
+    Severe("Expected closing parenthesis: %s", gSymStr);
+    return;
+  }
+
+  // Push the file onto the stack.
+  gInputState.OpenFileAsInput(filename, true);
 }
 
 bool OpenBlock() {

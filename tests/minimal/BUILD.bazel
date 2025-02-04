@@ -11,6 +11,7 @@ sci_headers(
     name = "base_headers",
     hdrs = [
         "game.sh",
+        "test.sh",
     ]
 )
 

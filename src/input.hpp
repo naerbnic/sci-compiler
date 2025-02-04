@@ -7,7 +7,6 @@
 #include <cstdio>
 #include <filesystem>
 #include <memory>
-#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -21,10 +20,12 @@ struct InputSource {
 
   InputSource& operator=(InputSource&);
 
-  virtual bool endInputLine() = 0;
   virtual LineOffset lineStartOffset() = 0;
 
-  virtual bool ReadNextLine(std::string* line) = 0;
+  // Reads the next line from the input source.
+  //
+  // If true, the line is stored in inputPtr;
+  virtual bool ReadNextLine() = 0;
 
   std::filesystem::path fileName;
   int lineNum;
@@ -39,12 +40,14 @@ struct InputFile : InputSource {
   InputFile(FILE*, std::filesystem::path name);
   ~InputFile();
 
-  bool endInputLine() override;
   LineOffset lineStartOffset() override { return this->lineStart; }
-  bool ReadNextLine(std::string* line) override;
+  bool ReadNextLine() override;
 
   FILE* file;
   LineOffset lineStart;
+
+ private:
+  std::string curr_line_;
 };
 
 struct InputString : InputSource {
@@ -53,12 +56,12 @@ struct InputString : InputSource {
 
   InputString& operator=(InputString&);
 
-  bool endInputLine() override;
   LineOffset lineStartOffset() override { return 0; }
-  bool ReadNextLine(std::string* line) override;
+  bool ReadNextLine() override;
 
  private:
-  std::optional<std::string> line_;
+  std::string line_;
+  bool wasRead_;
 };
 
 class InputState {

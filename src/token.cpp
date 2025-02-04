@@ -168,14 +168,23 @@ bool NextToken() {
 
   // Scan to the start of the next token.
   while (1) {
-    if (ip.empty() || ip[0] == '\n') {
-      if (gInputState.inputSource->endInputLine()) {
+    if (ip.empty()) {
+      if (GetNewLine()) {
         ip = gInputState.inputSource->inputPtr;
         continue;
       } else {
         symType = S_END;
         return false;
       }
+    }
+
+    if (ip[0] == '\0') {
+      throw std::runtime_error("Unexpected null character in input");
+    }
+
+    if (ip[0] == '\n') {
+      ip.remove_prefix(1);
+      continue;
     }
 
     if (!IsSep(ip[0])) break;
