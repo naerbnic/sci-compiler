@@ -20,7 +20,6 @@ struct InputSource {
 
   InputSource& operator=(InputSource&);
 
-  virtual bool incrementPastNewLine(std::string_view&) = 0;
   virtual bool endInputLine() = 0;
   virtual LineOffset lineStartOffset() = 0;
 
@@ -37,7 +36,6 @@ struct InputFile : InputSource {
   InputFile(FILE*, std::filesystem::path name);
   ~InputFile();
 
-  bool incrementPastNewLine(std::string_view&) override;
   bool endInputLine() override;
   LineOffset lineStartOffset() override { return this->lineStart; }
 
@@ -51,7 +49,6 @@ struct InputString : InputSource {
 
   InputString& operator=(InputString&);
 
-  bool incrementPastNewLine(std::string_view&) override;
   bool endInputLine() override;
   LineOffset lineStartOffset() override { return 0; }
 };

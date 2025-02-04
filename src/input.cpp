@@ -46,14 +46,6 @@ InputFile::InputFile(FILE* fp, std::filesystem::path name)
 
 InputFile::~InputFile() { fclose(file); }
 
-bool InputFile::incrementPastNewLine(std::string_view& ip) {
-  if (GetNewLine()) {
-    ip = gInputState.inputSource->inputPtr;
-    return true;
-  }
-  return false;
-}
-
 bool InputFile::endInputLine() { return GetNewLine(); }
 
 InputString::InputString(std::string_view str)
@@ -70,11 +62,6 @@ InputString& InputString::operator=(InputString& s) {
 }
 
 bool InputString::endInputLine() { return gInputState.CloseInputSource(); }
-
-bool InputString::incrementPastNewLine(std::string_view& ip) {
-  ip = ip.substr(1);
-  return true;
-}
 
 // -------------
 // InputState

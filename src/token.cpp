@@ -102,8 +102,7 @@ void GetRest(bool error) {
 
   while (1) {
     if (ip.empty()) {
-      gInputState.CloseInputSource();
-      if (!gInputState.inputSource) {
+      if (!GetNewLine()) {
         if (!error) EarlyEnd();
         return;
       }
@@ -126,9 +125,11 @@ void GetRest(bool error) {
         }
         break;
 
-      case '\n':
-        if (!gInputState.inputSource->incrementPastNewLine(ip)) EarlyEnd();
+      case '\n': {
+        // Don't include the newline in the string.
+        ip.remove_prefix(1);
         continue;
+      }
     }
 
     if (!truncate) gSymStr.push_back(currCharAndAdvance(ip));
