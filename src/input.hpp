@@ -68,9 +68,6 @@ struct InputString : InputSource {
 
 class InputState {
  public:
-  // The current base source file, independent of current input stack.
-  std::shared_ptr<InputSource> inputSource;
-
   bool GetNewInputLine();
   void SetStringInput(std::string_view);
 
@@ -89,6 +86,8 @@ class InputState {
   void SetRemainingLine(std::string_view line);
 
  private:
+  // The current base source file, independent of current input stack.
+  std::shared_ptr<InputSource> inputSource;
   std::vector<std::filesystem::path> includePath_;
   std::shared_ptr<InputSource> curSourceFile;
 };
