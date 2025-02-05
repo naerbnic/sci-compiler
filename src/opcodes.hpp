@@ -150,7 +150,4 @@ const uint8_t op_lineNum = 0x7E;
 
 const uint16_t OP_LABEL = 0x7000;
 
-void GetSourceLineNum();
-void GetSourceModuleFileName();
-
 #endif

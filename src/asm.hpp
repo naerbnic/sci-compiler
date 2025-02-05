@@ -9,9 +9,6 @@
 void InitAsm();
 void Assemble(ListingFile* listFile);
 
-void Optimize();
-void ShowOptimize();
-
 struct ANTable;
 struct ANWord;
 

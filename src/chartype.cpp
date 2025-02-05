@@ -123,8 +123,6 @@ uint8_t gCType[256] = {
 bool IsSep(char c) { return gCType[static_cast<uint8_t>(c)] & C_SEP; }
 bool IsTok(char c) { return gCType[static_cast<uint8_t>(c)] & C_TOK; }
 bool IsDigit(char c) { return gCType[static_cast<uint8_t>(c)] & C_DIGIT; }
-bool IsBin(char c) { return gCType[static_cast<uint8_t>(c)] & C_BIN; }
-bool IsDec(char c) { return gCType[static_cast<uint8_t>(c)] & C_DEC; }
 bool IsHex(char c) { return gCType[static_cast<uint8_t>(c)] & C_HEX; }
 bool IsTerm(char c) { return gCType[static_cast<uint8_t>(c)] & C_TERM; }
 bool IsIncl(char c) { return gCType[static_cast<uint8_t>(c)] & C_INCL; }

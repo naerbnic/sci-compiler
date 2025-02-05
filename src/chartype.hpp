@@ -11,8 +11,6 @@
 bool IsSep(char c);
 bool IsTok(char c);
 bool IsDigit(char c);
-bool IsBin(char c);
-bool IsDec(char c);
 bool IsHex(char c);
 bool IsTerm(char c);
 bool IsIncl(char c);
