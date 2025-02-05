@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <memory>
 
+#include "absl/cleanup/cleanup.h"
 #include "absl/strings/str_format.h"
 #include "error.hpp"
 
@@ -20,26 +21,46 @@ FILE* FOpen(std::filesystem::path const& path, const char* mode) {
 }
 
 struct InputFile : InputSource {
-  InputFile(FILE* fp) : file_(fp) {}
-  ~InputFile() { fclose(file_); }
+  InputFile(std::string fileContents)
+      : fileContents_(std::move(fileContents)), currOffset_(0) {}
 
   bool ReadNextLine(std::string* output) {
-    std::array<char, 512> inputLine;
-
-    if (!fgets(inputLine.data(), inputLine.size(), file_)) {
-      if (feof(file_)) {
-        return false;
-      }
-      throw std::runtime_error("I/O error reading file");
+    if (currOffset_ >= fileContents_.length()) {
+      return false;
     }
 
-    output->append(inputLine.data());
+    std::string_view contentsView = fileContents_;
+    auto newlineIndex = contentsView.find_first_of("\n\r", currOffset_);
+
+    // This marks the end of the non-newline text. Write it to the output.
+    output->append(
+        contentsView.substr(currOffset_, newlineIndex - currOffset_));
+    if (newlineIndex == std::string_view::npos) {
+      currOffset_ = fileContents_.length();
+    } else {
+      // We have some kind of newline. Regularize the output to \n.
+      output->append("\n");
+
+      // Check what kind of newline we have.
+      if (fileContents_[newlineIndex] == '\n') {
+        currOffset_ = newlineIndex + 1;
+      } else {
+        // We have a \r, check if we have a \n after it.
+        if (newlineIndex + 1 < fileContents_.length() &&
+            fileContents_[newlineIndex + 1] == '\n') {
+          currOffset_ = newlineIndex + 2;
+        } else {
+          currOffset_ = newlineIndex + 1;
+        }
+      }
+    }
 
     return true;
   }
 
  private:
-  FILE* file_;
+  std::string fileContents_;
+  std::size_t currOffset_;
 };
 
 struct InputString : InputSource {
@@ -142,7 +163,24 @@ void InputState::OpenFileAsInput(std::filesystem::path const& fileName,
     if (required) Panic("Can't open \"%s\"", fileName);
   }
 
-  PushInput(fileName, 1, std::make_unique<InputFile>(file));
+  auto cleanup = absl::Cleanup([&] { fclose(file); });
+
+  std::string fileContents;
+  std::array<char, 512> inputLine;
+
+  while (true) {
+    int length = fread(inputLine.data(), sizeof(char), inputLine.size(), file);
+    if (length == 0) {
+      if (ferror(file)) {
+        throw std::runtime_error("I/O error reading file");
+      }
+      break;
+    }
+
+    fileContents.append(inputLine.data(), length);
+  }
+
+  PushInput(fileName, 1, std::make_unique<InputFile>(std::move(fileContents)));
 }
 
 std::string InputState::GetCurrFileName() {

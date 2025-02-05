@@ -22,11 +22,12 @@ cc_binary(
         ":platform",
         "//src/io:buffer",
         "@abseil-cpp//absl/container:btree",
-        "@abseil-cpp//absl/debugging:stacktrace",
         "@abseil-cpp//absl/debugging:failure_signal_handler",
+        "@abseil-cpp//absl/debugging:stacktrace",
         "@abseil-cpp//absl/debugging:symbolize",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
+        "@abseil-cpp//absl/cleanup",
         "@argparse",
     ],
 )

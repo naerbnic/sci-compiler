@@ -12,7 +12,8 @@
 
 using LineOffset = int;
 
-struct InputSource {
+class InputSource {
+ public:
   InputSource() = default;
   virtual ~InputSource() = default;
 
@@ -26,7 +27,7 @@ class InputState {
  public:
   InputState();
   ~InputState();
-  
+
   // Sets the include path that will be used on include lookups.
   //
   // The paths will be searched in the order provided.
