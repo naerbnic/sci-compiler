@@ -115,8 +115,6 @@ class InputState {
   void SetRemainingLine(std::string_view line);
 
  private:
-  // Pops the current reading file from the input stack.
-  bool CloseInputSource();
   // The current base source file, independent of current input stack.
   std::vector<std::filesystem::path> includePath_;
 

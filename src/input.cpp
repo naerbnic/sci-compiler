@@ -100,7 +100,8 @@ bool InputState::GetNewInputLine() {
     if (inputStack_.back()->ReadNextLine()) {
       break;
     }
-    CloseInputSource();
+
+    inputStack_.pop_back();
   }
 
   if (!inputStack_.empty()) {
@@ -158,18 +159,6 @@ void InputState::OpenFileAsInput(std::filesystem::path const& fileName,
   }
 
   inputStack_.push_back(std::make_unique<InputFile>(file, fileName));
-}
-
-bool InputState::CloseInputSource() {
-  // Close the current input source.  If the source is a file, this involves
-  // closing the file.  Remove the source from the chain and free its memory.
-
-  if (inputStack_.empty()) {
-    return false;
-  }
-  inputStack_.pop_back();
-
-  return !inputStack_.empty();
 }
 
 std::string InputState::GetCurrFileName() {
