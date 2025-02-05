@@ -1,4 +1,5 @@
-load("//rules:sci.bzl", "sci_build_env", "sci_script", "sci_binary", "sci_headers")
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("//rules:sci.bzl", "sci_binary", "sci_build_env", "sci_headers", "sci_script")
 
 sci_build_env(
     name = "base_env",
@@ -12,7 +13,7 @@ sci_headers(
     hdrs = [
         "game.sh",
         "test.sh",
-    ]
+    ],
 )
 
 sci_script(
@@ -31,8 +32,15 @@ sci_script(
 sci_binary(
     name = "resources",
     srcs = [
-        ":main",
         ":helper",
+        ":main",
     ],
     build_env = ":base_env",
+)
+
+build_test(
+    name = "resources_build_test",
+    targets = [
+        ":resources",
+    ],
 )
