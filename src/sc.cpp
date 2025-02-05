@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
       .nargs(1);
   program.add_argument("-g")
       .help("maximum number of global or local variables")
-      .default_value(750);
+      .default_value(750ul);
   program.add_argument("-l")
       .help("generate a code listing")
       .default_value(false)
@@ -131,7 +131,7 @@ int main(int argc, char **argv) {
   ToolConfig config = {
       .abortIfLocked = program.get<bool>("-a"),
       .includeDebugInfo = program.get<bool>("-d"),
-      .maxVars = program.get<int>("-g"),
+      .maxVars = program.get<std::size_t>("-g"),
       .noAutoName = program.get<bool>("-n"),
       .outDir = program.get<std::string>("-o"),
       .writeOffsets = program.get<bool>("-O"),

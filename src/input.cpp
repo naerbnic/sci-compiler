@@ -7,6 +7,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <optional>
 
 #include "absl/cleanup/cleanup.h"
 #include "absl/strings/str_format.h"

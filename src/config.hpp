@@ -16,7 +16,7 @@ enum class SciTargetArch {
 struct ToolConfig {
   bool abortIfLocked;
   bool includeDebugInfo;
-  int maxVars;
+  std::size_t maxVars;
   bool noAutoName;
   std::filesystem::path outDir;
   bool writeOffsets;
