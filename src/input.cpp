@@ -242,8 +242,7 @@ void InputState::SetRemainingLine(std::string_view str) {
     bool start_in_range = str_start >= low_ptr && str_start <= high_ptr;
     bool end_in_range = str_end >= low_ptr && str_end <= high_ptr;
     if (!start_in_range || !end_in_range) {
-      throw new std::runtime_error(
-          "Updated line out of bounds of original line");
+      throw std::runtime_error("Updated line out of bounds of original line");
     }
   }
 
