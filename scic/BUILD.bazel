@@ -12,7 +12,7 @@ cc_binary(
     ),
     visibility = ["//visibility:public"],
     deps = [
-        "//scic/io:buffer",
+        "//util/io:buffer",
         "//util/platform",
         "@abseil-cpp//absl/cleanup",
         "@abseil-cpp//absl/container:btree",

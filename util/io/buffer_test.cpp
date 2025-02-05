@@ -1,4 +1,4 @@
-#include "scic/io/buffer.hpp"
+#include "util/io/buffer.hpp"
 
 #include <gtest/gtest.h>
 
