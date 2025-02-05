@@ -1,7 +1,7 @@
 //	asm.hpp
 // 	definitions for assembly
 
-#if !defined(ASM_HPP)
+#ifndef ASM_HPP
 #define ASM_HPP
 
 #include "listing.hpp"
