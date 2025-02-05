@@ -3,6 +3,8 @@
 #ifndef OPCODES_HPP
 #define OPCODES_HPP
 
+#include <cstdint>
+
 /*******************************************************************************
  *
  *						OPCODES
@@ -65,7 +67,7 @@ const uint8_t OP_GLOBAL = 0x00;  // global var
 const uint8_t OP_LOCAL = 0x02;   // local var
 const uint8_t OP_TMP = 0x04;     // temporary var (on the stack)
 const uint8_t OP_PARM = 0x06;    // parameter (different stack frame than
-                               // tmp)
+                                 // tmp)
 
 // Opcodes other than load/store.
 const uint8_t op_bnot = 0x00;

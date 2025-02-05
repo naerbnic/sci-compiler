@@ -5,7 +5,6 @@
 
 #include <memory>
 
-#include "listing.hpp"
 #include "object.hpp"
 
 SymTbls gSyms;
