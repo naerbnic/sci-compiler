@@ -4,27 +4,15 @@
 #ifndef OBJECT_HPP
 #define OBJECT_HPP
 
-#include <cstdint>
 #include <memory>
 #include <ranges>
 #include <string>
 #include <vector>
 
+#include "selector.hpp"
+
 struct ANode;
 class Symbol;
-
-// Structure of a node in a class or object template.
-struct Selector {
-  Selector(Symbol* s = 0) : sym(s), val(0), an(0), tag(0) {}
-
-  Symbol* sym;  // Pointer to symbol for this entry
-  int val;      //	For a property, its initial value
-  union {
-    int ofs;    // Offset of property in template
-    ANode* an;  // Pointer to code for a local method
-  };
-  uint32_t tag;
-};
 
 struct Class;
 
@@ -52,17 +40,6 @@ struct Object {
 
  protected:
   std::vector<std::unique_ptr<Selector>> selectors_;  // object's selectors
-};
-
-struct Class : Object {
-  Class();
-  Class(Class* theClass);
-
-  Selector* addSelector(Symbol* sym, int what);
-  bool selectorDiffers(Selector* tp);
-
-  Class* subClasses;
-  Class* nextSibling;
 };
 
 #define OBJECTNUM -1  // Class number for objects.
@@ -105,27 +82,10 @@ struct Class : Object {
 #define OBJ_SUPER 0xfffe   // refers to object's defining class
 #define OBJ_SUPERC 0xfffd  // refers to object's class' super-class
 
-//	class.cpp
-void DefineClass();
-Class* FindClass(int n);
-void InstallObjects();
-int GetClassNumber(Class*);
-Class* NextClass(int n);
-
-//	object.cpp
 void DoClass();
 void Instance();
 
-//	selector.cpp
-Symbol* GetSelector(Symbol*);
-void InitSelectors();
-Symbol* InstallSelector(std::string_view name, int value);
-int NewSelectorNum();
-
-extern Class* gClasses[];
 extern Object* gCurObj;
-extern int gMaxClassNum;
-extern int gMaxSelector;
 extern Symbol* gNameSymbol;
 extern Object* gReceiver;
 

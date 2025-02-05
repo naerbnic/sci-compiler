@@ -7,6 +7,7 @@
 #include <stdlib.h>
 
 #include "scic/asm.hpp"
+#include "scic/class.hpp"
 #include "scic/define.hpp"
 #include "scic/error.hpp"
 #include "scic/input.hpp"

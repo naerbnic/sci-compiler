@@ -15,6 +15,7 @@
 #include "scic/asm.hpp"
 #include "scic/banner.hpp"
 #include "scic/builtins.hpp"
+#include "scic/class.hpp"
 #include "scic/compile.hpp"
 #include "scic/config.hpp"
 #include "scic/define.hpp"

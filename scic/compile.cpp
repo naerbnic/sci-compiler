@@ -11,6 +11,7 @@
 #include "scic/define.hpp"
 #include "scic/error.hpp"
 #include "scic/input.hpp"
+#include "scic/loop.hpp"
 #include "scic/object.hpp"
 #include "scic/opcodes.hpp"
 #include "scic/pnode.hpp"

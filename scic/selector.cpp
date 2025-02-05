@@ -1,11 +1,13 @@
 //	selector.cpp
 // 	code for handling selectors
 
+#include "scic/selector.hpp"
+
 #include <stdio.h>
 
+#include "scic/class.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
-#include "scic/object.hpp"
 #include "scic/symtbl.hpp"
 #include "scic/token.hpp"
 #include "scic/update.hpp"
@@ -18,79 +20,6 @@ const int SEL_TBL_SIZE = MAXSELECTOR / BITS_PER_ENTRY;
 
 static void ClaimSelectorNum(uint16_t n);
 static uint16_t selTbl[SEL_TBL_SIZE];
-
-void Object::dupSelectors(Class* super) {
-  // duplicate super's selectors
-
-  for (auto* sn : super->selectors()) {
-    auto tn = std::make_unique<Selector>();
-    *tn = *sn;
-    if (tn->tag == T_LOCAL) {
-      tn->tag = T_METHOD;  // No longer a local method.
-      tn->an = nullptr;    // No code defined for this class.
-    }
-    selectors_.push_back(std::move(tn));
-  }
-
-  numProps = super->numProps;
-}
-
-Selector* Object::findSelectorByNum(int val) {
-  // Return a pointer to the selector node which corresponds to the
-  //	symbol 'sym'.
-
-  for (auto* sn : selectors()) {
-    if (val == sn->sym->val()) return sn;
-  }
-
-  return nullptr;
-}
-
-Selector* Object::findSelector(std::string_view name) {
-  // Return a pointer to the selector node which has the name 'name'.
-
-  Symbol* sym = gSyms.lookup(name);
-  return sym ? findSelectorByNum(sym->val()) : 0;
-}
-
-void Object::freeSelectors() {
-  // free the object's selectors
-
-  selectors_.clear();
-}
-
-///////////////////////////////////////////////////////////////////////////
-
-Selector* Class::addSelector(Symbol* sym, int what) {
-  // Add a selector ('sym') to the selectors for this class.
-  // Allocate a selector node, and link it into the selector list for
-  // the class.  Finally, return a pointer to the selector node.
-
-  if (!sym) return 0;
-
-  auto sn_owned = std::make_unique<Selector>(sym);
-  auto* sn = sn_owned.get();
-  selectors_.push_back(std::move(sn_owned));
-
-  switch (sym->val()) {
-    case SEL_METHDICT:
-      sn->tag = T_METHDICT;
-      break;
-    case SEL_PROPDICT:
-      sn->tag = T_PROPDICT;
-      break;
-    default:
-      sn->tag = (uint8_t)what;
-      break;
-  }
-
-  if (PropTag(what)) {
-    sn->ofs = 2 * numProps;
-    ++numProps;
-  }
-
-  return sn;
-}
 
 ///////////////////////////////////////////////////////////////////////////
 
