@@ -2,11 +2,11 @@ cc_library(
     name = "platform",
     srcs = ["platform.cpp"],
     hdrs = ["platform.hpp"],
-    visibility = ["//src:__subpackages__"],
+    visibility = ["//scic:__subpackages__"],
 )
 
 cc_binary(
-    name = "sc",
+    name = "scic",
     srcs = glob(
         [
             "*.cpp",
@@ -20,7 +20,7 @@ cc_binary(
     visibility = ["//visibility:public"],
     deps = [
         ":platform",
-        "//src/io:buffer",
+        "//scic/io:buffer",
         "@abseil-cpp//absl/container:btree",
         "@abseil-cpp//absl/debugging:failure_signal_handler",
         "@abseil-cpp//absl/debugging:stacktrace",

@@ -1,5 +1,5 @@
 package(
-    default_visibility = ["//src:__subpackages__"],
+    default_visibility = ["//scic:__subpackages__"],
 )
 
 cc_test(
@@ -17,7 +17,7 @@ cc_library(
     srcs = ["buffer.cpp"],
     hdrs = ["buffer.hpp"],
     deps = [
-        "//src:platform",
+        "//scic:platform",
         "@abseil-cpp//absl/strings:str_format",
     ],
 )

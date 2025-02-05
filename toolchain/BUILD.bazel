@@ -12,7 +12,7 @@ toolchain_type(
 
 compiled_toolchain_config(
     name = "compiled_sci_toolchain_config",
-    scic = "//:sc",
+    scic = "//scic",
     systems = [
         "//sci_lib/sci_1_1",
     ],

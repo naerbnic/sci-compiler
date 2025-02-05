@@ -1,4 +1,4 @@
-#include "src/io/buffer.hpp"
+#include "scic/io/buffer.hpp"
 
 #include <array>
 #include <cstdio>
