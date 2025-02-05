@@ -5,10 +5,6 @@ cc_binary(
             "*.cpp",
             "*.hpp",
         ],
-        exclude = [
-            "platform.cpp",
-            "platform.hpp",
-        ],
     ),
     visibility = ["//visibility:public"],
     deps = [
