@@ -2,6 +2,7 @@
 #define IO_BUFFER_HPP
 
 #include <cstdio>
+#include <memory>
 #include <string_view>
 
 namespace io {
