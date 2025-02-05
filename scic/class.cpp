@@ -1,6 +1,8 @@
 //	class.cpp
 // 	code to deal with classes.
 
+#include "scic/class.hpp"
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -271,4 +273,35 @@ bool Class::selectorDiffers(Selector* tp) {
   stp = findSelectorByNum(tp->sym->val());
   return !stp || (IsMethod(tp) && tp->tag == T_LOCAL) ||
          (tp->tag == T_PROP && tp->val != stp->val);
+}
+
+Selector* Class::addSelector(Symbol* sym, int what) {
+  // Add a selector ('sym') to the selectors for this class.
+  // Allocate a selector node, and link it into the selector list for
+  // the class.  Finally, return a pointer to the selector node.
+
+  if (!sym) return 0;
+
+  auto sn_owned = std::make_unique<Selector>(sym);
+  auto* sn = sn_owned.get();
+  selectors_.push_back(std::move(sn_owned));
+
+  switch (sym->val()) {
+    case SEL_METHDICT:
+      sn->tag = T_METHDICT;
+      break;
+    case SEL_PROPDICT:
+      sn->tag = T_PROPDICT;
+      break;
+    default:
+      sn->tag = (uint8_t)what;
+      break;
+  }
+
+  if (PropTag(what)) {
+    sn->ofs = 2 * numProps;
+    ++numProps;
+  }
+
+  return sn;
 }

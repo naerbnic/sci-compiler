@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <memory>
 
+#include "scic/class.hpp"
 #include "scic/define.hpp"
 #include "scic/error.hpp"
 #include "scic/object.hpp"

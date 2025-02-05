@@ -9,6 +9,7 @@
 #include <filesystem>
 
 #include "absl/strings/str_format.h"
+#include "scic/class.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
 #include "scic/input.hpp"
