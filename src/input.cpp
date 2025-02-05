@@ -13,39 +13,52 @@
 
 InputState gInputState;
 
-static FILE* FOpen(std::filesystem::path const& path, const char* mode) {
+namespace {
+
+FILE* FOpen(std::filesystem::path const& path, const char* mode) {
   return fopen(path.string().c_str(), mode);
 }
 
-InputFile::InputFile(FILE* fp) : file_(fp) {}
+struct InputFile : InputSource {
+  InputFile(FILE* fp) : file_(fp) {}
+  ~InputFile() { fclose(file_); }
 
-InputFile::~InputFile() { fclose(file_); }
+  bool ReadNextLine(std::string* output) {
+    std::array<char, 512> inputLine;
 
-bool InputFile::ReadNextLine(std::string* output) {
-  std::array<char, 512> inputLine;
+    if (!fgets(inputLine.data(), inputLine.size(), file_)) {
+      if (feof(file_)) {
+        return false;
+      }
+      throw std::runtime_error("I/O error reading file");
+    }
 
-  if (!fgets(inputLine.data(), inputLine.size(), file_)) {
-    if (feof(file_)) {
+    output->append(inputLine.data());
+
+    return true;
+  }
+
+ private:
+  FILE* file_;
+};
+
+struct InputString : InputSource {
+  InputString(std::string_view str) : line_(std::string(str)) {}
+
+  bool ReadNextLine(std::string* output) {
+    if (!line_) {
       return false;
     }
-    throw std::runtime_error("I/O error reading file");
+    *output = std::move(line_).value();
+    line_ = std::nullopt;
+    return true;
   }
 
-  output->append(inputLine.data());
+ private:
+  std::optional<std::string> line_;
+};
 
-  return true;
-}
-
-InputString::InputString(std::string_view str) : line_(std::string(str)) {}
-
-bool InputString::ReadNextLine(std::string* output) {
-  if (!line_) {
-    return false;
-  }
-  *output = std::move(line_).value();
-  line_ = std::nullopt;
-  return true;
-}
+}  // namespace
 
 // -------------
 // InputState
@@ -58,6 +71,9 @@ struct InputState::InputSourceState {
   std::unique_ptr<InputSource> inputSource;
 };
 
+// We need to define these here because InputSourceState has to be defined
+// before the destructor is defined, so the std::unique_ptrs know how to
+// destroy themselves.
 InputState::InputState() = default;
 InputState::~InputState() = default;
 

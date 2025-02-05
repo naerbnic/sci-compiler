@@ -4,10 +4,8 @@
 #ifndef INPUT_HPP
 #define INPUT_HPP
 
-#include <cstdio>
 #include <filesystem>
 #include <memory>
-#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -24,29 +22,11 @@ struct InputSource {
   virtual bool ReadNextLine(std::string*) = 0;
 };
 
-struct InputFile : InputSource {
-  InputFile(FILE* fp);
-  ~InputFile();
-
-  bool ReadNextLine(std::string* output) override;
-
- private:
-  FILE* file_;
-};
-
-struct InputString : InputSource {
-  InputString(std::string_view str);
-
-  bool ReadNextLine(std::string* output) override;
-
- private:
-  std::optional<std::string> line_;
-};
-
 class InputState {
  public:
   InputState();
   ~InputState();
+  
   // Sets the include path that will be used on include lookups.
   //
   // The paths will be searched in the order provided.
