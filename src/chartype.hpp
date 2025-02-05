@@ -8,26 +8,13 @@
 #ifndef CHARTYPE_H
 #define CHARTYPE_H
 
-#include <cstdint>
-
-#define C_SEP 0x0001    // seperator
-#define C_TOK 0x0002    // single char token
-#define C_DIGIT 0x0004  // first digit of a number
-#define C_BIN 0x0008    // binary digit
-#define C_DEC 0x0010    // decimal digit
-#define C_HEX 0x0020    // hex digit
-#define C_TERM 0x0040   // terminates an identifier
-#define C_INCL 0x0080   // terminates ident, but included
-
-#define IsSep(c) (gCType[static_cast<uint8_t>(c)] & C_SEP)
-#define IsTok(c) (gCType[static_cast<uint8_t>(c)] & C_TOK)
-#define IsDigit(c) (gCType[static_cast<uint8_t>(c)] & C_DIGIT)
-#define IsBin(c) (gCType[static_cast<uint8_t>(c)] & C_BIN)
-#define IsDec(c) (gCType[static_cast<uint8_t>(c)] & C_DEC)
-#define IsHex(c) (gCType[static_cast<uint8_t>(c)] & C_HEX)
-#define IsTerm(c) (gCType[static_cast<uint8_t>(c)] & C_TERM)
-#define IsIncl(c) (gCType[static_cast<uint8_t>(c)] & C_INCL)
-
-extern uint8_t gCType[];
+bool IsSep(char c);
+bool IsTok(char c);
+bool IsDigit(char c);
+bool IsBin(char c);
+bool IsDec(char c);
+bool IsHex(char c);
+bool IsTerm(char c);
+bool IsIncl(char c);
 
 #endif

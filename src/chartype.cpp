@@ -3,6 +3,17 @@
 
 #include "chartype.hpp"
 
+#include <cstdint>
+
+#define C_SEP 0x0001    // seperator
+#define C_TOK 0x0002    // single char token
+#define C_DIGIT 0x0004  // first digit of a number
+#define C_BIN 0x0008    // binary digit
+#define C_DEC 0x0010    // decimal digit
+#define C_HEX 0x0020    // hex digit
+#define C_TERM 0x0040   // terminates an identifier
+#define C_INCL 0x0080   // terminates ident, but included
+
 uint8_t gCType[256] = {
     C_SEP | C_TERM,                   // ^@ NUL
     0,                                // ^A SOH
@@ -108,3 +119,12 @@ uint8_t gCType[256] = {
     C_HEX,                            // e
     C_HEX,                            // f
 };
+
+bool IsSep(char c) { return gCType[static_cast<uint8_t>(c)] & C_SEP; }
+bool IsTok(char c) { return gCType[static_cast<uint8_t>(c)] & C_TOK; }
+bool IsDigit(char c) { return gCType[static_cast<uint8_t>(c)] & C_DIGIT; }
+bool IsBin(char c) { return gCType[static_cast<uint8_t>(c)] & C_BIN; }
+bool IsDec(char c) { return gCType[static_cast<uint8_t>(c)] & C_DEC; }
+bool IsHex(char c) { return gCType[static_cast<uint8_t>(c)] & C_HEX; }
+bool IsTerm(char c) { return gCType[static_cast<uint8_t>(c)] & C_TERM; }
+bool IsIncl(char c) { return gCType[static_cast<uint8_t>(c)] & C_INCL; }
