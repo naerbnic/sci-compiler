@@ -12,6 +12,7 @@ void DebugPrintImpl(std::source_location source_loc,
                     Args const&... args) {
   absl::FPrintF(stderr, "%s:%d: ", source_loc.file_name(), source_loc.line());
   absl::FPrintF(stderr, spec, args...);
+  absl::FPrintF(stderr, "\n");
 }
 
 #define DebugPrint(...) \
