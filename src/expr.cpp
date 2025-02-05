@@ -77,21 +77,21 @@ bool Expression(PNode* theNode, bool required) {
 
   theSym = LookupTok();
 
-  if (symType == (sym_t)'@') {
+  if (symType() == (sym_t)'@') {
     auto* addrof = theNode->newChild(PN_ADDROF);
     isExpr = Expression(addrof, true);
   } else if (IsVar()) {
     UnGetTok();
     isExpr = Variable(theNode);
   } else {
-    switch (symType) {
+    switch (symType()) {
       case S_NUM:
-        theNode->newChild(PN_NUM)->val = symVal;
+        theNode->newChild(PN_NUM)->val = symVal();
         isExpr = true;
         break;
 
       case S_REST:
-        theNode->newChild(PN_REST)->val = symVal;
+        theNode->newChild(PN_REST)->val = symVal();
         isExpr = true;
         break;
 
@@ -107,7 +107,7 @@ bool Expression(PNode* theNode, bool required) {
         theSym = gSyms.installModule(gSymStr, S_OBJ);
         theSym->clearAn();
         theSym->setObj(NULL);
-        symType = S_OBJ;
+        setSymType(S_OBJ);
 
         //	fall-through
 
@@ -120,7 +120,7 @@ bool Expression(PNode* theNode, bool required) {
 
       case S_CLASS:
         pn = theNode->newChild(PN_CLASS);
-        if ((uint32_t)symType == OBJ_SUPER) {
+        if ((uint32_t)symType() == OBJ_SUPER) {
           pn->sym = gClasses[gCurObj->super]->sym;
           pn->val = gClasses[gCurObj->super]->num;
         } else {
@@ -187,7 +187,7 @@ static bool _Expression(PNode* theNode) {
 
   //    if ( !theSym ) {
   //        printf ( "LookupTok() returned NULL symbol ('%s', %d, %d).\n",
-  //        symStr, symType, curLine );
+  //        symStr, symType(), curLine );
   //    }
 
   if (IsProc()) {
@@ -197,7 +197,7 @@ static bool _Expression(PNode* theNode) {
   else if (IsObj()) {
     retVal = Send(theNode, theSym);
   } else {
-    switch (symType) {
+    switch (symType()) {
       case S_NARY:
         retVal = NaryExpr(theNode);
         break;
@@ -223,7 +223,7 @@ static bool _Expression(PNode* theNode) {
         break;
 
       case S_KEYWORD:
-        switch (symVal) {
+        switch (symVal()) {
           case K_RETURN:
             retVal = Return(theNode);
             break;
@@ -327,7 +327,7 @@ static bool Assignment(PNode* theNode) {
   bool retVal = false;
 
   auto pn = std::make_unique<PNode>(PN_ASSIGN);
-  pn->val = symVal;
+  pn->val = symVal();
 
   // Get the variable
   if (Variable(pn.get()))
@@ -367,7 +367,7 @@ static bool Send(PNode* theNode, Symbol* theSym) {
 
   // Add a node giving the type and value which determines
   // the destination of the send.
-  if (symType == S_CLASS && symHasVal(OBJ_SUPER)) {
+  if (symType() == S_CLASS && symHasVal(OBJ_SUPER)) {
     dn = pn->newChild(PN_SUPER);
     dn->sym = gClasses[gCurObj->super]->sym;
     dn->val = gClasses[gCurObj->super]->num;
@@ -541,8 +541,8 @@ static bool Break(PNode* theNode) {
   pn = theNode->newChild(PN_BREAK);
 
   GetToken();
-  if (symType == S_NUM)
-    pn->val = symVal;
+  if (symType() == S_NUM)
+    pn->val = symVal();
   else {
     UnGetTok();
     pn->val = 1;
@@ -567,8 +567,8 @@ static bool BreakIf(PNode* theNode) {
 
   // Get the optional break level.
   GetToken();
-  if (symType == S_NUM)
-    pn->val = symVal;
+  if (symType() == S_NUM)
+    pn->val = symVal();
   else {
     UnGetTok();
     pn->val = 1;
@@ -589,8 +589,8 @@ static bool Continue(PNode* theNode) {
   pn = theNode->newChild(PN_CONT);
 
   GetToken();
-  if (symType == S_NUM)
-    pn->val = symVal;
+  if (symType() == S_NUM)
+    pn->val = symVal();
   else {
     UnGetTok();
     pn->val = 1;
@@ -615,8 +615,8 @@ static bool ContIf(PNode* theNode) {
 
   // Get the optional break level.
   GetToken();
-  if (symType == S_NUM)
-    pn->val = symVal;
+  if (symType() == S_NUM)
+    pn->val = symVal();
   else {
     UnGetTok();
     pn->val = 1;
@@ -665,7 +665,7 @@ static bool Cond(PNode* theNode) {
   auto pn = std::make_unique<PNode>(PN_COND);
 
   GetToken();
-  while (OpenP(symType)) {
+  while (OpenP(symType())) {
     // Get the expression which serves as the condition
     GetToken();
     if (Keyword() == K_ELSE)
@@ -702,7 +702,7 @@ static bool Switch(PNode* theNode) {
   }
 
   GetToken();
-  while (OpenP(symType)) {
+  while (OpenP(symType())) {
     // Get the expression to compare to the switch expression
     GetToken();
     if (Keyword() == K_ELSE)
@@ -756,7 +756,7 @@ static bool IncDec(PNode* theNode) {
 
   // Get the type of operation.
   auto pn = std::make_unique<PNode>(PN_INCDEC);
-  pn->val = symVal;
+  pn->val = symVal();
 
   // Get the argument
   if (Variable(pn.get())) {
@@ -774,14 +774,14 @@ static bool Variable(PNode* theNode) {
   Symbol* theSym;
 
   theSym = LookupTok();
-  if (symType == S_OPEN_BRACKET) return Array(theNode);
+  if (symType() == S_OPEN_BRACKET) return Array(theNode);
 
   if (!IsVar()) {
     Severe("Variable name expected: %s.", gSymStr);
     return false;
   }
-  pn = theNode->newChild(PNType(symType));
-  pn->val = symVal;
+  pn = theNode->newChild(PNType(symType()));
+  pn->val = symVal();
   pn->sym = theSym;
 
   return true;
@@ -808,7 +808,7 @@ static bool Array(PNode* theNode) {
   }
 
   GetToken();
-  if (symType != (sym_t)']') {
+  if (symType() != (sym_t)']') {
     Error("Expected closing ']': %s.", gSymStr);
     return false;
   }
@@ -819,11 +819,11 @@ static bool Array(PNode* theNode) {
 
 static bool Rest(PNode* theNode) {
   LookupTok();
-  if (!IsVar() || symType != S_PARM) {
+  if (!IsVar() || symType() != S_PARM) {
     Severe("Variable name expected: %s.", gSymStr);
     return false;
   }
-  theNode->newChild(PN_REST)->val = symVal;
+  theNode->newChild(PN_REST)->val = symVal();
   return true;
 }
 
@@ -833,13 +833,13 @@ static bool NaryExpr(PNode* theNode) {
 
   std::unique_ptr<PNode> pn;
   int val;
-  bool logicExpr = symVal == N_AND || symVal == N_OR;
+  bool logicExpr = symVal() == N_AND || symVal() == N_OR;
 
   if (logicExpr)
     pn = std::make_unique<PNode>(PN_COMP);
   else
     pn = std::make_unique<PNode>(PN_NARY);
-  pn->val = symVal;
+  pn->val = symVal();
 
   // Get the first and second arguments
   if (!Expression(pn.get(), REQUIRED)) {
@@ -922,7 +922,7 @@ static bool BinaryExpr(PNode* theNode) {
   //	binary-op ::=		'-' | '/' | '<<' | '>>' | '^' | '&' | '|' | '%'
 
   auto pn = std::make_unique<PNode>(PN_BINARY);
-  int opType = pn->val = symVal;
+  int opType = pn->val = symVal();
 
   // Get the first argument.
   if (!Expression(pn.get(), REQUIRED)) {
@@ -988,7 +988,7 @@ static bool UnaryExpr(PNode* theNode) {
   //	unary-op ::=		'~' | '!'
 
   auto pn = std::make_unique<PNode>(PN_UNARY);
-  pn->val = symVal;
+  pn->val = symVal();
 
   // Get the argument
   if (!Expression(pn.get(), REQUIRED)) {
@@ -1020,7 +1020,7 @@ static bool CompExpr(PNode* theNode) {
   //	comp-op ::=	'>' | '>=' | '<' | '<=' | '==' | '!='
 
   auto pn = std::make_unique<PNode>(PN_COMP);
-  pn->val = symVal;
+  pn->val = symVal();
 
   // Get the first and second arguments.
   if (!Expression(pn.get(), REQUIRED)) {

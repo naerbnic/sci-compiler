@@ -23,15 +23,15 @@ Symbol* LookupTok() {
 
   GetToken();
 
-  if (symType == (sym_t)'#') return Immediate();
+  if (symType() == (sym_t)'#') return Immediate();
 
-  if (symType == S_IDENT && (theSym = gSyms.lookup(gSymStr))) {
+  if (symType() == S_IDENT && (theSym = gSyms.lookup(gSymStr))) {
     gTokSym.SaveSymbol(*theSym);
     gTokSym.clearName();
   } else
     theSym = 0;
 
-  if (symType == S_SELECT) {
+  if (symType() == S_SELECT) {
     if (gCurObj && !gCurObj->selectors().empty()) {
       // If the symbol is a property and we're in a method definition,
       //	access the symbol as a local variable.
@@ -47,7 +47,7 @@ Symbol* LookupTok() {
         }
 
       } else if (sn->tag != T_LOCAL && sn->tag != T_METHOD) {
-        symType = S_PROP;
+        setSymType(S_PROP);
         setSymVal(sn->ofs);
       }
     }
@@ -79,7 +79,7 @@ bool GetDefineSymbol() {
   //	gets a symbol that was previously defined
 
   NextToken();
-  if (symType != S_IDENT) {
+  if (symType() != S_IDENT) {
     Error("Defined symbol expected");
     return false;
   }
@@ -93,7 +93,7 @@ bool GetDefineSymbol() {
 }
 
 bool IsIdent() {
-  if (symType != S_IDENT) {
+  if (symType() != S_IDENT) {
     Severe("Identifier required: %s", gSymStr);
     return false;
   }
@@ -136,10 +136,10 @@ static bool GetNumberOrStringToken(std::string_view errStr, bool stringOK) {
   // Otherwise, put the expression value into the symbol variables.
   switch (type) {
     case PN_NUM:
-      symType = S_NUM;
+      setSymType(S_NUM);
       break;
     case PN_STRING:
-      symType = S_STRING;
+      setSymType(S_STRING);
       break;
     default:
       Fatal("Unexpected literal type");
@@ -155,7 +155,7 @@ bool GetString(std::string_view errStr) {
   // Get a string from the input.
 
   GetToken();
-  if (symType != S_STRING) {
+  if (symType() != S_STRING) {
     Severe("%s required: %s", errStr, gSymStr);
     return false;
   }
@@ -169,9 +169,9 @@ keyword_t Keyword() {
   if (!(theSym = gSyms.lookup(gSymStr)) || theSym->type != S_KEYWORD)
     return K_UNDEFINED;
   else {
-    symType = S_KEYWORD;
+    setSymType(S_KEYWORD);
     setSymVal(theSym->val());
-    return (keyword_t)symVal;
+    return (keyword_t)symVal();
   }
 }
 
@@ -207,7 +207,7 @@ bool IsVar() {
 
   Selector* sn;
 
-  switch (symType) {
+  switch (symType()) {
     case S_GLOBAL:
     case S_LOCAL:
     case S_TMP:
@@ -230,21 +230,21 @@ bool IsProc() {
   // If the current symbol is a procedure of some type, return the type.
   // Otherwise return false.
 
-  return symType == S_PROC || symType == S_EXTERN;
+  return symType() == S_PROC || symType() == S_EXTERN;
 }
 
 bool IsObj() {
-  return symType == S_OBJ || symType == S_CLASS || symType == S_IDENT ||
-         symType == OPEN_P || IsVar();
+  return symType() == S_OBJ || symType() == S_CLASS || symType() == S_IDENT ||
+         symType() == OPEN_P || IsVar();
 }
 
-bool IsNumber() { return symType == S_NUM || symType == S_STRING; }
+bool IsNumber() { return symType() == S_NUM || symType() == S_STRING; }
 
 static Symbol* Immediate() {
   Symbol* theSym = nullptr;
 
   GetToken();
-  if (symType == S_IDENT) {
+  if (symType() == S_IDENT) {
     if (!(theSym = gSyms.lookup(gSymStr)) || theSym->type != S_SELECT) {
       Error("Selector required: %s", gSymStr);
       return 0;

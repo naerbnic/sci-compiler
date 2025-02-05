@@ -74,7 +74,7 @@ bool NewToken() {
   Symbol* theSym;
 
   if (NextToken()) {
-    if (symType == S_IDENT && (theSym = gSyms.lookup(gSymStr)) &&
+    if (symType() == S_IDENT && (theSym = gSyms.lookup(gSymStr)) &&
         theSym->type == S_DEFINE) {
       gInputState.SetStringInput(theSym->str());
       NewToken();
@@ -120,7 +120,7 @@ void GetRest(bool error) {
         if (pLevel > 0)
           --pLevel;
         else {
-          symType = S_STRING;
+          setSymType(S_STRING);
           gInputState.SetRemainingLine(ip);
           return;
         }
@@ -159,7 +159,7 @@ bool NextToken() {
   }
 
   if (gInputState.IsDone()) {
-    symType = S_END;
+    setSymType(S_END);
     return false;
   }
 
@@ -173,7 +173,7 @@ bool NextToken() {
         ip = gInputState.GetRemainingLine();
         continue;
       } else {
-        symType = S_END;
+        setSymType(S_END);
         return false;
       }
     }
@@ -223,7 +223,7 @@ bool NextToken() {
 
   if (IsTok(c)) {
     gSymStr.push_back(c);
-    symType = (sym_t)c;
+    setSymType((sym_t)c);
     gInputState.SetRemainingLine(ip.substr(1));
     return true;
   }
@@ -240,18 +240,18 @@ bool NextToken() {
   }
 
   if (IsDigit(c) || (c == '-' && ip.length() > 1 && IsDigit(ip[1]))) {
-    symType = S_NUM;
+    setSymType(S_NUM);
     ReadNumber(ip);
     return true;
   }
 
-  symType = S_IDENT;
+  setSymType(S_IDENT);
   while (!IsTerm(c)) {
     ip.remove_prefix(1);
     if (c == ':') {
       // This is a selector literal (e.g. 'foo:'). Only include the part
       // before the quote, but mark the sym type.
-      symType = S_SELECT_LIT;
+      setSymType(S_SELECT_LIT);
       break;
     }
     if (IsIncl(c)) break;
@@ -294,7 +294,7 @@ compiling:
       case PT_IF:
         if (!GetNumber("Constant expression")) setSymVal(0);
         ++gNestedCondCompile;
-        if (!symVal) goto notCompiling;
+        if (!symVal()) goto notCompiling;
         break;
 
       case PT_IFDEF:
@@ -351,7 +351,7 @@ notCompiling:
       case PT_ELIF:
         if (!level) {
           if (!GetNumber("Constant expression required")) setSymVal(0);
-          if (symVal) goto compiling;
+          if (symVal()) goto compiling;
         }
         break;
 
@@ -490,7 +490,7 @@ static void ReadNumber(std::string_view ip) {
     c = absl::ascii_tolower(rawChar);
     auto char_index = validDigits.find((char)c);
     if (char_index == std::string_view::npos) {
-      Warning("Invalid character in number: %c.  Number = %d", rawChar, symVal);
+      Warning("Invalid character in number: %c.  Number = %d", rawChar, symVal());
       break;
     }
     val = SCIWord((val * base) + char_index);
@@ -515,11 +515,11 @@ static void ReadString(std::string_view ip) {
   gSymStr.clear();
   open = currCharAndAdvance(ip);
 
-  symType = S_STRING;
+  setSymType(S_STRING);
 
   switch (open) {
     case ALT_QUOTE:
-      symType = S_STRING;
+      setSymType(S_STRING);
       open = '}';  // Set closing character to be different
       break;
   }
@@ -615,7 +615,7 @@ static uint32_t altKey[] = {
 };
 
 static void ReadKey(std::string_view ip) {
-  symType = S_NUM;
+  setSymType(S_NUM);
 
   gSymStr.clear();
   while (!IsTerm(currChar(ip))) gSymStr.push_back(currCharAndAdvance(ip));

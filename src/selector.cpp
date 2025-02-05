@@ -97,9 +97,9 @@ Selector* Class::addSelector(Symbol* sym, int what) {
 void InitSelectors() {
   // Add the selectors to the selector symbol table.
 
-  for (Symbol* sym = LookupTok(); !CloseP(symType); sym = LookupTok()) {
+  for (Symbol* sym = LookupTok(); !CloseP(symType()); sym = LookupTok()) {
     // Make sure that the symbol is not already defined.
-    if (sym && symType != S_SELECT) {
+    if (sym && symType() != S_SELECT) {
       Error("Redefinition of %s.", gSymStr);
       GetToken();  // eat selector number
       if (!IsNumber()) UnGetTok();
@@ -110,9 +110,9 @@ void InitSelectors() {
 
     GetNumber("Selector number");
     if (!sym)
-      InstallSelector(selStr, symVal);
+      InstallSelector(selStr, symVal());
     else
-      sym->setVal(symVal);
+      sym->setVal(symVal());
   }
 
   UnGetTok();
@@ -163,8 +163,8 @@ Symbol* GetSelector(Symbol* obj) {
 
   // Get the next token.  If it's not an identifier, it can't be a selector.
   GetToken();
-  if (symType == (sym_t)',') GetToken();
-  if (symType != S_SELECT_LIT) {
+  if (symType() == (sym_t)',') GetToken();
+  if (symType() != S_SELECT_LIT) {
     UnGetTok();
     return 0;
   }
@@ -180,14 +180,14 @@ Symbol* GetSelector(Symbol* obj) {
   gTokSym.SaveSymbol(*msgSel);
 
   // The symbol must be either a variable or a selector.
-  if (symType != S_SELECT && !IsVar()) {
+  if (symType() != S_SELECT && !IsVar()) {
     Severe("Selector required: %s", gSymStr);
     return 0;
   }
 
   // Complain if the symbol is a variable, but a selector of the same name
   //	exists.
-  if (IsVar() && symType != S_PROP && symType != S_SELECT &&
+  if (IsVar() && symType() != S_PROP && symType() != S_SELECT &&
       gSyms.selectorSymTbl->lookup(gSymStr)) {
     Error("%s is both a selector and a variable.", gSymStr);
     return 0;

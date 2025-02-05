@@ -80,17 +80,17 @@ class TokenSlot {
   RefVal ref_val_;
 };
 
-#define symObj gTokSym.obj()
-#define symType gTokSym.type
-#define symVal gTokSym.val()
-#define symHasVal(x) gTokSym.hasVal(x)
-#define setSymVal(x) gTokSym.setVal(x)
-
 const int MaxTokenLen = 2048;
 
 extern int gNestedCondCompile;
 extern int gSelectorIsVar;
 extern std::string gSymStr;
 extern TokenSlot gTokSym;
+
+inline sym_t symType() { return gTokSym.type; }
+inline void setSymType(sym_t typ) { gTokSym.type = typ; }
+inline int symVal() { return gTokSym.val(); }
+inline bool symHasVal(int x) { return gTokSym.hasVal(x); }
+inline void setSymVal(int x) { gTokSym.setVal(x); }
 
 #endif

@@ -44,7 +44,7 @@ void WriteError(std::string_view text) {
   ListingOutput(text);
   ListingOutput("\n");
 
-  if (!CloseP(symType))
+  if (!CloseP(symType()))
     GetRest(true);
   else
     UnGetTok();
@@ -93,7 +93,7 @@ void WriteSevere(std::string_view text) {
   ListingOutput(text);
   ListingOutput("\n");
 
-  if (!CloseP(symType))
+  if (!CloseP(symType()))
     GetRest(true);
   else
     UnGetTok();

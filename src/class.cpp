@@ -80,7 +80,7 @@ void DefineClass() {
   if (!sym)
     sym = gSyms.installClass(gSymStr);
 
-  else if (symType == S_IDENT || symType == S_OBJ) {
+  else if (symType() == S_IDENT || symType() == S_OBJ) {
     gSyms.del(gSymStr);
     sym = gSyms.installClass(gSymStr);
 
@@ -92,13 +92,13 @@ void DefineClass() {
   // Get the script, class, super-class numbers, and file name.
   GetKeyword(K_SCRIPTNUM);
   GetNumber("Script #");
-  int scriptNum = symVal;
+  int scriptNum = symVal();
   GetKeyword(K_CLASSNUM);
   GetNumber("Class #");
-  int classNum = symVal;
+  int classNum = symVal();
   GetKeyword(K_SUPER);
   GetNumber("Super #");
-  int superNum = symVal;
+  int superNum = symVal();
   GetKeyword(K_FILE);
   GetString("File name");
   std::string_view superFile = gSymStr;
@@ -123,7 +123,7 @@ void DefineClass() {
   }
 
   // Get properties and methods.
-  for (GetToken(); OpenP(symType); GetToken()) {
+  for (GetToken(); OpenP(symType()); GetToken()) {
     GetToken();
     switch (Keyword()) {
       case K_PROPLIST:
@@ -149,9 +149,9 @@ void DefClassItems(Class* theClass, int what) {
   // _property-list ::=	'properties' (symbol [number])+
   // _method-list ::=		'methods' symbol+
 
-  for (Symbol* sym = LookupTok(); !CloseP(symType); sym = LookupTok()) {
+  for (Symbol* sym = LookupTok(); !CloseP(symType()); sym = LookupTok()) {
     // Make sure the symbol has been defined as a selector.
-    if (!sym || symType != S_SELECT) {
+    if (!sym || symType() != S_SELECT) {
       Error("Not a selector: %s", gSymStr);
       if (PropTag(what)) {
         // Eat the property initialization value.
@@ -178,7 +178,7 @@ void DefClassItems(Class* theClass, int what) {
     if (!PropTag(what))
       tn->tag = T_LOCAL;
     else {
-      switch (symVal) {
+      switch (symVal()) {
         case SEL_METHDICT:
           tn->tag = T_METHDICT;
           GetNumber("initial selector value");
@@ -192,7 +192,7 @@ void DefClassItems(Class* theClass, int what) {
           GetNumber("initial selector value");
           break;
       }
-      tn->val = symVal;
+      tn->val = symVal();
     }
   }
 

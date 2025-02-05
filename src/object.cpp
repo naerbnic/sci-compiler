@@ -51,7 +51,7 @@ void DoClass() {
   if (!sym)
     sym = gSyms.installClass(gSymStr);
 
-  else if (symType != S_CLASS && symType != S_OBJ) {
+  else if (symType() != S_CLASS && symType() != S_OBJ) {
     Severe("Redefinition of %s.", gSymStr);
     return;
 
@@ -82,7 +82,7 @@ void DoClass() {
 
   // Get the super-class and create this class as an instance of it.
   Symbol* superSym = LookupTok();
-  if (!superSym || symType != S_CLASS) {
+  if (!superSym || symType() != S_CLASS) {
     Severe("%s is not a class.", gSymStr);
     return;
   }
@@ -123,8 +123,9 @@ void Instance() {
   Symbol* objSym = LookupTok();
   if (!objSym)
     objSym = gSyms.installLocal(gSymStr, S_OBJ);
-  else if (symType == S_IDENT || symType == S_OBJ) {
-    objSym->type = symType = S_OBJ;
+  else if (symType() == S_IDENT || symType() == S_OBJ) {
+    objSym->type = S_OBJ;
+    setSymType(S_OBJ);
     if (objSym->obj()) Error("Duplicate instance name: %s", objSym->name());
   } else {
     Severe("Redefinition of %s.", gSymStr);
@@ -172,7 +173,7 @@ static void InstanceBody(Object* obj) {
 
   // Get any property or method definitions.
   gCurObj = obj;
-  for (GetToken(); OpenP(symType); GetToken()) {
+  for (GetToken(); OpenP(symType()); GetToken()) {
     setjmp(gRecoverBuf);
     GetToken();
     switch (Keyword()) {
@@ -251,8 +252,8 @@ static void InstanceBody(Object* obj) {
 static void Declaration(Object* obj, int type) {
   char msg[80];
 
-  for (GetToken(); !CloseP(symType); GetToken()) {
-    if (OpenP(symType)) {
+  for (GetToken(); !CloseP(symType()); GetToken()) {
+    if (OpenP(symType())) {
       Definition();
       continue;
     }
@@ -289,8 +290,8 @@ static void Declaration(Object* obj, int type) {
 
     if (type == T_PROP) {
       GetNumberOrString(msg);
-      sn->val = symVal;
-      switch (symType) {
+      sn->val = symVal();
+      switch (symType()) {
         case S_NUM:
           sn->tag = T_PROP;
           break;

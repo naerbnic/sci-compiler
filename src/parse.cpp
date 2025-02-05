@@ -28,10 +28,10 @@ bool Parse() {
   while (NewToken()) {
     // We require an opening parenthesis at this level.
     // Keep reading until we get one.
-    if (!OpenP(symType)) {
+    if (!OpenP(symType())) {
       Error("Opening parenthesis expected: %s", gSymStr);
-      while (!OpenP(symType) && symType != S_END) NewToken();
-      if (symType == S_END) break;
+      while (!OpenP(symType()) && symType() != S_END) NewToken();
+      if (symType() == S_END) break;
     }
 
     setjmp(gRecoverBuf);
@@ -46,7 +46,7 @@ bool Parse() {
           if (gScript != -1)
             Severe("Script # already defined to be %d.", gScript);
           else
-            gScript = symVal;
+            gScript = symVal();
         }
         break;
 
@@ -120,7 +120,7 @@ bool Parse() {
 
 void Include() {
   GetToken();
-  if (symType != S_IDENT && symType != S_STRING) {
+  if (symType() != S_IDENT && symType() != S_STRING) {
     Severe("Need a filename: %s", gSymStr);
     return;
   }
@@ -128,7 +128,7 @@ void Include() {
   // We need to put this at the right syntactic level, so we GetToken to grab
   // the remaining parent before opening the file.
   GetToken();
-  if (symType != CLOSE_P) {
+  if (symType() != CLOSE_P) {
     Severe("Expected closing parenthesis: %s", gSymStr);
     return;
   }
@@ -139,12 +139,12 @@ void Include() {
 
 bool OpenBlock() {
   GetToken();
-  return OpenP(symType);
+  return OpenP(symType());
 }
 
 bool CloseBlock() {
   GetToken();
-  if (symType == CLOSE_P)
+  if (symType() == CLOSE_P)
     return true;
   else {
     Severe("Expected closing parenthesis: %s", gSymStr);

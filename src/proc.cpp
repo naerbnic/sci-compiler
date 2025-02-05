@@ -25,7 +25,7 @@ void Procedure() {
 
   GetToken();
   UnGetTok();
-  if (symType == OPEN_P) {
+  if (symType() == OPEN_P) {
     // Then a procedure definition.
     theSymTbl = gSyms.add(ST_MINI);
 
@@ -41,8 +41,8 @@ void Procedure() {
 
   } else {
     // A procedure declaration.
-    for (GetToken(); !CloseP(symType); GetToken()) {
-      if (symType == S_IDENT) theSym = gSyms.installLocal(gSymStr, S_PROC);
+    for (GetToken(); !CloseP(symType()); GetToken()) {
+      if (symType() == S_IDENT) theSym = gSyms.installLocal(gSymStr, S_PROC);
       theSym->setVal(UNDEFINED);
     }
     UnGetTok();
@@ -116,30 +116,30 @@ static int ParameterList() {
   parmType = S_PARM;
 
   gInParmList = true;
-  for (LookupTok(); !CloseP(symType); LookupTok()) {
-    if (symType == S_KEYWORD && symVal == K_TMP) {
+  for (LookupTok(); !CloseP(symType()); LookupTok()) {
+    if (symType() == S_KEYWORD && symVal() == K_TMP) {
       // Now defining temporaries -- set 'rest of argument' value.
       AddRest(parmOfs);
       parmOfs = 0;
       parmType = S_TMP;
 
-    } else if (symType == S_IDENT)
+    } else if (symType() == S_IDENT)
       // A parameter or tmp variable definition.
       NewParm(parmOfs++, parmType);
 
-    else if (symType == S_OPEN_BRACKET) {
+    else if (symType() == S_OPEN_BRACKET) {
       // An array parameter or tmp variable.
       if (!GetIdent()) break;
       NewParm(parmOfs, parmType);
       if (!GetNumber("array size")) return 0;
-      parmOfs += symVal;
+      parmOfs += symVal();
       GetToken();
-      if (symType != (sym_t)']') {
+      if (symType() != (sym_t)']') {
         Error("expecting closing ']': %s.", gSymStr);
         UnGetTok();
       }
 
-    } else if (symType == S_SELECT) {
+    } else if (symType() == S_SELECT) {
       if (gCurObj && gCurObj->findSelectorByNum(gTokSym.val()))
         Error("%s is a selector for current object.", gSymStr);
       else
