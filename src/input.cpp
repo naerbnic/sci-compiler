@@ -18,70 +18,49 @@ static FILE* FOpen(std::filesystem::path const& path, const char* mode) {
   return fopen(path.string().c_str(), mode);
 }
 
-InputSource::InputSource() : lineNum(0), fileName("") {}
+InputFile::InputFile(FILE* fp) : file_(fp) {}
 
-InputSource::InputSource(std::filesystem::path fileName, int lineNum)
-    : lineNum(lineNum), fileName(fileName) {}
+InputFile::~InputFile() { fclose(file_); }
 
-InputSource& InputSource::operator=(InputSource& s) {
-  fileName = s.fileName;
-  lineNum = s.lineNum;
-  return *this;
-}
-
-InputFile::InputFile(FILE* fp, std::filesystem::path name)
-    : InputSource(name), file(fp) {}
-
-InputFile::~InputFile() { fclose(file); }
-
-bool InputFile::ReadNextLine() {
+bool InputFile::ReadNextLine(std::string* output) {
   std::array<char, 512> inputLine;
 
-  if (!fgets(inputLine.data(), inputLine.size(), file)) {
-    if (feof(file)) {
-      inputPtr = "";
+  if (!fgets(inputLine.data(), inputLine.size(), file_)) {
+    if (feof(file_)) {
       return false;
     }
-    int error = ferror(file);
-    throw std::runtime_error(
-        absl::StrFormat("I/O error reading file %s: %d", fileName, error));
+    throw std::runtime_error("I/O error reading file");
   }
 
-  curr_line_.clear();
-  curr_line_.append(inputLine.data());
-
-  inputPtr = curr_line_;
+  output->append(inputLine.data());
 
   return true;
 }
 
-InputString::InputString() : line_(), wasRead_(true) { inputPtr = ""; }
+InputString::InputString(std::string_view str) : line_(std::string(str)) {}
 
-InputString::InputString(std::filesystem::path fileName, int lineNum,
-                         std::string_view str)
-    : InputSource(std::move(fileName), lineNum),
-      line_(std::string(str)),
-      wasRead_(false) {
-  inputPtr = "";
-}
-
-InputString& InputString::operator=(InputString& s) {
-  InputSource::operator=(s);
-  inputPtr = s.inputPtr;
-  return *this;
-}
-
-bool InputString::ReadNextLine() {
-  if (wasRead_) {
+bool InputString::ReadNextLine(std::string* output) {
+  if (!line_) {
     return false;
   }
-  inputPtr = line_;
-  wasRead_ = true;
+  *output = std::move(line_).value();
+  line_ = std::nullopt;
   return true;
 }
 
 // -------------
 // InputState
+
+struct InputState::InputSourceState {
+  std::filesystem::path fileName;
+  int lineNum;
+  std::string currLine;
+  std::string_view inputPtr;
+  std::unique_ptr<InputSource> inputSource;
+};
+
+InputState::InputState() = default;
+InputState::~InputState() = default;
 
 bool InputState::GetNewInputLine() {
   // Read a new line in from the current input file.  If we're at end of
@@ -97,7 +76,10 @@ bool InputState::GetNewInputLine() {
   }
 
   while (!inputStack_.empty() && inputStack_.back()->inputPtr.empty()) {
-    if (inputStack_.back()->ReadNextLine()) {
+    auto& currInput = inputStack_.back();
+    currInput->currLine.clear();
+    if (currInput->inputSource->ReadNextLine(&currInput->currLine)) {
+      currInput->inputPtr = currInput->currLine;
       break;
     }
 
@@ -112,9 +94,8 @@ bool InputState::GetNewInputLine() {
 }
 
 void InputState::SetStringInput(std::string_view str) {
-  auto nis =
-      std::make_unique<InputString>(GetCurrFileName(), GetCurrLineNum(), str);
-  inputStack_.push_back(std::move(nis));
+  PushInput(GetCurrFileName(), GetCurrLineNum(),
+            std::make_unique<InputString>(str));
 }
 
 void InputState::SetIncludePath(std::vector<std::string> const& extra_paths) {
@@ -158,7 +139,7 @@ void InputState::OpenFileAsInput(std::filesystem::path const& fileName,
     if (required) Panic("Can't open \"%s\"", fileName);
   }
 
-  inputStack_.push_back(std::make_unique<InputFile>(file, fileName));
+  PushInput(fileName, 1, std::make_unique<InputFile>(file));
 }
 
 std::string InputState::GetCurrFileName() {
@@ -226,4 +207,15 @@ void InputState::SetRemainingLine(std::string_view str) {
   }
 
   currInput->inputPtr = str;
+}
+
+void InputState::PushInput(std::filesystem::path const& fileName, int lineNum,
+                           std::unique_ptr<InputSource> input) {
+  inputStack_.push_back(std::make_unique<InputSourceState>(InputSourceState{
+      .fileName = fileName,
+      .lineNum = lineNum,
+      .currLine = "",
+      .inputPtr = "",
+      .inputSource = std::move(input),
+  }));
 }

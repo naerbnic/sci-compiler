@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -14,59 +15,38 @@
 using LineOffset = int;
 
 struct InputSource {
-  InputSource();
-  InputSource(std::filesystem::path fileName, int lineNum = 0);
-  virtual ~InputSource() {}
-
-  InputSource& operator=(InputSource&);
-
-  virtual LineOffset lineStartOffset() = 0;
+  InputSource() = default;
+  virtual ~InputSource() = default;
 
   // Reads the next line from the input source.
   //
   // If true, the line is stored in inputPtr;
-  virtual bool ReadNextLine() = 0;
-
- protected:
-  int lineNum;
-  std::string_view inputPtr;
-  std::filesystem::path fileName;
-
- private:
-  friend class InputState;
+  virtual bool ReadNextLine(std::string*) = 0;
 };
 
 struct InputFile : InputSource {
-  InputFile(FILE*, std::filesystem::path name);
+  InputFile(FILE* fp);
   ~InputFile();
 
-  LineOffset lineStartOffset() override { return this->lineStart; }
-  bool ReadNextLine() override;
-
-  FILE* file;
-  LineOffset lineStart;
+  bool ReadNextLine(std::string* output) override;
 
  private:
-  std::string curr_line_;
+  FILE* file_;
 };
 
 struct InputString : InputSource {
-  InputString();
-  InputString(std::filesystem::path fileName, int lineNum,
-              std::string_view str);
+  InputString(std::string_view str);
 
-  InputString& operator=(InputString&);
-
-  LineOffset lineStartOffset() override { return 0; }
-  bool ReadNextLine() override;
+  bool ReadNextLine(std::string* output) override;
 
  private:
-  std::string line_;
-  bool wasRead_;
+  std::optional<std::string> line_;
 };
 
 class InputState {
  public:
+  InputState();
+  ~InputState();
   // Sets the include path that will be used on include lookups.
   //
   // The paths will be searched in the order provided.
@@ -115,10 +95,14 @@ class InputState {
   void SetRemainingLine(std::string_view line);
 
  private:
+  struct InputSourceState;
+
+  void PushInput(std::filesystem::path const& fileName, int lineNum,
+                 std::unique_ptr<InputSource> input);
   // The current base source file, independent of current input stack.
   std::vector<std::filesystem::path> includePath_;
 
-  std::vector<std::unique_ptr<InputSource>> inputStack_;
+  std::vector<std::unique_ptr<InputSourceState>> inputStack_;
 };
 
 extern InputState gInputState;
