@@ -12,6 +12,7 @@
 #include "scic/parse.hpp"
 #include "scic/symtbl.hpp"
 #include "scic/token.hpp"
+#include "scic/toktypes.hpp"
 
 #define MAXCLASSES 512  // Maximum number of classes
 

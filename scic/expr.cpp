@@ -15,6 +15,7 @@
 #include "scic/symtbl.hpp"
 #include "scic/text.hpp"
 #include "scic/token.hpp"
+#include "scic/toktypes.hpp"
 
 static int gLoopNest;
 

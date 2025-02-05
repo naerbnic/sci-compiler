@@ -15,6 +15,7 @@
 #include "scic/input.hpp"
 #include "scic/sol.hpp"
 #include "scic/symtbl.hpp"
+#include "scic/toktypes.hpp"
 
 #define ALT_QUOTE '{'
 
@@ -490,7 +491,8 @@ static void ReadNumber(std::string_view ip) {
     c = absl::ascii_tolower(rawChar);
     auto char_index = validDigits.find((char)c);
     if (char_index == std::string_view::npos) {
-      Warning("Invalid character in number: %c.  Number = %d", rawChar, symVal());
+      Warning("Invalid character in number: %c.  Number = %d", rawChar,
+              symVal());
       break;
     }
     val = SCIWord((val * base) + char_index);

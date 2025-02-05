@@ -16,21 +16,6 @@ void GetRest(bool error = false);
 bool GetNewLine();
 
 //	toktypes.cpp
-Symbol* LookupTok();
-Symbol* GetSymbol();
-bool GetNumber(std::string_view);
-bool GetNumberOrString(std::string_view);
-bool GetString(std::string_view);
-bool GetIdent();
-bool GetDefineSymbol();
-bool IsIdent();
-bool IsUndefinedIdent();
-keyword_t Keyword();
-void GetKeyword(keyword_t);
-bool IsVar();
-bool IsProc();
-bool IsObj();
-bool IsNumber();
 
 // This keeps track of the current token value.
 class TokenSlot {
@@ -83,7 +68,6 @@ class TokenSlot {
 const int MaxTokenLen = 2048;
 
 extern int gNestedCondCompile;
-extern int gSelectorIsVar;
 extern std::string gSymStr;
 extern TokenSlot gTokSym;
 

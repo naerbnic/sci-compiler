@@ -2,6 +2,8 @@
 // 	routines for restricting the types of tokens returned or checking on
 // 	symbol/token types
 
+#include "scic/toktypes.hpp"
+
 #include "scic/error.hpp"
 #include "scic/expr.hpp"
 #include "scic/object.hpp"

@@ -19,6 +19,7 @@
 #include "scic/sol.hpp"
 #include "scic/symtbl.hpp"
 #include "scic/token.hpp"
+#include "scic/toktypes.hpp"
 #include "scic/vocab.hpp"
 
 bool gClassAdded;

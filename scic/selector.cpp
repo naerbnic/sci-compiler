@@ -10,6 +10,7 @@
 #include "scic/error.hpp"
 #include "scic/symtbl.hpp"
 #include "scic/token.hpp"
+#include "scic/toktypes.hpp"
 #include "scic/update.hpp"
 
 int gMaxSelector;

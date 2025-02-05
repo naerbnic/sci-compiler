@@ -17,6 +17,7 @@
 #include "scic/sc.hpp"
 #include "scic/symtbl.hpp"
 #include "scic/token.hpp"
+#include "scic/toktypes.hpp"
 
 jmp_buf gRecoverBuf;
 
