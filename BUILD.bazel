@@ -1,6 +1,6 @@
 alias(
-    name = "sc",
-    actual = "//src:sc",
+    name = "scic",
+    actual = "//scic",
     visibility = ["//visibility:public"],
 )
 
