@@ -34,7 +34,6 @@ struct InputSource {
 
  private:
   friend class InputState;
-  std::shared_ptr<InputSource> next_;
 };
 
 struct InputFile : InputSource {
@@ -119,9 +118,9 @@ class InputState {
   // Pops the current reading file from the input stack.
   bool CloseInputSource();
   // The current base source file, independent of current input stack.
-  std::shared_ptr<InputSource> inputSource;
   std::vector<std::filesystem::path> includePath_;
-  std::shared_ptr<InputSource> curSourceFile;
+
+  std::vector<std::unique_ptr<InputSource>> inputStack_;
 };
 
 extern InputState gInputState;

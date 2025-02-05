@@ -92,29 +92,28 @@ bool InputState::GetNewInputLine() {
   //
   // To ensure we don't just wait at the current source forever, we
   // set the current input to empty.
-  if (inputSource) {
-    inputSource->inputPtr = "";
+  if (!inputStack_.empty()) {
+    inputStack_.back()->inputPtr = "";
   }
 
-  while (inputSource && inputSource->inputPtr.empty()) {
-    if (inputSource->ReadNextLine()) {
+  while (!inputStack_.empty() && inputStack_.back()->inputPtr.empty()) {
+    if (inputStack_.back()->ReadNextLine()) {
       break;
     }
     CloseInputSource();
   }
 
-  if (inputSource) {
-    ++inputSource->lineNum;
+  if (!inputStack_.empty()) {
+    ++inputStack_.back()->lineNum;
   }
 
-  return (bool)inputSource;
+  return !inputStack_.empty();
 }
 
 void InputState::SetStringInput(std::string_view str) {
   auto nis =
-      std::make_shared<InputString>(GetCurrFileName(), GetCurrLineNum(), str);
-  nis->next_ = inputSource;
-  inputSource = nis;
+      std::make_unique<InputString>(GetCurrFileName(), GetCurrLineNum(), str);
+  inputStack_.push_back(std::move(nis));
 }
 
 void InputState::SetIncludePath(std::vector<std::string> const& extra_paths) {
@@ -135,18 +134,15 @@ void InputState::SetIncludePath(std::vector<std::string> const& extra_paths) {
 
 void InputState::OpenTopLevelFile(std::filesystem::path const& fileName,
                                   bool required) {
-  if (inputSource != nullptr) {
+  if (!inputStack_.empty()) {
     Warning("Top level file specified with other input sources open");
   }
 
   OpenFileAsInput(fileName, required);
-  curSourceFile = inputSource;
 }
 
 void InputState::OpenFileAsInput(std::filesystem::path const& fileName,
                                  bool required) {
-  std::shared_ptr<InputSource> localFile;
-
   // Try to open the file.  If we can't, try opening it in each of
   // the directories in the include path.
   FILE* file = FOpen(fileName, "r");
@@ -161,87 +157,84 @@ void InputState::OpenFileAsInput(std::filesystem::path const& fileName,
     if (required) Panic("Can't open \"%s\"", fileName);
   }
 
-  localFile = std::make_shared<InputFile>(file, fileName);
-
-  localFile->next_ = inputSource;
-  inputSource = localFile;
+  inputStack_.push_back(std::make_unique<InputFile>(file, fileName));
 }
 
 bool InputState::CloseInputSource() {
   // Close the current input source.  If the source is a file, this involves
   // closing the file.  Remove the source from the chain and free its memory.
 
-  std::shared_ptr<InputSource> ois;
-
-  if ((ois = inputSource)) {
-    std::shared_ptr<InputSource> next = inputSource->next_;
-    inputSource = next;
+  if (inputStack_.empty()) {
+    return false;
   }
+  inputStack_.pop_back();
 
-  return (bool)inputSource;
+  return !inputStack_.empty();
 }
 
 std::string InputState::GetCurrFileName() {
-  if (!inputSource) {
+  if (inputStack_.empty()) {
     return "<unknown>";
   }
-  return inputSource->fileName.string();
+  return inputStack_.back()->fileName.string();
 }
 
 std::string InputState::GetTopLevelFileName() {
-  if (!curSourceFile) {
+  if (inputStack_.empty()) {
     return "<unknown>";
   }
 
-  return curSourceFile->fileName.string();
+  return inputStack_.front()->fileName.string();
 }
 
 int InputState::GetCurrLineNum() {
-  if (!inputSource) {
+  if (inputStack_.empty()) {
     return 0;
   }
 
-  return inputSource->lineNum;
+  return inputStack_.back()->lineNum;
 }
 
 int InputState::GetTopLevelLineNum() {
-  if (!curSourceFile) {
+  if (inputStack_.empty()) {
     return 0;
   }
 
-  return curSourceFile->lineNum;
+  return inputStack_.front()->lineNum;
 }
 
-bool InputState::IsDone() { return !inputSource; }
+bool InputState::IsDone() { return inputStack_.empty(); }
 
 std::string_view InputState::GetRemainingLine() {
-  if (!inputSource) {
+  if (inputStack_.empty()) {
     return "";
   }
-  return inputSource->inputPtr;
+  return inputStack_.back()->inputPtr;
 }
 
 void InputState::SetRemainingLine(std::string_view str) {
-  if (!inputSource) {
+  if (inputStack_.empty()) {
     throw std::runtime_error(
         "Unexpeted setting of remaining line after closing");
   }
 
+  auto& currInput = inputStack_.back();
+
   if (!str.empty()) {
     // Enforce that this must be a part of the current line's
     // memory range.
-    auto currInput = inputSource->inputPtr;
-    auto const* low_ptr = &currInput[0];
-    auto const* high_ptr = &currInput[currInput.size()];
+    auto currInputStr = currInput->inputPtr;
+    auto const* low_ptr = &currInputStr[0];
+    auto const* high_ptr = &currInputStr[currInputStr.size()];
     auto const* str_start = &str[0];
     auto const* str_end = &str[str.size()];
-    bool start_in_range = str_start >= low_ptr || str_start <= high_ptr;
-    bool end_in_range = str_end >= low_ptr || str_end <= high_ptr;
+    bool start_in_range = str_start >= low_ptr && str_start <= high_ptr;
+    bool end_in_range = str_end >= low_ptr && str_end <= high_ptr;
     if (!start_in_range || !end_in_range) {
       throw new std::runtime_error(
           "Updated line out of bounds of original line");
     }
   }
 
-  inputSource->inputPtr = str;
+  currInput->inputPtr = str;
 }
