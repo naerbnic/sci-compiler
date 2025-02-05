@@ -11,6 +11,8 @@
 #include "scic/error.hpp"
 #include "scic/input.hpp"
 #include "scic/object.hpp"
+#include "scic/pnode.hpp"
+#include "scic/proc.hpp"
 #include "scic/sc.hpp"
 #include "scic/symtbl.hpp"
 #include "scic/token.hpp"

@@ -13,7 +13,7 @@
 #include "scic/input.hpp"
 #include "scic/object.hpp"
 #include "scic/opcodes.hpp"
-#include "scic/parse.hpp"
+#include "scic/pnode.hpp"
 #include "scic/sc.hpp"
 #include "scic/text.hpp"
 

@@ -1,7 +1,10 @@
 //	proc.cpp		sc
 
+#include "scic/proc.hpp"
+
 #include "scic/compile.hpp"
 #include "scic/error.hpp"
+#include "scic/expr.hpp"
 #include "scic/object.hpp"
 #include "scic/parse.hpp"
 #include "scic/sc.hpp"
@@ -88,7 +91,8 @@ static std::unique_ptr<PNode> _CallDef(sym_t theType) {
     case S_SELECT:
       if (!theProc || !(sn = gCurObj->findSelectorByNum(theProc->val())) ||
           IsProperty(sn)) {
-        Severe("%s is not a method for class %s", gSymStr, gCurObj->sym->name());
+        Severe("%s is not a method for class %s", gSymStr,
+               gCurObj->sym->name());
         return 0;
       }
       break;

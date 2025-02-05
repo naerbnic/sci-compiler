@@ -1,6 +1,6 @@
 //	pnode.cpp	sc
 
-#include "scic/parse.hpp"
+#include "scic/pnode.hpp"
 
 PNode* PNode::addChild(std::unique_ptr<PNode> node) {
   auto* ptr = node.get();

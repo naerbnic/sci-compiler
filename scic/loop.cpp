@@ -6,7 +6,7 @@
 #include "scic/anode.hpp"
 #include "scic/compile.hpp"
 #include "scic/opcodes.hpp"
-#include "scic/parse.hpp"
+#include "scic/pnode.hpp"
 #include "scic/symbol.hpp"
 
 enum LoopType { LOOP_FOR, LOOP_WHILE, LOOP_REPEAT };

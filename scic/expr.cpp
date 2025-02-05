@@ -1,6 +1,8 @@
 //	expr.cpp		sc
 // 	expressions
 
+#include "scic/expr.hpp"
+
 #include <algorithm>
 #include <memory>
 
