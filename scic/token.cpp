@@ -1,7 +1,7 @@
 //	token.cpp		sc
 // 	return the next token from the input
 
-#include "token.hpp"
+#include "scic/token.hpp"
 
 #include <stdlib.h>
 #include <string.h>
@@ -10,11 +10,11 @@
 
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_format.h"
-#include "chartype.hpp"
-#include "error.hpp"
-#include "input.hpp"
-#include "sol.hpp"
-#include "symtbl.hpp"
+#include "scic/chartype.hpp"
+#include "scic/error.hpp"
+#include "scic/input.hpp"
+#include "scic/sol.hpp"
+#include "scic/symtbl.hpp"
 
 #define ALT_QUOTE '{'
 

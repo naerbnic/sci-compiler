@@ -8,9 +8,9 @@
 #include <sys/stat.h>
 #include <time.h>
 
-#include "config.hpp"
-#include "error.hpp"
-#include "platform.hpp"
+#include "scic/config.hpp"
+#include "scic/error.hpp"
+#include "scic/platform.hpp"
 
 static int haveLock;
 static char lockFile[] = "$$$sc.lck";

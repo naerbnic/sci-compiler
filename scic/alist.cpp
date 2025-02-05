@@ -1,15 +1,15 @@
 //	alist.cpp
 
-#include "alist.hpp"
+#include "scic/alist.hpp"
 
 #include <cassert>
 
-#include "anode.hpp"
-#include "config.hpp"
-#include "listing.hpp"
-#include "opcodes.hpp"
-#include "output.hpp"
-#include "sc.hpp"
+#include "scic/anode.hpp"
+#include "scic/config.hpp"
+#include "scic/listing.hpp"
+#include "scic/opcodes.hpp"
+#include "scic/output.hpp"
+#include "scic/sc.hpp"
 
 bool gShrink;
 

@@ -10,7 +10,7 @@
 #include <span>
 #include <vector>
 
-#include "symbol.hpp"
+#include "scic/symbol.hpp"
 
 // Parse node types.  The same as symbol types, but with some additions.
 enum pn_t {

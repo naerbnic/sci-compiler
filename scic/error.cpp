@@ -1,7 +1,7 @@
 //	error.cpp	sc
 // 	error message routines for sc
 
-#include "error.hpp"
+#include "scic/error.hpp"
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -9,11 +9,11 @@
 #include <string_view>
 
 #include "absl/strings/str_format.h"
-#include "input.hpp"
-#include "platform.hpp"
-#include "share.hpp"
-#include "symbol.hpp"
-#include "token.hpp"
+#include "scic/input.hpp"
+#include "scic/platform.hpp"
+#include "scic/share.hpp"
+#include "scic/symbol.hpp"
+#include "scic/token.hpp"
 
 int gNumErrors;
 int gNumWarnings;

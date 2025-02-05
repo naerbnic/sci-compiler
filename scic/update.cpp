@@ -1,7 +1,7 @@
 //	update.cpp		sc
 // 	update the database of class and selector information
 
-#include "update.hpp"
+#include "scic/update.hpp"
 
 #include <stdlib.h>
 #include <string.h>
@@ -9,16 +9,16 @@
 #include <filesystem>
 
 #include "absl/strings/str_format.h"
-#include "config.hpp"
-#include "error.hpp"
-#include "input.hpp"
-#include "object.hpp"
-#include "output.hpp"
-#include "resource.hpp"
-#include "sol.hpp"
-#include "symtbl.hpp"
-#include "token.hpp"
-#include "vocab.hpp"
+#include "scic/config.hpp"
+#include "scic/error.hpp"
+#include "scic/input.hpp"
+#include "scic/object.hpp"
+#include "scic/output.hpp"
+#include "scic/resource.hpp"
+#include "scic/sol.hpp"
+#include "scic/symtbl.hpp"
+#include "scic/token.hpp"
+#include "scic/vocab.hpp"
 
 bool gClassAdded;
 bool gSelectorAdded;

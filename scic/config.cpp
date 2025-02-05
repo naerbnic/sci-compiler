@@ -1,3 +1,3 @@
-#include "config.hpp"
+#include "scic/config.hpp"
 
 ToolConfig const* gConfig = nullptr;

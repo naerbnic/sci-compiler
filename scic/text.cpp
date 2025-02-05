@@ -1,6 +1,6 @@
 //	text.cpp		sc
 
-#include "text.hpp"
+#include "scic/text.hpp"
 
 TextList gText;
 

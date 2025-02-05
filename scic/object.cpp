@@ -1,21 +1,21 @@
 //	object.cpp
 // 	handle class code/instances.
 
-#include "object.hpp"
+#include "scic/object.hpp"
 
 #include <setjmp.h>
 
-#include "compile.hpp"
-#include "config.hpp"
-#include "define.hpp"
-#include "error.hpp"
-#include "input.hpp"
-#include "parse.hpp"
-#include "sc.hpp"
-#include "symtbl.hpp"
-#include "text.hpp"
-#include "token.hpp"
-#include "update.hpp"
+#include "scic/compile.hpp"
+#include "scic/config.hpp"
+#include "scic/define.hpp"
+#include "scic/error.hpp"
+#include "scic/input.hpp"
+#include "scic/parse.hpp"
+#include "scic/sc.hpp"
+#include "scic/symtbl.hpp"
+#include "scic/text.hpp"
+#include "scic/token.hpp"
+#include "scic/update.hpp"
 
 Object* gCurObj;
 Object* gReceiver;

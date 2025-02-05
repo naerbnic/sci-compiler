@@ -7,7 +7,7 @@
 #include <string>
 #include <variant>
 
-#include "alist.hpp"
+#include "scic/alist.hpp"
 
 class OutputFile;
 

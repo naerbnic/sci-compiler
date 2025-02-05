@@ -5,7 +5,7 @@
 
 #include <cstdint>
 
-#include "alist.hpp"
+#include "scic/alist.hpp"
 
 struct PNode;
 struct ANode;

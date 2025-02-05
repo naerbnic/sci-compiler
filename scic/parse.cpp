@@ -1,19 +1,19 @@
 //	parse.cpp	sc
 // 	parse a script
 
-#include "parse.hpp"
+#include "scic/parse.hpp"
 
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "asm.hpp"
-#include "define.hpp"
-#include "error.hpp"
-#include "input.hpp"
-#include "object.hpp"
-#include "sc.hpp"
-#include "symtbl.hpp"
-#include "token.hpp"
+#include "scic/asm.hpp"
+#include "scic/define.hpp"
+#include "scic/error.hpp"
+#include "scic/input.hpp"
+#include "scic/object.hpp"
+#include "scic/sc.hpp"
+#include "scic/symtbl.hpp"
+#include "scic/token.hpp"
 
 jmp_buf gRecoverBuf;
 

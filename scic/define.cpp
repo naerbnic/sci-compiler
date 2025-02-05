@@ -1,6 +1,6 @@
 //	define.cpp
 
-#include "define.hpp"
+#include "scic/define.hpp"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,14 +8,14 @@
 #include <string_view>
 
 #include "absl/strings/ascii.h"
-#include "anode.hpp"
-#include "compile.hpp"
-#include "config.hpp"
-#include "error.hpp"
-#include "parse.hpp"
-#include "sc.hpp"
-#include "symtbl.hpp"
-#include "token.hpp"
+#include "scic/anode.hpp"
+#include "scic/compile.hpp"
+#include "scic/config.hpp"
+#include "scic/error.hpp"
+#include "scic/parse.hpp"
+#include "scic/sc.hpp"
+#include "scic/symtbl.hpp"
+#include "scic/token.hpp"
 
 VarList gLocalVars;
 VarList gGlobalVars;

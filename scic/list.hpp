@@ -7,7 +7,7 @@
 #include <cassert>
 #include <memory>
 
-#include "casts.hpp"
+#include "scic/casts.hpp"
 
 class TListBase;
 

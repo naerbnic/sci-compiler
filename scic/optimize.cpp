@@ -1,10 +1,10 @@
 //	optimize.cpp	sc
 // 	optimize generated assembly code
 
-#include "optimize.hpp"
+#include "scic/optimize.hpp"
 
-#include "anode.hpp"
-#include "opcodes.hpp"
+#include "scic/anode.hpp"
+#include "scic/opcodes.hpp"
 
 enum {
   UNKNOWN = 0x4000,

@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <vector>
 
-#include "symtypes.hpp"
+#include "scic/symtypes.hpp"
 
 class Symbol;
 

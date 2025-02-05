@@ -1,12 +1,12 @@
 //	proc.cpp		sc
 
-#include "compile.hpp"
-#include "error.hpp"
-#include "object.hpp"
-#include "parse.hpp"
-#include "sc.hpp"
-#include "symtbl.hpp"
-#include "token.hpp"
+#include "scic/compile.hpp"
+#include "scic/error.hpp"
+#include "scic/object.hpp"
+#include "scic/parse.hpp"
+#include "scic/sc.hpp"
+#include "scic/symtbl.hpp"
+#include "scic/token.hpp"
 
 bool gInParmList;
 

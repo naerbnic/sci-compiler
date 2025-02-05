@@ -1,4 +1,4 @@
-#include "platform.hpp"
+#include "scic/platform.hpp"
 
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__linux__)
 

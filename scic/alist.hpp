@@ -10,8 +10,8 @@
 #include <utility>
 #include <vector>
 
-#include "list.hpp"
-#include "listing.hpp"
+#include "scic/list.hpp"
+#include "scic/listing.hpp"
 
 struct ANOpCode;
 class OutputFile;

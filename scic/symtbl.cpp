@@ -1,11 +1,11 @@
 //	symtbl.cpp	sc
 // 	symbol table routines for sc
 
-#include "symtbl.hpp"
+#include "scic/symtbl.hpp"
 
 #include <memory>
 
-#include "object.hpp"
+#include "scic/object.hpp"
 
 SymTbls gSyms;
 

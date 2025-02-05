@@ -1,7 +1,7 @@
 //	sc.cpp		sc
 // 	the Script language compiler
 
-#include "sc.hpp"
+#include "scic/sc.hpp"
 
 #include <stdlib.h>
 
@@ -12,22 +12,22 @@
 #include "absl/debugging/failure_signal_handler.h"
 #include "absl/debugging/symbolize.h"
 #include "argparse/argparse.hpp"
-#include "asm.hpp"
-#include "banner.hpp"
-#include "builtins.hpp"
-#include "compile.hpp"
-#include "config.hpp"
-#include "define.hpp"
-#include "error.hpp"
-#include "input.hpp"
-#include "listing.hpp"
-#include "object.hpp"
-#include "parse.hpp"
-#include "platform.hpp"
-#include "share.hpp"
-#include "symtbl.hpp"
-#include "text.hpp"
-#include "update.hpp"
+#include "scic/asm.hpp"
+#include "scic/banner.hpp"
+#include "scic/builtins.hpp"
+#include "scic/compile.hpp"
+#include "scic/config.hpp"
+#include "scic/define.hpp"
+#include "scic/error.hpp"
+#include "scic/input.hpp"
+#include "scic/listing.hpp"
+#include "scic/object.hpp"
+#include "scic/parse.hpp"
+#include "scic/platform.hpp"
+#include "scic/share.hpp"
+#include "scic/symtbl.hpp"
+#include "scic/text.hpp"
+#include "scic/update.hpp"
 
 std::unique_ptr<Compiler> gSc;
 int gScript;

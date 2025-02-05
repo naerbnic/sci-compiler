@@ -1,17 +1,17 @@
 //	asm.cpp
 // 	assemble an object code list
 
-#include "asm.hpp"
+#include "scic/asm.hpp"
 
 #include <cstdlib>
 
 #include "absl/strings/str_format.h"
-#include "anode.hpp"
-#include "define.hpp"
-#include "input.hpp"
-#include "listing.hpp"
-#include "output.hpp"
-#include "sc.hpp"
+#include "scic/anode.hpp"
+#include "scic/define.hpp"
+#include "scic/input.hpp"
+#include "scic/listing.hpp"
+#include "scic/output.hpp"
+#include "scic/sc.hpp"
 
 ANTable* gDispTbl;
 int gLastLineNum;

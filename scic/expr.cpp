@@ -4,14 +4,14 @@
 #include <algorithm>
 #include <memory>
 
-#include "define.hpp"
-#include "error.hpp"
-#include "object.hpp"
-#include "parse.hpp"
-#include "sc.hpp"
-#include "symtbl.hpp"
-#include "text.hpp"
-#include "token.hpp"
+#include "scic/define.hpp"
+#include "scic/error.hpp"
+#include "scic/object.hpp"
+#include "scic/parse.hpp"
+#include "scic/sc.hpp"
+#include "scic/symtbl.hpp"
+#include "scic/text.hpp"
+#include "scic/token.hpp"
 
 static int gLoopNest;
 

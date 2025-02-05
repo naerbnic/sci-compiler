@@ -1,7 +1,7 @@
 //	chartype.cpp
 // 	character type lookup table.
 
-#include "chartype.hpp"
+#include "scic/chartype.hpp"
 
 #include <cstdint>
 

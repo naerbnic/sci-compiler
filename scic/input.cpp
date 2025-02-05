@@ -1,7 +1,7 @@
 //	input.cpp	sc
 // 	input routines
 
-#include "input.hpp"
+#include "scic/input.hpp"
 
 #include <stdlib.h>
 
@@ -12,7 +12,7 @@
 
 #include "absl/cleanup/cleanup.h"
 #include "absl/strings/str_format.h"
-#include "error.hpp"
+#include "scic/error.hpp"
 
 InputState gInputState;
 

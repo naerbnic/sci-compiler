@@ -1,21 +1,21 @@
 //	compile.cpp
 // 	compile the object code list for a parse tree
 
-#include "compile.hpp"
+#include "scic/compile.hpp"
 
 #include <ranges>
 
-#include "anode.hpp"
-#include "asm.hpp"
-#include "config.hpp"
-#include "define.hpp"
-#include "error.hpp"
-#include "input.hpp"
-#include "object.hpp"
-#include "opcodes.hpp"
-#include "parse.hpp"
-#include "sc.hpp"
-#include "text.hpp"
+#include "scic/anode.hpp"
+#include "scic/asm.hpp"
+#include "scic/config.hpp"
+#include "scic/define.hpp"
+#include "scic/error.hpp"
+#include "scic/input.hpp"
+#include "scic/object.hpp"
+#include "scic/opcodes.hpp"
+#include "scic/parse.hpp"
+#include "scic/sc.hpp"
+#include "scic/text.hpp"
 
 static void MakeAccess(AOpList* curList, PNode*, uint8_t);
 static void MakeImmediate(AOpList* curList, int);

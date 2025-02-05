@@ -1,6 +1,6 @@
 //	list.cpp		sc
 
-#include "list.hpp"
+#include "scic/list.hpp"
 
 #include <cassert>
 

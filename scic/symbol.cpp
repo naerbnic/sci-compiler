@@ -1,11 +1,11 @@
 //	symbol.cpp	sc
 // 	symbol class routines for sc
 
-#include "symbol.hpp"
+#include "scic/symbol.hpp"
 
-#include "define.hpp"
-#include "input.hpp"
-#include "object.hpp"
+#include "scic/define.hpp"
+#include "scic/input.hpp"
+#include "scic/object.hpp"
 
 Symbol::Symbol(std::string_view name, sym_t type)
     : name_(!name.empty() ? std::optional(std::string(name)) : std::nullopt),

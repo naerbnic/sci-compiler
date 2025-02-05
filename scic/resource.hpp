@@ -5,7 +5,7 @@
 
 #include <string>
 
-#include "memtype.hpp"
+#include "scic/memtype.hpp"
 
 std::string ResNameMake(MemType type, int num);
 

@@ -1,7 +1,7 @@
 //	listing.cpp		sc
 // 	handle code listing
 
-#include "listing.hpp"
+#include "scic/listing.hpp"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -12,11 +12,11 @@
 #include "absl/base/nullability.h"
 #include "absl/functional/function_ref.h"
 #include "absl/strings/str_cat.h"
-#include "config.hpp"
-#include "error.hpp"
-#include "opcodes.hpp"
-#include "sc.hpp"
-#include "sol.hpp"
+#include "scic/config.hpp"
+#include "scic/error.hpp"
+#include "scic/opcodes.hpp"
+#include "scic/sc.hpp"
+#include "scic/sol.hpp"
 
 #define JUST_OP 0  // Only operator -- no arguments
 #define OP_ARGS 1  // Operator takes arguments

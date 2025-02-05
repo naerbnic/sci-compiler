@@ -3,11 +3,11 @@
 
 #include <cassert>
 
-#include "anode.hpp"
-#include "compile.hpp"
-#include "opcodes.hpp"
-#include "parse.hpp"
-#include "symbol.hpp"
+#include "scic/anode.hpp"
+#include "scic/compile.hpp"
+#include "scic/opcodes.hpp"
+#include "scic/parse.hpp"
+#include "scic/symbol.hpp"
 
 enum LoopType { LOOP_FOR, LOOP_WHILE, LOOP_REPEAT };
 

@@ -5,7 +5,7 @@
 
 #include <string_view>
 
-#include "symbol.hpp"
+#include "scic/symbol.hpp"
 
 //	token.cpp
 void GetToken();

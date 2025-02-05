@@ -1,26 +1,26 @@
 //	anode.cpp
 // 	assemble an object code list
 
-#include "anode.hpp"
+#include "scic/anode.hpp"
 
 #include <stdlib.h>
 #include <string.h>
 
 #include <algorithm>
 
-#include "asm.hpp"
-#include "config.hpp"
-#include "define.hpp"
-#include "error.hpp"
-#include "listing.hpp"
-#include "object.hpp"
-#include "opcodes.hpp"
-#include "optimize.hpp"
-#include "output.hpp"
-#include "sc.hpp"
-#include "sol.hpp"
-#include "symbol.hpp"
-#include "text.hpp"
+#include "scic/asm.hpp"
+#include "scic/config.hpp"
+#include "scic/define.hpp"
+#include "scic/error.hpp"
+#include "scic/listing.hpp"
+#include "scic/object.hpp"
+#include "scic/opcodes.hpp"
+#include "scic/optimize.hpp"
+#include "scic/output.hpp"
+#include "scic/sc.hpp"
+#include "scic/sol.hpp"
+#include "scic/symbol.hpp"
+#include "scic/text.hpp"
 
 ANCodeBlk* gCodeStart;
 uint32_t gTextStart;

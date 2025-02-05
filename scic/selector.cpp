@@ -3,12 +3,12 @@
 
 #include <stdio.h>
 
-#include "config.hpp"
-#include "error.hpp"
-#include "object.hpp"
-#include "symtbl.hpp"
-#include "token.hpp"
-#include "update.hpp"
+#include "scic/config.hpp"
+#include "scic/error.hpp"
+#include "scic/object.hpp"
+#include "scic/symtbl.hpp"
+#include "scic/token.hpp"
+#include "scic/update.hpp"
 
 int gMaxSelector;
 

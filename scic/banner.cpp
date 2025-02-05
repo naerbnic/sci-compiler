@@ -1,6 +1,6 @@
 // banner.cpp sc
 
-#include "banner.hpp"
+#include "scic/banner.hpp"
 
 char gBanner[] = "Digital Alchemy Script Compiler 5.0 (" __DATE__ " " __TIME__
                 ")\n"

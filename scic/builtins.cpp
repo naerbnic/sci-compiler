@@ -1,9 +1,9 @@
 //	builtins.cpp
 // 	code to install the keywords, etc., in the symbol table.
 
-#include "builtins.hpp"
+#include "scic/builtins.hpp"
 
-#include "symtbl.hpp"
+#include "scic/symtbl.hpp"
 
 struct BuiltIn {
   std::string_view name;

@@ -4,7 +4,7 @@
 #ifndef ASM_HPP
 #define ASM_HPP
 
-#include "listing.hpp"
+#include "scic/listing.hpp"
 
 void InitAsm();
 void Assemble(ListingFile* listFile);

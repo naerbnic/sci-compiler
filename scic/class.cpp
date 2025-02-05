@@ -5,11 +5,11 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
-#include "error.hpp"
-#include "object.hpp"
-#include "parse.hpp"
-#include "symtbl.hpp"
-#include "token.hpp"
+#include "scic/error.hpp"
+#include "scic/object.hpp"
+#include "scic/parse.hpp"
+#include "scic/symtbl.hpp"
+#include "scic/token.hpp"
 
 #define MAXCLASSES 512  // Maximum number of classes
 

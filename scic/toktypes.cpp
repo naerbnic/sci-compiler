@@ -2,12 +2,12 @@
 // 	routines for restricting the types of tokens returned or checking on
 // 	symbol/token types
 
-#include "error.hpp"
-#include "object.hpp"
-#include "parse.hpp"
-#include "sc.hpp"
-#include "symtbl.hpp"
-#include "token.hpp"
+#include "scic/error.hpp"
+#include "scic/object.hpp"
+#include "scic/parse.hpp"
+#include "scic/sc.hpp"
+#include "scic/symtbl.hpp"
+#include "scic/token.hpp"
 
 int gSelectorIsVar;
 

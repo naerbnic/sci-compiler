@@ -9,7 +9,7 @@
 #include <ranges>
 
 #include "absl/container/btree_map.h"
-#include "symbol.hpp"
+#include "scic/symbol.hpp"
 
 // Possible hash table sizes for symbol tables.
 const int ST_LARGE = 253;

@@ -10,9 +10,9 @@
 #include <string>
 #include <variant>
 
-#include "define.hpp"
-#include "object.hpp"
-#include "symtypes.hpp"
+#include "scic/define.hpp"
+#include "scic/object.hpp"
+#include "scic/symtypes.hpp"
 
 struct ANode;
 struct ANReference;
