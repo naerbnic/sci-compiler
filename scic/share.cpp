@@ -10,7 +10,7 @@
 
 #include "scic/config.hpp"
 #include "scic/error.hpp"
-#include "scic/platform.hpp"
+#include "util/platform/platform.hpp"
 
 static int haveLock;
 static char lockFile[] = "$$$sc.lck";

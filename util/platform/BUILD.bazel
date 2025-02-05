@@ -1,0 +1,6 @@
+cc_library(
+    name = "platform",
+    srcs = ["platform.cpp"],
+    hdrs = ["platform.hpp"],
+    visibility = ["//scic:__subpackages__"],
+)

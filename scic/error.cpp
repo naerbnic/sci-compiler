@@ -10,10 +10,10 @@
 
 #include "absl/strings/str_format.h"
 #include "scic/input.hpp"
-#include "scic/platform.hpp"
 #include "scic/share.hpp"
 #include "scic/symbol.hpp"
 #include "scic/token.hpp"
+#include "util/platform/platform.hpp"
 
 int gNumErrors;
 int gNumWarnings;

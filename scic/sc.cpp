@@ -23,11 +23,11 @@
 #include "scic/listing.hpp"
 #include "scic/object.hpp"
 #include "scic/parse.hpp"
-#include "scic/platform.hpp"
 #include "scic/share.hpp"
 #include "scic/symtbl.hpp"
 #include "scic/text.hpp"
 #include "scic/update.hpp"
+#include "util/platform/platform.hpp"
 
 std::unique_ptr<Compiler> gSc;
 int gScript;

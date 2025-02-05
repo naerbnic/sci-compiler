@@ -13,10 +13,10 @@
 #include "scic/config.hpp"
 #include "scic/error.hpp"
 #include "scic/memtype.hpp"
-#include "scic/platform.hpp"
 #include "scic/resource.hpp"
 #include "scic/sc.hpp"
 #include "scic/sol.hpp"
+#include "util/platform/platform.hpp"
 
 OutputFile::OutputFile(std::string fileName) : fileName(fileName) {
   fp = CreateOutputFile(fileName);
