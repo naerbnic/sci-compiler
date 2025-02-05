@@ -9,7 +9,6 @@
 #include <memory>
 
 #include "absl/strings/str_format.h"
-#include "absl/strings/str_split.h"
 #include "error.hpp"
 
 InputState gInputState;
@@ -99,18 +98,6 @@ void InputState::SetStringInput(std::string_view str) {
 }
 
 void InputState::SetIncludePath(std::vector<std::string> const& extra_paths) {
-  const char* t = getenv("SINCLUDE");
-
-  if (t) {
-    // Successively copy each element of the path into 'path',
-    // and add it to the includePath_ chain.
-    for (auto path : absl::StrSplit(t, ';')) {
-      // Now allocate a node to keep this path on in the includePath_
-      // chain and link it into the list.
-      includePath_.emplace_back(path);
-    }
-  }
-
   std::ranges::copy(extra_paths, std::back_inserter(includePath_));
 }
 
