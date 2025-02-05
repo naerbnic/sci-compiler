@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 
+#include <array>
 #include <filesystem>
 #include <memory>
 #include <optional>
