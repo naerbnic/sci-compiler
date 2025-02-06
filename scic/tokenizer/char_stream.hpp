@@ -18,8 +18,8 @@ class CharOffset {
         column_index_(column_number) {}
 
   std::size_t byte_offset() const { return byte_offset_; }
-  std::size_t line_number() const { return line_index_; }
-  std::size_t column_number() const { return column_index_; }
+  std::size_t line_index() const { return line_index_; }
+  std::size_t column_index() const { return column_index_; }
 
  private:
   std::size_t byte_offset_;
@@ -65,6 +65,7 @@ class TextContents {
   std::string_view contents() const { return contents_; }
   std::size_t num_lines() const { return line_spans_.size(); }
   std::string_view GetLine(std::size_t line_index) const;
+  std::string_view GetAfter(std::size_t byte_offset) const;
   char CharAt(std::size_t byte_offset) const;
   CharOffset GetOffset(std::size_t byte_offset) const;
 
@@ -81,7 +82,7 @@ class TextContents {
 class CharStream {
  public:
   CharStream() = default;
-  CharStream(std::string_view input);
+  CharStream(std::string_view input, std::size_t offset = 0);
 
   CharStream& operator++();
   CharStream operator++(int);
@@ -107,6 +108,7 @@ class CharStream {
   };
 
   bool AtEnd() const;
+  void Advance();
 
   TextContents contents_;
   std::size_t curr_index_;
