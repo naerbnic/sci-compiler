@@ -1,0 +1,27 @@
+cc_library(
+    name = "token",
+    srcs = ["token.cpp"],
+    hdrs = ["token.hpp"],
+    deps = [
+        ":char_stream",
+    ],
+)
+
+cc_library(
+    name = "char_stream",
+    srcs = ["char_stream.cpp"],
+    hdrs = ["char_stream.hpp"],
+    deps = [
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "char_stream_test",
+    srcs = ["char_stream_test.cpp"],
+    deps = [
+        ":char_stream",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
