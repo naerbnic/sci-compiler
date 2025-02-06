@@ -81,7 +81,7 @@ CharOffset TextContents::GetOffset(std::size_t byte_offset) const {
 }
 
 CharStream::CharStream(std::string_view input, std::size_t offset)
-    : contents_(input), curr_index_(offset) {}
+    : contents_(std::make_shared<TextContents>(input)), curr_index_(offset) {}
 
 CharStream& CharStream::operator++() {
   Advance();
@@ -100,7 +100,7 @@ char CharStream::operator*() const {
   if (AtEnd()) {
     throw std::runtime_error("Dereferencing end of input.");
   }
-  auto remainder = contents_.GetAfter(curr_index_);
+  auto remainder = contents_->GetAfter(curr_index_);
   if (remainder[0] == '\r') {
     return '\n';
   } else {
@@ -108,15 +108,17 @@ char CharStream::operator*() const {
   }
 }
 
+bool CharStream::AtStart() const { return curr_index_ == 0; }
+
 CharStream CharStream::FindNext(char c) const {
   return FindNextOf(std::string_view(&c, 1));
 }
 
 CharStream CharStream::FindNextOf(std::string_view chars) const {
   auto copy = *this;
-  auto pos = contents_.contents().find_first_of(chars, curr_index_);
+  auto pos = contents_->contents().find_first_of(chars, curr_index_);
   if (pos == std::string_view::npos) {
-    copy.curr_index_ = contents_.size();
+    copy.curr_index_ = contents_->size();
   } else {
     copy.curr_index_ = pos;
   }
@@ -129,9 +131,9 @@ CharStream CharStream::SkipChar(char c) const {
 
 CharStream CharStream::SkipCharsOf(std::string_view chars) const {
   auto copy = *this;
-  auto pos = contents_.contents().find_first_not_of(chars, curr_index_);
+  auto pos = contents_->contents().find_first_not_of(chars, curr_index_);
   if (pos == std::string_view::npos) {
-    copy.curr_index_ = contents_.size();
+    copy.curr_index_ = contents_->size();
   } else {
     copy.curr_index_ = pos;
   }
@@ -140,7 +142,7 @@ CharStream CharStream::SkipCharsOf(std::string_view chars) const {
 
 CharStream CharStream::SkipN(std::size_t n) const {
   auto copy = *this;
-  if (curr_index_ + n >= contents_.size()) {
+  if (curr_index_ + n >= contents_->size()) {
     throw std::runtime_error("Skipping past end of input.");
   }
   copy.curr_index_ += n;
@@ -148,19 +150,27 @@ CharStream CharStream::SkipN(std::size_t n) const {
 }
 
 CharOffset CharStream::Offset() const {
-  return contents_.GetOffset(curr_index_);
+  return contents_->GetOffset(curr_index_);
 }
 
 CharRange CharStream::RangeTo(CharStream const& other) const {
   return CharRange(Offset(), other.Offset());
 }
 
-bool CharStream::AtEnd() const { return contents_.size() == curr_index_; }
+std::string_view CharStream::GetTextTo(CharStream const& other) const {
+  if (contents_.get() != other.contents_.get()) {
+    throw std::runtime_error("Getting text range from different contents.");
+  }
+  return contents_->GetAfter(curr_index_)
+      .substr(0, other.curr_index_ - curr_index_);
+}
+
+bool CharStream::AtEnd() const { return contents_->size() == curr_index_; }
 void CharStream::Advance() {
   if (AtEnd()) {
     throw std::runtime_error("Advancing past end of input.");
   }
-  if (contents_.GetAfter(curr_index_).starts_with("\r\n")) {
+  if (contents_->GetAfter(curr_index_).starts_with("\r\n")) {
     curr_index_ += 2;
   } else {
     curr_index_ += 1;
