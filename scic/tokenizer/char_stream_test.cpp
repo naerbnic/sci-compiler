@@ -79,7 +79,6 @@ TEST(CharStreamTest, StreamIsCopyable) {
 
   EXPECT_EQ(*stream2++, 'b');
   EXPECT_EQ(*stream2++, 'c');
-
 }
 
 }  // namespace

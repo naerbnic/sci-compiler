@@ -1,3 +1,14 @@
+package(
+    default_visibility = [":scic_internal"],
+)
+
+package_group(
+    name = "scic_internal",
+    packages = [
+        "//scic/...",
+    ],
+)
+
 cc_binary(
     name = "scic",
     srcs = glob(
@@ -5,9 +16,14 @@ cc_binary(
             "*.cpp",
             "*.hpp",
         ],
+        exclude = [
+            "chartype.cpp",
+            "chartype.hpp",
+        ],
     ),
     visibility = ["//visibility:public"],
     deps = [
+        ":chartype",
         "//util/io:buffer",
         "//util/platform",
         "@abseil-cpp//absl/cleanup",
@@ -19,4 +35,10 @@ cc_binary(
         "@abseil-cpp//absl/strings:str_format",
         "@argparse",
     ],
+)
+
+cc_library(
+    name = "chartype",
+    srcs = ["chartype.cpp"],
+    hdrs = ["chartype.hpp"],
 )

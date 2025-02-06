@@ -1,9 +1,35 @@
+package(
+    default_visibility = ["//scic:scic_internal"],
+)
+
 cc_library(
     name = "token",
     srcs = ["token.cpp"],
     hdrs = ["token.hpp"],
     deps = [
         ":char_stream",
+    ],
+)
+
+cc_library(
+    name = "token_readers",
+    srcs = ["token_readers.cpp"],
+    hdrs = ["token_readers.hpp"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":char_stream",
+        ":token",
+        "//scic:chartype",
+    ],
+)
+
+cc_test(
+    name = "token_readers_test",
+    srcs = ["token_readers_test.cpp"],
+    deps = [
+        ":token_readers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 

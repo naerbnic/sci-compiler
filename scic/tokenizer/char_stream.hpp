@@ -91,6 +91,8 @@ class CharStream {
   bool operator!() const;
   char operator*() const;
 
+  bool AtStart() const;
+
   CharStream FindNext(char c) const;
   CharStream FindNextOf(std::string_view chars) const;
 
@@ -101,6 +103,8 @@ class CharStream {
   CharOffset Offset() const;
   CharRange RangeTo(CharStream const& other) const;
 
+  std::string_view GetTextTo(CharStream const& other) const;
+
  private:
   struct LineSpan {
     std::size_t start;
@@ -110,7 +114,7 @@ class CharStream {
   bool AtEnd() const;
   void Advance();
 
-  TextContents contents_;
+  std::shared_ptr<TextContents> contents_;
   std::size_t curr_index_;
 };
 

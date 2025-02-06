@@ -23,22 +23,36 @@ class Token {
   };
 
   enum PunctType : char {
-    OP_HASH = '#',
-    OP_LPAREN = '(',
-    OP_RPAREN = ')',
-    OP_COMMA = ',',
-    OP_DOT = '.',
-    OP_AT = '@',
-    OP_LBRACKET = '[',
-    OP_RBRACKET = ']',
+    PCT_HASH = '#',
+    PCT_LPAREN = '(',
+    PCT_RPAREN = ')',
+    PCT_COMMA = ',',
+    PCT_DOT = '.',
+    PCT_AT = '@',
+    PCT_LBRACKET = '[',
+    PCT_RBRACKET = ']',
   };
 
   // Token subtypes.
 
   // An identifier.
   struct Ident {
+    // The trailing character of the identifier.
+    enum Trailer {
+      None,
+      // ':'
+      Colon,
+      // '?'
+      Question,
+    };
     // The name of the identifier. This may not exactly match the raw string
     // if some kind of escape sequence is used.
+    std::string name;
+    Trailer trailer;
+  };
+
+  // A Selector in a call (e.g. "mySelector:")
+  struct Selector {
     std::string name;
   };
 
@@ -66,14 +80,16 @@ class Token {
     std::vector<Token> lineTokens;
   };
 
- private:
   using TokenValue = std::variant<Ident, String, Number, Punct, PreProcessor>;
 
- public:
   Token() = default;
+  Token(CharRange file_range, std::string raw_text, TokenValue value);
+
+  CharRange const& char_range() const { return char_range_; }
+  std::string_view raw_text() const { return raw_text_; }
 
  private:
-  FileRange file_range_;
+  CharRange char_range_;
   std::string raw_text_;
   TokenValue value_;
 };
