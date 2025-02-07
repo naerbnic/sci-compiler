@@ -5,10 +5,13 @@
 #include <string>
 #include <string_view>
 
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/numbers.h"
 #include "scic/chartype.hpp"
 #include "scic/tokenizer/token.hpp"
+#include "util/status/status_macros.hpp"
 
 namespace tokenizer {
 
@@ -48,53 +51,65 @@ Token::PunctType CharToPunctType(char c) {
   }
 }
 
-int CharDigitValue(char c, std::optional<uint8_t> base = std::nullopt) {
-  c = absl::ascii_tolower(c);
+absl::Status ExpectNonEmpty(CharStream& stream) {
+  if (!stream) {
+    return absl::FailedPreconditionError("Unexpected end of stream");
+  }
+  return absl::OkStatus();
+}
+
+#define CHECK_NONEMPTY(stream) RETURN_IF_ERROR(ExpectNonEmpty(stream))
+
+template <class... Args>
+absl::Status TokenError(CharStream const& stream,
+                        absl::FormatSpec<Args...> const& spec,
+                        Args const&... args) {
+  return absl::FailedPreconditionError(absl::StrFormat(spec, args...));
+}
+
+absl::StatusOr<int> CharDigitValue(CharStream& stream, uint8_t base) {
+  char c = absl::ascii_tolower(*stream);
   auto index = hexDigits.find(c);
   if (index == std::string_view::npos) {
-    throw std::runtime_error("Invalid digit");
+    return TokenError(stream, "Invalid digit: %c", c);
   }
-  if (base && index >= *base) {
-    throw std::runtime_error("Digit out of range");
+  if (index >= base) {
+    return TokenError(stream, "Invalid digit: %c", c);
   }
+  stream++;
   return index;
 }
 
 }  // namespace
 
-int ReadKey(CharStream& stream) {
-  if (!stream) {
-    throw std::runtime_error("End of stream reached while reading key");
-  }
+absl::StatusOr<int> ReadKey(CharStream& stream) {
+  CHECK_NONEMPTY(stream);
 
   int result;
 
   char currChar;
   switch ((currChar = *stream++)) {
     case '^': {
-      if (!stream) {
-        throw std::runtime_error("End of stream reached while reading key");
-      }
+      CHECK_NONEMPTY(stream);
+
       // A control key.
       auto ctrlChar = *stream++;
       if (isalpha(ctrlChar)) {
         result = toupper(ctrlChar) - 0x40;
       } else {
-        // Error("Not a valid control key: %s", gSymStr);
+        return TokenError(stream, "Not a valid control key: %c", ctrlChar);
       }
       break;
     }
 
     case '@': {
-      if (!stream) {
-        throw std::runtime_error("End of stream reached while reading key");
-      }
+      CHECK_NONEMPTY(stream);
       // An alt-key.
       auto altChar = *stream++;
       if (isalpha(altChar)) {
         result = altKey[toupper(altChar) - 'A'] << 8;
       } else {
-        // Error("Not a valid alt key: %c", altChar);
+        return TokenError(stream, "Not a valid alt key: %c", altChar);
       }
       break;
     }
@@ -107,7 +122,8 @@ int ReadKey(CharStream& stream) {
       }
       int num;
       if (!absl::SimpleAtoi(start_pos.GetTextTo(stream), &num)) {
-        // Error("Not a valid function key: %s", gSymStr);
+        return TokenError(start_pos, "Not a valid function key: %s",
+                          start_pos.GetTextTo(stream));
         break;
       }
       result = (num + 58) << 8;
@@ -126,12 +142,12 @@ int ReadKey(CharStream& stream) {
   // parsing, but that can cause some of the above cases not to process all
   // of the characters read. This attempts to fix that.
   if (stream && !IsTerm(*stream)) {
-    throw std::runtime_error("Extra characters after key");
+    return TokenError(stream, "Extra characters after key");
   }
   return result;
 }
 
-std::optional<int> ReadNumber(CharStream& stream) {
+absl::StatusOr<int> ReadNumber(CharStream& stream) {
   // Determine the sign of the number
   int sign;
   if (*stream != '-')
@@ -149,14 +165,8 @@ std::optional<int> ReadNumber(CharStream& stream) {
 
   int val = 0;
   while (stream && !IsTerm(*stream)) {
-    auto value = CharDigitValue(*stream, base);
-    if (value >= base) {
-      // Warning("Invalid character in number: %c.  Number = %d", rawChar,
-      //         symVal());
-      break;
-    }
+    ASSIGN_OR_RETURN(auto value, CharDigitValue(stream, base));
     val = (val * base) + value;
-    ++stream;
   }
 
   val *= sign;
@@ -164,12 +174,11 @@ std::optional<int> ReadNumber(CharStream& stream) {
   return val;
 }
 
-std::optional<std::string> ReadString(CharStream& stream) {
+absl::StatusOr<std::string> ReadString(CharStream& stream) {
   char open = *stream++;
   char close = (open == ALT_QUOTE) ? '}' : open;
 
   std::string parsed_string;
-  bool truncated = false;
   while (stream && *stream != close) {
     char currChar = *stream++;
     switch (currChar) {
@@ -177,7 +186,7 @@ std::optional<std::string> ReadString(CharStream& stream) {
         break;
 
       case '_':
-        if (!truncated) parsed_string.push_back(' ');
+        parsed_string.push_back(' ');
         break;
 
       case ' ':
@@ -190,33 +199,31 @@ std::optional<std::string> ReadString(CharStream& stream) {
       case '\\': {
         if (IsHex(*stream)) {  // else move to next char
           // Then insert a hex number in the string.
-          int high_digit = CharDigitValue(*stream++, 16);
-          int low_digit = CharDigitValue(*stream++, 16);
+          ASSIGN_OR_RETURN(int high_digit, CharDigitValue(stream, 16));
+          ASSIGN_OR_RETURN(int low_digit, CharDigitValue(stream, 16));
           char c = (high_digit << 4) | (low_digit & 0x0F);
-          if (!truncated) parsed_string.push_back(c);
+          parsed_string.push_back(c);
         } else {
           // Then just use char as is.
           char c = *stream++;
           switch (c) {
             case 'n':
-              if (!truncated) parsed_string.push_back('\n');
+              parsed_string.push_back('\n');
               break;
             case 't':
-              if (!truncated) parsed_string.push_back('\t');
+              parsed_string.push_back('\t');
               break;
             case 'r':
-              if (!truncated) {
-                parsed_string.push_back('\r');
-              }
+              parsed_string.push_back('\r');
               break;
             case '\\':
             case '"':
             case '}':
-              if (!truncated) parsed_string.push_back(c);
+              parsed_string.push_back(c);
               break;
             default:
-              // Should we error on unexpected escape sequences?
-              if (!truncated) parsed_string.push_back(c);
+              return TokenError(stream, "Unexpected escape sequence: '\\%c'",
+                                c);
               break;
           }
         }
@@ -225,18 +232,17 @@ std::optional<std::string> ReadString(CharStream& stream) {
       }
 
       default:
-        if (!truncated) parsed_string.push_back(currChar);
+        parsed_string.push_back(currChar);
         break;
     }
 
-    if (parsed_string.length() >= MaxTokenLen && !truncated) {
-      // Error("String too large.");
-      truncated = true;
+    if (parsed_string.length() >= MaxTokenLen) {
+      return TokenError(stream, "String too large.");
     }
   }
 
   if (!stream) {
-    // Error("Unterminated string");
+    return TokenError(stream, "Unterminated string");
   }
 
   if (*stream != close) {
@@ -247,7 +253,7 @@ std::optional<std::string> ReadString(CharStream& stream) {
   return parsed_string;
 }
 
-std::optional<Token::Ident> ReadIdent(CharStream& stream) {
+absl::StatusOr<Token::Ident> ReadIdent(CharStream& stream) {
   std::string ident;
   Token::Ident::Trailer trailer = Token::Ident::None;
   while (stream && !IsTerm(*stream)) {
@@ -271,7 +277,8 @@ std::optional<Token::Ident> ReadIdent(CharStream& stream) {
   };
 }
 
-std::optional<Token::PreProcessor> ReadPreprocessor(CharStream& stream) {
+absl::StatusOr<std::optional<Token::PreProcessor>> ReadPreprocessor(
+    CharStream& stream) {
   // We should be at the beginning of a line. Skip over any whitespace.
   auto curr_stream = stream.SkipCharsOf(" \t");
 
@@ -321,7 +328,7 @@ std::optional<Token::PreProcessor> ReadPreprocessor(CharStream& stream) {
 
   std::vector<Token> tokens;
   while (true) {
-    auto next_token = NextToken(curr_stream);
+    ASSIGN_OR_RETURN(auto next_token, NextToken(curr_stream));
     if (!next_token) {
       break;
     }
@@ -336,7 +343,7 @@ std::optional<Token::PreProcessor> ReadPreprocessor(CharStream& stream) {
 
 // Read a token, assuming that the current stream location is at the
 // start of the token.
-std::optional<Token::TokenValue> ReadToken(CharStream& stream) {
+absl::StatusOr<Token::TokenValue> ReadToken(CharStream& stream) {
   if (IsTok(*stream)) {
     // This is equivalent to our Punct struct.
     return Token::Punct{
@@ -347,16 +354,16 @@ std::optional<Token::TokenValue> ReadToken(CharStream& stream) {
   if (*stream == '`') {
     // A character constant.
     ++stream;
-    int keyValue = ReadKey(stream);
+    ASSIGN_OR_RETURN(int keyValue, ReadKey(stream));
     return Token::Number{
         .value = keyValue,
     };
   }
 
   if (*stream == '"' || *stream == ALT_QUOTE) {
-    auto parsed_string = ReadString(stream);
+    ASSIGN_OR_RETURN(auto parsed_string, ReadString(stream));
     return Token::String{
-        .decodedString = *parsed_string,
+        .decodedString = parsed_string,
     };
   }
 
@@ -370,12 +377,9 @@ std::optional<Token::TokenValue> ReadToken(CharStream& stream) {
   }
 
   if (is_num) {
-    auto number = ReadNumber(stream);
-    if (!number) {
-      return std::nullopt;
-    }
+    ASSIGN_OR_RETURN(auto number, ReadNumber(stream));
     return Token::Number{
-        .value = *number,
+        .value = number,
     };
   }
 
@@ -384,7 +388,7 @@ std::optional<Token::TokenValue> ReadToken(CharStream& stream) {
   return ReadIdent(stream);
 }
 
-std::optional<Token> NextToken(CharStream& stream) {
+absl::StatusOr<std::optional<Token>> NextToken(CharStream& stream) {
   bool at_start_of_line = stream.AtStart();
 
   while (true) {
@@ -394,7 +398,7 @@ std::optional<Token> NextToken(CharStream& stream) {
 
     if (at_start_of_line) {
       auto start_of_line = stream;
-      auto preprocessor = ReadPreprocessor(stream);
+      ASSIGN_OR_RETURN(auto preprocessor, ReadPreprocessor(stream));
       if (preprocessor) {
         return Token(start_of_line.RangeTo(stream),
                      std::string(start_of_line.GetTextTo(stream)),
@@ -423,14 +427,11 @@ std::optional<Token> NextToken(CharStream& stream) {
   }
 
   auto token_start = stream;
-  auto token_value = ReadToken(stream);
-  if (!token_value) {
-    return std::nullopt;
-  }
+  ASSIGN_OR_RETURN(auto token_value, ReadToken(stream));
 
   std::string raw_text(token_start.GetTextTo(stream));
   auto char_range = token_start.RangeTo(stream);
-  return Token(char_range, raw_text, *token_value);
+  return Token(char_range, raw_text, token_value);
 }
 
 }  // namespace tokenizer

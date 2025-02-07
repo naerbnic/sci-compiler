@@ -1,3 +1,9 @@
+# Visibility for targets only in this module.
+package_group(
+    name = "internal",
+    packages = ["//..."],
+)
+
 alias(
     name = "scic",
     actual = "//scic",
