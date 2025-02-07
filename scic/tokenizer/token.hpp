@@ -20,6 +20,7 @@ class Token {
     PPT_ELIFNDEF,
     PPT_ELIF,
     PPT_ELSE,
+    PPT_ENDIF,
   };
 
   enum PunctType : char {
@@ -87,6 +88,7 @@ class Token {
 
   CharRange const& char_range() const { return char_range_; }
   std::string_view raw_text() const { return raw_text_; }
+  TokenValue const& value() const { return value_; }
 
  private:
   CharRange char_range_;

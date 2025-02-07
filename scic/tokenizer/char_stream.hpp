@@ -2,6 +2,7 @@
 #define TOKENIZER_CHAR_STREAM_HPP
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -65,7 +66,8 @@ class TextContents {
   std::string_view contents() const { return contents_; }
   std::size_t num_lines() const { return line_spans_.size(); }
   std::string_view GetLine(std::size_t line_index) const;
-  std::string_view GetAfter(std::size_t byte_offset) const;
+  std::string_view GetBetween(std::size_t start_offset,
+                              std::size_t end_offset) const;
   char CharAt(std::size_t byte_offset) const;
   CharOffset GetOffset(std::size_t byte_offset) const;
 
@@ -82,7 +84,8 @@ class TextContents {
 class CharStream {
  public:
   CharStream() = default;
-  CharStream(std::string_view input, std::size_t offset = 0);
+  CharStream(std::string_view input, std::size_t offset = 0,
+             std::optional<std::size_t> end_offset = std::nullopt);
 
   CharStream& operator++();
   CharStream operator++(int);
@@ -104,8 +107,13 @@ class CharStream {
   CharRange RangeTo(CharStream const& other) const;
 
   std::string_view GetTextTo(CharStream const& other) const;
+  CharStream GetStreamTo(CharStream const& other) const;
+
+  bool TryConsumePrefix(std::string_view prefix);
 
  private:
+  CharStream(std::shared_ptr<TextContents> contents, std::size_t start_offset,
+             std::size_t end_offset);
   struct LineSpan {
     std::size_t start;
     std::size_t end;
@@ -113,9 +121,13 @@ class CharStream {
 
   bool AtEnd() const;
   void Advance();
+  std::string_view Remainder() const;
+  std::size_t IndexOf(std::string_view) const;
+  std::size_t IndexNotOf(std::string_view) const;
 
   std::shared_ptr<TextContents> contents_;
   std::size_t curr_index_;
+  std::size_t end_index_;
 };
 
 }  // namespace tokenizer

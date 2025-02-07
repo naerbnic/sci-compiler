@@ -271,6 +271,69 @@ std::optional<Token::Ident> ReadIdent(CharStream& stream) {
   };
 }
 
+std::optional<Token::PreProcessor> ReadPreprocessor(CharStream& stream) {
+  // We should be at the beginning of a line. Skip over any whitespace.
+  auto curr_stream = stream.SkipCharsOf(" \t");
+
+  if (!curr_stream || *curr_stream != '#') {
+    return std::nullopt;
+  }
+
+  struct PreProcDirective {
+    std::string_view text;
+    Token::PreProcessorType type;
+  };
+
+  PreProcDirective directives[] = {
+      {"#ifdef", Token::PPT_IFDEF},
+      {"#ifndef", Token::PPT_IFNDEF},
+      {"#if", Token::PPT_IF},
+      {"#elifdef", Token::PPT_ELIFDEF},
+      {"#elifndef", Token::PPT_ELIFNDEF},
+      {"#elif", Token::PPT_ELIF},
+      {"#else", Token::PPT_ELSE},
+      {"#endif", Token::PPT_ENDIF},
+  };
+
+  std::optional<Token::PreProcessorType> directive_type = std::nullopt;
+
+  for (auto const& directive : directives) {
+    if (curr_stream.TryConsumePrefix(directive.text)) {
+      directive_type = directive.type;
+      break;
+    }
+  }
+
+  if (!directive_type) {
+    return std::nullopt;
+  }
+
+  // We need to have a separator between the directive and the next token.
+  if (curr_stream && !IsTerm(*curr_stream)) {
+    return std::nullopt;
+  }
+
+  // We know we have a preproc directive. We grab the rest of the line
+  // for the directive, and set our output stream to the end of the line.
+  auto end_of_line_stream = curr_stream.FindNext('\n');
+  curr_stream = curr_stream.GetStreamTo(end_of_line_stream);
+  stream = end_of_line_stream;
+
+  std::vector<Token> tokens;
+  while (true) {
+    auto next_token = NextToken(curr_stream);
+    if (!next_token) {
+      break;
+    }
+    tokens.push_back(*next_token);
+  }
+
+  return Token::PreProcessor{
+      .type = *directive_type,
+      .lineTokens = std::move(tokens),
+  };
+}
+
 // Read a token, assuming that the current stream location is at the
 // start of the token.
 std::optional<Token::TokenValue> ReadToken(CharStream& stream) {
@@ -330,7 +393,13 @@ std::optional<Token> NextToken(CharStream& stream) {
     }
 
     if (at_start_of_line) {
-      // TODO: We need to check for the existence of a preprocessor directive.
+      auto start_of_line = stream;
+      auto preprocessor = ReadPreprocessor(stream);
+      if (preprocessor) {
+        return Token(start_of_line.RangeTo(stream),
+                     std::string(start_of_line.GetTextTo(stream)),
+                     Token::TokenValue(*preprocessor));
+      }
       at_start_of_line = false;
     }
 

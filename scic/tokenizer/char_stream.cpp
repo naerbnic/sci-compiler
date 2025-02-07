@@ -5,6 +5,8 @@
 #include <string>
 #include <string_view>
 
+#include "absl/strings/str_cat.h"
+
 namespace tokenizer {
 namespace {
 std::optional<std::pair<std::size_t, std::size_t>> FindNextNewline(
@@ -50,11 +52,13 @@ std::string_view TextContents::GetLine(std::size_t line_index) const {
   return std::string_view(contents_).substr(line.start, line.end - line.start);
 }
 
-std::string_view TextContents::GetAfter(std::size_t byte_offset) const {
-  if (byte_offset > contents_.size()) {
+std::string_view TextContents::GetBetween(std::size_t start_offset,
+                                          std::size_t end_offset) const {
+  if (start_offset > contents_.size() || end_offset > contents_.size()) {
     throw std::out_of_range("Byte offset out of range.");
   }
-  return std::string_view(contents_).substr(byte_offset);
+  return std::string_view(contents_).substr(start_offset,
+                                            end_offset - start_offset);
 }
 
 char TextContents::CharAt(std::size_t byte_offset) const {
@@ -80,8 +84,11 @@ CharOffset TextContents::GetOffset(std::size_t byte_offset) const {
   return CharOffset(byte_offset, line_index, line_offset);
 }
 
-CharStream::CharStream(std::string_view input, std::size_t offset)
-    : contents_(std::make_shared<TextContents>(input)), curr_index_(offset) {}
+CharStream::CharStream(std::string_view input, std::size_t offset,
+                       std::optional<std::size_t> end_offset)
+    : contents_(std::make_shared<TextContents>(input)),
+      curr_index_(offset),
+      end_index_(end_offset.value_or(input.size())) {}
 
 CharStream& CharStream::operator++() {
   Advance();
@@ -100,7 +107,7 @@ char CharStream::operator*() const {
   if (AtEnd()) {
     throw std::runtime_error("Dereferencing end of input.");
   }
-  auto remainder = contents_->GetAfter(curr_index_);
+  auto remainder = Remainder();
   if (remainder[0] == '\r') {
     return '\n';
   } else {
@@ -115,13 +122,13 @@ CharStream CharStream::FindNext(char c) const {
 }
 
 CharStream CharStream::FindNextOf(std::string_view chars) const {
-  auto copy = *this;
-  auto pos = contents_->contents().find_first_of(chars, curr_index_);
-  if (pos == std::string_view::npos) {
-    copy.curr_index_ = contents_->size();
-  } else {
-    copy.curr_index_ = pos;
+  std::string scratch;
+  if (chars.find('\n') != std::string_view::npos) {
+    scratch = absl::StrCat("\r", chars);
+    chars = scratch;
   }
+  auto copy = *this;
+  copy.curr_index_ = IndexOf(chars);
   return copy;
 }
 
@@ -130,19 +137,19 @@ CharStream CharStream::SkipChar(char c) const {
 }
 
 CharStream CharStream::SkipCharsOf(std::string_view chars) const {
-  auto copy = *this;
-  auto pos = contents_->contents().find_first_not_of(chars, curr_index_);
-  if (pos == std::string_view::npos) {
-    copy.curr_index_ = contents_->size();
-  } else {
-    copy.curr_index_ = pos;
+  std::string scratch;
+  if (chars.find('\n') != std::string_view::npos) {
+    scratch = absl::StrCat("\r", chars);
+    chars = scratch;
   }
+  auto copy = *this;
+  copy.curr_index_ = IndexNotOf(chars);
   return copy;
 }
 
 CharStream CharStream::SkipN(std::size_t n) const {
   auto copy = *this;
-  if (curr_index_ + n >= contents_->size()) {
+  if (curr_index_ + n >= end_index_) {
     throw std::runtime_error("Skipping past end of input.");
   }
   copy.curr_index_ += n;
@@ -154,6 +161,12 @@ CharOffset CharStream::Offset() const {
 }
 
 CharRange CharStream::RangeTo(CharStream const& other) const {
+  if (contents_.get() != other.contents_.get()) {
+    throw std::runtime_error("Getting text range from different contents.");
+  }
+  if (end_index_ != other.end_index_) {
+    throw std::runtime_error("Getting text range from different contents.");
+  }
   return CharRange(Offset(), other.Offset());
 }
 
@@ -161,20 +174,74 @@ std::string_view CharStream::GetTextTo(CharStream const& other) const {
   if (contents_.get() != other.contents_.get()) {
     throw std::runtime_error("Getting text range from different contents.");
   }
-  return contents_->GetAfter(curr_index_)
-      .substr(0, other.curr_index_ - curr_index_);
+  if (end_index_ != other.end_index_) {
+    throw std::runtime_error("Getting text range from different contents.");
+  }
+
+  if (curr_index_ > other.curr_index_) {
+    throw std::runtime_error("Getting stream range in reverse.");
+  }
+
+  return Remainder().substr(0, other.curr_index_ - curr_index_);
 }
 
-bool CharStream::AtEnd() const { return contents_->size() == curr_index_; }
+CharStream CharStream::GetStreamTo(CharStream const& other) const {
+  if (contents_.get() != other.contents_.get()) {
+    throw std::runtime_error("Getting stream range from different contents.");
+  }
+  if (end_index_ != other.end_index_) {
+    throw std::runtime_error("Getting stream range from different contents.");
+  }
+
+  if (curr_index_ > other.curr_index_) {
+    throw std::runtime_error("Getting stream range in reverse.");
+  }
+
+  return CharStream(contents_, curr_index_, other.curr_index_);
+}
+
+bool CharStream::TryConsumePrefix(std::string_view prefix) {
+  if (!Remainder().starts_with(prefix)) {
+    return false;
+  }
+  curr_index_ += prefix.size();
+  return true;
+}
+
+CharStream::CharStream(std::shared_ptr<TextContents> contents,
+                       std::size_t start_offset, std::size_t end_offset)
+    : contents_(contents), curr_index_(start_offset), end_index_(end_offset) {}
+
+bool CharStream::AtEnd() const { return end_index_ == curr_index_; }
 void CharStream::Advance() {
   if (AtEnd()) {
     throw std::runtime_error("Advancing past end of input.");
   }
-  if (contents_->GetAfter(curr_index_).starts_with("\r\n")) {
+  if (Remainder().starts_with("\r\n")) {
     curr_index_ += 2;
   } else {
     curr_index_ += 1;
   }
+}
+
+std::string_view CharStream::Remainder() const {
+  return contents_->GetBetween(curr_index_, end_index_);
+}
+
+std::size_t CharStream::IndexOf(std::string_view chars) const {
+  auto pos = Remainder().find_first_of(chars);
+  if (pos == std::string_view::npos) {
+    return end_index_;
+  }
+  return curr_index_ + pos;
+}
+
+std::size_t CharStream::IndexNotOf(std::string_view chars) const {
+  auto pos = Remainder().find_first_not_of(chars);
+  if (pos == std::string_view::npos) {
+    return end_index_;
+  }
+  return curr_index_ + pos;
 }
 
 }  // namespace tokenizer
