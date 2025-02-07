@@ -13,6 +13,7 @@ int ReadKey(CharStream& stream);
 std::optional<int> ReadNumber(CharStream& stream);
 std::optional<std::string> ReadString(CharStream& stream);
 std::optional<Token::Ident> ReadIdent(CharStream& stream);
+std::optional<Token::PreProcessor> ReadPreprocessor(CharStream& stream);
 std::optional<Token::TokenValue> ReadToken(CharStream& stream);
 
 }  // namespace tokenizer

@@ -3,13 +3,14 @@
 #include <gtest/gtest.h>
 
 #include "gmock/gmock.h"
+#include "scic/tokenizer/token_test_utils.hpp"
 
 namespace tokenizer {
 namespace {
 
-using ::testing::AllOf;
-using ::testing::Field;
 using ::testing::Optional;
+using ::testing::SizeIs;
+using ::testing::VariantWith;
 
 // ReadKeyTest
 
@@ -141,37 +142,107 @@ TEST(ReadStringTest, ConvertsHexCharacters) {
 
 // ReadIdentTest
 
-testing::Matcher<Token::Ident const&> IdentOf(const std::string& name,
-                                              Token::Ident::Trailer trailer) {
-  return AllOf(Field("name", &Token::Ident::name, name),
-               Field("trailer", &Token::Ident::trailer, trailer));
-}
-
 TEST(ReadIdentTest, BasicIdentWorks) {
   auto stream = CharStream("foo");
   auto value = ReadIdent(stream);
-  EXPECT_THAT(value, Optional(IdentOf("foo", Token::Ident::None)));
+  EXPECT_THAT(value, Optional(IdentOf({
+                         .name = "foo",
+                         .trailer = Token::Ident::None,
+                     })));
   EXPECT_FALSE(stream);
 }
 
 TEST(ReadIdentTest, ColonIdentWorks) {
   auto stream = CharStream("foo:");
   auto value = ReadIdent(stream);
-  EXPECT_THAT(value, Optional(IdentOf("foo", Token::Ident::Colon)));
+  EXPECT_THAT(value, Optional(IdentOf({
+                         .name = "foo",
+                         .trailer = Token::Ident::Colon,
+                     })));
   EXPECT_FALSE(stream);
 }
 
 TEST(ReadIdentTest, QuestionIdentWorks) {
   auto stream = CharStream("foo?");
   auto value = ReadIdent(stream);
-  EXPECT_THAT(value, Optional(IdentOf("foo", Token::Ident::Question)));
+  EXPECT_THAT(value, Optional(IdentOf({
+                         .name = "foo",
+                         .trailer = Token::Ident::Question,
+                     })));
   EXPECT_FALSE(stream);
 }
 
 TEST(ReadIdentTest, SpecialCharsInIdentWork) {
   auto stream = CharStream("a-b_c<=>");
   auto value = ReadIdent(stream);
-  EXPECT_THAT(value, Optional(IdentOf("a-b_c<=>", Token::Ident::None)));
+  EXPECT_THAT(value, Optional(IdentOf({
+                         .name = "a-b_c<=>",
+                         .trailer = Token::Ident::None,
+                     })));
+  EXPECT_FALSE(stream);
+}
+
+// ReadPreprocessorTest
+
+// ReadTokenTest
+
+TEST(ReadTokenTest, SimpleCase) {
+  auto stream = CharStream("foo");
+  EXPECT_THAT(ReadToken(stream), Optional(VariantWith(IdentOf({
+                                     .name = "foo",
+                                 }))));
+  EXPECT_FALSE(stream);
+}
+
+// NextTokenTest
+
+TEST(NextTokenTest, SimpleCase) {
+  auto stream = CharStream("foo");
+  EXPECT_THAT(NextToken(stream), Optional(TokenOf({
+                                     .raw_text = "foo",
+                                     .value = VariantWith(IdentOf({
+                                         .name = "foo",
+                                     })),
+                                 })));
+  EXPECT_FALSE(stream);
+}
+
+TEST(NextTokenTest, InitialWhitespaceIsSkipped) {
+  auto stream = CharStream("  \n\tfoo");
+  EXPECT_THAT(NextToken(stream), Optional(TokenOf({
+                                     .raw_text = "foo",
+                                     .value = VariantWith(IdentOf({
+                                         .name = "foo",
+                                     })),
+                                 })));
+  EXPECT_FALSE(stream);
+}
+
+TEST(NextTokenTest, PreProcessorDirectiveWorksOnFirstLine) {
+  auto stream = CharStream("#if foo\nbar");
+  EXPECT_THAT(NextToken(stream), Optional(TokenOf({
+                                     .raw_text = "#if foo",
+                                     .value = VariantWith(PreProcOf({
+                                         .type = Token::PPT_IF,
+                                         .lineTokens = SizeIs(1),
+                                     })),
+                                 })));
+
+  EXPECT_THAT(NextToken(stream), Optional(IdentTokenOf("bar")));
+  EXPECT_FALSE(stream);
+}
+
+TEST(NextTokenTest, PreProcessorDirectiveWorksOnAnotherLine) {
+  auto stream = CharStream("    \n#if foo\nbar");
+  EXPECT_THAT(NextToken(stream), Optional(TokenOf({
+                                     .raw_text = "#if foo",
+                                     .value = VariantWith(PreProcOf({
+                                         .type = Token::PPT_IF,
+                                         .lineTokens = SizeIs(1),
+                                     })),
+                                 })));
+
+  EXPECT_THAT(NextToken(stream), Optional(IdentTokenOf("bar")));
   EXPECT_FALSE(stream);
 }
 

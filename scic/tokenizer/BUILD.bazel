@@ -12,6 +12,16 @@ cc_library(
 )
 
 cc_library(
+    name = "token_test_utils",
+    testonly = True,
+    hdrs = ["token_test_utils.hpp"],
+    deps = [
+        ":token",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "token_readers",
     srcs = ["token_readers.cpp"],
     hdrs = ["token_readers.hpp"],
@@ -28,6 +38,7 @@ cc_test(
     srcs = ["token_readers_test.cpp"],
     deps = [
         ":token_readers",
+        ":token_test_utils",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
