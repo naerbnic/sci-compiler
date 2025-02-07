@@ -8,8 +8,8 @@
 namespace tokenizer {
 namespace {
 
+using ::testing::ElementsAre;
 using ::testing::Optional;
-using ::testing::SizeIs;
 using ::testing::VariantWith;
 
 // ReadKeyTest
@@ -220,13 +220,14 @@ TEST(NextTokenTest, InitialWhitespaceIsSkipped) {
 
 TEST(NextTokenTest, PreProcessorDirectiveWorksOnFirstLine) {
   auto stream = CharStream("#if foo\nbar");
-  EXPECT_THAT(NextToken(stream), Optional(TokenOf({
-                                     .raw_text = "#if foo",
-                                     .value = VariantWith(PreProcOf({
-                                         .type = Token::PPT_IF,
-                                         .lineTokens = SizeIs(1),
-                                     })),
-                                 })));
+  EXPECT_THAT(NextToken(stream),
+              Optional(TokenOf({
+                  .raw_text = "#if foo",
+                  .value = VariantWith(PreProcOf({
+                      .type = Token::PPT_IF,
+                      .lineTokens = ElementsAre(IdentTokenOf("foo")),
+                  })),
+              })));
 
   EXPECT_THAT(NextToken(stream), Optional(IdentTokenOf("bar")));
   EXPECT_FALSE(stream);
@@ -234,13 +235,14 @@ TEST(NextTokenTest, PreProcessorDirectiveWorksOnFirstLine) {
 
 TEST(NextTokenTest, PreProcessorDirectiveWorksOnAnotherLine) {
   auto stream = CharStream("    \n#if foo\nbar");
-  EXPECT_THAT(NextToken(stream), Optional(TokenOf({
-                                     .raw_text = "#if foo",
-                                     .value = VariantWith(PreProcOf({
-                                         .type = Token::PPT_IF,
-                                         .lineTokens = SizeIs(1),
-                                     })),
-                                 })));
+  EXPECT_THAT(NextToken(stream),
+              Optional(TokenOf({
+                  .raw_text = "#if foo",
+                  .value = VariantWith(PreProcOf({
+                      .type = Token::PPT_IF,
+                      .lineTokens = ElementsAre(IdentTokenOf("foo")),
+                  })),
+              })));
 
   EXPECT_THAT(NextToken(stream), Optional(IdentTokenOf("bar")));
   EXPECT_FALSE(stream);
