@@ -1,0 +1,18 @@
+package(
+    default_visibility = ["//:internal"],
+)
+
+cc_library(
+    name = "status_macros",
+    hdrs = ["status_macros.hpp"],
+)
+
+cc_library(
+    name = "status_matchers",
+    testonly = True,
+    hdrs = ["status_matchers.hpp"],
+    deps = [
+        ":status_macros",
+        "@googletest//:gtest",
+    ],
+)

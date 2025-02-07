@@ -3,18 +3,20 @@
 
 #include <optional>
 
+#include "absl/status/statusor.h"
 #include "scic/tokenizer/token.hpp"
 
 namespace tokenizer {
-std::optional<Token> NextToken(CharStream& stream);
+absl::StatusOr<std::optional<Token>> NextToken(CharStream& stream);
 
 // These are generally internal, and are provided for testing.
-int ReadKey(CharStream& stream);
-std::optional<int> ReadNumber(CharStream& stream);
-std::optional<std::string> ReadString(CharStream& stream);
-std::optional<Token::Ident> ReadIdent(CharStream& stream);
-std::optional<Token::PreProcessor> ReadPreprocessor(CharStream& stream);
-std::optional<Token::TokenValue> ReadToken(CharStream& stream);
+absl::StatusOr<int> ReadKey(CharStream& stream);
+absl::StatusOr<int> ReadNumber(CharStream& stream);
+absl::StatusOr<std::string> ReadString(CharStream& stream);
+absl::StatusOr<Token::Ident> ReadIdent(CharStream& stream);
+absl::StatusOr<std::optional<Token::PreProcessor>> ReadPreprocessor(
+    CharStream& stream);
+absl::StatusOr<Token::TokenValue> ReadToken(CharStream& stream);
 
 }  // namespace tokenizer
 

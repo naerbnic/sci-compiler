@@ -30,6 +30,8 @@ cc_library(
         ":char_stream",
         ":token",
         "//scic:chartype",
+        "//util/status:status_macros",
+        "@abseil-cpp//absl/status:statusor",
     ],
 )
 
@@ -41,6 +43,7 @@ cc_test(
         ":token_test_utils",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
+        "//util/status:status_matchers",
     ],
 )
 
