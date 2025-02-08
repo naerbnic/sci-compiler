@@ -2,9 +2,6 @@
 
 #include "scic/define.hpp"
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include <string_view>
 
 #include "absl/strings/ascii.h"

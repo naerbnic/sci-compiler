@@ -4,11 +4,11 @@
 #include "scic/output.hpp"
 
 #include <fcntl.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/stat.h>
 
 #include <cstddef>
+#include <cstdlib>
+#include <cstring>
 
 #include "scic/config.hpp"
 #include "scic/error.hpp"

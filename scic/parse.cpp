@@ -3,9 +3,6 @@
 
 #include "scic/parse.hpp"
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "scic/asm.hpp"
 #include "scic/class.hpp"
 #include "scic/define.hpp"

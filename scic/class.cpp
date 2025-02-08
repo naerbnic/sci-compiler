@@ -4,8 +4,9 @@
 #include "scic/class.hpp"
 
 #include <fcntl.h>
-#include <stdio.h>
 #include <sys/stat.h>
+
+#include <cstdio>
 
 #include "scic/error.hpp"
 #include "scic/object.hpp"
@@ -259,7 +260,8 @@ Class::Class(Class* theSuper)
   //	add this class to the end of the super's children
 
   Class** p;
-  for (p = &theSuper->subClasses; *p; p = &(*p)->nextSibling);
+  for (p = &theSuper->subClasses; *p; p = &(*p)->nextSibling)
+    ;
   *p = this;
 }
 

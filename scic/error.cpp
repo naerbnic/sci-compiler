@@ -3,8 +3,7 @@
 
 #include "scic/error.hpp"
 
-#include <stdarg.h>
-#include <stdlib.h>
+#include <cstdlib>
 
 #include <string_view>
 

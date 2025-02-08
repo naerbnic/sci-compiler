@@ -3,8 +3,6 @@
 
 #include "scic/sc.hpp"
 
-#include <stdlib.h>
-
 #include <filesystem>
 #include <string_view>
 #include <vector>

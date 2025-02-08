@@ -1,7 +1,6 @@
 #ifndef CASTS_H_
 #define CASTS_H_
 
-#include <concepts>
 #include <memory>
 
 namespace casts_impl {
