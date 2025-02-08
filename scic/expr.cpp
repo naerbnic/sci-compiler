@@ -11,11 +11,11 @@
 #include <string_view>
 #include <utility>
 
-#include "scic/class.hpp"
 #include "scic/define.hpp"
 #include "scic/error.hpp"
 #include "scic/object.hpp"
 #include "scic/parse.hpp"
+#include "scic/parse_class.hpp"
 #include "scic/parse_object.hpp"
 #include "scic/pnode.hpp"
 #include "scic/sc.hpp"

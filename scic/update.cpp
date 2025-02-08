@@ -21,6 +21,7 @@
 #include "scic/memtype.hpp"
 #include "scic/object.hpp"
 #include "scic/output.hpp"
+#include "scic/parse_class.hpp"
 #include "scic/resource.hpp"
 #include "scic/selector.hpp"
 #include "scic/sol.hpp"

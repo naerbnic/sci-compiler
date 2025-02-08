@@ -15,14 +15,4 @@ struct Class : Object {
   Class* nextSibling;
 };
 
-//	class.cpp
-void DefineClass();
-Class* FindClass(int n);
-void InstallObjects();
-int GetClassNumber(Class*);
-Class* NextClass(int n);
-
-extern Class* gClasses[];
-extern int gMaxClassNum;
-
 #endif

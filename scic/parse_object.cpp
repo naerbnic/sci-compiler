@@ -16,6 +16,7 @@
 #include "scic/input.hpp"
 #include "scic/object.hpp"
 #include "scic/parse.hpp"
+#include "scic/parse_class.hpp"
 #include "scic/proc.hpp"
 #include "scic/sc.hpp"
 #include "scic/selector.hpp"

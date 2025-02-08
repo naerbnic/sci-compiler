@@ -8,10 +8,10 @@
 #include <string>
 
 #include "scic/asm.hpp"
-#include "scic/class.hpp"
 #include "scic/define.hpp"
 #include "scic/error.hpp"
 #include "scic/input.hpp"
+#include "scic/parse_class.hpp"
 #include "scic/parse_object.hpp"
 #include "scic/pnode.hpp"
 #include "scic/proc.hpp"
