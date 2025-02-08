@@ -3,10 +3,9 @@
 #ifndef TOKEN_HPP
 #define TOKEN_HPP
 
+#include <optional>
 #include <string>
 #include <string_view>
-#include <utility>
-#include <variant>
 
 #include "scic/symbol.hpp"
 #include "scic/symtypes.hpp"
@@ -24,13 +23,11 @@ bool GetNewLine();
 // This keeps track of the current token value.
 class TokenSlot {
  public:
-  using RefVal = std::variant<int, std::string>;
+  using RefVal = std::optional<int>;
 
   TokenSlot() : type(S_END), ref_val_(0){};
   TokenSlot(sym_t type, std::string raw_string, int val)
       : type(type), raw_string_(raw_string), ref_val_(val) {}
-  TokenSlot(sym_t type, std::string raw_string_, std::string val)
-      : type(type), raw_string_(raw_string_), ref_val_(std::move(val)) {}
 
   TokenSlot(TokenSlot const& tok) = default;
   TokenSlot(TokenSlot&& tok) noexcept = default;
@@ -46,30 +43,15 @@ class TokenSlot {
       case 0:
         ref_val_ = sym.val();
         break;
-
-      case 1:
-        ref_val_ = std::string(sym.str());
-        break;
     }
   }
 
   std::string_view name() const { return name_; }
   void clearName() { name_.clear(); }
 
-  int val() const {
-    auto* ptr = std::get_if<int>(&ref_val_);
-    return ptr ? *ptr : 0;
-  }
-  bool hasVal(int val) const {
-    auto* ptr = std::get_if<int>(&ref_val_);
-    return ptr && *ptr == val;
-  }
+  int val() const { return ref_val_.value_or(0); }
+  bool hasVal(int val) const { return ref_val_.has_value(); }
   void setVal(int val) { ref_val_ = val; }
-  std::string_view str() const {
-    auto* ptr = std::get_if<std::string>(&ref_val_);
-    return ptr ? ptr->c_str() : "";
-  }
-  void setStr(std::string_view str) { ref_val_ = std::string(str); }
 
  private:
   std::string name_;
