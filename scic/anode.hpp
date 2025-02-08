@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -269,7 +270,7 @@ struct ANOpUnsign : ANOpCode
   void emit(OutputFile*) override;
 
   uint32_t value;
-  Symbol* sym;
+  std::optional<std::string> name;
 };
 
 struct ANOpSign : ANOpCode
@@ -283,13 +284,13 @@ struct ANOpSign : ANOpCode
   void emit(OutputFile*) override;
 
   int value;
-  Symbol* sym;
+  std::optional<std::string> name;
 };
 
 struct ANOpExtern : ANOpCode
 // The ANOpExtern class describes a call to an external proceedure.
 {
-  ANOpExtern(Symbol* s, int32_t m, uint32_t e);
+  ANOpExtern(std::string name, int32_t m, uint32_t e);
 
   size_t size() override;
   void list(ListingFile* listFile) override;
@@ -298,7 +299,7 @@ struct ANOpExtern : ANOpCode
   int32_t module;    // module # of destination
   uint32_t entry;    // entry # of destination
   uint32_t numArgs;  // number of arguments
-  Symbol* sym;
+  std::string name;
 };
 
 struct ANCall : ANOpCode,
@@ -339,8 +340,8 @@ struct ANVarAccess : ANOpCode
   void list(ListingFile* listFile) override;
   void emit(OutputFile*) override;
 
-  uint32_t addr;  // variable address
-  Symbol* sym;    // symbol of variable name
+  uint32_t addr;                    // variable address
+  std::optional<std::string> name;  //  variable name
 };
 
 struct ANOpOfs : ANOpCode
@@ -400,14 +401,14 @@ struct ANSuper : ANSend
 // The ANSuper class represents a send to the superclass whose number is
 // 'classNum'.
 {
-  ANSuper(Symbol* s, uint32_t c);
+  ANSuper(std::string name, uint32_t c);
 
   size_t size() override;
   void list(ListingFile* listFile) override;
   void emit(OutputFile*) override;
 
   uint32_t classNum;
-  Symbol* sym;
+  std::string name;
 };
 
 struct VarList;

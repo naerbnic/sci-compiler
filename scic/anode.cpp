@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -328,17 +329,17 @@ ANOpUnsign::ANOpUnsign(uint32_t o, uint32_t v) {
   else
     op = o | (value < 128 ? OP_BYTE : 0);
 #endif
-  sym = 0;
+  name = std::nullopt;
 }
 
 size_t ANOpUnsign::size() { return op & OP_BYTE ? 2 : 3; }
 
 void ANOpUnsign::list(ListingFile* listFile) {
   listFile->ListOp(*offset, op);
-  if (!sym)
+  if (!name)
     listFile->ListArg("$%-4x", (SCIUWord)value);
   else
-    listFile->ListArg("$%-4x\t(%s)", (SCIUWord)value, sym->name());
+    listFile->ListArg("$%-4x\t(%s)", (SCIUWord)value, *name);
 }
 
 void ANOpUnsign::emit(OutputFile* out) {
@@ -356,17 +357,16 @@ void ANOpUnsign::emit(OutputFile* out) {
 ANOpSign::ANOpSign(uint32_t o, int v) {
   value = v;
   op = o | ((uint32_t)abs(value) < 128 ? OP_BYTE : 0);
-  sym = 0;
 }
 
 size_t ANOpSign::size() { return op & OP_BYTE ? 2 : 3; }
 
 void ANOpSign::list(ListingFile* listFile) {
   listFile->ListOp(*offset, op);
-  if (!sym)
+  if (!name)
     listFile->ListArg("$%-4x", (SCIUWord)value);
   else
-    listFile->ListArg("$%-4x\t(%s)", (SCIUWord)value, sym->name());
+    listFile->ListArg("$%-4x\t(%s)", (SCIUWord)value, *name);
 }
 
 void ANOpSign::emit(OutputFile* out) {
@@ -381,8 +381,8 @@ void ANOpSign::emit(OutputFile* out) {
 // Class ANOpExtern
 ///////////////////////////////////////////////////
 
-ANOpExtern::ANOpExtern(Symbol* s, int32_t m, uint32_t e)
-    : module(m), entry(e), sym(s) {
+ANOpExtern::ANOpExtern(std::string name, int32_t m, uint32_t e)
+    : module(m), entry(e), name(std::move(name)) {
   switch (module) {
     case KERNEL:
       op = op_callk | (entry < 256 ? OP_BYTE : 0);
@@ -415,11 +415,11 @@ void ANOpExtern::list(ListingFile* listFile) {
   switch (op & ~OP_BYTE) {
     case op_callk:
     case op_callb:
-      listFile->ListArg("$%-4x\t(%s)", (SCIUWord)entry, sym->name());
+      listFile->ListArg("$%-4x\t(%s)", (SCIUWord)entry, name);
       break;
     case op_calle:
       listFile->ListArg("$%x/%x\t(%s)", (SCIUWord)module, (SCIUWord)entry,
-                        sym->name());
+                        name);
   }
   ListNumArgs(listFile, *offset + 1, numArgs);
 }
@@ -543,8 +543,8 @@ size_t ANVarAccess::size() { return op & OP_BYTE ? 2 : 3; }
 
 void ANVarAccess::list(ListingFile* listFile) {
   listFile->ListOp(*offset, op);
-  if (sym)
-    listFile->ListArg("$%-4x\t(%s)", addr, sym->name());
+  if (name)
+    listFile->ListArg("$%-4x\t(%s)", addr, *name);
   else
     listFile->ListArg("$%-4x", addr);
 }
@@ -611,7 +611,7 @@ size_t ANEffctAddr::size() { return op & OP_BYTE ? 3 : 5; }
 
 void ANEffctAddr::list(ListingFile* listFile) {
   listFile->ListOp(*offset, op);
-  listFile->ListArg("$%-4x\t(%s)", addr, sym->name());
+  listFile->ListArg("$%-4x\t(%s)", addr, *name);
 }
 
 void ANEffctAddr::emit(OutputFile* out) {
@@ -648,8 +648,8 @@ void ANSend::emit(OutputFile* out) {
 // Class ANSuper
 ///////////////////////////////////////////////////
 
-ANSuper::ANSuper(Symbol* s, uint32_t c)
-    : ANSend(op_super), classNum(c), sym(s) {
+ANSuper::ANSuper(std::string name, uint32_t c)
+    : ANSend(op_super), classNum(c), name(std::move(name)) {
   if (classNum < 256) op |= OP_BYTE;
 }
 
@@ -657,7 +657,7 @@ size_t ANSuper::size() { return (op & OP_BYTE ? 2 : 3) + NumArgsSize(); }
 
 void ANSuper::list(ListingFile* listFile) {
   listFile->ListOp(*offset, op);
-  listFile->ListArg("$%-4x\t(%s)", classNum, sym->name());
+  listFile->ListArg("$%-4x\t(%s)", classNum, name);
   ListNumArgs(listFile, *offset + 1, numArgs);
 }
 

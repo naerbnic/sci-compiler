@@ -302,11 +302,17 @@ static void MakeAccess(AOpList* curList, PNode* pn, uint8_t theCode) {
   switch (pn->type) {
     case PN_NUM:
       break;
-    case PN_INDEX:
-      an->sym = pn->child_at(0)->sym;
+    case PN_INDEX: {
+      auto* index = pn->child_at(0)->sym;
+      if (index) {
+        an->name = std::string(index->name());
+      }
       break;
+    }
     default:
-      an->sym = pn->sym;
+      if (pn->sym) {
+        an->name = std::string(pn->sym->name());
+      }
       break;
   }
 }
@@ -348,8 +354,8 @@ static void MakeCall(AOpList* curList, PNode* pn) {
 
   } else {
     Public* pub = sym->ext();
-    ANOpExtern* extCall =
-        curList->newNode<ANOpExtern>(sym, pub->script, pub->entry);
+    ANOpExtern* extCall = curList->newNode<ANOpExtern>(std::string(sym->name()),
+                                                       pub->script, pub->entry);
     extCall->numArgs = 2 * numArgs;
   }
 }
@@ -358,7 +364,7 @@ static void MakeClassID(AOpList* curList, PNode* pn) {
   // Compile a class ID.
 
   ANOpUnsign* an = curList->newNode<ANOpUnsign>(op_class, pn->sym->obj()->num);
-  an->sym = pn->sym;
+  an->name = std::string(pn->sym->name());
 }
 
 static void MakeObjID(AOpList* curList, PNode* pn) {
@@ -399,7 +405,7 @@ static void MakeSend(AOpList* curList, PNode* pn) {
   if (on->type == PN_OBJ && on->val == (int)OBJ_SELF)
     an = curList->newNode<ANSend>(op_self);
   else if (on->type == PN_SUPER)
-    an = curList->newNode<ANSuper>(on->sym, on->val);
+    an = curList->newNode<ANSuper>(std::string(on->sym->name()), on->val);
   else {
     CompileExpr(curList, on);  // compile the object/class id
     an = curList->newNode<ANSend>(op_send);
