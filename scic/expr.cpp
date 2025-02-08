@@ -116,7 +116,7 @@ bool Expression(PNode* theNode, bool required) {
       case S_IDENT: {
         // Assume that all unknown identifiers are objects,
         // and fall through to object handling.
-        auto* theSym = gSyms.installModule(slot.name(), S_OBJ);
+        auto* theSym = gParseContext.syms.installModule(slot.name(), S_OBJ);
         theSym->setObj(nullptr);
         slot = ResolvedTokenSlot::OfSymbol(theSym);
       }
@@ -390,7 +390,7 @@ static bool Send(PNode* theNode, ResolvedTokenSlot const& slot) {
     if (slot.is_resolved() && slot.type() == S_IDENT) {
       // If the symbol has not been previously defined, define it as
       // an undefined object in the global symbol table.
-      theSym = gSyms.installModule(slot.name(), S_OBJ);
+      theSym = gParseContext.syms.installModule(slot.name(), S_OBJ);
       theSym->clearAn();
       theSym->setObj(nullptr);
     } else {

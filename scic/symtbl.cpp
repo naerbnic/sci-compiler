@@ -12,8 +12,6 @@
 #include "scic/object.hpp"
 #include "scic/symtypes.hpp"
 
-SymTbls gSyms;
-
 SymTbl::SymTbl(int size, bool keep) : keep(keep) {}
 
 SymTbl::~SymTbl() {}

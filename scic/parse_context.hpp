@@ -9,6 +9,7 @@
 #include "scic/class.hpp"
 #include "scic/object.hpp"
 #include "scic/public.hpp"
+#include "scic/symtbl.hpp"
 #include "scic/varlist.hpp"
 
 #define MAXCLASSES 512  // Maximum number of classes
@@ -30,6 +31,8 @@ class ParseContext {
 
   std::deque<std::unique_ptr<Public>> publicList;
   int publicMax;
+
+  SymTbls syms;
 };
 
 extern ParseContext gParseContext;

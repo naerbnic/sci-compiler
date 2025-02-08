@@ -125,7 +125,7 @@ class SymTbls {
   //	set
 
   Symbol* lookup(std::string_view name);
-  // gSyms.lookup the Symbol with name 'name' in 'activeList'. Return 0
+  // gParseContext.syms.lookup the Symbol with name 'name' in 'activeList'. Return 0
   // if not found.
 
   std::unique_ptr<Symbol> remove(std::string_view name);
@@ -144,7 +144,5 @@ class SymTbls {
 
   friend std::ostream& operator<<(std::ostream& os, const SymTbls& symtbl);
 };
-
-extern SymTbls gSyms;
 
 #endif

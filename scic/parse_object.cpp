@@ -40,12 +40,12 @@ void Declaration(Object* obj, int type) {
       continue;
     }
 
-    Symbol* sym = gSyms.lookup(token.name());
+    Symbol* sym = gParseContext.syms.lookup(token.name());
     if (!sym && obj->num != OBJECTNUM) {
       // If the symbol is not currently defined, define it as
       // the next selector number.
       InstallSelector(token.name(), NewSelectorNum());
-      sym = gSyms.lookup(token.name());
+      sym = gParseContext.syms.lookup(token.name());
     }
 
     // If this selector is not in the current class, add it.
@@ -98,7 +98,7 @@ void Declaration(Object* obj, int type) {
 void MethodDef(Object* obj) {
   // _method-def ::= 'method' call-def expression*
 
-  SymTbl* symTbl = gSyms.add(ST_MINI);
+  SymTbl* symTbl = gParseContext.syms.add(ST_MINI);
   {
     auto node = CallDef(S_SELECT);
     if (node) {
@@ -121,13 +121,13 @@ void MethodDef(Object* obj) {
       }
     }
   }
-  gSyms.deactivate(symTbl);
+  gParseContext.syms.deactivate(symTbl);
 }
 
 static void InstanceBody(Object* obj) {
   // instance-body ::= (property-list | method-def | procedure)*
 
-  SymTbl* symTbl = gSyms.add(ST_MINI);
+  SymTbl* symTbl = gParseContext.syms.add(ST_MINI);
 
   jmp_buf savedBuf;
   memcpy(savedBuf, gParseContext.recoverBuf, sizeof(jmp_buf));
@@ -214,7 +214,7 @@ static void InstanceBody(Object* obj) {
   MakeObject(obj);
   gParseContext.curObj = 0;
 
-  gSyms.deactivate(symTbl);
+  gParseContext.syms.deactivate(symTbl);
 }
 
 }  // namespace
@@ -234,7 +234,7 @@ void DoClass() {
   auto* sym = slot.symbol();
 
   if (!sym)
-    sym = gSyms.installClass(slot.name());
+    sym = gParseContext.syms.installClass(slot.name());
 
   else if (slot.type() != S_CLASS && slot.type() != S_OBJ) {
     Severe("Redefinition of %s.", slot.name());
@@ -256,9 +256,9 @@ void DoClass() {
 
     //	make sure the symbol is in the class symbol table
     if (sym->type != S_CLASS) {
-      auto symOwned = gSyms.remove(sym->name());
+      auto symOwned = gParseContext.syms.remove(sym->name());
       symOwned->type = S_CLASS;
-      gSyms.classSymTbl->add(std::move(symOwned));
+      gParseContext.syms.classSymTbl->add(std::move(symOwned));
     }
   }
 
@@ -309,7 +309,7 @@ void Instance() {
   auto slot = LookupTok();
   auto* objSym = slot.symbol();
   if (!objSym)
-    objSym = gSyms.installLocal(slot.name(), S_OBJ);
+    objSym = gParseContext.syms.installLocal(slot.name(), S_OBJ);
   else if (slot.type() == S_IDENT || slot.type() == S_OBJ) {
     objSym->type = S_OBJ;
     if (objSym->obj()) Error("Duplicate instance name: %s", objSym->name());

@@ -26,7 +26,7 @@
 bool Parse() {
   InitAsm();
 
-  gSyms.clearAsmPtrs();
+  gParseContext.syms.clearAsmPtrs();
 
   std::optional<TokenSlot> token;
   while ((token = NewToken())) {

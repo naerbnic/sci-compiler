@@ -216,10 +216,10 @@ static void CompileFile(std::string_view fileName, bool listCode) {
   gText.init();
 
   // Delete any free symbol tables.
-  gSyms.delFreeTbls();
+  gParseContext.syms.delFreeTbls();
 
   // Look up the symbol for 'name', as it will be used in object.c.
-  gParseContext.nameSymbol = gSyms.selectorSymTbl->lookup("name");
+  gParseContext.nameSymbol = gParseContext.syms.selectorSymTbl->lookup("name");
 
   // Open the source file.
 
@@ -229,7 +229,7 @@ static void CompileFile(std::string_view fileName, bool listCode) {
   gInputState.OpenTopLevelFile(sourceFileName, true);
 
   // Parse the file (don't lock the symbol tables), then assemble it.
-  gSyms.moduleSymTbl = gSyms.add(ST_MEDIUM);
+  gParseContext.syms.moduleSymTbl = gParseContext.syms.add(ST_MEDIUM);
   Parse();
   MakeText();  // Add text to the assembly code
   if (gScript == -1)
@@ -249,7 +249,7 @@ static void CompileFile(std::string_view fileName, bool listCode) {
   ShowInfo();
 
   // Delete any free symbol tables.
-  gSyms.delFreeTbls();
+  gParseContext.syms.delFreeTbls();
 }
 
 static void ShowInfo() {
@@ -274,9 +274,9 @@ static void InstallCommandLineDefine(std::string_view str) {
     value = str.substr(eq_index + 1);
   }
 
-  if (gSyms.lookup(token)) Panic("'%s' has already been defined", token);
+  if (gParseContext.syms.lookup(token)) Panic("'%s' has already been defined", token);
 
-  Symbol *sym = gSyms.installGlobal(token, S_DEFINE);
+  Symbol *sym = gParseContext.syms.installGlobal(token, S_DEFINE);
   sym->setStr(std::string(value));
 }
 

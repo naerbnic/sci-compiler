@@ -68,7 +68,7 @@ Symbol* InstallSelector(std::string_view name, int value) {
   gSelectorAdded = true;
 
   // Install the selector in the selector symbol table.
-  Symbol* sym = gSyms.installSelector(name);
+  Symbol* sym = gParseContext.syms.installSelector(name);
   sym->setVal(value);
 
   return sym;
@@ -108,9 +108,9 @@ Symbol* GetSelector(Symbol* obj) {
 
   // Look up the identifier.  If it is not currently defined, define it as
   // the next selector number.
-  if (!(msgSel = gSyms.lookup(token.name()))) {
+  if (!(msgSel = gParseContext.syms.lookup(token.name()))) {
     InstallSelector(token.name(), NewSelectorNum());
-    msgSel = gSyms.lookup(token.name());
+    msgSel = gParseContext.syms.lookup(token.name());
     if (gConfig->showSelectors)
       Info("%s is being installed as a selector.", token.name());
   }
@@ -125,7 +125,7 @@ Symbol* GetSelector(Symbol* obj) {
   // Complain if the symbol is a variable, but a selector of the same name
   //	exists.
   if (IsVar(slot) && slot.type() != S_PROP && slot.type() != S_SELECT &&
-      gSyms.selectorSymTbl->lookup(slot.name())) {
+      gParseContext.syms.selectorSymTbl->lookup(slot.name())) {
     Error("%s is both a selector and a variable.", slot.name());
     return 0;
   }

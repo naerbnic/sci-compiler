@@ -20,8 +20,9 @@
 #include "scic/chartype.hpp"
 #include "scic/error.hpp"
 #include "scic/input.hpp"
+#include "scic/parse_context.hpp"
 #include "scic/sol.hpp"
-#include "scic/symtbl.hpp"
+#include "scic/symbol.hpp"
 #include "scic/symtypes.hpp"
 #include "scic/toktypes.hpp"
 
@@ -86,7 +87,7 @@ std::optional<TokenSlot> NewToken() {
     return std::nullopt;
   }
 
-  if (token->type() == S_IDENT && (theSym = gSyms.lookup(token->name())) &&
+  if (token->type() == S_IDENT && (theSym = gParseContext.syms.lookup(token->name())) &&
       theSym->type == S_DEFINE) {
     gInputState.SetStringInput(theSym->str());
     return NewToken();

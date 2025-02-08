@@ -44,10 +44,10 @@ void Define() {
       return;
     }
 
-    Symbol* sym = gSyms.lookup(token->name());
+    Symbol* sym = gParseContext.syms.lookup(token->name());
     bool newSym = sym == 0;
     if (newSym)
-      sym = gSyms.installLocal(token->name(), S_DEFINE);
+      sym = gParseContext.syms.installLocal(token->name(), S_DEFINE);
     else if (sym->type != S_DEFINE)
       // This isn't just a re-'define' of the symbol, it's a change
       // in symbol type.
@@ -81,7 +81,7 @@ void Enum() {
     if (token->type() == S_NUM) {
       val = token->val();
     } else if (IsUndefinedIdent(*token)) {
-      Symbol* theSym = gSyms.installLocal(token->name(), S_DEFINE);
+      Symbol* theSym = gParseContext.syms.installLocal(token->name(), S_DEFINE);
 
       //	initializer expression?
       auto expr = LookupTok();
@@ -114,7 +114,7 @@ void GlobalDecl() {
     // We only install into the symbol table for globals. We do not add
     // global variables to the gParseContext.globalVars list. That still has to be
     // done by Script0.
-    Symbol* theSym = gSyms.lookup(varName);
+    Symbol* theSym = gParseContext.syms.lookup(varName);
     if (theSym) {
       if (theSym->type != S_GLOBAL) {
         Error("Redefinition of %s as a global.", theSym->name());
@@ -130,7 +130,7 @@ void GlobalDecl() {
       }
     } else {
       // Install the symbol.
-      theSym = gSyms.installLocal(varName, S_GLOBAL);
+      theSym = gParseContext.syms.installLocal(varName, S_GLOBAL);
       theSym->setVal(*var_num);
     }
   }
@@ -165,7 +165,7 @@ void Global() {
       if (!var_num) break;
 
       // Try to get the symbol from the symbol table.
-      Symbol* theSym = gSyms.lookup(varName);
+      Symbol* theSym = gParseContext.syms.lookup(varName);
       if (theSym) {
         if (theSym->type != S_GLOBAL) {
           Error("Redefinition of %s as a global.", theSym->name());
@@ -181,7 +181,7 @@ void Global() {
         }
       } else {
         // Install the symbol.
-        theSym = gSyms.installLocal(varName, S_GLOBAL);
+        theSym = gParseContext.syms.installLocal(varName, S_GLOBAL);
         theSym->setVal(*var_num);
       }
       offset = theSym->val();
@@ -231,7 +231,7 @@ void Local() {
     if (token.type() == S_OPEN_BRACKET) {
       auto ident = GetIdent();
       if (ident) {
-        theSym = gSyms.installLocal(ident->name(), S_LOCAL);
+        theSym = gParseContext.syms.installLocal(ident->name(), S_LOCAL);
         theSym->setVal(size);
         auto array_size = GetNumber("Array size");
         if (!array_size) break;
@@ -253,7 +253,7 @@ void Local() {
       Definition();
 
     else if (IsUndefinedIdent(token)) {
-      theSym = gSyms.installLocal(token.name(), S_LOCAL);
+      theSym = gParseContext.syms.installLocal(token.name(), S_LOCAL);
       theSym->setVal(size);
       n = InitialValue(gParseContext.localVars, size, 1);
       size += n;
@@ -296,9 +296,9 @@ void Extern() {
     else {
       // Install the symbol in both the symbol table and the
       // externals list.
-      Symbol* theSym = gSyms.lookup(token.name());
+      Symbol* theSym = gParseContext.syms.lookup(token.name());
       if (!theSym) {
-        theSym = gSyms.installLocal(token.name(), S_EXTERN);
+        theSym = gParseContext.syms.installLocal(token.name(), S_EXTERN);
       }
       auto entry = std::make_unique<Public>(theSym);
       auto* theEntry = entry.get();
@@ -331,9 +331,9 @@ void DoPublic() {
   for (auto token = GetToken(); !CloseP(token.type()); token = GetToken()) {
     // Install the symbol in both the symbol table and the
     // publics list.
-    if (!(theSym = gSyms.lookup(token.name())) || theSym->type == S_EXTERN)
+    if (!(theSym = gParseContext.syms.lookup(token.name())) || theSym->type == S_EXTERN)
       theSym =
-          gSyms.installModule(token.name(), (sym_t)(!theSym ? S_OBJ : S_IDENT));
+          gParseContext.syms.installModule(token.name(), (sym_t)(!theSym ? S_OBJ : S_IDENT));
     auto theEntry = std::make_unique<Public>(theSym);
     auto* entryPtr = theEntry.get();
     gParseContext.publicList.push_front(std::move(theEntry));

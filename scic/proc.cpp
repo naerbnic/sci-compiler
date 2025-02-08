@@ -38,7 +38,7 @@ void Procedure() {
   UnGetTok();
   if (token.type() == OPEN_P) {
     // Then a procedure definition.
-    theSymTbl = gSyms.add(ST_MINI);
+    theSymTbl = gParseContext.syms.add(ST_MINI);
 
     {
       auto theNode = CallDef(S_PROC);
@@ -48,13 +48,13 @@ void Procedure() {
       }
     }
 
-    gSyms.deactivate(theSymTbl);
+    gParseContext.syms.deactivate(theSymTbl);
 
   } else {
     // A procedure declaration.
     for (token = GetToken(); !CloseP(token.type()); token = GetToken()) {
       if (token.type() == S_IDENT)
-        theSym = gSyms.installLocal(token.name(), S_PROC);
+        theSym = gParseContext.syms.installLocal(token.name(), S_PROC);
       theSym->setVal(UNDEFINED);
     }
     UnGetTok();
@@ -83,11 +83,11 @@ static std::unique_ptr<PNode> _CallDef(sym_t theType) {
   Selector* sn;
 
   auto token = GetToken();
-  theProc = gSyms.lookup(token.name());
+  theProc = gParseContext.syms.lookup(token.name());
   switch (theType) {
     case S_PROC:
       if (!theProc)
-        theProc = gSyms.installModule(token.name(), theType);
+        theProc = gParseContext.syms.installModule(token.name(), theType);
 
       else if (theProc->type != S_PROC || theProc->val() != UNDEFINED) {
         Severe("%s is already defined.", token.name());
@@ -157,7 +157,7 @@ static int ParameterList() {
       if (gParseContext.curObj && gParseContext.curObj->findSelectorByNum(slot.val()))
         Error("%s is a selector for current object.", slot.name());
       else
-        gSyms.installLocal(slot.name(), parmType)->setVal(parmOfs++);
+        gParseContext.syms.installLocal(slot.name(), parmType)->setVal(parmOfs++);
 
     } else
       Error("Non-identifier in parameter list: %s", slot.name());
@@ -176,15 +176,15 @@ static int ParameterList() {
 static void NewParm(int n, sym_t type, TokenSlot const& token) {
   Symbol* theSym;
 
-  if (gSyms.lookup(token.name()))
+  if (gParseContext.syms.lookup(token.name()))
     Warning("Redefinition of '%s'.", token.name());
-  theSym = gSyms.installLocal(token.name(), type);
+  theSym = gParseContext.syms.installLocal(token.name(), type);
   theSym->setVal(n);
 }
 
 static void AddRest(int ofs) {
   Symbol* theSym;
 
-  theSym = gSyms.installLocal("&rest", S_REST);
+  theSym = gParseContext.syms.installLocal("&rest", S_REST);
   theSym->setVal(ofs);
 }

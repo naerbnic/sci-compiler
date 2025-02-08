@@ -6,8 +6,8 @@
 #include <string_view>
 #include <vector>
 
+#include "scic/parse_context.hpp"
 #include "scic/symbol.hpp"
-#include "scic/symtbl.hpp"
 #include "scic/symtypes.hpp"
 
 struct BuiltIn {
@@ -102,7 +102,7 @@ void InstallBuiltIns() {
   // Install the builtin symbol table.
 
   for (BuiltIn const& builtIn : builtIns) {
-    Symbol* sp = gSyms.installGlobal(builtIn.name, builtIn.type);
+    Symbol* sp = gParseContext.syms.installGlobal(builtIn.name, builtIn.type);
     sp->setVal(builtIn.val);
   }
 }

@@ -79,7 +79,7 @@ void WriteClassTbl() {
   // Now walk through the class symbol table, entering the script
   // number of each class in its proper place in the table.
   int index;
-  for (auto* sym : gSyms.classSymTbl->symbols()) {
+  for (auto* sym : gParseContext.syms.classSymTbl->symbols()) {
     if (sym->obj()->num != -1) {
       classTbl[sym->obj()->num].objID = 0;
       classTbl[sym->obj()->num].scriptNum = SCIUWord(sym->obj()->script);
@@ -116,7 +116,7 @@ void WritePropOffsets() {
 
   std::optional<TokenSlot> token;
   while ((token = NewToken())) {
-    theSym = gSyms.lookup(token->name());
+    theSym = gParseContext.syms.lookup(token->name());
     if (theSym->type != S_CLASS) {
       Error("Not a class: %s", token->name());
       token = GetToken();
@@ -142,7 +142,7 @@ static void WriteSelector() {
   fseek(fp, 0L, SEEK_SET);
 
   absl::FPrintF(fp, "(selectors\n");
-  for (auto* sp : gSyms.selectorSymTbl->symbols())
+  for (auto* sp : gParseContext.syms.selectorSymTbl->symbols())
     absl::FPrintF(fp, "\t%-20s %d\n", sp->name(), sp->val());
 
   absl::FPrintF(fp, ")\n");
@@ -248,7 +248,7 @@ static void WriteSelectorVocab() {
 
   // Now write out the names of all the other selectors and put their
   // offsets into the table.
-  for (auto* sp : gSyms.selectorSymTbl->symbols()) {
+  for (auto* sp : gParseContext.syms.selectorSymTbl->symbols()) {
     tbl[sp->val() + 1] = SCIUWord(ofs);
     ofs += out.Write(sp->name());
   }
