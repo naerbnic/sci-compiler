@@ -17,6 +17,7 @@
 #include "scic/loop.hpp"
 #include "scic/object.hpp"
 #include "scic/opcodes.hpp"
+#include "scic/parse_object.hpp"
 #include "scic/pnode.hpp"
 #include "scic/sc.hpp"
 #include "scic/symtypes.hpp"

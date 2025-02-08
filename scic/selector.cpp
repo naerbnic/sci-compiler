@@ -11,6 +11,7 @@
 #include "scic/config.hpp"
 #include "scic/error.hpp"
 #include "scic/object.hpp"
+#include "scic/parse_object.hpp"
 #include "scic/symbol.hpp"
 #include "scic/symtbl.hpp"
 #include "scic/symtypes.hpp"

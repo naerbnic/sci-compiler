@@ -83,11 +83,4 @@ struct Object {
 #define OBJ_SUPER 0xfffe   // refers to object's defining class
 #define OBJ_SUPERC 0xfffd  // refers to object's class' super-class
 
-void DoClass();
-void Instance();
-
-extern Object* gCurObj;
-extern Symbol* gNameSymbol;
-extern Object* gReceiver;
-
 #endif

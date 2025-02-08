@@ -14,6 +14,7 @@
 #include "scic/error.hpp"
 #include "scic/expr.hpp"
 #include "scic/object.hpp"
+#include "scic/parse_object.hpp"
 #include "scic/pnode.hpp"
 #include "scic/proc.hpp"
 #include "scic/sc.hpp"

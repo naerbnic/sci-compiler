@@ -21,6 +21,7 @@
 #include "scic/opcodes.hpp"
 #include "scic/optimize.hpp"
 #include "scic/output.hpp"
+#include "scic/parse_object.hpp"
 #include "scic/sc.hpp"
 #include "scic/sol.hpp"
 #include "scic/symbol.hpp"
