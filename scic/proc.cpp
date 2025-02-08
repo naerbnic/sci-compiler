@@ -22,7 +22,7 @@ bool gInParmList;
 
 static std::unique_ptr<PNode> _CallDef(sym_t theType);
 static int ParameterList();
-static void NewParm(int n, sym_t type);
+static void NewParm(int n, sym_t type, TokenSlot const& token);
 static void AddRest(int ofs);
 
 void Procedure() {
@@ -33,9 +33,9 @@ void Procedure() {
   Symbol* theSym;
   SymTbl* theSymTbl;
 
-  GetToken();
+  auto token = GetToken();
   UnGetTok();
-  if (symType() == OPEN_P) {
+  if (token.type() == OPEN_P) {
     // Then a procedure definition.
     theSymTbl = gSyms.add(ST_MINI);
 
@@ -51,8 +51,9 @@ void Procedure() {
 
   } else {
     // A procedure declaration.
-    for (GetToken(); !CloseP(symType()); GetToken()) {
-      if (symType() == S_IDENT) theSym = gSyms.installLocal(gTokenState.symStr(), S_PROC);
+    for (token = GetToken(); !CloseP(token.type()); token = GetToken()) {
+      if (token.type() == S_IDENT)
+        theSym = gSyms.installLocal(token.name(), S_PROC);
       theSym->setVal(UNDEFINED);
     }
     UnGetTok();
@@ -80,15 +81,15 @@ static std::unique_ptr<PNode> _CallDef(sym_t theType) {
   Symbol* theProc;
   Selector* sn;
 
-  GetToken();
-  theProc = gSyms.lookup(gTokenState.symStr());
+  auto token = GetToken();
+  theProc = gSyms.lookup(token.name());
   switch (theType) {
     case S_PROC:
       if (!theProc)
-        theProc = gSyms.installModule(gTokenState.symStr(), theType);
+        theProc = gSyms.installModule(token.name(), theType);
 
       else if (theProc->type != S_PROC || theProc->val() != UNDEFINED) {
-        Severe("%s is already defined.", gTokenState.symStr());
+        Severe("%s is already defined.", token.name());
         return 0;
       }
 
@@ -98,7 +99,7 @@ static std::unique_ptr<PNode> _CallDef(sym_t theType) {
     case S_SELECT:
       if (!theProc || !(sn = gCurObj->findSelectorByNum(theProc->val())) ||
           IsProperty(sn)) {
-        Severe("%s is not a method for class %s", gTokenState.symStr(),
+        Severe("%s is not a method for class %s", token.name(),
                gCurObj->sym->name());
         return 0;
       }
@@ -127,37 +128,39 @@ static int ParameterList() {
   parmType = S_PARM;
 
   gInParmList = true;
-  for (LookupTok(); !CloseP(symType()); LookupTok()) {
-    if (symType() == S_KEYWORD && symVal() == K_TMP) {
+  for (auto slot = LookupTok(); !CloseP(slot.type()); slot = LookupTok()) {
+    if (slot.type() == S_KEYWORD && slot.val() == K_TMP) {
       // Now defining temporaries -- set 'rest of argument' value.
       AddRest(parmOfs);
       parmOfs = 0;
       parmType = S_TMP;
 
-    } else if (symType() == S_IDENT)
+    } else if (slot.type() == S_IDENT)
       // A parameter or tmp variable definition.
-      NewParm(parmOfs++, parmType);
+      NewParm(parmOfs++, parmType, slot.token());
 
-    else if (symType() == S_OPEN_BRACKET) {
+    else if (slot.type() == S_OPEN_BRACKET) {
       // An array parameter or tmp variable.
-      if (!GetIdent()) break;
-      NewParm(parmOfs, parmType);
-      if (!GetNumber("array size")) return 0;
-      parmOfs += symVal();
-      GetToken();
-      if (symType() != (sym_t)']') {
-        Error("expecting closing ']': %s.", gTokenState.symStr());
+      auto name = GetIdent();
+      if (!name) break;
+      NewParm(parmOfs, parmType, *name);
+      auto array_size = GetNumber("array size");
+      if (!array_size) return 0;
+      parmOfs += *array_size;
+      auto close = GetToken();
+      if (close.type() != (sym_t)']') {
+        Error("expecting closing ']': %s.", close.name());
         UnGetTok();
       }
 
-    } else if (symType() == S_SELECT) {
-      if (gCurObj && gCurObj->findSelectorByNum(gTokenState.tokSym().val()))
-        Error("%s is a selector for current object.", gTokenState.symStr());
+    } else if (slot.type() == S_SELECT) {
+      if (gCurObj && gCurObj->findSelectorByNum(slot.val()))
+        Error("%s is a selector for current object.", slot.name());
       else
-        gSyms.installLocal(gTokenState.symStr(), parmType)->setVal(parmOfs++);
+        gSyms.installLocal(slot.name(), parmType)->setVal(parmOfs++);
 
     } else
-      Error("Non-identifier in parameter list: %s", gTokenState.symStr());
+      Error("Non-identifier in parameter list: %s", slot.name());
   }
 
   if (parmType == S_PARM) AddRest(parmOfs);
@@ -170,11 +173,12 @@ static int ParameterList() {
   return parmType == S_PARM ? 0 : parmOfs;
 }
 
-static void NewParm(int n, sym_t type) {
+static void NewParm(int n, sym_t type, TokenSlot const& token) {
   Symbol* theSym;
 
-  if (gSyms.lookup(gTokenState.symStr())) Warning("Redefinition of '%s'.", gTokenState.symStr());
-  theSym = gSyms.installLocal(gTokenState.symStr(), type);
+  if (gSyms.lookup(token.name()))
+    Warning("Redefinition of '%s'.", token.name());
+  theSym = gSyms.installLocal(token.name(), type);
   theSym->setVal(n);
 }
 

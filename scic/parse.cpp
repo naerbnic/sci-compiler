@@ -4,6 +4,7 @@
 #include "scic/parse.hpp"
 
 #include <csetjmp>
+#include <optional>
 #include <string>
 
 #include "scic/asm.hpp"
@@ -32,13 +33,16 @@ bool Parse() {
 
   gSyms.clearAsmPtrs();
 
-  while (NewToken()) {
+  std::optional<TokenSlot> token;
+  while ((token = NewToken())) {
     // We require an opening parenthesis at this level.
     // Keep reading until we get one.
-    if (!OpenP(symType())) {
-      Error("Opening parenthesis expected: %s", gTokenState.symStr());
-      while (!OpenP(symType()) && symType() != S_END) NewToken();
-      if (symType() == S_END) break;
+    if (!OpenP(token->type())) {
+      Error("Opening parenthesis expected: %s", token->name());
+      while (token && !OpenP(token->type())) {
+        token = NewToken();
+      }
+      if (!token) break;
     }
 
     // The original code ignores the return value of setjmp.
@@ -47,75 +51,79 @@ bool Parse() {
     // The next token must be a keyword.  Dispatch to the appropriate
     // routines for the keyword.
 
-    NewToken();
-    switch (Keyword()) {
-      case K_SCRIPTNUM:
-        if (GetNumber("Script #")) {
-          if (gScript != -1)
-            Severe("Script # already defined to be %d.", gScript);
-          else
-            gScript = symVal();
+    token = NewToken();
+    if (token) {
+      switch (Keyword(*token)) {
+        case K_SCRIPTNUM: {
+          auto script_num = GetNumber("Script #");
+          if (script_num) {
+            if (gScript != -1)
+              Severe("Script # already defined to be %d.", gScript);
+            else
+              gScript = *script_num;
+          }
+          break;
         }
-        break;
 
-      case K_INCLUDE:
-        Include();
-        continue;
+        case K_INCLUDE:
+          Include();
+          continue;
 
-      case K_PUBLIC:
-        DoPublic();
-        break;
+        case K_PUBLIC:
+          DoPublic();
+          break;
 
-      case K_EXTERN:
-        Extern();
-        break;
+        case K_EXTERN:
+          Extern();
+          break;
 
-      case K_GLOBALDECL:
-        GlobalDecl();
-        break;
+        case K_GLOBALDECL:
+          GlobalDecl();
+          break;
 
-      case K_GLOBAL:
-        Global();
-        break;
+        case K_GLOBAL:
+          Global();
+          break;
 
-      case K_LOCAL:
-        Local();
-        break;
+        case K_LOCAL:
+          Local();
+          break;
 
-      case K_DEFINE:
-        Define();
-        break;
+        case K_DEFINE:
+          Define();
+          break;
 
-      case K_ENUM:
-        Enum();
-        break;
+        case K_ENUM:
+          Enum();
+          break;
 
-      case K_PROC:
-        Procedure();
-        break;
+        case K_PROC:
+          Procedure();
+          break;
 
-      case K_CLASS:
-        DoClass();
-        break;
+        case K_CLASS:
+          DoClass();
+          break;
 
-      case K_INSTANCE:
-        Instance();
-        break;
+        case K_INSTANCE:
+          Instance();
+          break;
 
-      case K_CLASSDEF:
-        DefineClass();
-        break;
+        case K_CLASSDEF:
+          DefineClass();
+          break;
 
-      case K_SELECT:
-        InitSelectors();
-        break;
+        case K_SELECT:
+          InitSelectors();
+          break;
 
-      case K_UNDEFINED:
-        Severe("Keyword required: %s", gTokenState.symStr());
-        break;
+        case K_UNDEFINED:
+          Severe("Keyword required: %s", token->name());
+          break;
 
-      default:
-        Severe("Not a top-level keyword: %s.", gTokenState.symStr());
+        default:
+          Severe("Not a top-level keyword: %s.", token->name());
+      }
     }
 
     CloseBlock();
@@ -127,17 +135,17 @@ bool Parse() {
 }
 
 void Include() {
-  GetToken();
-  if (symType() != S_IDENT && symType() != S_STRING) {
-    Severe("Need a filename: %s", gTokenState.symStr());
+  auto token = GetToken();
+  if (token.type() != S_IDENT && token.type() != S_STRING) {
+    Severe("Need a filename: %s", token.name());
     return;
   }
-  std::string filename = gTokenState.symStr();
+  std::string filename(token.name());
   // We need to put this at the right syntactic level, so we GetToken to grab
   // the remaining parent before opening the file.
-  GetToken();
-  if (symType() != CLOSE_P) {
-    Severe("Expected closing parenthesis: %s", gTokenState.symStr());
+  token = GetToken();
+  if (token.type() != CLOSE_P) {
+    Severe("Expected closing parenthesis: %s", token.name());
     return;
   }
 
@@ -146,16 +154,16 @@ void Include() {
 }
 
 bool OpenBlock() {
-  GetToken();
-  return OpenP(symType());
+  auto token = GetToken();
+  return OpenP(token.type());
 }
 
 bool CloseBlock() {
-  GetToken();
-  if (symType() == CLOSE_P)
+  auto token = GetToken();
+  if (token.type() == CLOSE_P)
     return true;
   else {
-    Severe("Expected closing parenthesis: %s", gTokenState.symStr());
+    Severe("Expected closing parenthesis: %s", token.name());
     return false;
   }
 }

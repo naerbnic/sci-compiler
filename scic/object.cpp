@@ -6,6 +6,7 @@
 #include <csetjmp>
 #include <cstring>
 #include <memory>
+#include <stdexcept>
 #include <string_view>
 #include <utility>
 
@@ -97,13 +98,14 @@ void DoClass() {
   int classNum = OBJECTNUM;
   int superNum = OBJECTNUM;
 
-  Symbol* sym = LookupTok();
+  auto slot = LookupTok();
+  auto* sym = slot.symbol();
 
   if (!sym)
-    sym = gSyms.installClass(gTokenState.symStr());
+    sym = gSyms.installClass(slot.name());
 
-  else if (symType() != S_CLASS && symType() != S_OBJ) {
-    Severe("Redefinition of %s.", gTokenState.symStr());
+  else if (slot.type() != S_CLASS && slot.type() != S_OBJ) {
+    Severe("Redefinition of %s.", slot.name());
     return;
 
   } else {
@@ -132,13 +134,13 @@ void DoClass() {
   GetKeyword(K_OF);
 
   // Get the super-class and create this class as an instance of it.
-  Symbol* superSym = LookupTok();
-  if (!superSym || symType() != S_CLASS) {
-    Severe("%s is not a class.", gTokenState.symStr());
+  auto superSlot = LookupTok();
+  if (!superSlot.is_resolved() || superSlot.type() != S_CLASS) {
+    Severe("%s is not a class.", superSlot.name());
     return;
   }
 
-  Class* super = (Class*)superSym->obj();
+  Class* super = (Class*)superSlot.symbol()->obj();
   if (superNum != OBJECTNUM && superNum != super->num)
     Fatal("Can't change superclass of %s", sym->name());
 
@@ -171,15 +173,15 @@ void Instance() {
   // instance ::=	'instance' symbol 'of' class-name instance-body
 
   // Get the symbol for the object.
-  Symbol* objSym = LookupTok();
+  auto slot = LookupTok();
+  auto* objSym = slot.symbol();
   if (!objSym)
-    objSym = gSyms.installLocal(gTokenState.symStr(), S_OBJ);
-  else if (symType() == S_IDENT || symType() == S_OBJ) {
+    objSym = gSyms.installLocal(slot.name(), S_OBJ);
+  else if (slot.type() == S_IDENT || slot.type() == S_OBJ) {
     objSym->type = S_OBJ;
-    setSymType(S_OBJ);
     if (objSym->obj()) Error("Duplicate instance name: %s", objSym->name());
   } else {
-    Severe("Redefinition of %s.", gTokenState.symStr());
+    Severe("Redefinition of %s.", slot.name());
     return;
   }
 
@@ -187,9 +189,10 @@ void Instance() {
   GetKeyword(K_OF);
 
   // Get the class of which this object is an instance.
-  Symbol* sym = LookupTok();
+  auto classSlot = LookupTok();
+  auto* sym = classSlot.symbol();
   if (!sym || sym->type != S_CLASS) {
-    Severe("%s is not a class.", gTokenState.symStr());
+    Severe("%s is not a class.", classSlot.name());
     return;
   }
   Class* super = (Class*)sym->obj();
@@ -224,11 +227,11 @@ static void InstanceBody(Object* obj) {
 
   // Get any property or method definitions.
   gCurObj = obj;
-  for (GetToken(); OpenP(symType()); GetToken()) {
+  for (auto token = GetToken(); OpenP(token.type()); token = GetToken()) {
     // The original code ignores the return value of setjmp.
     (void)setjmp(gRecoverBuf);
-    GetToken();
-    switch (Keyword()) {
+    token = GetToken();
+    switch (Keyword(token)) {
       case K_PROPLIST:
         Declaration(obj, T_PROP);
         break;
@@ -261,7 +264,8 @@ static void InstanceBody(Object* obj) {
         longjmp(gRecoverBuf, 1);
 
       default:
-        Severe("Only property and method definitions allowed: %s.", gTokenState.symStr());
+        Severe("Only property and method definitions allowed: %s.",
+               token.name());
         break;
     }
 
@@ -304,18 +308,18 @@ static void InstanceBody(Object* obj) {
 static void Declaration(Object* obj, int type) {
   char msg[80];
 
-  for (GetToken(); !CloseP(symType()); GetToken()) {
-    if (OpenP(symType())) {
+  for (auto token = GetToken(); !CloseP(token.type()); token = GetToken()) {
+    if (OpenP(token.type())) {
       Definition();
       continue;
     }
 
-    Symbol* sym = gSyms.lookup(gTokenState.symStr());
+    Symbol* sym = gSyms.lookup(token.name());
     if (!sym && obj->num != OBJECTNUM) {
       // If the symbol is not currently defined, define it as
       // the next selector number.
-      InstallSelector(gTokenState.symStr(), NewSelectorNum());
-      sym = gSyms.lookup(gTokenState.symStr());
+      InstallSelector(token.name(), NewSelectorNum());
+      sym = gSyms.lookup(token.name());
     }
 
     // If this selector is not in the current class, add it.
@@ -326,24 +330,29 @@ static void Declaration(Object* obj, int type) {
       else {
         // Can't define new properties or methods in an instance.
         Error("Can't declare property or method in instance.");
-        GetToken();
-        if (!IsNumber()) UnGetTok();
+        token = GetToken();
+        if (!IsNumber(token)) UnGetTok();
         continue;
       }
     }
 
     if (sym->type != S_SELECT || (type == T_PROP && !IsProperty(sn)) ||
         (type == T_METHOD && IsProperty(sn))) {
-      Error("Not a %s: %s.", type == T_PROP ? "property" : "method", gTokenState.symStr());
-      GetToken();
-      if (IsNumber()) UnGetTok();
+      Error("Not a %s: %s.", type == T_PROP ? "property" : "method",
+            token.name());
+      token = GetToken();
+      if (IsNumber(token)) UnGetTok();
       continue;
     }
 
     if (type == T_PROP) {
-      GetNumberOrString(msg);
-      sn->val = symVal();
-      switch (symType()) {
+      auto value = GetNumberOrString(msg);
+      if (!value) {
+        Fatal("Invalid property type: %s, %d", "CHECK THIS VALUE", type);
+        continue;
+      }
+      sn->val = value->val();
+      switch (value->type()) {
         case S_NUM:
           sn->tag = T_PROP;
           break;
@@ -351,7 +360,7 @@ static void Declaration(Object* obj, int type) {
           sn->tag = T_TEXT;
           break;
         default:
-          Fatal("Invalid property type: %s, %d", gTokenState.symStr(), type);
+          throw std::runtime_error("Invalid property type");
           break;
       }
     }

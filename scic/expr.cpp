@@ -31,7 +31,7 @@ static int gLoopNest;
 static bool _Expression(PNode*);
 static bool Return(PNode*);
 static bool Call(PNode*, Symbol*);
-static bool Send(PNode*, Symbol*);
+static bool Send(PNode*, ResolvedTokenSlot const&);
 static bool Message(PNode*, Symbol*);
 static bool While(PNode*);
 static bool Repeat(PNode*);
@@ -44,14 +44,14 @@ static bool If(PNode*);
 static bool Cond(PNode*);
 static bool Switch(PNode*);
 static bool SwitchTo(PNode*);
-static bool IncDec(PNode*);
+static bool IncDec(PNode*, int);
 static bool Variable(PNode*);
 static bool Array(PNode*);
-static bool NaryExpr(PNode*);
-static bool BinaryExpr(PNode*);
-static bool UnaryExpr(PNode*);
-static bool CompExpr(PNode*);
-static bool Assignment(PNode*);
+static bool NaryExpr(PNode*, int);
+static bool BinaryExpr(PNode*, int);
+static bool UnaryExpr(PNode*, int);
+static bool CompExpr(PNode*, int);
+static bool Assignment(PNode*, int);
 static bool Rest(PNode*);
 static pn_t PNType(sym_t);
 
@@ -85,66 +85,66 @@ bool Expression(PNode* theNode, bool required) {
   //				open _expression close
 
   bool isExpr;
-  Symbol* theSym;
   PNode* pn;
 
-  theSym = LookupTok();
+  auto slot = LookupTok();
 
-  if (symType() == (sym_t)'@') {
+  if (slot.type() == (sym_t)'@') {
     auto* addrof = theNode->newChild(PN_ADDROF);
     isExpr = Expression(addrof, true);
-  } else if (IsVar()) {
+  } else if (IsVar(slot)) {
     UnGetTok();
     isExpr = Variable(theNode);
   } else {
-    switch (symType()) {
+    switch (slot.type()) {
       case S_NUM:
-        theNode->newChild(PN_NUM)->val = symVal();
+        theNode->newChild(PN_NUM)->val = slot.val();
         isExpr = true;
         break;
 
       case S_REST:
-        theNode->newChild(PN_REST)->val = symVal();
+        theNode->newChild(PN_REST)->val = slot.val();
         isExpr = true;
         break;
 
       case S_SELECT:
-        if (theSym)
-          Error("Selector %s used as value without #", theSym->name());
+        if (slot.symbol())
+          Error("Selector %s used as value without #", slot.symbol()->name());
         isExpr = false;
         break;
 
-      case S_IDENT:
+      case S_IDENT: {
         // Assume that all unknown identifiers are objects,
         // and fall through to object handling.
-        theSym = gSyms.installModule(gTokenState.symStr(), S_OBJ);
+        auto* theSym = gSyms.installModule(slot.name(), S_OBJ);
         theSym->clearAn();
         theSym->setObj(nullptr);
-        setSymType(S_OBJ);
+        slot = ResolvedTokenSlot::OfSymbol(theSym);
+      }
 
-        //	fall-through
+        [[fallthrough]];
 
       case S_OBJ:
         // This needs to stay right here, as the handling of
         // S_IDENT falls through to it.
-        theNode->newChild(PN_OBJ)->sym = theSym;
+        theNode->newChild(PN_OBJ)->sym = slot.symbol();
         isExpr = true;
         break;
 
       case S_CLASS:
         pn = theNode->newChild(PN_CLASS);
-        if ((uint32_t)symType() == OBJ_SUPER) {
+        if ((uint32_t)slot.type() == OBJ_SUPER) {
           pn->sym = gClasses[gCurObj->super]->sym;
           pn->val = gClasses[gCurObj->super]->num;
         } else {
-          pn->sym = theSym;
-          pn->val = theSym->obj()->num;
+          pn->sym = slot.symbol();
+          pn->val = pn->sym->obj()->num;
         }
         isExpr = true;
         break;
 
       case S_STRING:
-        theNode->newChild(PN_STRING)->val = gText.find(gTokenState.symStr());
+        theNode->newChild(PN_STRING)->val = gText.find(slot.name());
         isExpr = true;
         break;
 
@@ -155,7 +155,7 @@ bool Expression(PNode* theNode, bool required) {
 
       default:
         if (required)
-          Severe("Expression required: %s", gTokenState.symStr());
+          Severe("Expression required: %s", slot.name());
         else
           UnGetTok();
         isExpr = false;
@@ -190,45 +190,44 @@ static bool _Expression(PNode* theNode) {
   //				jump
 
   bool retVal;
-  Symbol* theSym;
   bool oldSelectVar;
 
   oldSelectVar = gSelectorIsVar;
   gSelectorIsVar = true;
 
-  theSym = LookupTok();
+  auto slot = LookupTok();
 
   //    if ( !theSym ) {
   //        printf ( "LookupTok() returned NULL symbol ('%s', %d, %d).\n",
   //        symStr, symType(), curLine );
   //    }
 
-  if (IsProc()) {
-    retVal = Call(theNode, theSym);
+  if (IsProc(slot)) {
+    retVal = Call(theNode, slot.symbol());
   }
 
-  else if (IsObj()) {
-    retVal = Send(theNode, theSym);
+  else if (IsObj(slot)) {
+    retVal = Send(theNode, slot);
   } else {
-    switch (symType()) {
+    switch (slot.type()) {
       case S_NARY:
-        retVal = NaryExpr(theNode);
+        retVal = NaryExpr(theNode, slot.val());
         break;
 
       case S_BINARY:
-        retVal = BinaryExpr(theNode);
+        retVal = BinaryExpr(theNode, slot.val());
         break;
 
       case S_ASSIGN:
-        retVal = Assignment(theNode);
+        retVal = Assignment(theNode, slot.val());
         break;
 
       case S_UNARY:
-        retVal = UnaryExpr(theNode);
+        retVal = UnaryExpr(theNode, slot.val());
         break;
 
       case S_COMP:
-        retVal = CompExpr(theNode);
+        retVal = CompExpr(theNode, slot.val());
         break;
 
       case S_REST:
@@ -236,7 +235,7 @@ static bool _Expression(PNode* theNode) {
         break;
 
       case S_KEYWORD:
-        switch (symVal()) {
+        switch (slot.symbol()->val()) {
           case K_RETURN:
             retVal = Return(theNode);
             break;
@@ -287,7 +286,7 @@ static bool _Expression(PNode* theNode) {
 
           case K_INC:
           case K_DEC:
-            retVal = IncDec(theNode);
+            retVal = IncDec(theNode, slot.val());
             break;
 
           case K_DEFINE:
@@ -309,13 +308,13 @@ static bool _Expression(PNode* theNode) {
             longjmp(gRecoverBuf, 1);
 
           default:
-            Severe("Expected an expression here: %s", gTokenState.symStr());
+            Severe("Expected an expression here: %s", slot.name());
             retVal = true;
         }
         break;
 
       default:
-        Severe("Expected an expression here: %s", gTokenState.symStr());
+        Severe("Expected an expression here: %s", slot.name());
         retVal = true;
     }
   }
@@ -334,13 +333,13 @@ static bool Return(PNode* theNode) {
   return true;
 }
 
-static bool Assignment(PNode* theNode) {
+static bool Assignment(PNode* theNode, int val) {
   // assignment ::= assign-op variable expression
 
   bool retVal = false;
 
   auto pn = std::make_unique<PNode>(PN_ASSIGN);
-  pn->val = symVal();
+  pn->val = val;
 
   // Get the variable
   if (Variable(pn.get()))
@@ -370,7 +369,7 @@ static bool Call(PNode* theNode, Symbol* theSym) {
   return true;
 }
 
-static bool Send(PNode* theNode, Symbol* theSym) {
+static bool Send(PNode* theNode, ResolvedTokenSlot const& slot) {
   // send ::= (object | variable) message+
 
   PNode* pn;
@@ -378,22 +377,25 @@ static bool Send(PNode* theNode, Symbol* theSym) {
   std::string_view objName;
 
   pn = theNode->newChild(PN_SEND);
+  Symbol* theSym;
 
   // Add a node giving the type and value which determines
   // the destination of the send.
-  if (symType() == S_CLASS && symHasVal(OBJ_SUPER)) {
+  if (slot.type() == S_CLASS && slot.hasVal(OBJ_SUPER)) {
     dn = pn->newChild(PN_SUPER);
     dn->sym = gClasses[gCurObj->super]->sym;
     dn->val = gClasses[gCurObj->super]->num;
     objName = "super";
-
+    theSym = slot.symbol();
   } else {
-    if (theSym && theSym->type == S_IDENT) {
+    if (slot.is_resolved() && slot.type() == S_IDENT) {
       // If the symbol has not been previously defined, define it as
       // an undefined object in the global symbol table.
-      theSym = gSyms.installModule(gTokenState.symStr(), S_OBJ);
+      theSym = gSyms.installModule(slot.name(), S_OBJ);
       theSym->clearAn();
       theSym->setObj(nullptr);
+    } else {
+      theSym = slot.symbol();
     }
     UnGetTok();
     Expression(pn, REQUIRED);
@@ -555,10 +557,10 @@ static bool Break(PNode* theNode) {
 
   pn = theNode->newChild(PN_BREAK);
 
-  GetToken();
-  if (symType() == S_NUM)
-    pn->val = symVal();
-  else {
+  auto token = GetToken();
+  if (token.type() == S_NUM) {
+    pn->val = token.val();
+  } else {
     UnGetTok();
     pn->val = 1;
   }
@@ -581,9 +583,9 @@ static bool BreakIf(PNode* theNode) {
   }
 
   // Get the optional break level.
-  GetToken();
-  if (symType() == S_NUM)
-    pn->val = symVal();
+  auto token = GetToken();
+  if (token.type() == S_NUM)
+    pn->val = token.val();
   else {
     UnGetTok();
     pn->val = 1;
@@ -603,9 +605,9 @@ static bool Continue(PNode* theNode) {
 
   pn = theNode->newChild(PN_CONT);
 
-  GetToken();
-  if (symType() == S_NUM)
-    pn->val = symVal();
+  auto token = GetToken();
+  if (token.type() == S_NUM)
+    pn->val = token.val();
   else {
     UnGetTok();
     pn->val = 1;
@@ -629,9 +631,9 @@ static bool ContIf(PNode* theNode) {
   }
 
   // Get the optional break level.
-  GetToken();
-  if (symType() == S_NUM)
-    pn->val = symVal();
+  auto token = GetToken();
+  if (token.type() == S_NUM)
+    pn->val = token.val();
   else {
     UnGetTok();
     pn->val = 1;
@@ -661,8 +663,8 @@ static bool If(PNode* theNode) {
   }
 
   // Get the else branch, if it exists
-  GetToken();
-  if (Keyword() == K_ELSE) {
+  auto token = GetToken();
+  if (Keyword(token) == K_ELSE) {
     if (!ExprList(pn.get(), OPTIONAL)) {
       return false;
     }
@@ -679,11 +681,11 @@ static bool Cond(PNode* theNode) {
 
   auto pn = std::make_unique<PNode>(PN_COND);
 
-  GetToken();
-  while (OpenP(symType())) {
+  auto token = GetToken();
+  while (OpenP(token.type())) {
     // Get the expression which serves as the condition
-    GetToken();
-    if (Keyword() == K_ELSE)
+    token = GetToken();
+    if (Keyword(token) == K_ELSE)
       pn->newChild(PN_ELSE);
     else {
       UnGetTok();
@@ -696,7 +698,7 @@ static bool Cond(PNode* theNode) {
     ExprList(pn.get(), OPTIONAL);
 
     CloseBlock();
-    GetToken();
+    token = GetToken();
   }
 
   UnGetTok();
@@ -716,11 +718,11 @@ static bool Switch(PNode* theNode) {
     return false;
   }
 
-  GetToken();
-  while (OpenP(symType())) {
+  auto token = GetToken();
+  while (OpenP(token.type())) {
     // Get the expression to compare to the switch expression
-    GetToken();
-    if (Keyword() == K_ELSE)
+    token = GetToken();
+    if (Keyword(token) == K_ELSE)
       pn->newChild(PN_ELSE);
     else {
       UnGetTok();
@@ -732,7 +734,7 @@ static bool Switch(PNode* theNode) {
     // Get the expressions to execute if this case is selected.
     ExprList(pn.get(), OPTIONAL);
     CloseBlock();
-    GetToken();
+    token = GetToken();
   }
   UnGetTok();
 
@@ -766,12 +768,12 @@ static bool SwitchTo(PNode* theNode) {
   return true;
 }
 
-static bool IncDec(PNode* theNode) {
+static bool IncDec(PNode* theNode, int val) {
   //	inc-dec ::=	('++' | '--') variable
 
   // Get the type of operation.
   auto pn = std::make_unique<PNode>(PN_INCDEC);
-  pn->val = symVal();
+  pn->val = val;
 
   // Get the argument
   if (Variable(pn.get())) {
@@ -786,18 +788,17 @@ static bool Variable(PNode* theNode) {
   // variable ::= var-symbol | ('[' var-symbol expression ']')
 
   PNode* pn;
-  Symbol* theSym;
 
-  theSym = LookupTok();
-  if (symType() == S_OPEN_BRACKET) return Array(theNode);
+  auto slot = LookupTok();
+  if (slot.type() == S_OPEN_BRACKET) return Array(theNode);
 
-  if (!IsVar()) {
-    Severe("Variable name expected: %s.", gTokenState.symStr());
+  if (!IsVar(slot)) {
+    Severe("Variable name expected: %s.", slot.name());
     return false;
   }
-  pn = theNode->newChild(PNType(symType()));
-  pn->val = symVal();
-  pn->sym = theSym;
+  pn = theNode->newChild(PNType(slot.type()));
+  pn->val = slot.val();
+  pn->sym = slot.symbol();
 
   return true;
 }
@@ -805,26 +806,26 @@ static bool Variable(PNode* theNode) {
 static bool Array(PNode* theNode) {
   PNode* node;
 
-  Symbol* lookupSym = GetSymbol();
-  if (lookupSym->type != S_GLOBAL && lookupSym->type != S_LOCAL &&
-      lookupSym->type != S_PARM && lookupSym->type != S_TMP) {
-    Severe("Array name expected: %s.", gTokenState.symStr());
+  auto slot = GetSymbol();
+  if (slot.type() != S_GLOBAL && slot.type() != S_LOCAL &&
+      slot.type() != S_PARM && slot.type() != S_TMP) {
+    Severe("Array name expected: %s.", slot.name());
     return false;
   }
 
   auto pn = std::make_unique<PNode>(PN_INDEX);
-  node = pn->newChild(PNType(lookupSym->type));
-  node->val = lookupSym->val();
-  node->sym = lookupSym;
+  node = pn->newChild(PNType(slot.type()));
+  node->val = slot.val();
+  node->sym = slot.symbol();
 
   // Get the index into the array.
   if (!Expression(pn.get(), REQUIRED)) {
     return false;
   }
 
-  GetToken();
-  if (symType() != (sym_t)']') {
-    Error("Expected closing ']': %s.", gTokenState.symStr());
+  auto close = GetToken();
+  if (close.type() != (sym_t)']') {
+    Error("Expected closing ']': %s.", close.name());
     return false;
   }
 
@@ -833,28 +834,28 @@ static bool Array(PNode* theNode) {
 }
 
 static bool Rest(PNode* theNode) {
-  LookupTok();
-  if (!IsVar() || symType() != S_PARM) {
-    Severe("Variable name expected: %s.", gTokenState.symStr());
+  auto slot = LookupTok();
+  if (!IsVar(slot) || slot.type() != S_PARM) {
+    Severe("Variable name expected: %s.", slot.name());
     return false;
   }
-  theNode->newChild(PN_REST)->val = symVal();
+  theNode->newChild(PN_REST)->val = slot.val();
   return true;
 }
 
-static bool NaryExpr(PNode* theNode) {
+static bool NaryExpr(PNode* theNode, int symVal) {
   //	nary-expr ::=	nary-op expression expression+
   //	nary-op ::=	'+' | '*' | '^' | '|' | '&' | 'and' | 'or'
 
   std::unique_ptr<PNode> pn;
   int val;
-  bool logicExpr = symVal() == N_AND || symVal() == N_OR;
+  bool logicExpr = symVal == N_AND || symVal == N_OR;
 
   if (logicExpr)
     pn = std::make_unique<PNode>(PN_COMP);
   else
     pn = std::make_unique<PNode>(PN_NARY);
-  pn->val = symVal();
+  pn->val = symVal;
 
   // Get the first and second arguments
   if (!Expression(pn.get(), REQUIRED)) {
@@ -933,12 +934,12 @@ static bool NaryExpr(PNode* theNode) {
   return true;
 }
 
-static bool BinaryExpr(PNode* theNode) {
+static bool BinaryExpr(PNode* theNode, int symVal) {
   //	binary-expr ::=	binary-op expression expression
   //	binary-op ::=		'-' | '/' | '<<' | '>>' | '^' | '&' | '|' | '%'
 
   auto pn = std::make_unique<PNode>(PN_BINARY);
-  int opType = pn->val = symVal();
+  int opType = pn->val = symVal;
 
   // Get the first argument.
   if (!Expression(pn.get(), REQUIRED)) {
@@ -999,12 +1000,12 @@ static bool BinaryExpr(PNode* theNode) {
   return true;
 }
 
-static bool UnaryExpr(PNode* theNode) {
+static bool UnaryExpr(PNode* theNode, int symVal) {
   //	unary-expr ::=		unary-op expression
   //	unary-op ::=		'~' | '!'
 
   auto pn = std::make_unique<PNode>(PN_UNARY);
-  pn->val = symVal();
+  pn->val = symVal;
 
   // Get the argument
   if (!Expression(pn.get(), REQUIRED)) {
@@ -1031,12 +1032,12 @@ static bool UnaryExpr(PNode* theNode) {
   return true;
 }
 
-static bool CompExpr(PNode* theNode) {
+static bool CompExpr(PNode* theNode, int symVal) {
   //	comp-expr ::=	comp-op expression expression+
   //	comp-op ::=	'>' | '>=' | '<' | '<=' | '==' | '!='
 
   auto pn = std::make_unique<PNode>(PN_COMP);
-  pn->val = symVal();
+  pn->val = symVal;
 
   // Get the first and second arguments.
   if (!Expression(pn.get(), REQUIRED)) {

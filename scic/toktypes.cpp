@@ -5,8 +5,12 @@
 #include "scic/toktypes.hpp"
 
 #include <memory>
+#include <optional>
+#include <string>
 #include <string_view>
+#include <utility>
 
+#include "absl/strings/str_cat.h"
 #include "scic/error.hpp"
 #include "scic/expr.hpp"
 #include "scic/object.hpp"
@@ -21,27 +25,30 @@
 
 int gSelectorIsVar;
 
-static Symbol* Immediate();
-static bool GetNumberOrStringToken(std::string_view errStr, bool stringOK);
+[[nodiscard]] static ResolvedTokenSlot Immediate();
+[[nodiscard]] static std::optional<RuntimeNumberOrString>
+GetNumberOrStringToken(std::string_view errStr, bool stringOK);
 
-Symbol* LookupTok() {
+ResolvedTokenSlot LookupTok() {
   // Get a token.  If it is an identifier, look it up in the current
   // environment and put its values in the global token slot.  Return a
   // a pointer to the symbol in the table.
 
-  Symbol* theSym;
+  auto token = GetToken();
 
-  GetToken();
+  if (token.type() == (sym_t)'#') return Immediate();
 
-  if (symType() == (sym_t)'#') return Immediate();
+  if (token.type() != S_IDENT) {
+    return ResolvedTokenSlot::OfToken(std::move(token));
+  }
 
-  if (symType() == S_IDENT && (theSym = gSyms.lookup(gTokenState.symStr()))) {
-    gTokenState.tokSym().SaveSymbol(*theSym);
-    gTokenState.tokSym().clearName();
-  } else
-    theSym = 0;
+  Symbol* theSym = gSyms.lookup(token.name());
 
-  if (symType() == S_SELECT) {
+  if (!theSym) {
+    return ResolvedTokenSlot::OfToken(std::move(token));
+  }
+
+  if (theSym->type == S_SELECT) {
     if (gCurObj && !gCurObj->selectors().empty()) {
       // If the symbol is a property and we're in a method definition,
       //	access the symbol as a local variable.
@@ -57,43 +64,44 @@ Symbol* LookupTok() {
         }
 
       } else if (sn->tag != T_LOCAL && sn->tag != T_METHOD) {
-        setSymType(S_PROP);
-        setSymVal(sn->ofs);
+        return ResolvedTokenSlot::OfToken(
+            TokenSlot(S_PROP, std::string(theSym->name()), sn->ofs));
       }
     }
   }
 
-  return theSym;
+  return ResolvedTokenSlot::OfSymbol(theSym);
 }
 
-Symbol* GetSymbol() {
+ResolvedTokenSlot GetSymbol() {
   // Get a token that is in the symbol table.
   Symbol* theSym;
-  GetToken();
-  if (!(theSym = gSyms.lookup(gTokenState.symStr()))) {
-    Severe("%s not defined.", gTokenState.symStr());
-    return nullptr;
+  auto token = GetToken();
+  if (!(theSym = gSyms.lookup(token.name()))) {
+    Severe("%s not defined.", token.name());
+    return ResolvedTokenSlot::OfToken(std::move(token));
   }
 
-  return theSym;
+  return ResolvedTokenSlot::OfSymbol(theSym);
 }
 
-bool GetIdent() {
+std::optional<TokenSlot> GetIdent() {
   // Get an identifier.
 
-  GetToken();
-  return IsUndefinedIdent();
+  auto token = GetToken();
+  if (!IsUndefinedIdent(token)) return std::nullopt;
+  return token;
 }
 
 bool GetDefineSymbol() {
   //	gets a symbol that was previously defined
 
-  NextToken();
-  if (symType() != S_IDENT) {
+  auto token = NextToken();
+  if (!token || token->type() != S_IDENT) {
     Error("Defined symbol expected");
     return false;
   }
-  Symbol* sym = gSyms.lookup(gTokenState.symStr());
+  Symbol* sym = gSyms.lookup(token->name());
   if (!sym) return false;
   if (sym->type != S_DEFINE) {
     Error("Define expected");
@@ -102,32 +110,36 @@ bool GetDefineSymbol() {
   return true;
 }
 
-bool IsIdent() {
-  if (symType() != S_IDENT) {
-    Severe("Identifier required: %s", gTokenState.symStr());
+bool IsIdent(TokenSlot const& token) {
+  if (token.type() != S_IDENT) {
+    Severe("Identifier required: %s", token.name());
     return false;
   }
 
   return true;
 }
 
-bool IsUndefinedIdent() {
-  if (!IsIdent()) return false;
+bool IsUndefinedIdent(TokenSlot const& token) {
+  if (!IsIdent(token)) return false;
 
-  if (gSyms.lookup(gTokenState.symStr())) Warning("Redefinition of %s.", gTokenState.symStr());
+  if (gSyms.lookup(token.name())) Warning("Redefinition of %s.", token.name());
 
   return true;
 }
 
-bool GetNumber(std::string_view errStr) {
-  return GetNumberOrStringToken(errStr, false);
+std::optional<int> GetNumber(std::string_view errStr) {
+  auto token = GetNumberOrStringToken(errStr, false);
+  if (!token) return std::nullopt;
+  return token->val();
 }
 
-bool GetNumberOrString(std::string_view errStr) {
+std::optional<RuntimeNumberOrString> GetNumberOrString(
+    std::string_view errStr) {
   return GetNumberOrStringToken(errStr, true);
 }
 
-static bool GetNumberOrStringToken(std::string_view errStr, bool stringOK) {
+static std::optional<RuntimeNumberOrString> GetNumberOrStringToken(
+    std::string_view errStr, bool stringOK) {
   // Get a number (or a string) from the input.
 
   // Get a parse node.
@@ -140,56 +152,47 @@ static bool GetNumberOrStringToken(std::string_view errStr, bool stringOK) {
   pn_t type = pn->first_child()->type;
   if (type != PN_NUM && (type != PN_STRING || !stringOK)) {
     Error("%s required.", errStr);
-    return false;
+    return std::nullopt;
   }
 
   // Otherwise, put the expression value into the symbol variables.
   switch (type) {
     case PN_NUM:
-      setSymType(S_NUM);
-      break;
+      return RuntimeNumberOrString(S_NUM, pn->first_child()->val);
     case PN_STRING:
-      setSymType(S_STRING);
-      break;
+      return RuntimeNumberOrString(S_STRING, pn->first_child()->val);
     default:
       Fatal("Unexpected literal type");
-      break;
   }
-
-  setSymVal(pn->first_child()->val);
-
-  return true;
 }
 
-bool GetString(std::string_view errStr) {
+std::optional<TokenSlot> GetString(std::string_view errStr) {
   // Get a string from the input.
 
-  GetToken();
-  if (symType() != S_STRING) {
-    Severe("%s required: %s", errStr, gTokenState.symStr());
-    return false;
+  auto token = GetToken();
+  if (token.type() != S_STRING) {
+    Severe("%s required: %s", errStr, token.name());
+    return std::nullopt;
   }
 
-  return true;
+  return token;
 }
 
-keyword_t Keyword() {
+keyword_t Keyword(TokenSlot const& token_slot) {
   Symbol* theSym;
 
-  if (!(theSym = gSyms.lookup(gTokenState.symStr())) || theSym->type != S_KEYWORD)
+  if (!(theSym = gSyms.lookup(token_slot.name())) || theSym->type != S_KEYWORD)
     return K_UNDEFINED;
   else {
-    setSymType(S_KEYWORD);
-    setSymVal(theSym->val());
-    return (keyword_t)symVal();
+    return (keyword_t)theSym->val();
   }
 }
 
 void GetKeyword(keyword_t which) {
   std::string_view str;
 
-  GetToken();
-  if (Keyword() != which) {
+  auto token = GetToken();
+  if (Keyword(token) != which) {
     switch (which) {
       case K_OF:
         str = "of";
@@ -212,12 +215,12 @@ void GetKeyword(keyword_t which) {
   }
 }
 
-bool IsVar() {
+bool IsVar(ResolvedTokenSlot const& token) {
   // return whether the current symbol is a variable
 
   Selector* sn;
 
-  switch (symType()) {
+  switch (token.type()) {
     case S_GLOBAL:
     case S_LOCAL:
     case S_TMP:
@@ -228,7 +231,7 @@ bool IsVar() {
 
     case S_SELECT:
       return gCurObj && gSelectorIsVar &&
-             (sn = gCurObj->findSelectorByNum(gTokenState.tokSym().val())) &&
+             (sn = gCurObj->findSelectorByNum(token.val())) &&
              sn->tag == T_PROP;
 
     default:
@@ -236,31 +239,32 @@ bool IsVar() {
   }
 }
 
-bool IsProc() {
+bool IsProc(ResolvedTokenSlot const& token) {
   // If the current symbol is a procedure of some type, return the type.
   // Otherwise return false.
 
-  return symType() == S_PROC || symType() == S_EXTERN;
+  return token.type() == S_PROC || token.type() == S_EXTERN;
 }
 
-bool IsObj() {
-  return symType() == S_OBJ || symType() == S_CLASS || symType() == S_IDENT ||
-         symType() == OPEN_P || IsVar();
+bool IsObj(ResolvedTokenSlot const& token) {
+  return token.type() == S_OBJ || token.type() == S_CLASS ||
+         token.type() == S_IDENT || token.type() == OPEN_P || IsVar(token);
 }
 
-bool IsNumber() { return symType() == S_NUM || symType() == S_STRING; }
+bool IsNumber(TokenSlot const& token) {
+  return token.type() == S_NUM || token.type() == S_STRING;
+}
 
-static Symbol* Immediate() {
+[[nodiscard]] static ResolvedTokenSlot Immediate() {
   Symbol* theSym = nullptr;
 
-  GetToken();
-  if (symType() == S_IDENT) {
-    if (!(theSym = gSyms.lookup(gTokenState.symStr())) || theSym->type != S_SELECT) {
-      Error("Selector required: %s", gTokenState.symStr());
-      return 0;
+  auto token = GetToken();
+  if (token.type() == S_IDENT) {
+    if (!(theSym = gSyms.lookup(token.name())) || theSym->type != S_SELECT) {
+      Error("Selector required: %s", token.name());
+      return ResolvedTokenSlot::OfToken(std::move(token));
     }
-    gTokenState.tokSym().SaveSymbol(*theSym);
-    gTokenState.tokSym().type = S_NUM;
   }
-  return theSym;
+  return ResolvedTokenSlot::OfToken(
+      TokenSlot(S_NUM, absl::StrCat(theSym->val()), theSym->val()));
 }

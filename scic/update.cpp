@@ -9,6 +9,7 @@
 #include <cstring>
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -111,16 +112,18 @@ void WritePropOffsets() {
   // Write out the resource header (this will be a vocabulary resource).
   out.Write(resHdr, sizeof resHdr);
 
-  while (NewToken()) {
-    theSym = gSyms.lookup(gTokenState.symStr());
+  std::optional<TokenSlot> token;
+  while ((token = NewToken())) {
+    theSym = gSyms.lookup(token->name());
     if (theSym->type != S_CLASS) {
-      Error("Not a class: %s", gTokenState.symStr());
-      GetToken();
+      Error("Not a class: %s", token->name());
+      token = GetToken();
       continue;
     }
     cp = theSym->obj();
-    if (!LookupTok() || !(sel = cp->findSelectorByNum(gTokenState.tokSym().val()))) {
-      Error("Not a selector for class %s: %s", cp->sym->name(), gTokenState.symStr());
+    auto slot = LookupTok();
+    if (!slot.is_resolved() || !(sel = cp->findSelectorByNum(slot.val()))) {
+      Error("Not a selector for class %s: %s", cp->sym->name(), slot.name());
       continue;
     }
 

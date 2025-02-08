@@ -1,8 +1,13 @@
 #ifndef DEBUG_UTILS_H
 #define DEBUG_UTILS_H
 
+#include <array>
+#include <cstdio>
 #include <source_location>
+#include <string_view>
 
+#include "absl/debugging/stacktrace.h"
+#include "absl/debugging/symbolize.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_format.h"
 
@@ -31,5 +36,18 @@ class Escaped {
     sink.Append("\"");
   }
 };
+
+inline void PrintStackTrace() {
+  std::array<void*, 64> stack;
+  int depth = absl::GetStackTrace(stack.data(), stack.size(), 0);
+  std::array<char, 512> symbol_buffer;
+  for (int i = 0; i < depth; ++i) {
+    if (absl::Symbolize(stack[i], symbol_buffer.data(), symbol_buffer.size())) {
+      absl::FPrintF(stderr, "%s\n", symbol_buffer.data());
+    } else {
+      absl::FPrintF(stderr, "??\n");
+    }
+  }
+}
 
 #endif

@@ -44,26 +44,27 @@ void Define() {
   // Handle a definition.
   //	define ::=	'define' symbol rest-of-expression
 
-  if (NextToken()) {
-    if (symType() != S_IDENT) {
-      Severe("Identifier required: %s", gTokenState.symStr());
+  auto token = NextToken();
+  if (token) {
+    if (token->type() != S_IDENT) {
+      Severe("Identifier required: %s", token->name());
       return;
     }
 
-    Symbol* sym = gSyms.lookup(gTokenState.symStr());
+    Symbol* sym = gSyms.lookup(token->name());
     bool newSym = sym == 0;
     if (newSym)
-      sym = gSyms.installLocal(gTokenState.symStr(), S_DEFINE);
+      sym = gSyms.installLocal(token->name(), S_DEFINE);
     else if (sym->type != S_DEFINE)
       // This isn't just a re-'define' of the symbol, it's a change
       // in symbol type.
       Error("Redefinition of %s", sym->name());
 
-    GetRest();
+    auto rest = GetRest();
 
     if (!newSym) {
       std::string_view newString =
-          absl::StripAsciiWhitespace(gTokenState.symStr());
+          absl::StripAsciiWhitespace(rest ? rest->name() : "");
       std::string_view oldString = absl::StripAsciiWhitespace(sym->str());
 
       if (newString != oldString) {
@@ -73,7 +74,7 @@ void Define() {
       }
     }
 
-    if (newSym) sym->setStr(gTokenState.symStr());
+    if (newSym) sym->setStr(std::string(rest ? rest->name() : ""));
   }
 }
 
@@ -81,21 +82,21 @@ void Enum() {
   //	enum ::=	'enum' ([number] (symbol | (= symbol expr))+
 
   int val = 0;
-  for (NextToken(); !CloseP(symType()); NextToken()) {
+  for (auto token = NextToken(); token && !CloseP(token->type());
+       token = NextToken()) {
     //	initializer constant?
-    if (symType() == S_NUM)
-      val = symVal();
-
-    else if (IsUndefinedIdent()) {
-      Symbol* theSym = gSyms.installLocal(gTokenState.symStr(), S_DEFINE);
+    if (token->type() == S_NUM) {
+      val = token->val();
+    } else if (IsUndefinedIdent(*token)) {
+      Symbol* theSym = gSyms.installLocal(token->name(), S_DEFINE);
 
       //	initializer expression?
-      LookupTok();
-      if (symType() != S_ASSIGN)
+      auto expr = LookupTok();
+      if (expr.type() != S_ASSIGN)
         UnGetTok();
       else {
-        GetNumber("Constant expression required");
-        val = symVal();
+        auto value = GetNumber("Constant expression required");
+        val = value.value_or(0);
       }
       theSym->setStr(absl::StrCat(val));
       ++val;
@@ -108,13 +109,14 @@ void Enum() {
 void GlobalDecl() {
   // Handle a forward definition of global variables.
 
-  for (GetToken(); !CloseP(symType()); GetToken()) {
-    if (!IsIdent()) {
-      Severe("Global variable name expected. Got: %s", gTokenState.symStr());
+  for (auto token = GetToken(); !CloseP(token.type()); token = GetToken()) {
+    if (!IsIdent(token)) {
+      Severe("Global variable name expected. Got: %s", token.name());
       break;
     }
-    std::string varName = gTokenState.symStr();
-    if (!GetNumber("Variable #")) break;
+    std::string varName(token.name());
+    auto var_num = GetNumber("Variable #");
+    if (!var_num) break;
 
     // We only install into the symbol table for globals. We do not add
     // global variables to the gGlobalVars list. That still has to be
@@ -126,17 +128,17 @@ void GlobalDecl() {
         break;
       }
 
-      if (theSym->val() != symVal()) {
+      if (theSym->val() != *var_num) {
         Error(
             "Redefinition of %s with different global index (%d expected, %d "
             "found).",
-            theSym->name(), theSym->val(), symVal());
+            theSym->name(), theSym->val(), *var_num);
         break;
       }
     } else {
       // Install the symbol.
       theSym = gSyms.installLocal(varName, S_GLOBAL);
-      theSym->setVal(symVal());
+      theSym->setVal(*var_num);
     }
   }
 
@@ -161,12 +163,13 @@ void Global() {
   // If there are previously defined globals, keep them in the globals
   // list.
 
-  for (GetToken(); !CloseP(symType()); GetToken()) {
-    if (OpenP(symType()))
+  for (auto token = GetToken(); !CloseP(token.type()); token = GetToken()) {
+    if (OpenP(token.type()))
       Definition();
-    else if (IsIdent()) {
-      std::string varName = gTokenState.symStr();
-      if (!GetNumber("Variable #")) break;
+    else if (IsIdent(token)) {
+      std::string varName(token.name());
+      auto var_num = GetNumber("Variable #");
+      if (!var_num) break;
 
       // Try to get the symbol from the symbol table.
       Symbol* theSym = gSyms.lookup(varName);
@@ -176,17 +179,17 @@ void Global() {
           break;
         }
 
-        if (theSym->val() != symVal()) {
+        if (theSym->val() != *var_num) {
           Error(
               "Redefinition of %s with different global index (%d expected, %d "
               "found).",
-              theSym->name(), theSym->val(), symVal());
+              theSym->name(), theSym->val(), *var_num);
           break;
         }
       } else {
         // Install the symbol.
         theSym = gSyms.installLocal(varName, S_GLOBAL);
-        theSym->setVal(symVal());
+        theSym->setVal(*var_num);
       }
       offset = theSym->val();
 
@@ -231,15 +234,17 @@ void Local() {
 
   size = 0;
 
-  for (GetToken(); !CloseP(symType()); GetToken()) {
-    if (symType() == S_OPEN_BRACKET) {
-      if (GetIdent()) {
-        theSym = gSyms.installLocal(gTokenState.symStr(), S_LOCAL);
+  for (auto token = GetToken(); !CloseP(token.type()); token = GetToken()) {
+    if (token.type() == S_OPEN_BRACKET) {
+      auto ident = GetIdent();
+      if (ident) {
+        theSym = gSyms.installLocal(ident->name(), S_LOCAL);
         theSym->setVal(size);
-        if (!GetNumber("Array size")) break;
-        arraySize = symVal();
-        GetToken();
-        if (symType() != (sym_t)']') {
+        auto array_size = GetNumber("Array size");
+        if (!array_size) break;
+        arraySize = *array_size;
+        auto close = GetToken();
+        if (close.type() != (sym_t)']') {
           Severe("no closing ']' in array declaration");
           break;
         }
@@ -251,11 +256,11 @@ void Local() {
         }
       }
 
-    } else if (OpenP(symType()))
+    } else if (OpenP(token.type()))
       Definition();
 
-    else if (IsUndefinedIdent()) {
-      theSym = gSyms.installLocal(gTokenState.symStr(), S_LOCAL);
+    else if (IsUndefinedIdent(token)) {
+      theSym = gSyms.installLocal(token.name(), S_LOCAL);
       theSym->setVal(size);
       n = InitialValue(gLocalVars, size, 1);
       size += n;
@@ -273,8 +278,8 @@ void Local() {
 }
 
 void Definition() {
-  GetToken();
-  switch (Keyword()) {
+  auto token = GetToken();
+  switch (Keyword(token)) {
     case K_DEFINE:
       Define();
       break;
@@ -284,7 +289,7 @@ void Definition() {
       break;
 
     default:
-      Severe("define or enum expected: %s", gTokenState.symStr());
+      Severe("define or enum expected: %s", token.name());
   }
   CloseBlock();
 }
@@ -292,26 +297,28 @@ void Definition() {
 void Extern() {
   //	extern ::= 'extern' (symbol script# entry#)+
 
-  for (GetToken(); !CloseP(symType()); GetToken()) {
-    if (OpenP(symType()))
+  for (auto token = GetToken(); !CloseP(token.type()); token = GetToken()) {
+    if (OpenP(token.type()))
       Definition();
     else {
       // Install the symbol in both the symbol table and the
       // externals list.
-      Symbol* theSym = gSyms.lookup(gTokenState.symStr());
+      Symbol* theSym = gSyms.lookup(token.name());
       if (!theSym) {
-        theSym = gSyms.installLocal(gTokenState.symStr(), S_EXTERN);
+        theSym = gSyms.installLocal(token.name(), S_EXTERN);
       }
       auto entry = std::make_unique<Public>(theSym);
       auto* theEntry = entry.get();
       theSym->setExt(std::move(entry));
 
       // Get the script and entry numbers of the symbol.
-      if (!GetNumber("Script #")) break;
-      theEntry->script = symVal();
+      auto script_num = GetNumber("Script #");
+      if (!script_num) break;
+      theEntry->script = *script_num;
 
-      if (!GetNumber("Entry #")) break;
-      theEntry->entry = symVal();
+      auto entry_num = GetNumber("Entry #");
+      if (!entry_num) break;
+      theEntry->entry = *entry_num;
     }
   }
 
@@ -328,22 +335,22 @@ void DoPublic() {
 
   Symbol* theSym;
 
-  for (GetToken(); !CloseP(symType()); GetToken()) {
+  for (auto token = GetToken(); !CloseP(token.type()); token = GetToken()) {
     // Install the symbol in both the symbol table and the
     // publics list.
-    if (!(theSym = gSyms.lookup(gTokenState.symStr())) ||
-        theSym->type == S_EXTERN)
-      theSym = gSyms.installModule(gTokenState.symStr(),
-                                   (sym_t)(!theSym ? S_OBJ : S_IDENT));
+    if (!(theSym = gSyms.lookup(token.name())) || theSym->type == S_EXTERN)
+      theSym =
+          gSyms.installModule(token.name(), (sym_t)(!theSym ? S_OBJ : S_IDENT));
     auto theEntry = std::make_unique<Public>(theSym);
     auto* entryPtr = theEntry.get();
     publicList.push_front(std::move(theEntry));
 
-    if (!GetNumber("Entry #")) break;
+    auto entry_num = GetNumber("Entry #");
+    if (!entry_num) break;
 
     // Keep track of the maximum numbered public entry.
-    entryPtr->entry = symVal();
-    if (symVal() > publicMax) publicMax = symVal();
+    entryPtr->entry = *entry_num;
+    if (*entry_num > publicMax) publicMax = *entry_num;
   }
 
   UnGetTok();
@@ -374,8 +381,8 @@ static int InitialValue(VarList& theVars, int offset, int arraySize) {
 
   // See if there are initial values.  Return 1 if not (by default, there
   // is one initial value of 0 for all variable declarations).
-  LookupTok();
-  if (symType() != S_ASSIGN) {
+  auto slot = LookupTok();
+  if (slot.type() != S_ASSIGN) {
     UnGetTok();
     return 1;
   }
@@ -388,29 +395,34 @@ static int InitialValue(VarList& theVars, int offset, int arraySize) {
 
   // See if the initialization is for an array.  If not, just get one
   // initial value and return.
-  GetToken();
-  if (symType() != (sym_t)'[') {
+  auto token = GetToken();
+  if (token.type() != (sym_t)'[') {
     UnGetTok();
-    GetNumberOrString("Initial value");
+    auto value = GetNumberOrString("Initial value");
     for (int i = 0; i < arraySize; ++i) {
       Var* vp = &theVars.values[offset + i];
       if (vp->type != (sym_t)VAR_NONE) {
         Error("Redefinition of index %d", offset + i);
       }
-      vp->type = symType();
-      vp->value = symVal();
+      if (value) {
+        vp->type = value->type();
+        vp->value = value->val();
+      }
     }
     return arraySize;
   }
 
   int n;
   // Read an array of initial values and return the number defined.
-  for (n = 0, GetToken(); symType() != (sym_t)']'; ++n, GetToken()) {
+  for (n = 0, token = GetToken(); token.type() != (sym_t)']';
+       ++n, token = GetToken()) {
     UnGetTok();
-    GetNumberOrString("Initial value");
+    auto value = GetNumberOrString("Initial value");
     Var* vp = &theVars.values[offset + n];
-    vp->type = symType();
-    vp++->value = symVal();
+    if (value) {
+      vp->type = value->type();
+      vp++->value = value->val();
+    }
   }
   return n;
 }

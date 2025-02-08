@@ -28,7 +28,7 @@ void ListingOutput(std::string_view str) {
 
 }  // namespace
 
-void EarlyEnd() { Fatal("Unexpected end of input."); }
+[[noreturn]] void EarlyEnd() { Fatal("Unexpected end of input."); }
 
 static void beep() { putc('\a', stderr); };
 
@@ -43,8 +43,10 @@ void WriteError(std::string_view text) {
   ListingOutput(text);
   ListingOutput("\n");
 
-  if (!CloseP(symType()))
-    GetRest(true);
+  UnGetTok();
+  auto token = GetToken();
+  if (!CloseP(token.type()))
+    (void)GetRest(true);
   else
     UnGetTok();
 
@@ -92,8 +94,10 @@ void WriteSevere(std::string_view text) {
   ListingOutput(text);
   ListingOutput("\n");
 
-  if (!CloseP(symType()))
-    GetRest(true);
+  UnGetTok();
+  auto token = GetToken();
+  if (!CloseP(token.type()))
+    (void)GetRest(true);
   else
     UnGetTok();
 
