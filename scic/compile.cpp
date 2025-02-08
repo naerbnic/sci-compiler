@@ -987,8 +987,8 @@ void MakeObject(Object* theObj) {
 
   {
     // Create the object ID node.
-    ANObject* obj = gSc->heapList->getList()->newNodeBefore<ANObject>(
-        nullptr, theObj->sym, theObj->num);
+    ANObject* obj =
+        gSc->heapList->getList()->newNodeBefore<ANObject>(nullptr, theObj);
     theObj->an = obj;
 
     // Create the table of properties.
@@ -1021,13 +1021,12 @@ void MakeObject(Object* theObj) {
     // If any nodes already compiled have this object as a target, they
     // will be on a list hanging off the object's symbol table entry.
     // Let all nodes know where this one is.
-    if (obj->sym->ref()) obj->sym->ref()->backpatch(props);
-    obj->sym->setLoc(props);
+    if (theObj->sym->ref()) theObj->sym->ref()->backpatch(props);
+    theObj->sym->setLoc(props);
   }
 
   // The rest of the object goes into hunk, as it never changes.
-  gSc->hunkList->getList()->newNodeBefore<ANObject>(gCodeStart, theObj->sym,
-                                                    theObj->num);
+  gSc->hunkList->getList()->newNodeBefore<ANObject>(gCodeStart, theObj);
 
   // If this a class, add the property dictionary.
   ANObjTable* propDict = gSc->hunkList->getList()->newNodeBefore<ANObjTable>(

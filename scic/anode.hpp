@@ -13,6 +13,7 @@
 
 #include "scic/alist.hpp"
 #include "scic/listing.hpp"
+#include "scic/object.hpp"
 
 class OutputFile;
 
@@ -125,12 +126,11 @@ struct ANObject : ANode
 // It generates nothing in the object code file.  The object itself is built
 // up of ANTables containing properties, method dispatch vectors, etc.
 {
-  ANObject(Symbol* s, int n);
+  ANObject(Object* obj);
 
   void list(ListingFile* listFile);
 
-  Symbol* sym;
-  int num;
+  Object* obj;
 };
 
 struct ANCodeBlk : ANode
@@ -158,10 +158,10 @@ struct ANMethCode : ANCodeBlk
 {
   ANMethCode(std::string name);
 
-  void list(ListingFile* listFile);
+  void list(ListingFile* listFile) override;
 
-  Symbol* objSym;  // pointer to symbol of object which this is a
-                   // method for
+  Object* obj;  // pointer to symbol of object which this is a
+                // method for
 };
 
 struct ANProcCode : ANCodeBlk

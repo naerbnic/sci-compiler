@@ -197,10 +197,10 @@ void ANText::emit(OutputFile* out) {
 // Class ANObject
 ///////////////////////////////////////////////////
 
-ANObject::ANObject(Symbol* s, int n) : sym(s), num(n) {}
+ANObject::ANObject(Object* obj) : obj(obj) {}
 
 void ANObject::list(ListingFile* listFile) {
-  listFile->Listing("\nObject: %-20s", sym->name());
+  listFile->Listing("\nObject: %-20s", obj->name);
 }
 
 ///////////////////////////////////////////////////
@@ -240,10 +240,10 @@ void ANProcCode::list(ListingFile* listFile) {
 ///////////////////////////////////////////////////
 
 ANMethCode::ANMethCode(std::string name)
-    : ANCodeBlk(std::move(name)), objSym(gCurObj->sym) {}
+    : ANCodeBlk(std::move(name)), obj(gCurObj) {}
 
 void ANMethCode::list(ListingFile* listFile) {
-  listFile->Listing("\n\nMethod: (%s %s)\n", objSym->name(), name);
+  listFile->Listing("\n\nMethod: (%s %s)\n", obj->name, name);
   ANCodeBlk::list(listFile);
 }
 
