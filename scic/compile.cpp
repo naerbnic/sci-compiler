@@ -12,6 +12,7 @@
 #include "scic/asm.hpp"
 #include "scic/config.hpp"
 #include "scic/define.hpp"
+#include "scic/public.hpp"
 #include "scic/error.hpp"
 #include "scic/input.hpp"
 #include "scic/loop.hpp"

@@ -4,7 +4,6 @@
 #include <csetjmp>
 
 #include "scic/class.hpp"
-#include "scic/define.hpp"
 #include "scic/object.hpp"
 #include "scic/varlist.hpp"
 

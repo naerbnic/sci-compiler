@@ -14,7 +14,6 @@
 #include "scic/alist.hpp"
 #include "scic/asm.hpp"
 #include "scic/config.hpp"
-#include "scic/define.hpp"
 #include "scic/error.hpp"
 #include "scic/listing.hpp"
 #include "scic/object.hpp"

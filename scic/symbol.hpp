@@ -15,13 +15,12 @@
 
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_format.h"
-#include "scic/define.hpp"
 #include "scic/object.hpp"
+#include "scic/public.hpp"
 #include "scic/symtypes.hpp"
 
 struct ANode;
 struct ANReference;
-struct Public;
 
 class Symbol {
   // The Symbol class is where information about identifiers resides.  Symbols

@@ -9,7 +9,6 @@
 
 #include "scic/class.hpp"
 #include "scic/compile.hpp"
-#include "scic/define.hpp"
 #include "scic/selector.hpp"
 #include "scic/symbol.hpp"
 #include "scic/symtbl.hpp"

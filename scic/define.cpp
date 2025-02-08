@@ -19,6 +19,7 @@
 #include "scic/error.hpp"
 #include "scic/parse.hpp"
 #include "scic/parse_context.hpp"
+#include "scic/public.hpp"
 #include "scic/sc.hpp"
 #include "scic/symbol.hpp"
 #include "scic/symtbl.hpp"

@@ -11,7 +11,6 @@
 #include <utility>
 #include <variant>
 
-#include "scic/define.hpp"
 #include "scic/input.hpp"
 #include "scic/object.hpp"
 #include "scic/symtypes.hpp"
