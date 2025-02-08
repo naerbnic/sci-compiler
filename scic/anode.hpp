@@ -59,9 +59,9 @@ struct ANDispatch : ANode,
 // each line in the (public ...) statement in SCI.  These are added to
 // the 'dispTbl' dispatch table, set up in InitAsm().
 {
-  size_t size();
-  void list(ListingFile* listFile);
-  void emit(OutputFile*);
+  size_t size() override;
+  void list(ListingFile* listFile) override;
+  void emit(OutputFile*) override;
 };
 
 struct ANWord : ANode
@@ -71,9 +71,9 @@ struct ANWord : ANode
 {
   ANWord(int v = 0);
 
-  size_t size();
-  void list(ListingFile* listFile);
-  void emit(OutputFile*);
+  size_t size() override;
+  void list(ListingFile* listFile) override;
+  void emit(OutputFile*) override;
 
   int value;
 };
@@ -88,10 +88,10 @@ struct ANTable : ANode
 {
   ANTable(std::string nameStr);
 
-  size_t size();
-  size_t setOffset(size_t ofs);
-  void list(ListingFile* listFile);
-  void emit(OutputFile*);
+  size_t size() override;
+  size_t setOffset(size_t ofs) override;
+  void list(ListingFile* listFile) override;
+  void emit(OutputFile*) override;
 
   std::string name;  // name of table (values follow)
   AList entries;     // list of entries in the table
@@ -111,10 +111,10 @@ struct ANText : ANode
 {
   ANText(Text* tp);
 
-  size_t setOffset(size_t ofs);  // set offset to ofs, return new ofs
-  size_t size();
-  void list(ListingFile* listFile);
-  void emit(OutputFile*);
+  size_t setOffset(size_t ofs) override;  // set offset to ofs, return new ofs
+  size_t size() override;
+  void list(ListingFile* listFile) override;
+  void emit(OutputFile*) override;
 
   Text* text;
 };
@@ -141,11 +141,11 @@ struct ANCodeBlk : ANode
 {
   ANCodeBlk(Symbol* s);
 
-  size_t size();
-  void emit(OutputFile*);
-  size_t setOffset(size_t ofs);
-  void list(ListingFile* listFile);
-  bool optimize();
+  size_t size() override;
+  void emit(OutputFile*) override;
+  size_t setOffset(size_t ofs) override;
+  void list(ListingFile* listFile) override;
+  bool optimize() override;
 
   Symbol* sym;
   AOpList code;
@@ -182,9 +182,9 @@ struct ANProp : ANode
   virtual std::string_view desc() = 0;  // return descriptive string
   virtual uint32_t value() = 0;         // return value of selector
 
-  size_t size();
-  void list(ListingFile* listFile);
-  void emit(OutputFile*);
+  size_t size() override;
+  void list(ListingFile* listFile) override;
+  void emit(OutputFile*) override;
 
   Symbol* sym;  // pointer to selector's symbol
   int val;      // value of selector
@@ -195,8 +195,8 @@ struct ANIntProp : ANProp
 {
   ANIntProp(Symbol* sp, int v) : ANProp(sp, v) {}
 
-  std::string_view desc();  // return descriptive string
-  uint32_t value();         // return value of selector
+  std::string_view desc() override;  // return descriptive string
+  uint32_t value() override;         // return value of selector
 };
 
 struct ANTextProp : ANProp
@@ -204,9 +204,9 @@ struct ANTextProp : ANProp
 {
   ANTextProp(Symbol* sp, int v);
 
-  void emit(OutputFile*);
-  std::string_view desc();  // return descriptive string
-  uint32_t value();         // return value of selector
+  void emit(OutputFile*) override;
+  std::string_view desc() override;  // return descriptive string
+  uint32_t value() override;         // return value of selector
 };
 
 struct ANOfsProp : ANProp
@@ -214,8 +214,8 @@ struct ANOfsProp : ANProp
 {
   ANOfsProp(Symbol* sp) : ANProp(sp, 0) {}
 
-  std::string_view desc();
-  uint32_t value();
+  std::string_view desc() override;
+  uint32_t value() override;
 
   ANode* target;
 };
@@ -225,8 +225,8 @@ struct ANMethod : ANProp
 {
   ANMethod(Symbol* sp, ANMethCode* mp);
 
-  std::string_view desc();  // return descriptive string
-  uint32_t value();         // return value of selector
+  std::string_view desc() override;  // return descriptive string
+  uint32_t value() override;         // return value of selector
 
   ANMethCode* method;
 };
@@ -245,9 +245,9 @@ class ANLabel : public ANOpCode
  public:
   ANLabel();
 
-  size_t size();
-  void list(ListingFile* listFile);
-  void emit(OutputFile*);
+  size_t size() override;
+  void list(ListingFile* listFile) override;
+  void emit(OutputFile*) override;
 
   uint32_t number;  // label number
 
@@ -263,9 +263,9 @@ struct ANOpUnsign : ANOpCode
 {
   ANOpUnsign(uint32_t o, uint32_t v);
 
-  size_t size();
-  void list(ListingFile* listFile);
-  void emit(OutputFile*);
+  size_t size() override;
+  void list(ListingFile* listFile) override;
+  void emit(OutputFile*) override;
 
   uint32_t value;
   Symbol* sym;
@@ -277,9 +277,9 @@ struct ANOpSign : ANOpCode
 {
   ANOpSign(uint32_t o, int v);
 
-  size_t size();
-  void list(ListingFile* listFile);
-  void emit(OutputFile*);
+  size_t size() override;
+  void list(ListingFile* listFile) override;
+  void emit(OutputFile*) override;
 
   int value;
   Symbol* sym;
@@ -290,9 +290,9 @@ struct ANOpExtern : ANOpCode
 {
   ANOpExtern(Symbol* s, int32_t m, uint32_t e);
 
-  size_t size();
-  void list(ListingFile* listFile);
-  void emit(OutputFile*);
+  size_t size() override;
+  void list(ListingFile* listFile) override;
+  void emit(OutputFile*) override;
 
   int32_t module;    // module # of destination
   uint32_t entry;    // entry # of destination
@@ -306,9 +306,9 @@ struct ANCall : ANOpCode,
 {
   ANCall(Symbol* s);
 
-  size_t size();
-  void list(ListingFile* listFile);
-  void emit(OutputFile*);
+  size_t size() override;
+  void list(ListingFile* listFile) override;
+  void emit(OutputFile*) override;
 
   uint32_t numArgs;  // number of arguments
 };
@@ -321,9 +321,9 @@ struct ANBranch : ANOpCode,
 {
   ANBranch(uint32_t o);
 
-  size_t size();
-  void list(ListingFile* listFile);
-  void emit(OutputFile*);
+  size_t size() override;
+  void list(ListingFile* listFile) override;
+  void emit(OutputFile*) override;
 };
 
 struct ANVarAccess : ANOpCode
@@ -334,9 +334,9 @@ struct ANVarAccess : ANOpCode
 {
   ANVarAccess(uint32_t o, uint32_t a);
 
-  size_t size();
-  void list(ListingFile* listFile);
-  void emit(OutputFile*);
+  size_t size() override;
+  void list(ListingFile* listFile) override;
+  void emit(OutputFile*) override;
 
   uint32_t addr;  // variable address
   Symbol* sym;    // symbol of variable name
@@ -348,9 +348,9 @@ struct ANOpOfs : ANOpCode
 {
   ANOpOfs(uint32_t o);
 
-  size_t size();
-  void list(ListingFile* listFile);
-  void emit(OutputFile*);
+  size_t size() override;
+  void list(ListingFile* listFile) override;
+  void emit(OutputFile*) override;
 
   size_t ofs;  // the offset
 };
@@ -364,9 +364,9 @@ struct ANObjID : ANOpCode,
 {
   ANObjID(Symbol* sym);
 
-  size_t size();
-  void list(ListingFile* listFile);
-  void emit(OutputFile*);
+  size_t size() override;
+  void list(ListingFile* listFile) override;
+  void emit(OutputFile*) override;
 };
 
 struct ANEffctAddr : ANVarAccess
@@ -376,9 +376,9 @@ struct ANEffctAddr : ANVarAccess
 {
   ANEffctAddr(uint32_t o, uint32_t a, uint32_t t);
 
-  size_t size();
-  void list(ListingFile* listFile);
-  void emit(OutputFile*);
+  size_t size() override;
+  void list(ListingFile* listFile) override;
+  void emit(OutputFile*) override;
 
   uint32_t eaType;  // type of access
 };
@@ -388,9 +388,9 @@ struct ANSend : ANOpCode
 {
   ANSend(uint32_t o);
 
-  size_t size();
-  void list(ListingFile* listFile);
-  void emit(OutputFile*);
+  size_t size() override;
+  void list(ListingFile* listFile) override;
+  void emit(OutputFile*) override;
 
   uint32_t numArgs;
 };
@@ -401,9 +401,9 @@ struct ANSuper : ANSend
 {
   ANSuper(Symbol* s, uint32_t c);
 
-  size_t size();
-  void list(ListingFile* listFile);
-  void emit(OutputFile*);
+  size_t size() override;
+  void list(ListingFile* listFile) override;
+  void emit(OutputFile*) override;
 
   uint32_t classNum;
   Symbol* sym;
@@ -418,9 +418,9 @@ class ANVars : public ANode
  public:
   ANVars(VarList&);
 
-  size_t size();
-  void list(ListingFile* listFile);
-  void emit(OutputFile*);
+  size_t size() override;
+  void list(ListingFile* listFile) override;
+  void emit(OutputFile*) override;
 
  protected:
   VarList& theVars;
@@ -432,9 +432,9 @@ struct ANFixup : ANode {
 
   ANFixup(AList* list);
 
-  size_t size();
-  void list(ListingFile* listFile);
-  void emit(OutputFile*);
+  size_t size() override;
+  void list(ListingFile* listFile) override;
+  void emit(OutputFile*) override;
 };
 
 struct ANFileName : ANOpCode {
@@ -442,9 +442,9 @@ struct ANFileName : ANOpCode {
 
   ANFileName(std::string name);
 
-  void list(ListingFile* listFile);
-  void emit(OutputFile*);
-  size_t size();
+  void list(ListingFile* listFile) override;
+  void emit(OutputFile*) override;
+  size_t size() override;
 
  protected:
   std::string name;
@@ -455,9 +455,9 @@ struct ANLineNum : ANOpCode {
 
   ANLineNum(int num);
 
-  void list(ListingFile* listFile);
-  void emit(OutputFile*);
-  size_t size();
+  void list(ListingFile* listFile) override;
+  void emit(OutputFile*) override;
+  size_t size() override;
 
  protected:
   int num;
