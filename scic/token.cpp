@@ -3,9 +3,8 @@
 
 #include "scic/token.hpp"
 
-#include <stdlib.h>
-#include <string.h>
-
+#include <cstdlib>
+#include <cstring>
 #include <string_view>
 
 #include "absl/strings/ascii.h"

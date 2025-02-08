@@ -3,9 +3,8 @@
 
 #include "scic/update.hpp"
 
-#include <stdlib.h>
-#include <string.h>
-
+#include <cstdlib>
+#include <cstring>
 #include <filesystem>
 
 #include "absl/strings/str_format.h"

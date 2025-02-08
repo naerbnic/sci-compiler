@@ -4,10 +4,6 @@
 #ifndef SOL_HPP
 #define SOL_HPP
 
-//	for size_t
-#include <stddef.h>
-#include <stdio.h>
-
 #include <cstdint>
 
 //	data types for interfacing to the SCI language, in which all values

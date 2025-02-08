@@ -3,8 +3,8 @@
 
 #include "scic/anode.hpp"
 
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 
 #include <algorithm>
 

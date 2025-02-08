@@ -3,8 +3,6 @@
 
 #include "scic/input.hpp"
 
-#include <stdlib.h>
-
 #include <array>
 #include <filesystem>
 #include <memory>

@@ -4,7 +4,6 @@
 #ifndef DEFINE_HPP
 #define DEFINE_HPP
 
-#include <cstddef>
 #include <cstdint>
 #include <vector>
 

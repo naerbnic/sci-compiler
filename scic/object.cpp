@@ -3,7 +3,7 @@
 
 #include "scic/object.hpp"
 
-#include <setjmp.h>
+#include <csetjmp>
 
 #include "scic/class.hpp"
 #include "scic/compile.hpp"

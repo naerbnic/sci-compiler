@@ -3,10 +3,7 @@
 
 #include "scic/listing.hpp"
 
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-
+#include <cstdio>
 #include <string_view>
 
 #include "absl/base/nullability.h"

@@ -3,8 +3,6 @@
 
 #include "scic/selector.hpp"
 
-#include <stdio.h>
-
 #include "scic/class.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"

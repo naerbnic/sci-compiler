@@ -3,9 +3,6 @@
 
 #include "scic/resource.hpp"
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "absl/strings/str_format.h"
 #include "scic/sol.hpp"
 
