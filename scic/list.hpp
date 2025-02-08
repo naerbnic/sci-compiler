@@ -5,6 +5,7 @@
 #define LIST_HPP
 
 #include <cassert>
+#include <cstddef>
 #include <memory>
 
 #include "scic/casts.hpp"

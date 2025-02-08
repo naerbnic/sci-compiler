@@ -1,12 +1,16 @@
 #include "util/platform/platform.hpp"
 
+#include <cerrno>
+#include <memory>
+#include <string_view>
+
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__linux__)
 
 #include <fcntl.h>
-#include <stdio.h>
 #include <unistd.h>
 
 #include <cassert>
+#include <cstdio>
 #include <string>
 
 #ifdef __linux__

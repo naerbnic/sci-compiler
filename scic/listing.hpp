@@ -3,7 +3,10 @@
 #ifndef LISTING_HPP
 #define LISTING_HPP
 
+#include <cstddef>
 #include <cstdint>
+#include <cstdio>
+#include <memory>
 #include <string_view>
 
 #include "absl/functional/function_ref.h"
@@ -18,7 +21,6 @@ class ListingFile {
   static std::unique_ptr<ListingFile> Open(std::string_view sourceFileName);
   static std::unique_ptr<ListingFile> Null();
 
- public:
   ListingFile() = default;
   virtual ~ListingFile() = default;
 

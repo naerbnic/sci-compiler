@@ -1,8 +1,14 @@
 #include "util/io/buffer.hpp"
 
 #include <array>
+#include <cerrno>
 #include <cstdio>
+#include <cstring>
+#include <memory>
+#include <stdexcept>
 #include <string>
+#include <string_view>
+#include <utility>
 
 #include "absl/strings/str_format.h"
 

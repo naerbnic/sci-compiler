@@ -3,6 +3,7 @@
 #ifndef ERROR_HPP
 #define ERROR_HPP
 
+#include <string_view>
 #include "absl/strings/str_format.h"
 
 void EarlyEnd();

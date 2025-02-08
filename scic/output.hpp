@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <memory>
 #include <string>
+#include <string_view>
 
 class OutputFile {
  public:

@@ -3,7 +3,12 @@
 
 #include "scic/optimize.hpp"
 
+#include <cstdint>
+#include <memory>
+
+#include "scic/alist.hpp"
 #include "scic/anode.hpp"
+#include "scic/casts.hpp"
 #include "scic/opcodes.hpp"
 
 enum {
