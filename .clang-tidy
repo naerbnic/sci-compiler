@@ -3,7 +3,6 @@ Checks:
 - modernize-deprecated-headers
 - modernize-loop-convert
 - modernize-use-bool-literals
-- modernize-use-default-member-init
 - modernize-use-nullptr
 - modernize-use-override
 - modernize-use-using
