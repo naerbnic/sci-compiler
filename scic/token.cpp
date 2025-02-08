@@ -7,12 +7,15 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include "absl/strings/ascii.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "scic/chartype.hpp"
 #include "scic/define.hpp"
@@ -45,9 +48,9 @@ enum pt {
 };
 
 static pt GetPreprocessorToken();
-static void ReadKey(std::string_view ip);
-static void ReadString(std::string_view ip);
-static void ReadNumber(std::string_view ip);
+static TokenSlot ReadKey(std::string_view ip);
+static TokenSlot ReadString(std::string_view ip);
+static TokenSlot ReadNumber(std::string_view ip);
 
 static char currCharAndAdvance(std::string_view& ip) {
   if (ip.empty()) return '\0';
@@ -62,34 +65,39 @@ static void advance(std::string_view& ip) {
   if (!ip.empty()) ip.remove_prefix(1);
 }
 
-void GetToken() {
+TokenSlot GetToken() {
   // Get a token and bitch if one is not available.
-  if (!NewToken()) EarlyEnd();
+  auto token = NewToken();
+  if (!token) EarlyEnd();
 
   // Save the token type and value returned, in case we want to 'unget'
   // the token after changing them.
-  lastTok = gTokenState.tokSym();
+  lastTok = *token;
+  return *token;
 }
 
-bool NewToken() {
+std::optional<TokenSlot> NewToken() {
   // Get a new token and handle replacement if the token is a define or enum.
 
   Symbol* theSym;
 
-  if (NextToken()) {
-    if (symType() == S_IDENT && (theSym = gSyms.lookup(gTokenState.symStr())) &&
-        theSym->type == S_DEFINE) {
-      gInputState.SetStringInput(theSym->str());
-      NewToken();
-    }
-    return true;
+  auto token = NextToken();
+
+  if (!token) {
+    return std::nullopt;
   }
-  return false;
+
+  if (token->type() == S_IDENT && (theSym = gSyms.lookup(token->name())) &&
+      theSym->type == S_DEFINE) {
+    gInputState.SetStringInput(theSym->str());
+    return NewToken();
+  }
+  return token;
 }
 
 void UnGetTok() { haveUnGet = true; }
 
-void GetRest(bool error) {
+std::optional<TokenSlot> GetRest(bool error) {
   // Copy the rest of the parenthesized expression into 'symStr'.
   //	If just seeking until next closing paren, don't display further
   //	messages.
@@ -97,18 +105,18 @@ void GetRest(bool error) {
   int pLevel;
   bool truncate;
 
-  if (error && gInputState.IsDone()) return;
+  if (error && gInputState.IsDone()) return std::nullopt;
 
   std::string_view ip = gInputState.GetRemainingLine();
-  gTokenState.symStr().clear();
+  std::string contents;
   pLevel = 0;
   truncate = false;
 
-  while (1) {
+  while (true) {
     if (ip.empty()) {
       if (!GetNewLine()) {
         if (!error) EarlyEnd();
-        return;
+        return std::nullopt;
       }
       ip = gInputState.GetRemainingLine();
       continue;
@@ -123,9 +131,8 @@ void GetRest(bool error) {
         if (pLevel > 0)
           --pLevel;
         else {
-          setSymType(S_STRING);
           gInputState.SetRemainingLine(ip);
-          return;
+          return TokenSlot(S_STRING, contents);
         }
         break;
 
@@ -137,19 +144,19 @@ void GetRest(bool error) {
     }
 
     if (!truncate) {
-      gTokenState.symStr().push_back(currCharAndAdvance(ip));
+      contents.push_back(currCharAndAdvance(ip));
     } else {
       advance(ip);
     }
 
-    if (gTokenState.symStr().length() >= MaxTokenLen && !truncate) {
+    if (contents.length() >= MaxTokenLen && !truncate) {
       if (!error) Warning("Define too long.  Truncated.");
       truncate = true;
     }
   }
 }
 
-bool NextToken() {
+std::optional<TokenSlot> NextToken() {
   // Return the next token.  If we're at the end of the current input source,
   // close it and get input from the previous source in the queue.
 
@@ -157,13 +164,11 @@ bool NextToken() {
 
   if (haveUnGet) {
     haveUnGet = false;
-    gTokenState.tokSym() = lastTok;
-    return true;
+    return lastTok;
   }
 
   if (gInputState.IsDone()) {
-    setSymType(S_END);
-    return false;
+    return std::nullopt;
   }
 
   // Get pointer to input in a register
@@ -176,8 +181,7 @@ bool NextToken() {
         ip = gInputState.GetRemainingLine();
         continue;
       } else {
-        setSymType(S_END);
-        return false;
+        return std::nullopt;
       }
     }
 
@@ -222,43 +226,37 @@ bool NextToken() {
   // character, but simply causes us to move to another input source.
 
   c = ip[0];
-  gTokenState.symStr().clear();
 
   if (IsTok(c)) {
-    gTokenState.symStr().push_back(c);
-    setSymType((sym_t)c);
     gInputState.SetRemainingLine(ip.substr(1));
-    return true;
+    return TokenSlot((sym_t)c, absl::StrCat(c));
   }
 
   if (c == '`') {
     // A character constant.
-    ReadKey(ip.substr(1));
-    return true;
+    return ReadKey(ip.substr(1));
   }
 
   if (c == '"' || c == ALT_QUOTE) {
-    ReadString(ip);
-    return true;
+    return ReadString(ip);
   }
 
   if (IsDigit(c) || (c == '-' && ip.length() > 1 && IsDigit(ip[1]))) {
-    setSymType(S_NUM);
-    ReadNumber(ip);
-    return true;
+    return ReadNumber(ip);
   }
 
-  setSymType(S_IDENT);
+  sym_t type = S_IDENT;
+  std::string ident;
   while (!IsTerm(c)) {
     ip.remove_prefix(1);
     if (c == ':') {
       // This is a selector literal (e.g. 'foo:'). Only include the part
       // before the quote, but mark the sym type.
-      setSymType(S_SELECT_LIT);
+      type = S_SELECT_LIT;
       break;
     }
     if (IsIncl(c)) break;
-    gTokenState.symStr().push_back(c);
+    ident.push_back(c);
     if (ip.empty()) {
       break;
     }
@@ -266,7 +264,7 @@ bool NextToken() {
   }
   gInputState.SetRemainingLine(ip);
 
-  return true;
+  return TokenSlot(type, std::move(ident));
 }
 
 bool GetNewLine() {
@@ -294,11 +292,12 @@ compiling:
     if (!gInputState.GetNewInputLine()) return false;
 
     switch (GetPreprocessorToken()) {
-      case PT_IF:
-        if (!GetNumber("Constant expression")) setSymVal(0);
+      case PT_IF: {
+        auto value = GetNumber("Constant expression").value_or(0);
         ++gTokenState.nestedCondCompile();
-        if (!symVal()) goto notCompiling;
+        if (!value) goto notCompiling;
         break;
+      }
 
       case PT_IFDEF:
         ++gTokenState.nestedCondCompile();
@@ -357,8 +356,8 @@ notCompiling:
 
       case PT_ELIF:
         if (!level) {
-          if (!GetNumber("Constant expression required")) setSymVal(0);
-          if (symVal()) goto compiling;
+          int value = GetNumber("Constant expression required").value_or(0);
+          if (value) goto compiling;
         }
         break;
 
@@ -457,28 +456,28 @@ static pt GetPreprocessorToken() {
   return PT_NONE;
 }
 
-static void ReadNumber(std::string_view ip) {
+static TokenSlot ReadNumber(std::string_view ip) {
   int c;
   int base;
   int sign;
   std::string_view validDigits;
 
   SCIWord val = 0;
-  gTokenState.symStr().clear();
+  std::string number_str;
 
   // Determine the sign of the number
   if (currChar(ip) != '-')
     sign = 1;
   else {
     sign = -1;
-    gTokenState.symStr().push_back(currCharAndAdvance(ip));
+    number_str.push_back(currCharAndAdvance(ip));
   }
 
   // Determine the base of the number
   base = 10;
   if (currChar(ip) == '%' || currChar(ip) == '$') {
     base = (currChar(ip) == '%') ? 2 : 16;
-    gTokenState.symStr().push_back(currCharAndAdvance(ip));
+    number_str.push_back(currCharAndAdvance(ip));
   }
   switch (base) {
     case 2:
@@ -497,37 +496,33 @@ static void ReadNumber(std::string_view ip) {
     c = absl::ascii_tolower(rawChar);
     auto char_index = validDigits.find((char)c);
     if (char_index == std::string_view::npos) {
-      Warning("Invalid character in number: %c.  Number = %d", rawChar,
-              symVal());
+      Warning("Invalid character in number: %c.  Number = %d", rawChar, val);
       break;
     }
     val = SCIWord((val * base) + char_index);
     advance(ip);
-    gTokenState.symStr().push_back(rawChar);
+    number_str.push_back(rawChar);
   }
 
   val *= sign;
 
-  setSymVal(val);
-
   gInputState.SetRemainingLine(ip);
+
+  return TokenSlot(S_NUM, number_str, val);
 }
 
-static void ReadString(std::string_view ip) {
+static TokenSlot ReadString(std::string_view ip) {
   char c = '\0';
   char open;
   bool truncated;
   uint32_t n;
 
   truncated = false;
-  gTokenState.symStr().clear();
+  std::string string_contents;
   open = currCharAndAdvance(ip);
-
-  setSymType(S_STRING);
 
   switch (open) {
     case ALT_QUOTE:
-      setSymType(S_STRING);
       open = '}';  // Set closing character to be different
       break;
   }
@@ -543,14 +538,14 @@ static void ReadString(std::string_view ip) {
         break;
 
       case '_':
-        if (!truncated) gTokenState.symStr().push_back(' ');
+        if (!truncated) string_contents.push_back(' ');
         break;
 
       case ' ':
       case '\t':
-        if (!gTokenState.symStr().empty() &&
-            gTokenState.symStr().back() != '\n' && !truncated) {
-          gTokenState.symStr().push_back(' ');
+        if (!string_contents.empty() && string_contents.back() != '\n' &&
+            !truncated) {
+          string_contents.push_back(' ');
         }
         while ((c = currChar(ip)) == ' ' || c == '\t' || c == '\n') {
           advance(ip);
@@ -566,19 +561,19 @@ static void ReadString(std::string_view ip) {
           // Then just use char as is.
           switch (c) {
             case 'n':
-              if (!truncated) gTokenState.symStr().push_back('\n');
+              if (!truncated) string_contents.push_back('\n');
               break;
             case 't':
-              if (!truncated) gTokenState.symStr().push_back('\t');
+              if (!truncated) string_contents.push_back('\t');
               break;
             case 'r':
               if (!truncated) {
-                gTokenState.symStr().push_back('\r');
-                gTokenState.symStr().push_back('\n');
+                string_contents.push_back('\r');
+                string_contents.push_back('\n');
               }
               break;
             default:
-              if (!truncated) gTokenState.symStr().push_back(c);
+              if (!truncated) string_contents.push_back(c);
               break;
           }
 
@@ -592,17 +587,17 @@ static void ReadString(std::string_view ip) {
           c = absl::ascii_tolower(c);
           int low_digit = hexDigits.find(c);
           n += (uint32_t)low_digit;
-          if (!truncated) gTokenState.symStr().push_back((char)n);
+          if (!truncated) string_contents.push_back((char)n);
         }
 
         break;
 
       default:
-        if (!truncated) gTokenState.symStr().push_back(c);
+        if (!truncated) string_contents.push_back(c);
         break;
     }
 
-    if (gTokenState.symStr().length() >= MaxTokenLen && !truncated) {
+    if (string_contents.length() >= MaxTokenLen && !truncated) {
       Error("String too large.");
       truncated = true;
     }
@@ -615,6 +610,8 @@ static void ReadString(std::string_view ip) {
   } else {
     EarlyEnd();
   }
+
+  return TokenSlot(S_STRING, string_contents);
 }
 
 static uint32_t altKey[] = {
@@ -623,55 +620,58 @@ static uint32_t altKey[] = {
     31, 20, 22, 47, 17, 45, 21, 44       // s - z
 };
 
-static void ReadKey(std::string_view ip) {
-  setSymType(S_NUM);
+static TokenSlot ReadKey(std::string_view ip) {
+  std::string key_string;
+  int key_val;
+  while (!IsTerm(currChar(ip))) key_string.push_back(currCharAndAdvance(ip));
 
-  gTokenState.symStr().clear();
-  while (!IsTerm(currChar(ip)))
-    gTokenState.symStr().push_back(currCharAndAdvance(ip));
-
-  char firstChar = gTokenState.symStr()[0];
+  char firstChar = key_string[0];
 
   switch (firstChar) {
     case '^': {
       // A control key.
-      auto ctrlChar = gTokenState.symStr()[1];
+      auto ctrlChar = key_string[1];
       if (isalpha(ctrlChar))
-        setSymVal(toupper(ctrlChar) - 0x40);
-      else
-        Error("Not a valid control key: %s", gTokenState.symStr());
+        key_val = toupper(ctrlChar) - 0x40;
+      else {
+        Error("Not a valid control key: %s", key_string);
+        key_val = 0;
+      }
       break;
     }
 
     case '@': {
       // An alt-key.
-      auto altChar = gTokenState.symStr()[1];
+      auto altChar = key_string[1];
       if (isalpha(altChar))
-        setSymVal(altKey[toupper(altChar) - 'A'] << 8);
-      else
-        Error("Not a valid alt key: %s", gTokenState.symStr());
+        key_val = altKey[toupper(altChar) - 'A'] << 8;
+      else {
+        Error("Not a valid alt key: %s", key_string);
+        key_val = 0;
+      }
       break;
     }
 
     case '#': {
       // A function key.
       int num;
-      if (!absl::SimpleAtoi(std::string_view(gTokenState.symStr()).substr(1),
-                            &num)) {
-        Error("Not a valid function key: %s", gTokenState.symStr());
+      if (!absl::SimpleAtoi(std::string_view(key_string).substr(1), &num)) {
+        Error("Not a valid function key: %s", key_string);
+        key_val = 0;
         break;
       }
-      setSymVal((num + 58) << 8);
+      key_val = (num + 58) << 8;
       break;
     }
 
     default:
       // Just a character...
-      setSymVal(firstChar);
+      key_val = firstChar;
       break;
   }
 
   gInputState.SetRemainingLine(ip);
+  return TokenSlot(S_NUM, key_string, key_val);
 }
 
 TokenState::TokenState() : nested_cond_compile_(0) {}

@@ -32,22 +32,23 @@ static uint16_t selTbl[SEL_TBL_SIZE];
 void InitSelectors() {
   // Add the selectors to the selector symbol table.
 
-  for (Symbol* sym = LookupTok(); !CloseP(symType()); sym = LookupTok()) {
+  for (ResolvedTokenSlot slot = LookupTok(); !CloseP(slot.type());
+       slot = LookupTok()) {
     // Make sure that the symbol is not already defined.
-    if (sym && symType() != S_SELECT) {
-      Error("Redefinition of %s.", gTokenState.symStr());
-      GetToken();  // eat selector number
-      if (!IsNumber()) UnGetTok();
+    if (slot.is_resolved() && slot.type() != S_SELECT) {
+      Error("Redefinition of %s.", slot.name());
+      auto num_token = GetToken();  // eat selector number
+      if (!IsNumber(num_token)) UnGetTok();
       continue;
     }
 
-    std::string selStr = gTokenState.symStr();
+    std::string selStr(slot.name());
 
-    GetNumber("Selector number");
-    if (!sym)
-      InstallSelector(selStr, symVal());
+    int sel_num = GetNumber("Selector number").value_or(0);
+    if (!slot.is_resolved())
+      InstallSelector(selStr, sel_num);
     else
-      sym->setVal(symVal());
+      slot.symbol()->setVal(sel_num);
   }
 
   UnGetTok();
@@ -98,41 +99,41 @@ Symbol* GetSelector(Symbol* obj) {
   Symbol* msgSel;
 
   // Get the next token.  If it's not an identifier, it can't be a selector.
-  GetToken();
-  if (symType() == (sym_t)',') GetToken();
-  if (symType() != S_SELECT_LIT) {
+  auto token = GetToken();
+  if (token.type() == (sym_t)',') token = GetToken();
+  if (token.type() != S_SELECT_LIT) {
     UnGetTok();
     return 0;
   }
 
   // Look up the identifier.  If it is not currently defined, define it as
   // the next selector number.
-  if (!(msgSel = gSyms.lookup(gTokenState.symStr()))) {
-    InstallSelector(gTokenState.symStr(), NewSelectorNum());
-    msgSel = gSyms.lookup(gTokenState.symStr());
+  if (!(msgSel = gSyms.lookup(token.name()))) {
+    InstallSelector(token.name(), NewSelectorNum());
+    msgSel = gSyms.lookup(token.name());
     if (gConfig->showSelectors)
-      Info("%s is being installed as a selector.", gTokenState.symStr());
+      Info("%s is being installed as a selector.", token.name());
   }
-  gTokenState.tokSym().SaveSymbol(*msgSel);
+  auto slot = ResolvedTokenSlot::OfSymbol(msgSel);
 
   // The symbol must be either a variable or a selector.
-  if (symType() != S_SELECT && !IsVar()) {
-    Severe("Selector required: %s", gTokenState.symStr());
+  if (slot.type() != S_SELECT && !IsVar(slot)) {
+    Severe("Selector required: %s", slot.name());
     return 0;
   }
 
   // Complain if the symbol is a variable, but a selector of the same name
   //	exists.
-  if (IsVar() && symType() != S_PROP && symType() != S_SELECT &&
-      gSyms.selectorSymTbl->lookup(gTokenState.symStr())) {
-    Error("%s is both a selector and a variable.", gTokenState.symStr());
+  if (IsVar(slot) && slot.type() != S_PROP && slot.type() != S_SELECT &&
+      gSyms.selectorSymTbl->lookup(slot.name())) {
+    Error("%s is both a selector and a variable.", slot.name());
     return 0;
   }
 
   // The selector must be a selector for the object 'obj', if that
   // object is known.
   gReceiver = 0;
-  if (!IsVar() && obj && (obj->type == S_OBJ || obj->type == S_CLASS) &&
+  if (!IsVar(slot) && obj && (obj->type == S_OBJ || obj->type == S_CLASS) &&
       obj->obj()) {
     if (obj->hasVal(OBJ_SELF)) {
       gReceiver = gCurObj;
@@ -148,8 +149,8 @@ Symbol* GetSelector(Symbol* obj) {
       gReceiver = obj->obj();
     }
 
-    if (!gReceiver->findSelectorByNum(gTokenState.tokSym().val())) {
-      Error("Not a selector for %s: %s", obj->name(), gTokenState.tokSym().name());
+    if (!gReceiver->findSelectorByNum(slot.val())) {
+      Error("Not a selector for %s: %s", obj->name(), slot.name());
       return 0;
     }
   }

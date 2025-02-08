@@ -13,6 +13,8 @@
 #include <utility>
 #include <variant>
 
+#include "absl/strings/escaping.h"
+#include "absl/strings/str_format.h"
 #include "scic/define.hpp"
 #include "scic/object.hpp"
 #include "scic/symtypes.hpp"
@@ -80,6 +82,16 @@ class Symbol {
   void setExt(std::unique_ptr<Public> ext);
 
  private:
+  template <class Sink>
+  friend void AbslStringify(Sink& sink, Symbol const& sym) {
+    if (sym.ref_val_.index() == 0) {
+      absl::Format(&sink, "Symbol(type: %d, name: \"%s\", val: %d)", sym.type,
+                   absl::CEscape(sym.name()), sym.val());
+    } else {
+      absl::Format(&sink, "Symbol(type: %d, name: \"%s\")", sym.type,
+                   absl::CEscape(sym.name()));
+    }
+  }
   friend std::ostream& operator<<(std::ostream& os, const Symbol& sym);
 };
 

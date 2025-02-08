@@ -6,39 +6,30 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 
+#include "absl/strings/escaping.h"
+#include "absl/strings/str_format.h"
 #include "scic/symbol.hpp"
 #include "scic/symtypes.hpp"
-
-//	token.cpp
-void GetToken();
-bool NextToken();
-bool NewToken();
-void UnGetTok();
-void GetRest(bool error = false);
-bool GetNewLine();
-
-//	toktypes.cpp
 
 // This keeps track of the current token value.
 class TokenSlot {
  public:
-  using RefVal = std::optional<int>;
-
-  TokenSlot() : type(S_END), ref_val_(0){};
-  TokenSlot(sym_t type, std::string raw_string, int val)
-      : type(type), raw_string_(raw_string), ref_val_(val) {}
+  TokenSlot() : type_(S_END), ref_val_(0){};
+  TokenSlot(sym_t type, std::string name)
+      : type_(type), name_(std::move(name)) {}
+  TokenSlot(sym_t type, std::string name, int val)
+      : type_(type), name_(std::move(name)), ref_val_(val) {}
 
   TokenSlot(TokenSlot const& tok) = default;
   TokenSlot(TokenSlot&& tok) noexcept = default;
   TokenSlot& operator=(TokenSlot const& tok) = default;
   TokenSlot& operator=(TokenSlot&& tok) noexcept = default;
 
-  sym_t type;
-
   void SaveSymbol(Symbol const& sym) {
     name_ = sym.name();
-    type = sym.type;
+    type_ = sym.type;
     switch (sym.refVal().index()) {
       case 0:
         ref_val_ = sym.val();
@@ -46,6 +37,8 @@ class TokenSlot {
     }
   }
 
+  sym_t type() const { return type_; }
+  void setType(sym_t type) { type_ = type; }
   std::string_view name() const { return name_; }
   void clearName() { name_.clear(); }
 
@@ -54,9 +47,21 @@ class TokenSlot {
   void setVal(int val) { ref_val_ = val; }
 
  private:
+  sym_t type_;
   std::string name_;
-  std::string raw_string_;
-  RefVal ref_val_;
+  std::optional<int> ref_val_;
+
+  template <class Sink>
+  friend void AbslStringify(Sink& sink, TokenSlot const& token) {
+    if (token.ref_val_.has_value()) {
+      absl::Format(&sink, "TokenSlot(type: %d, name: \"%s\", val: %d)",
+                   token.type_, absl::CEscape(token.name_),
+                   token.ref_val_.value());
+    } else {
+      absl::Format(&sink, "TokenSlot(type: %d, name: \"%s\")", token.type_,
+                   absl::CEscape(token.name_));
+    }
+  }
 };
 
 const int MaxTokenLen = 2048;
@@ -66,21 +71,19 @@ class TokenState {
   TokenState();
 
   int& nestedCondCompile() { return nested_cond_compile_; }
-  std::string& symStr() { return sym_str_; }
-  TokenSlot& tokSym() { return tok_sym_; }
 
  private:
   int nested_cond_compile_;
-  std::string sym_str_;
-  TokenSlot tok_sym_;
 };
 
 extern TokenState gTokenState;
 
-inline sym_t symType() { return gTokenState.tokSym().type; }
-inline void setSymType(sym_t typ) { gTokenState.tokSym().type = typ; }
-inline int symVal() { return gTokenState.tokSym().val(); }
-inline bool symHasVal(int x) { return gTokenState.tokSym().hasVal(x); }
-inline void setSymVal(int x) { gTokenState.tokSym().setVal(x); }
+//	token.cpp
+[[nodiscard]] TokenSlot GetToken();
+[[nodiscard]] std::optional<TokenSlot> NextToken();
+[[nodiscard]] std::optional<TokenSlot> NewToken();
+void UnGetTok();
+[[nodiscard]] std::optional<TokenSlot> GetRest(bool error = false);
+bool GetNewLine();
 
 #endif

@@ -4,9 +4,10 @@
 #define ERROR_HPP
 
 #include <string_view>
+
 #include "absl/strings/str_format.h"
 
-void EarlyEnd();
+[[noreturn]] void EarlyEnd();
 
 template <class... Args>
 void Error(absl::FormatSpec<Args...> const&, Args const&... args);

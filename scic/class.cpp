@@ -87,32 +87,30 @@ void DefineClass() {
   // Get and install the name of this class.  The class is installed in
   // the class symbol table, which will be used to write out classdefs
   // later.
-  Symbol* sym = LookupTok();
+  auto slot = LookupTok();
+  auto* sym = slot.symbol();
   if (!sym)
-    sym = gSyms.installClass(gTokenState.symStr());
+    sym = gSyms.installClass(slot.name());
 
-  else if (symType() == S_IDENT || symType() == S_OBJ) {
-    gSyms.del(gTokenState.symStr());
-    sym = gSyms.installClass(gTokenState.symStr());
+  else if (slot.type() == S_IDENT || slot.type() == S_OBJ) {
+    gSyms.del(slot.name());
+    sym = gSyms.installClass(slot.name());
 
   } else {
-    Severe("Redefinition of %s.", gTokenState.symStr());
+    Severe("Redefinition of %s.", slot.name());
     return;
   }
 
   // Get the script, class, super-class numbers, and file name.
   GetKeyword(K_SCRIPTNUM);
-  GetNumber("Script #");
-  int scriptNum = symVal();
+  int scriptNum = GetNumber("Script #").value_or(0);
   GetKeyword(K_CLASSNUM);
-  GetNumber("Class #");
-  int classNum = symVal();
+  int classNum = GetNumber("Class #").value_or(0);
   GetKeyword(K_SUPER);
-  GetNumber("Super #");
-  int superNum = symVal();
+  int superNum = GetNumber("Super #").value_or(0);
   GetKeyword(K_FILE);
-  GetString("File name");
-  std::string_view superFile = gTokenState.symStr();
+  auto file_name_token = GetString("File name");
+  std::string_view superFile = file_name_token ? file_name_token->name() : "";
 
   Class* super = FindClass(superNum);
   if (!super) Fatal("Can't find superclass for %s\n", sym->name());
@@ -134,9 +132,10 @@ void DefineClass() {
   }
 
   // Get properties and methods.
-  for (GetToken(); OpenP(symType()); GetToken()) {
-    GetToken();
-    switch (Keyword()) {
+  for (auto outer_token = GetToken(); OpenP(outer_token.type());
+       outer_token = GetToken()) {
+    auto token = GetToken();
+    switch (Keyword(token)) {
       case K_PROPLIST:
         DefClassItems(theClass, T_PROP);
         break;
@@ -147,7 +146,7 @@ void DefineClass() {
 
       default:
         Severe("Only properties or methods allowed in 'class': %s",
-               gTokenState.symStr());
+               token.name());
     }
     CloseBlock();
   }
@@ -161,50 +160,50 @@ void DefClassItems(Class* theClass, int what) {
   // _property-list ::=	'properties' (symbol [number])+
   // _method-list ::=		'methods' symbol+
 
-  for (Symbol* sym = LookupTok(); !CloseP(symType()); sym = LookupTok()) {
+  for (ResolvedTokenSlot slot = LookupTok(); !CloseP(slot.type());
+       slot = LookupTok()) {
     // Make sure the symbol has been defined as a selector.
-    if (!sym || symType() != S_SELECT) {
-      Error("Not a selector: %s", gTokenState.symStr());
+    if (!slot.is_resolved() || slot.type() != S_SELECT) {
+      Error("Not a selector: %s", slot.name());
       if (PropTag(what)) {
         // Eat the property initialization value.
-        GetToken();
-        if (!IsNumber()) UnGetTok();
+        auto init_token = GetToken();
+        if (!IsNumber(init_token)) UnGetTok();
       }
       continue;
     }
 
     // If the selector is already a selector of a different sort, complain.
-    Selector* tn = theClass->findSelectorByNum(sym->val());
+    Selector* tn = theClass->findSelectorByNum(slot.val());
     if (tn && PropTag(what) != IsProperty(tn)) {
       Error("Already defined as %s: %s", IsProperty(tn) ? "property" : "method",
-            gTokenState.symStr());
+            slot.name());
       if (PropTag(what)) {
-        GetToken();
-        if (!IsNumber()) UnGetTok();
+        auto value = GetToken();
+        if (!IsNumber(value)) UnGetTok();
       }
       continue;
     }
 
     // Install selector.
-    if (!tn) tn = theClass->addSelector(sym, what);
+    if (!tn) tn = theClass->addSelector(slot.symbol(), what);
     if (!PropTag(what))
       tn->tag = T_LOCAL;
     else {
-      switch (symVal()) {
+      switch (slot.val()) {
         case SEL_METHDICT:
           tn->tag = T_METHDICT;
-          GetNumber("initial selector value");
+          tn->val = GetNumber("initial selector value").value_or(0);
           break;
         case SEL_PROPDICT:
           tn->tag = T_PROPDICT;
-          GetNumber("initial selector value");
+          tn->val = GetNumber("initial selector value").value_or(0);
           break;
         default:
           tn->tag = T_PROP;
-          GetNumber("initial selector value");
+          tn->val = GetNumber("initial selector value").value_or(0);
           break;
       }
-      tn->val = symVal();
     }
   }
 
