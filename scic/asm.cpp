@@ -3,7 +3,10 @@
 
 #include "scic/asm.hpp"
 
+#include <cstdio>
 #include <cstdlib>
+#include <memory>
+#include <utility>
 
 #include "absl/strings/str_format.h"
 #include "scic/anode.hpp"

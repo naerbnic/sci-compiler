@@ -3,7 +3,12 @@
 
 #include "scic/sc.hpp"
 
+#include <cstddef>
+#include <exception>
 #include <filesystem>
+#include <iostream>
+#include <memory>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -24,6 +29,7 @@
 #include "scic/parse.hpp"
 #include "scic/share.hpp"
 #include "scic/symtbl.hpp"
+#include "scic/symtypes.hpp"
 #include "scic/text.hpp"
 #include "scic/update.hpp"
 #include "util/platform/platform.hpp"

@@ -3,20 +3,28 @@
 
 #include "scic/update.hpp"
 
+#include <cstdint>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
+#include <memory>
+#include <string>
+#include <vector>
 
 #include "absl/strings/str_format.h"
 #include "scic/class.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
 #include "scic/input.hpp"
+#include "scic/memtype.hpp"
 #include "scic/object.hpp"
 #include "scic/output.hpp"
 #include "scic/resource.hpp"
+#include "scic/selector.hpp"
 #include "scic/sol.hpp"
 #include "scic/symtbl.hpp"
+#include "scic/symtypes.hpp"
 #include "scic/token.hpp"
 #include "scic/toktypes.hpp"
 #include "scic/vocab.hpp"

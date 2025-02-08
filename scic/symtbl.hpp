@@ -4,12 +4,16 @@
 #ifndef SYMTBL_HPP
 #define SYMTBL_HPP
 
+#include <deque>
 #include <memory>
 #include <ostream>
 #include <ranges>
+#include <string>
+#include <string_view>
 
 #include "absl/container/btree_map.h"
 #include "scic/symbol.hpp"
+#include "scic/symtypes.hpp"
 
 // Possible hash table sizes for symbol tables.
 const int ST_LARGE = 253;

@@ -3,9 +3,14 @@
 
 #include "scic/symtbl.hpp"
 
+#include <algorithm>
 #include <memory>
+#include <ostream>
+#include <string_view>
+#include <utility>
 
 #include "scic/object.hpp"
+#include "scic/symtypes.hpp"
 
 SymTbls gSyms;
 

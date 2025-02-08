@@ -1,9 +1,13 @@
 #include "scic/tokenizer/char_stream.hpp"
 
 #include <algorithm>
+#include <cstddef>
+#include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include "absl/strings/str_cat.h"
 

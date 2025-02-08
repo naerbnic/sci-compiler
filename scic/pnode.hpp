@@ -1,8 +1,10 @@
 #ifndef PNODE_HPP
 #define PNODE_HPP
 
+#include <cstddef>
 #include <memory>
 #include <span>
+#include <utility>
 #include <vector>
 
 #include "scic/symbol.hpp"

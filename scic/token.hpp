@@ -3,9 +3,12 @@
 #ifndef TOKEN_HPP
 #define TOKEN_HPP
 
+#include <string>
 #include <string_view>
+#include <variant>
 
 #include "scic/symbol.hpp"
+#include "scic/symtypes.hpp"
 
 //	token.cpp
 void GetToken();
@@ -22,7 +25,7 @@ class TokenSlot {
  public:
   using RefVal = std::variant<int, std::string>;
 
-  TokenSlot() : type(S_END), ref_val_(0) {};
+  TokenSlot() : type(S_END), ref_val_(0){};
   TokenSlot(TokenSlot const& tok) = default;
   TokenSlot& operator=(TokenSlot const& tok) = default;
 

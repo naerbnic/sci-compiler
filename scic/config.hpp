@@ -5,6 +5,7 @@
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
 
+#include <cstddef>
 #include <filesystem>
 
 // The target SCI architecture for the scripts.

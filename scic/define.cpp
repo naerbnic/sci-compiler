@@ -2,16 +2,26 @@
 
 #include "scic/define.hpp"
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <deque>
+#include <memory>
+#include <string>
 #include <string_view>
+#include <utility>
 
 #include "absl/strings/ascii.h"
+#include "absl/strings/str_cat.h"
 #include "scic/anode.hpp"
 #include "scic/compile.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
 #include "scic/parse.hpp"
 #include "scic/sc.hpp"
+#include "scic/symbol.hpp"
 #include "scic/symtbl.hpp"
+#include "scic/symtypes.hpp"
 #include "scic/token.hpp"
 #include "scic/toktypes.hpp"
 

@@ -3,17 +3,24 @@
 
 #include "scic/token.hpp"
 
+#include <cctype>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <stdexcept>
+#include <string>
 #include <string_view>
 
 #include "absl/strings/ascii.h"
+#include "absl/strings/numbers.h"
 #include "absl/strings/str_format.h"
 #include "scic/chartype.hpp"
+#include "scic/define.hpp"
 #include "scic/error.hpp"
 #include "scic/input.hpp"
 #include "scic/sol.hpp"
 #include "scic/symtbl.hpp"
+#include "scic/symtypes.hpp"
 #include "scic/toktypes.hpp"
 
 #define ALT_QUOTE '{'

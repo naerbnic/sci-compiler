@@ -2,6 +2,11 @@
 
 #include "scic/text.hpp"
 
+#include <cstdint>
+#include <memory>
+#include <string_view>
+#include <utility>
+
 TextList gText;
 
 void TextList::init() {

@@ -4,10 +4,12 @@
 #ifndef TEXT_HPP
 #define TEXT_HPP
 
+#include <cstddef>
+#include <cstdint>
+#include <memory>
 #include <ranges>
 #include <string>
 #include <string_view>
-#include <memory>
 #include <vector>
 
 struct Text {

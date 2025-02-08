@@ -3,10 +3,18 @@
 
 #include "scic/input.hpp"
 
+#include <algorithm>
 #include <array>
+#include <cstdio>
 #include <filesystem>
+#include <iterator>
 #include <memory>
 #include <optional>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 #include "absl/cleanup/cleanup.h"
 #include "absl/strings/str_format.h"

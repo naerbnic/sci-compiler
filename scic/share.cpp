@@ -7,6 +7,7 @@
 
 #include <cstdio>
 #include <ctime>
+#include <memory>
 
 #include "scic/config.hpp"
 #include "scic/error.hpp"

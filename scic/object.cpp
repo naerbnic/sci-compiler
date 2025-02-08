@@ -4,6 +4,10 @@
 #include "scic/object.hpp"
 
 #include <csetjmp>
+#include <cstring>
+#include <memory>
+#include <string_view>
+#include <utility>
 
 #include "scic/class.hpp"
 #include "scic/compile.hpp"
@@ -15,7 +19,10 @@
 #include "scic/parse.hpp"
 #include "scic/proc.hpp"
 #include "scic/sc.hpp"
+#include "scic/selector.hpp"
+#include "scic/symbol.hpp"
 #include "scic/symtbl.hpp"
+#include "scic/symtypes.hpp"
 #include "scic/text.hpp"
 #include "scic/token.hpp"
 #include "scic/toktypes.hpp"

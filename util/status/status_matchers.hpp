@@ -1,6 +1,11 @@
 #ifndef UTIL_STATUS_STATUS_MATCHERS_HPP_
 #define UTIL_STATUS_STATUS_MATCHERS_HPP_
 
+#include <cstddef>
+#include <ostream>
+#include <string>
+#include <type_traits>
+
 #include "absl/status/status.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

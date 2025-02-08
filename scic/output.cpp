@@ -6,9 +6,16 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
+#include <bit>
 #include <cstddef>
+#include <cstdint>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <memory>
+#include <string>
+#include <string_view>
+#include <utility>
 
 #include "scic/config.hpp"
 #include "scic/error.hpp"

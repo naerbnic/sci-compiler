@@ -6,10 +6,12 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <utility>
 #include <vector>
 
+#include "scic/casts.hpp"
 #include "scic/list.hpp"
 #include "scic/listing.hpp"
 

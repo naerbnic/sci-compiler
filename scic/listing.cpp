@@ -3,12 +3,17 @@
 
 #include "scic/listing.hpp"
 
+#include <cstdint>
 #include <cstdio>
+#include <memory>
+#include <stdexcept>
+#include <string>
 #include <string_view>
 
 #include "absl/base/nullability.h"
 #include "absl/functional/function_ref.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
 #include "scic/opcodes.hpp"

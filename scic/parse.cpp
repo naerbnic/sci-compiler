@@ -3,6 +3,9 @@
 
 #include "scic/parse.hpp"
 
+#include <csetjmp>
+#include <string>
+
 #include "scic/asm.hpp"
 #include "scic/class.hpp"
 #include "scic/define.hpp"
@@ -12,7 +15,10 @@
 #include "scic/pnode.hpp"
 #include "scic/proc.hpp"
 #include "scic/sc.hpp"
+#include "scic/selector.hpp"
+#include "scic/symbol.hpp"
 #include "scic/symtbl.hpp"
+#include "scic/symtypes.hpp"
 #include "scic/token.hpp"
 #include "scic/toktypes.hpp"
 

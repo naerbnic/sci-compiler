@@ -2,8 +2,10 @@
 #define TOKENIZER_TOKEN_READERS_HPP
 
 #include <optional>
+#include <string>
 
 #include "absl/status/statusor.h"
+#include "scic/tokenizer/char_stream.hpp"
 #include "scic/tokenizer/token.hpp"
 
 namespace tokenizer {

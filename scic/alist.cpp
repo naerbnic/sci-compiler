@@ -3,6 +3,8 @@
 #include "scic/alist.hpp"
 
 #include <cassert>
+#include <cstddef>
+#include <ranges>
 
 #include "scic/anode.hpp"
 #include "scic/config.hpp"
@@ -123,7 +125,8 @@ void FixupList::emit(OutputFile* out) {
 void CodeList::optimize() {
   if (!gConfig->noOptimize) {
     for (auto it = list_.iter(); it; ++it)
-      while (it->optimize());
+      while (it->optimize())
+        ;
   }
 
   // Make a first pass, resolving offsets and converting to byte offsets
