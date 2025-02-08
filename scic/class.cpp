@@ -89,14 +89,14 @@ void DefineClass() {
   // later.
   Symbol* sym = LookupTok();
   if (!sym)
-    sym = gSyms.installClass(gSymStr);
+    sym = gSyms.installClass(gTokenState.symStr());
 
   else if (symType() == S_IDENT || symType() == S_OBJ) {
-    gSyms.del(gSymStr);
-    sym = gSyms.installClass(gSymStr);
+    gSyms.del(gTokenState.symStr());
+    sym = gSyms.installClass(gTokenState.symStr());
 
   } else {
-    Severe("Redefinition of %s.", gSymStr);
+    Severe("Redefinition of %s.", gTokenState.symStr());
     return;
   }
 
@@ -112,7 +112,7 @@ void DefineClass() {
   int superNum = symVal();
   GetKeyword(K_FILE);
   GetString("File name");
-  std::string_view superFile = gSymStr;
+  std::string_view superFile = gTokenState.symStr();
 
   Class* super = FindClass(superNum);
   if (!super) Fatal("Can't find superclass for %s\n", sym->name());
@@ -146,7 +146,8 @@ void DefineClass() {
         break;
 
       default:
-        Severe("Only properties or methods allowed in 'class': %s", gSymStr);
+        Severe("Only properties or methods allowed in 'class': %s",
+               gTokenState.symStr());
     }
     CloseBlock();
   }
@@ -163,7 +164,7 @@ void DefClassItems(Class* theClass, int what) {
   for (Symbol* sym = LookupTok(); !CloseP(symType()); sym = LookupTok()) {
     // Make sure the symbol has been defined as a selector.
     if (!sym || symType() != S_SELECT) {
-      Error("Not a selector: %s", gSymStr);
+      Error("Not a selector: %s", gTokenState.symStr());
       if (PropTag(what)) {
         // Eat the property initialization value.
         GetToken();
@@ -176,7 +177,7 @@ void DefClassItems(Class* theClass, int what) {
     Selector* tn = theClass->findSelectorByNum(sym->val());
     if (tn && PropTag(what) != IsProperty(tn)) {
       Error("Already defined as %s: %s", IsProperty(tn) ? "property" : "method",
-            gSymStr);
+            gTokenState.symStr());
       if (PropTag(what)) {
         GetToken();
         if (!IsNumber()) UnGetTok();

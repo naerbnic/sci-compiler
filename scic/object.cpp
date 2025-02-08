@@ -100,10 +100,10 @@ void DoClass() {
   Symbol* sym = LookupTok();
 
   if (!sym)
-    sym = gSyms.installClass(gSymStr);
+    sym = gSyms.installClass(gTokenState.symStr());
 
   else if (symType() != S_CLASS && symType() != S_OBJ) {
-    Severe("Redefinition of %s.", gSymStr);
+    Severe("Redefinition of %s.", gTokenState.symStr());
     return;
 
   } else {
@@ -134,7 +134,7 @@ void DoClass() {
   // Get the super-class and create this class as an instance of it.
   Symbol* superSym = LookupTok();
   if (!superSym || symType() != S_CLASS) {
-    Severe("%s is not a class.", gSymStr);
+    Severe("%s is not a class.", gTokenState.symStr());
     return;
   }
 
@@ -173,13 +173,13 @@ void Instance() {
   // Get the symbol for the object.
   Symbol* objSym = LookupTok();
   if (!objSym)
-    objSym = gSyms.installLocal(gSymStr, S_OBJ);
+    objSym = gSyms.installLocal(gTokenState.symStr(), S_OBJ);
   else if (symType() == S_IDENT || symType() == S_OBJ) {
     objSym->type = S_OBJ;
     setSymType(S_OBJ);
     if (objSym->obj()) Error("Duplicate instance name: %s", objSym->name());
   } else {
-    Severe("Redefinition of %s.", gSymStr);
+    Severe("Redefinition of %s.", gTokenState.symStr());
     return;
   }
 
@@ -189,7 +189,7 @@ void Instance() {
   // Get the class of which this object is an instance.
   Symbol* sym = LookupTok();
   if (!sym || sym->type != S_CLASS) {
-    Severe("%s is not a class.", gSymStr);
+    Severe("%s is not a class.", gTokenState.symStr());
     return;
   }
   Class* super = (Class*)sym->obj();
@@ -261,7 +261,7 @@ static void InstanceBody(Object* obj) {
         longjmp(gRecoverBuf, 1);
 
       default:
-        Severe("Only property and method definitions allowed: %s.", gSymStr);
+        Severe("Only property and method definitions allowed: %s.", gTokenState.symStr());
         break;
     }
 
@@ -310,12 +310,12 @@ static void Declaration(Object* obj, int type) {
       continue;
     }
 
-    Symbol* sym = gSyms.lookup(gSymStr);
+    Symbol* sym = gSyms.lookup(gTokenState.symStr());
     if (!sym && obj->num != OBJECTNUM) {
       // If the symbol is not currently defined, define it as
       // the next selector number.
-      InstallSelector(gSymStr, NewSelectorNum());
-      sym = gSyms.lookup(gSymStr);
+      InstallSelector(gTokenState.symStr(), NewSelectorNum());
+      sym = gSyms.lookup(gTokenState.symStr());
     }
 
     // If this selector is not in the current class, add it.
@@ -334,7 +334,7 @@ static void Declaration(Object* obj, int type) {
 
     if (sym->type != S_SELECT || (type == T_PROP && !IsProperty(sn)) ||
         (type == T_METHOD && IsProperty(sn))) {
-      Error("Not a %s: %s.", type == T_PROP ? "property" : "method", gSymStr);
+      Error("Not a %s: %s.", type == T_PROP ? "property" : "method", gTokenState.symStr());
       GetToken();
       if (IsNumber()) UnGetTok();
       continue;
@@ -351,7 +351,7 @@ static void Declaration(Object* obj, int type) {
           sn->tag = T_TEXT;
           break;
         default:
-          Fatal("Invalid property type: %s, %d", gSymStr, type);
+          Fatal("Invalid property type: %s, %d", gTokenState.symStr(), type);
           break;
       }
     }

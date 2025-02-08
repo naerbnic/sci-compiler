@@ -35,13 +35,13 @@ void InitSelectors() {
   for (Symbol* sym = LookupTok(); !CloseP(symType()); sym = LookupTok()) {
     // Make sure that the symbol is not already defined.
     if (sym && symType() != S_SELECT) {
-      Error("Redefinition of %s.", gSymStr);
+      Error("Redefinition of %s.", gTokenState.symStr());
       GetToken();  // eat selector number
       if (!IsNumber()) UnGetTok();
       continue;
     }
 
-    std::string selStr = gSymStr;
+    std::string selStr = gTokenState.symStr();
 
     GetNumber("Selector number");
     if (!sym)
@@ -107,25 +107,25 @@ Symbol* GetSelector(Symbol* obj) {
 
   // Look up the identifier.  If it is not currently defined, define it as
   // the next selector number.
-  if (!(msgSel = gSyms.lookup(gSymStr))) {
-    InstallSelector(gSymStr, NewSelectorNum());
-    msgSel = gSyms.lookup(gSymStr);
+  if (!(msgSel = gSyms.lookup(gTokenState.symStr()))) {
+    InstallSelector(gTokenState.symStr(), NewSelectorNum());
+    msgSel = gSyms.lookup(gTokenState.symStr());
     if (gConfig->showSelectors)
-      Info("%s is being installed as a selector.", gSymStr);
+      Info("%s is being installed as a selector.", gTokenState.symStr());
   }
-  gTokSym.SaveSymbol(*msgSel);
+  gTokenState.tokSym().SaveSymbol(*msgSel);
 
   // The symbol must be either a variable or a selector.
   if (symType() != S_SELECT && !IsVar()) {
-    Severe("Selector required: %s", gSymStr);
+    Severe("Selector required: %s", gTokenState.symStr());
     return 0;
   }
 
   // Complain if the symbol is a variable, but a selector of the same name
   //	exists.
   if (IsVar() && symType() != S_PROP && symType() != S_SELECT &&
-      gSyms.selectorSymTbl->lookup(gSymStr)) {
-    Error("%s is both a selector and a variable.", gSymStr);
+      gSyms.selectorSymTbl->lookup(gTokenState.symStr())) {
+    Error("%s is both a selector and a variable.", gTokenState.symStr());
     return 0;
   }
 
@@ -148,8 +148,8 @@ Symbol* GetSelector(Symbol* obj) {
       gReceiver = obj->obj();
     }
 
-    if (!gReceiver->findSelectorByNum(gTokSym.val())) {
-      Error("Not a selector for %s: %s", obj->name(), gTokSym.name());
+    if (!gReceiver->findSelectorByNum(gTokenState.tokSym().val())) {
+      Error("Not a selector for %s: %s", obj->name(), gTokenState.tokSym().name());
       return 0;
     }
   }

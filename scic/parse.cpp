@@ -36,7 +36,7 @@ bool Parse() {
     // We require an opening parenthesis at this level.
     // Keep reading until we get one.
     if (!OpenP(symType())) {
-      Error("Opening parenthesis expected: %s", gSymStr);
+      Error("Opening parenthesis expected: %s", gTokenState.symStr());
       while (!OpenP(symType()) && symType() != S_END) NewToken();
       if (symType() == S_END) break;
     }
@@ -111,17 +111,17 @@ bool Parse() {
         break;
 
       case K_UNDEFINED:
-        Severe("Keyword required: %s", gSymStr);
+        Severe("Keyword required: %s", gTokenState.symStr());
         break;
 
       default:
-        Severe("Not a top-level keyword: %s.", gSymStr);
+        Severe("Not a top-level keyword: %s.", gTokenState.symStr());
     }
 
     CloseBlock();
   }
 
-  if (gNestedCondCompile) Error("#if without #endif");
+  if (gTokenState.nestedCondCompile()) Error("#if without #endif");
 
   return !gNumErrors;
 }
@@ -129,15 +129,15 @@ bool Parse() {
 void Include() {
   GetToken();
   if (symType() != S_IDENT && symType() != S_STRING) {
-    Severe("Need a filename: %s", gSymStr);
+    Severe("Need a filename: %s", gTokenState.symStr());
     return;
   }
-  std::string filename = gSymStr;
+  std::string filename = gTokenState.symStr();
   // We need to put this at the right syntactic level, so we GetToken to grab
   // the remaining parent before opening the file.
   GetToken();
   if (symType() != CLOSE_P) {
-    Severe("Expected closing parenthesis: %s", gSymStr);
+    Severe("Expected closing parenthesis: %s", gTokenState.symStr());
     return;
   }
 
@@ -155,7 +155,7 @@ bool CloseBlock() {
   if (symType() == CLOSE_P)
     return true;
   else {
-    Severe("Expected closing parenthesis: %s", gSymStr);
+    Severe("Expected closing parenthesis: %s", gTokenState.symStr());
     return false;
   }
 }

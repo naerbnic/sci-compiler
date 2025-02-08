@@ -35,9 +35,9 @@ Symbol* LookupTok() {
 
   if (symType() == (sym_t)'#') return Immediate();
 
-  if (symType() == S_IDENT && (theSym = gSyms.lookup(gSymStr))) {
-    gTokSym.SaveSymbol(*theSym);
-    gTokSym.clearName();
+  if (symType() == S_IDENT && (theSym = gSyms.lookup(gTokenState.symStr()))) {
+    gTokenState.tokSym().SaveSymbol(*theSym);
+    gTokenState.tokSym().clearName();
   } else
     theSym = 0;
 
@@ -70,8 +70,8 @@ Symbol* GetSymbol() {
   // Get a token that is in the symbol table.
   Symbol* theSym;
   GetToken();
-  if (!(theSym = gSyms.lookup(gSymStr))) {
-    Severe("%s not defined.", gSymStr);
+  if (!(theSym = gSyms.lookup(gTokenState.symStr()))) {
+    Severe("%s not defined.", gTokenState.symStr());
     return nullptr;
   }
 
@@ -93,7 +93,7 @@ bool GetDefineSymbol() {
     Error("Defined symbol expected");
     return false;
   }
-  Symbol* sym = gSyms.lookup(gSymStr);
+  Symbol* sym = gSyms.lookup(gTokenState.symStr());
   if (!sym) return false;
   if (sym->type != S_DEFINE) {
     Error("Define expected");
@@ -104,7 +104,7 @@ bool GetDefineSymbol() {
 
 bool IsIdent() {
   if (symType() != S_IDENT) {
-    Severe("Identifier required: %s", gSymStr);
+    Severe("Identifier required: %s", gTokenState.symStr());
     return false;
   }
 
@@ -114,7 +114,7 @@ bool IsIdent() {
 bool IsUndefinedIdent() {
   if (!IsIdent()) return false;
 
-  if (gSyms.lookup(gSymStr)) Warning("Redefinition of %s.", gSymStr);
+  if (gSyms.lookup(gTokenState.symStr())) Warning("Redefinition of %s.", gTokenState.symStr());
 
   return true;
 }
@@ -166,7 +166,7 @@ bool GetString(std::string_view errStr) {
 
   GetToken();
   if (symType() != S_STRING) {
-    Severe("%s required: %s", errStr, gSymStr);
+    Severe("%s required: %s", errStr, gTokenState.symStr());
     return false;
   }
 
@@ -176,7 +176,7 @@ bool GetString(std::string_view errStr) {
 keyword_t Keyword() {
   Symbol* theSym;
 
-  if (!(theSym = gSyms.lookup(gSymStr)) || theSym->type != S_KEYWORD)
+  if (!(theSym = gSyms.lookup(gTokenState.symStr())) || theSym->type != S_KEYWORD)
     return K_UNDEFINED;
   else {
     setSymType(S_KEYWORD);
@@ -228,7 +228,7 @@ bool IsVar() {
 
     case S_SELECT:
       return gCurObj && gSelectorIsVar &&
-             (sn = gCurObj->findSelectorByNum(gTokSym.val())) &&
+             (sn = gCurObj->findSelectorByNum(gTokenState.tokSym().val())) &&
              sn->tag == T_PROP;
 
     default:
@@ -255,12 +255,12 @@ static Symbol* Immediate() {
 
   GetToken();
   if (symType() == S_IDENT) {
-    if (!(theSym = gSyms.lookup(gSymStr)) || theSym->type != S_SELECT) {
-      Error("Selector required: %s", gSymStr);
+    if (!(theSym = gSyms.lookup(gTokenState.symStr())) || theSym->type != S_SELECT) {
+      Error("Selector required: %s", gTokenState.symStr());
       return 0;
     }
-    gTokSym.SaveSymbol(*theSym);
-    gTokSym.type = S_NUM;
+    gTokenState.tokSym().SaveSymbol(*theSym);
+    gTokenState.tokSym().type = S_NUM;
   }
   return theSym;
 }

@@ -5,6 +5,7 @@
 
 #include <string>
 #include <string_view>
+#include <utility>
 #include <variant>
 
 #include "scic/symbol.hpp"
@@ -26,8 +27,15 @@ class TokenSlot {
   using RefVal = std::variant<int, std::string>;
 
   TokenSlot() : type(S_END), ref_val_(0){};
+  TokenSlot(sym_t type, std::string raw_string, int val)
+      : type(type), raw_string_(raw_string), ref_val_(val) {}
+  TokenSlot(sym_t type, std::string raw_string_, std::string val)
+      : type(type), raw_string_(raw_string_), ref_val_(std::move(val)) {}
+
   TokenSlot(TokenSlot const& tok) = default;
+  TokenSlot(TokenSlot&& tok) noexcept = default;
   TokenSlot& operator=(TokenSlot const& tok) = default;
+  TokenSlot& operator=(TokenSlot&& tok) noexcept = default;
 
   sym_t type;
 
@@ -65,19 +73,32 @@ class TokenSlot {
 
  private:
   std::string name_;
+  std::string raw_string_;
   RefVal ref_val_;
 };
 
 const int MaxTokenLen = 2048;
 
-extern int gNestedCondCompile;
-extern std::string gSymStr;
-extern TokenSlot gTokSym;
+class TokenState {
+ public:
+  TokenState();
 
-inline sym_t symType() { return gTokSym.type; }
-inline void setSymType(sym_t typ) { gTokSym.type = typ; }
-inline int symVal() { return gTokSym.val(); }
-inline bool symHasVal(int x) { return gTokSym.hasVal(x); }
-inline void setSymVal(int x) { gTokSym.setVal(x); }
+  int& nestedCondCompile() { return nested_cond_compile_; }
+  std::string& symStr() { return sym_str_; }
+  TokenSlot& tokSym() { return tok_sym_; }
+
+ private:
+  int nested_cond_compile_;
+  std::string sym_str_;
+  TokenSlot tok_sym_;
+};
+
+extern TokenState gTokenState;
+
+inline sym_t symType() { return gTokenState.tokSym().type; }
+inline void setSymType(sym_t typ) { gTokenState.tokSym().type = typ; }
+inline int symVal() { return gTokenState.tokSym().val(); }
+inline bool symHasVal(int x) { return gTokenState.tokSym().hasVal(x); }
+inline void setSymVal(int x) { gTokenState.tokSym().setVal(x); }
 
 #endif

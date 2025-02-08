@@ -117,7 +117,7 @@ bool Expression(PNode* theNode, bool required) {
       case S_IDENT:
         // Assume that all unknown identifiers are objects,
         // and fall through to object handling.
-        theSym = gSyms.installModule(gSymStr, S_OBJ);
+        theSym = gSyms.installModule(gTokenState.symStr(), S_OBJ);
         theSym->clearAn();
         theSym->setObj(nullptr);
         setSymType(S_OBJ);
@@ -144,7 +144,7 @@ bool Expression(PNode* theNode, bool required) {
         break;
 
       case S_STRING:
-        theNode->newChild(PN_STRING)->val = gText.find(gSymStr);
+        theNode->newChild(PN_STRING)->val = gText.find(gTokenState.symStr());
         isExpr = true;
         break;
 
@@ -155,7 +155,7 @@ bool Expression(PNode* theNode, bool required) {
 
       default:
         if (required)
-          Severe("Expression required: %s", gSymStr);
+          Severe("Expression required: %s", gTokenState.symStr());
         else
           UnGetTok();
         isExpr = false;
@@ -309,13 +309,13 @@ static bool _Expression(PNode* theNode) {
             longjmp(gRecoverBuf, 1);
 
           default:
-            Severe("Expected an expression here: %s", gSymStr);
+            Severe("Expected an expression here: %s", gTokenState.symStr());
             retVal = true;
         }
         break;
 
       default:
-        Severe("Expected an expression here: %s", gSymStr);
+        Severe("Expected an expression here: %s", gTokenState.symStr());
         retVal = true;
     }
   }
@@ -391,7 +391,7 @@ static bool Send(PNode* theNode, Symbol* theSym) {
     if (theSym && theSym->type == S_IDENT) {
       // If the symbol has not been previously defined, define it as
       // an undefined object in the global symbol table.
-      theSym = gSyms.installModule(gSymStr, S_OBJ);
+      theSym = gSyms.installModule(gTokenState.symStr(), S_OBJ);
       theSym->clearAn();
       theSym->setObj(nullptr);
     }
@@ -792,7 +792,7 @@ static bool Variable(PNode* theNode) {
   if (symType() == S_OPEN_BRACKET) return Array(theNode);
 
   if (!IsVar()) {
-    Severe("Variable name expected: %s.", gSymStr);
+    Severe("Variable name expected: %s.", gTokenState.symStr());
     return false;
   }
   pn = theNode->newChild(PNType(symType()));
@@ -808,7 +808,7 @@ static bool Array(PNode* theNode) {
   Symbol* lookupSym = GetSymbol();
   if (lookupSym->type != S_GLOBAL && lookupSym->type != S_LOCAL &&
       lookupSym->type != S_PARM && lookupSym->type != S_TMP) {
-    Severe("Array name expected: %s.", gSymStr);
+    Severe("Array name expected: %s.", gTokenState.symStr());
     return false;
   }
 
@@ -824,7 +824,7 @@ static bool Array(PNode* theNode) {
 
   GetToken();
   if (symType() != (sym_t)']') {
-    Error("Expected closing ']': %s.", gSymStr);
+    Error("Expected closing ']': %s.", gTokenState.symStr());
     return false;
   }
 
@@ -835,7 +835,7 @@ static bool Array(PNode* theNode) {
 static bool Rest(PNode* theNode) {
   LookupTok();
   if (!IsVar() || symType() != S_PARM) {
-    Severe("Variable name expected: %s.", gSymStr);
+    Severe("Variable name expected: %s.", gTokenState.symStr());
     return false;
   }
   theNode->newChild(PN_REST)->val = symVal();
