@@ -3,9 +3,6 @@
 
 #include "scic/class.hpp"
 
-extern Class* gClasses[];
-extern int gMaxClassNum;
-
 void DefineClass();
 Class* FindClass(int n);
 void InstallObjects();

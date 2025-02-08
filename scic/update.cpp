@@ -22,6 +22,7 @@
 #include "scic/object.hpp"
 #include "scic/output.hpp"
 #include "scic/parse_class.hpp"
+#include "scic/parse_context.hpp"
 #include "scic/resource.hpp"
 #include "scic/selector.hpp"
 #include "scic/sol.hpp"

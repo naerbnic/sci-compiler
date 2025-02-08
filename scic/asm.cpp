@@ -10,10 +10,10 @@
 
 #include "absl/strings/str_format.h"
 #include "scic/anode.hpp"
-#include "scic/define.hpp"
 #include "scic/input.hpp"
 #include "scic/listing.hpp"
 #include "scic/output.hpp"
+#include "scic/parse_context.hpp"
 #include "scic/sc.hpp"
 
 ANTable* gDispTbl;

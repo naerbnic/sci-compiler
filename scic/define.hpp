@@ -5,35 +5,8 @@
 #define DEFINE_HPP
 
 #include <cstdint>
-#include <vector>
-
-#include "scic/symtypes.hpp"
 
 class Symbol;
-
-enum VarType {
-  VAR_NONE,
-  VAR_GLOBAL,
-  VAR_LOCAL,
-};
-
-struct Var {
-  // Variable definition.
-  Var() : type((sym_t)VAR_NONE), value(0) {}
-
-  sym_t type;
-  int value;
-};
-
-struct VarList {
-  // Variable block definition.
-  VarList() : type(VAR_NONE), values(0) {}
-
-  void kill();
-
-  VarType type;             // what type of variables are these
-  std::vector<Var> values;  // pointer to block of initial values
-};
 
 struct Public {
   // Node for public/export definition lists.
@@ -55,8 +28,5 @@ Symbol* FindPublic(int);
 void Extern();
 void InitPublics();
 void Definition();
-
-extern VarList gGlobalVars;
-extern VarList gLocalVars;
 
 #endif

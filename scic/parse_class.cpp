@@ -12,17 +12,13 @@
 #include "scic/error.hpp"
 #include "scic/object.hpp"
 #include "scic/parse.hpp"
+#include "scic/parse_context.hpp"
 #include "scic/selector.hpp"
 #include "scic/symbol.hpp"
 #include "scic/symtbl.hpp"
 #include "scic/symtypes.hpp"
 #include "scic/token.hpp"
 #include "scic/toktypes.hpp"
-
-#define MAXCLASSES 512  // Maximum number of classes
-
-Class* gClasses[MAXCLASSES];
-int gMaxClassNum = -1;
 
 static void DefClassItems(Class* theClass, int what);
 

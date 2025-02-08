@@ -9,7 +9,7 @@
 #include "scic/expr.hpp"
 #include "scic/object.hpp"
 #include "scic/parse.hpp"
-#include "scic/parse_object.hpp"
+#include "scic/parse_context.hpp"
 #include "scic/pnode.hpp"
 #include "scic/sc.hpp"
 #include "scic/selector.hpp"

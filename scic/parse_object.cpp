@@ -17,6 +17,7 @@
 #include "scic/object.hpp"
 #include "scic/parse.hpp"
 #include "scic/parse_class.hpp"
+#include "scic/parse_context.hpp"
 #include "scic/proc.hpp"
 #include "scic/sc.hpp"
 #include "scic/selector.hpp"
@@ -27,10 +28,6 @@
 #include "scic/token.hpp"
 #include "scic/toktypes.hpp"
 #include "scic/update.hpp"
-
-Object* gCurObj;
-Object* gReceiver;
-Symbol* gNameSymbol;
 
 namespace {
 

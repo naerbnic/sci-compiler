@@ -12,6 +12,7 @@
 #include "scic/error.hpp"
 #include "scic/input.hpp"
 #include "scic/parse_class.hpp"
+#include "scic/parse_context.hpp"
 #include "scic/parse_object.hpp"
 #include "scic/pnode.hpp"
 #include "scic/proc.hpp"
@@ -22,8 +23,6 @@
 #include "scic/symtypes.hpp"
 #include "scic/token.hpp"
 #include "scic/toktypes.hpp"
-
-jmp_buf gRecoverBuf;
 
 PNode::PNode(pn_t t)
     : sym(0), val(0), type(t), lineNum(gInputState.GetTopLevelLineNum()) {}

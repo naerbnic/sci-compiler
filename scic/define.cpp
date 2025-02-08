@@ -18,15 +18,14 @@
 #include "scic/config.hpp"
 #include "scic/error.hpp"
 #include "scic/parse.hpp"
+#include "scic/parse_context.hpp"
 #include "scic/sc.hpp"
 #include "scic/symbol.hpp"
 #include "scic/symtbl.hpp"
 #include "scic/symtypes.hpp"
 #include "scic/token.hpp"
 #include "scic/toktypes.hpp"
-
-VarList gLocalVars;
-VarList gGlobalVars;
+#include "scic/varlist.hpp"
 
 static int InitialValue(VarList& theVars, int offset, int arraySize);
 
@@ -34,11 +33,6 @@ static std::deque<std::unique_ptr<Public>> publicList;
 static int publicMax = -1;
 static constexpr std::string_view tooManyVars =
     "Too many variables. Max is %d.\n";
-
-void VarList::kill() {
-  type = VAR_NONE;
-  values.clear();
-}
 
 void Define() {
   // Handle a definition.
