@@ -3,10 +3,17 @@
 
 #include "scic/selector.hpp"
 
+#include <cstdint>
+#include <string>
+#include <string_view>
+
 #include "scic/class.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
+#include "scic/object.hpp"
+#include "scic/symbol.hpp"
 #include "scic/symtbl.hpp"
+#include "scic/symtypes.hpp"
 #include "scic/token.hpp"
 #include "scic/toktypes.hpp"
 #include "scic/update.hpp"
@@ -73,15 +80,16 @@ int NewSelectorNum() {
 
   // Scan for the first entry with a free bit.
   uint16_t* stp;
-  for (stp = selTbl; stp < &selTbl[SEL_TBL_SIZE] && *stp == (uint16_t)-1;
-       ++stp);
+  for (stp = selTbl; stp < &selTbl[SEL_TBL_SIZE] && *stp == (uint16_t)-1; ++stp)
+    ;
 
   // Check for no more selector numbers available.
   if (stp >= &selTbl[SEL_TBL_SIZE]) Fatal("Out of selector numbers!");
 
   // Find the specific selector number that is free.
   uint16_t n = uint16_t((stp - &selTbl[0]) * BITS_PER_ENTRY);
-  for (uint16_t mask = 0x8000; mask & *stp; mask >>= 1, ++n);
+  for (uint16_t mask = 0x8000; mask & *stp; mask >>= 1, ++n)
+    ;
 
   return n;
 }

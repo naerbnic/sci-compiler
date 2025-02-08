@@ -3,8 +3,11 @@
 
 #include "scic/compile.hpp"
 
+#include <cstddef>
+#include <cstdint>
 #include <ranges>
 
+#include "scic/alist.hpp"
 #include "scic/anode.hpp"
 #include "scic/asm.hpp"
 #include "scic/config.hpp"
@@ -16,6 +19,7 @@
 #include "scic/opcodes.hpp"
 #include "scic/pnode.hpp"
 #include "scic/sc.hpp"
+#include "scic/symtypes.hpp"
 #include "scic/text.hpp"
 
 static void MakeAccess(AOpList* curList, PNode*, uint8_t);

@@ -3,9 +3,18 @@
 
 #include "scic/symbol.hpp"
 
+#include <memory>
+#include <optional>
+#include <ostream>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <variant>
+
 #include "scic/define.hpp"
 #include "scic/input.hpp"
 #include "scic/object.hpp"
+#include "scic/symtypes.hpp"
 
 Symbol::Symbol(std::string_view name, sym_t type)
     : name_(!name.empty() ? std::optional(std::string(name)) : std::nullopt),

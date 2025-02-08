@@ -3,7 +3,12 @@
 
 #include "scic/builtins.hpp"
 
+#include <string_view>
+#include <vector>
+
+#include "scic/define.hpp"
 #include "scic/symtbl.hpp"
+#include "scic/symtypes.hpp"
 
 struct BuiltIn {
   std::string_view name;

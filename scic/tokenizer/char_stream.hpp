@@ -1,10 +1,12 @@
 #ifndef TOKENIZER_CHAR_STREAM_HPP
 #define TOKENIZER_CHAR_STREAM_HPP
 
+#include <cstddef>
 #include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace tokenizer {

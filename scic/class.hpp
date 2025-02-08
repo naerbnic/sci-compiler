@@ -2,6 +2,7 @@
 #define CLASS_HPP
 
 #include "scic/object.hpp"
+#include "scic/selector.hpp"
 
 struct Class : Object {
   Class();

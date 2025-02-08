@@ -1,15 +1,21 @@
 #include "scic/tokenizer/token_readers.hpp"
 
+#include <cctype>
+#include <cstdint>
 #include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_format.h"
 #include "scic/chartype.hpp"
+#include "scic/tokenizer/char_stream.hpp"
 #include "scic/tokenizer/token.hpp"
 #include "util/status/status_macros.hpp"
 

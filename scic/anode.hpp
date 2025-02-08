@@ -4,10 +4,14 @@
 #ifndef ANODE_HPP
 #define ANODE_HPP
 
+#include <cstddef>
+#include <cstdint>
 #include <string>
+#include <string_view>
 #include <variant>
 
 #include "scic/alist.hpp"
+#include "scic/listing.hpp"
 
 class OutputFile;
 

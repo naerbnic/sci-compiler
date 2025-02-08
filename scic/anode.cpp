@@ -3,11 +3,15 @@
 
 #include "scic/anode.hpp"
 
+#include <algorithm>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <stdexcept>
+#include <string>
+#include <string_view>
 
-#include <algorithm>
-
+#include "scic/alist.hpp"
 #include "scic/asm.hpp"
 #include "scic/config.hpp"
 #include "scic/define.hpp"
@@ -20,6 +24,7 @@
 #include "scic/sc.hpp"
 #include "scic/sol.hpp"
 #include "scic/symbol.hpp"
+#include "scic/symtypes.hpp"
 #include "scic/text.hpp"
 
 ANCodeBlk* gCodeStart;

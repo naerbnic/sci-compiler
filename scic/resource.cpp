@@ -3,7 +3,10 @@
 
 #include "scic/resource.hpp"
 
+#include <string>
+
 #include "absl/strings/str_format.h"
+#include "scic/memtype.hpp"
 #include "scic/sol.hpp"
 
 std::string ResNameMake(MemType type, int num) {

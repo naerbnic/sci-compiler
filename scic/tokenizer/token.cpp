@@ -1,6 +1,9 @@
 #include "scic/tokenizer/token.hpp"
 
 #include <string>
+#include <utility>
+
+#include "scic/tokenizer/char_stream.hpp"
 
 namespace tokenizer {
 

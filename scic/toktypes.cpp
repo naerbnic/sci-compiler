@@ -4,12 +4,19 @@
 
 #include "scic/toktypes.hpp"
 
+#include <memory>
+#include <string_view>
+
 #include "scic/error.hpp"
 #include "scic/expr.hpp"
 #include "scic/object.hpp"
+#include "scic/pnode.hpp"
 #include "scic/proc.hpp"
 #include "scic/sc.hpp"
+#include "scic/selector.hpp"
+#include "scic/symbol.hpp"
 #include "scic/symtbl.hpp"
+#include "scic/symtypes.hpp"
 #include "scic/token.hpp"
 
 int gSelectorIsVar;

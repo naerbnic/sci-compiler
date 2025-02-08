@@ -4,15 +4,24 @@
 #include "scic/expr.hpp"
 
 #include <algorithm>
+#include <cassert>
+#include <csetjmp>
+#include <cstdint>
 #include <memory>
+#include <string_view>
+#include <utility>
 
 #include "scic/class.hpp"
 #include "scic/define.hpp"
 #include "scic/error.hpp"
 #include "scic/object.hpp"
 #include "scic/parse.hpp"
+#include "scic/pnode.hpp"
 #include "scic/sc.hpp"
+#include "scic/selector.hpp"
+#include "scic/symbol.hpp"
 #include "scic/symtbl.hpp"
+#include "scic/symtypes.hpp"
 #include "scic/text.hpp"
 #include "scic/token.hpp"
 #include "scic/toktypes.hpp"
@@ -110,7 +119,7 @@ bool Expression(PNode* theNode, bool required) {
         // and fall through to object handling.
         theSym = gSyms.installModule(gSymStr, S_OBJ);
         theSym->clearAn();
-        theSym->setObj(NULL);
+        theSym->setObj(nullptr);
         setSymType(S_OBJ);
 
         //	fall-through
@@ -354,7 +363,8 @@ static bool Call(PNode* theNode, Symbol* theSym) {
   }
 
   // Collect the arguments
-  while (Expression(pn.get(), OPTIONAL));
+  while (Expression(pn.get(), OPTIONAL))
+    ;
 
   theNode->addChild(std::move(pn));
   return true;
@@ -438,7 +448,8 @@ static bool Message(PNode* theNode, Symbol* theSym) {
 
     // Collect the arguments of the message.
     int nArgs;
-    for (nArgs = 0; Expression(pn, OPTIONAL); nArgs++);
+    for (nArgs = 0; Expression(pn, OPTIONAL); nArgs++)
+      ;
 
     // Make sure we're not sending multiple arguments to a property
     if (nArgs > 1 && curReceiver) {
@@ -854,7 +865,8 @@ static bool NaryExpr(PNode* theNode) {
   }
 
   // Get any optional arguments
-  while (Expression(pn.get(), OPTIONAL));
+  while (Expression(pn.get(), OPTIONAL))
+    ;
 
   // See if there are any constant nodes in the expression.  We end
   // up either pointing at the first constant node or at the end
@@ -1035,7 +1047,8 @@ static bool CompExpr(PNode* theNode) {
   }
 
   // Get any optional arguments
-  while (Expression(pn.get(), OPTIONAL));
+  while (Expression(pn.get(), OPTIONAL))
+    ;
 
   theNode->addChild(std::move(pn));
   return true;

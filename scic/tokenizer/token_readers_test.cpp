@@ -3,6 +3,8 @@
 #include <gtest/gtest.h>
 
 #include "gmock/gmock.h"
+#include "scic/tokenizer/char_stream.hpp"
+#include "scic/tokenizer/token.hpp"
 #include "scic/tokenizer/token_test_utils.hpp"
 #include "util/status/status_matchers.hpp"
 
