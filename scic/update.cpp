@@ -125,7 +125,7 @@ void WritePropOffsets() {
     cp = theSym->obj();
     auto slot = LookupTok();
     if (!slot.is_resolved() || !(sel = cp->findSelectorByNum(slot.val()))) {
-      Error("Not a selector for class %s: %s", cp->sym->name(), slot.name());
+      Error("Not a selector for class %s: %s", cp->name, slot.name());
       continue;
     }
 
@@ -166,7 +166,7 @@ static void WriteClassDefs() {
                   "	class# %d\n"
                   "	super# %d\n"
                   "	file# \"%s\"\n\n",
-                  cp->sym->name(), (SCIUWord)cp->script, (SCIUWord)cp->num,
+                  cp->name, (SCIUWord)cp->script, (SCIUWord)cp->num,
                   (SCIUWord)cp->super, cp->file);
 
     // Get a pointer to the class' super-class.
@@ -210,7 +210,7 @@ static void WriteClasses() {
 static void PrintSubClasses(Class* sp, int level, FILE* fp) {
   // Print out this class' information.
   absl::FPrintF(fp, "%.*s%-*s;%s\n", 2 * level, "               ",
-                20 - 2 * level, sp->sym->name(), sp->file);
+                20 - 2 * level, sp->name, sp->file);
 
   // Print information about this class' subclasses.
   ++level;

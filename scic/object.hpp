@@ -27,12 +27,15 @@ struct Object {
   Selector* findSelector(std::string_view name);
   void freeSelectors();
 
+  virtual bool isClass() const { return false; }
+
   auto selectors() const {
     return std::views::transform(selectors_,
                                  [](auto const& p) { return p.get(); });
   }
 
   Symbol* sym;       // the symbol for this object/class
+  std::string name; // name of object/class
   int num;           // class number (== OBJECTNUM for objects)
   int super;         // number of this object's super-class
   int script;        // module # in which this object is defined

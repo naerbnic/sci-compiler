@@ -100,8 +100,7 @@ static std::unique_ptr<PNode> _CallDef(sym_t theType) {
     case S_SELECT:
       if (!theProc || !(sn = gCurObj->findSelectorByNum(theProc->val())) ||
           IsProperty(sn)) {
-        Severe("%s is not a method for class %s", token.name(),
-               gCurObj->sym->name());
+        Severe("%s is not a method for class %s", token.name(), gCurObj->name);
         return 0;
       }
       break;

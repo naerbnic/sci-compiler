@@ -29,6 +29,7 @@ void InstallObjects() {
   auto* rootClass = rootClassOwned.get();
   sym->setObj(std::move(rootClassOwned));
   rootClass->sym = sym;
+  rootClass->name = "RootObj";
   rootClass->script = KERNEL;
   rootClass->num = -1;
 
@@ -110,6 +111,7 @@ void DefineClass() {
   auto theClassOwned = std::make_unique<Class>(super);
   auto* theClass = theClassOwned.get();
   sym->setObj(std::move(theClassOwned));
+  theClass->name = sym->name();
   theClass->super = superNum;
   theClass->script = scriptNum;
   theClass->num = classNum;
@@ -119,8 +121,7 @@ void DefineClass() {
   if (classNum >= 0 && gClasses[classNum] == 0)
     gClasses[classNum] = theClass;
   else {
-    Severe("%s is already class #%d.", gClasses[classNum]->sym->name(),
-           classNum);
+    Severe("%s is already class #%d.", gClasses[classNum]->name, classNum);
     return;
   }
 

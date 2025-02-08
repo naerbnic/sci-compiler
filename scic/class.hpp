@@ -11,6 +11,8 @@ struct Class : Object {
   Selector* addSelector(Symbol* sym, int what);
   bool selectorDiffers(Selector* tp);
 
+  bool isClass() const override { return true; }
+
   Class* subClasses;
   Class* nextSibling;
 };

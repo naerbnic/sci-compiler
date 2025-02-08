@@ -191,13 +191,13 @@ static void InstanceBody(Object* obj) {
   // name of the symbol.
   if (!gConfig->noAutoName && nameSelector && nameSelector->val == -1) {
     nameSelector->tag = T_TEXT;
-    nameSelector->val = gText.find(obj->sym->name());
+    nameSelector->val = gText.find(obj->name);
   }
 
   // The CLASSBIT of the '-info-' property is set for a class.  If this
   // is an instance, clear this bit.
   Selector* sn = obj->findSelector("-info-");
-  if (sn && obj->sym->type == S_OBJ) sn->val &= ~CLASSBIT;
+  if (sn && !obj->isClass()) sn->val &= ~CLASSBIT;
 
   // Set the number of properties for this object.
   sn = obj->findSelector("-size-");
@@ -284,6 +284,7 @@ void DoClass() {
     theClass->num = classNum =
         classNum == OBJECTNUM ? GetClassNumber(theClass) : classNum;
     theClass->sym = sym;
+    theClass->name = sym->name();
     sym->setObj(std::move(theClassOwned));
     gClasses[classNum] = theClass;
   }
@@ -333,6 +334,7 @@ void Instance() {
   auto* obj = objOwned.get();
   obj->num = OBJECTNUM;
   obj->sym = objSym;
+  obj->name = objSym->name();
   objSym->setObj(std::move(objOwned));
 
   // Set the super-class number for this object.
