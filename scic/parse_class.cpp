@@ -3,7 +3,6 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
-#include <cstdio>
 #include <memory>
 #include <string_view>
 #include <utility>
@@ -208,7 +207,7 @@ int GetClassNumber(Class* theClass) {
   // Return the first free class number.
 
   for (int i = 0; i < MAXCLASSES; ++i)
-    if (gClasses[i] == NULL) {
+    if (gClasses[i] == nullptr) {
       gClasses[i] = theClass;
       if (i > gMaxClassNum) gMaxClassNum = i;
       return i;

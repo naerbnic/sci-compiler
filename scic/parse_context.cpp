@@ -4,13 +4,14 @@
 #include <deque>
 #include <memory>
 
+#include "absl/container/btree_map.h"
 #include "scic/class.hpp"
 #include "scic/object.hpp"
 #include "scic/public.hpp"
 #include "scic/varlist.hpp"
 
 jmp_buf gRecoverBuf;
-Class* gClasses[MAXCLASSES];
+absl::btree_map<int, Class*> gClasses;
 int gMaxClassNum = -1;
 
 Object* gCurObj;

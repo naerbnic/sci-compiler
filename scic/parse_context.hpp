@@ -5,6 +5,7 @@
 #include <deque>
 #include <memory>
 
+#include "absl/container/btree_map.h"
 #include "scic/class.hpp"
 #include "scic/object.hpp"
 #include "scic/public.hpp"
@@ -13,7 +14,7 @@
 #define MAXCLASSES 512  // Maximum number of classes
 
 extern jmp_buf gRecoverBuf;
-extern Class* gClasses[];
+extern absl::btree_map<int, Class*> gClasses;
 extern int gMaxClassNum;
 
 extern Object* gCurObj;
