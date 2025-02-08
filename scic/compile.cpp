@@ -1000,19 +1000,23 @@ void MakeObject(Object* theObj) {
         if (IsProperty(sp)) {
           switch (sp->tag) {
             case T_PROP:
-              gSc->heapList->getList()->newNode<ANIntProp>(sp->sym, sp->val);
+              gSc->heapList->getList()->newNode<ANIntProp>(
+                  std::string(sp->sym->name()), sp->val);
               break;
 
             case T_TEXT:
-              gSc->heapList->getList()->newNode<ANTextProp>(sp->sym, sp->val);
+              gSc->heapList->getList()->newNode<ANTextProp>(
+                  std::string(sp->sym->name()), sp->val);
               break;
 
             case T_PROPDICT:
-              pDict = gSc->heapList->getList()->newNode<ANOfsProp>(sp->sym);
+              pDict = gSc->heapList->getList()->newNode<ANOfsProp>(
+                  std::string(sp->sym->name()));
               break;
 
             case T_METHDICT:
-              mDict = gSc->heapList->getList()->newNode<ANOfsProp>(sp->sym);
+              mDict = gSc->heapList->getList()->newNode<ANOfsProp>(
+                  std::string(sp->sym->name()));
               break;
           }
         }
@@ -1046,7 +1050,8 @@ void MakeObject(Object* theObj) {
     for (auto* sp : theObj->selectors())
       if (sp->tag == T_LOCAL) {
         methDict->entries.newNode<ANWord>(sp->sym->val());
-        methDict->entries.newNode<ANMethod>(sp->sym, (ANMethCode*)sp->an);
+        methDict->entries.newNode<ANMethod>(std::string(sp->sym->name()),
+                                            (ANMethCode*)sp->an);
         sp->sym->setLoc(nullptr);
         ++numMeth->value;
       }

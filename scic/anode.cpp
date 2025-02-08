@@ -251,13 +251,13 @@ void ANMethCode::list(ListingFile* listFile) {
 // Class ANProp
 ///////////////////////////////////////////////////
 
-ANProp::ANProp(Symbol* sp, int v) : sym(sp), val(v) {}
+ANProp::ANProp(std::string name, int v) : name(std::move(name)), val(v) {}
 
 size_t ANProp::size() { return 2; }
 
 void ANProp::list(ListingFile* listFile) {
   listFile->ListAsCode(*offset, "%-6s$%-4x\t(%s)", desc(), (SCIUWord)value(),
-                       sym->name());
+                       name);
 }
 
 void ANProp::emit(OutputFile* out) { out->WriteWord(value()); }
@@ -266,7 +266,7 @@ std::string_view ANIntProp::desc() { return "prop"; }
 
 uint32_t ANIntProp::value() { return val; }
 
-ANTextProp::ANTextProp(Symbol* sp, int v) : ANProp(sp, v) {}
+ANTextProp::ANTextProp(std::string name, int v) : ANProp(std::move(name), v) {}
 
 void ANTextProp::emit(OutputFile* out) {
   gSc->heapList->addFixup(*offset);
@@ -281,7 +281,8 @@ std::string_view ANOfsProp::desc() { return "ofs"; }
 
 uint32_t ANOfsProp::value() { return *target->offset; }
 
-ANMethod::ANMethod(Symbol* sp, ANMethCode* mp) : ANProp(sp, 0), method(mp) {}
+ANMethod::ANMethod(std::string name, ANMethCode* mp)
+    : ANProp(std::move(name), 0), method(mp) {}
 
 std::string_view ANMethod::desc() { return "local"; }
 

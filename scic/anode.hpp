@@ -178,7 +178,7 @@ struct ANProp : ANode
 // Its method uses the virtual methods desc() and value() to deal with
 // the differences between the various property types.
 {
-  ANProp(Symbol* sp, int v);
+  ANProp(std::string name, int v);
 
   virtual std::string_view desc() = 0;  // return descriptive string
   virtual uint32_t value() = 0;         // return value of selector
@@ -187,14 +187,14 @@ struct ANProp : ANode
   void list(ListingFile* listFile) override;
   void emit(OutputFile*) override;
 
-  Symbol* sym;  // pointer to selector's symbol
-  int val;      // value of selector
+  std::string name;  // pointer to selector's symbol
+  int val;           // value of selector
 };
 
 struct ANIntProp : ANProp
 // A subclass of ANProp which represents integer properties.
 {
-  ANIntProp(Symbol* sp, int v) : ANProp(sp, v) {}
+  ANIntProp(std::string name, int v) : ANProp(std::move(name), v) {}
 
   std::string_view desc() override;  // return descriptive string
   uint32_t value() override;         // return value of selector
@@ -203,7 +203,7 @@ struct ANIntProp : ANProp
 struct ANTextProp : ANProp
 // A subclass of ANProp which represents text properties.
 {
-  ANTextProp(Symbol* sp, int v);
+  ANTextProp(std::string name, int v);
 
   void emit(OutputFile*) override;
   std::string_view desc() override;  // return descriptive string
@@ -213,7 +213,7 @@ struct ANTextProp : ANProp
 struct ANOfsProp : ANProp
 // A subclass of ANProp which represents an offset to an object table.
 {
-  ANOfsProp(Symbol* sp) : ANProp(sp, 0) {}
+  ANOfsProp(std::string name) : ANProp(std::move(name), 0) {}
 
   std::string_view desc() override;
   uint32_t value() override;
@@ -224,7 +224,7 @@ struct ANOfsProp : ANProp
 struct ANMethod : ANProp
 // A subclass of ANProp which represents methods.
 {
-  ANMethod(Symbol* sp, ANMethCode* mp);
+  ANMethod(std::string name, ANMethCode* mp);
 
   std::string_view desc() override;  // return descriptive string
   uint32_t value() override;         // return value of selector
