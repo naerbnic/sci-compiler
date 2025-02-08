@@ -176,8 +176,8 @@ int main(int argc, char **argv) {
   // Install the built-in symbols then read in and install
   // the definitions.  Lock the class database so that we're the only
   // one updating it.
-  InstallBuiltIns();
-  InstallObjects();
+  InstallBuiltIns(&gParseContext);
+  InstallObjects(&gParseContext);
   Lock();
   gNumErrors = gNumWarnings = 0;
   gInputState.OpenFileAsInput(selector_file, true);
@@ -274,7 +274,8 @@ static void InstallCommandLineDefine(std::string_view str) {
     value = str.substr(eq_index + 1);
   }
 
-  if (gParseContext.syms.lookup(token)) Panic("'%s' has already been defined", token);
+  if (gParseContext.syms.lookup(token))
+    Panic("'%s' has already been defined", token);
 
   Symbol *sym = gParseContext.syms.installGlobal(token, S_DEFINE);
   sym->setStr(std::string(value));

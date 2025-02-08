@@ -129,7 +129,7 @@ struct ANMethCode : ANCodeBlk
 // ANMethCode is just a listing-specific subclass of ANCodeBlk, which
 // generates "Method" rather than "Procedure" in the listing.
 {
-  ANMethCode(std::string name);
+  ANMethCode(std::string name, Object* obj);
 
   void list(ListingFile* listFile) override;
 

@@ -3,6 +3,8 @@
 #ifndef BUILTINS_HPP
 #define BUILTINS_HPP
 
-void InstallBuiltIns();
+#include "scic/parse_context.hpp"
+
+void InstallBuiltIns(ParseContext* context);
 
 #endif

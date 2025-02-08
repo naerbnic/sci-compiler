@@ -21,9 +21,9 @@
 
 static void DefClassItems(Class* theClass, int what);
 
-void InstallObjects() {
+void InstallObjects(ParseContext* parseContext) {
   // Install 'RootObj' as the root of the class system.
-  Symbol* sym = gParseContext.syms.installClass("RootObj");
+  Symbol* sym = parseContext->syms.installClass("RootObj");
   auto rootClassOwned = std::make_unique<Class>();
   auto* rootClass = rootClassOwned.get();
   sym->setObj(std::move(rootClassOwned));
@@ -35,40 +35,42 @@ void InstallObjects() {
   // Install the root class' selectors in the symbol table and add them
   // to the root class.
   InstallSelector("-objID-", SEL_OBJID);
-  if ((sym = gParseContext.syms.lookup("-objID-")))
+  if ((sym = parseContext->syms.lookup("-objID-")))
     rootClass->addSelector(sym, T_PROP)->val = 0x1234;
 
   InstallSelector("-size-", SEL_SIZE);
-  if ((sym = gParseContext.syms.lookup("-size-"))) rootClass->addSelector(sym, T_PROP);
+  if ((sym = parseContext->syms.lookup("-size-")))
+    rootClass->addSelector(sym, T_PROP);
 
   InstallSelector("-propDict-", SEL_PROPDICT);
-  if ((sym = gParseContext.syms.lookup("-propDict-"))) {
+  if ((sym = parseContext->syms.lookup("-propDict-"))) {
     rootClass->addSelector(sym, T_PROPDICT);
   }
 
   InstallSelector("-methDict-", SEL_METHDICT);
-  if ((sym = gParseContext.syms.lookup("-methDict-")))
+  if ((sym = parseContext->syms.lookup("-methDict-")))
     rootClass->addSelector(sym, T_METHDICT);
 
   InstallSelector("-classScript-", SEL_CLASS_SCRIPT);
-  if ((sym = gParseContext.syms.lookup("-classScript-")))
+  if ((sym = parseContext->syms.lookup("-classScript-")))
     rootClass->addSelector(sym, T_PROP)->val = 0;
 
   InstallSelector("-script-", SEL_SCRIPT);
-  if ((sym = gParseContext.syms.lookup("-script-"))) rootClass->addSelector(sym, T_PROP);
+  if ((sym = parseContext->syms.lookup("-script-")))
+    rootClass->addSelector(sym, T_PROP);
 
   InstallSelector("-super-", SEL_SUPER);
-  if ((sym = gParseContext.syms.lookup("-super-")))
+  if ((sym = parseContext->syms.lookup("-super-")))
     rootClass->addSelector(sym, T_PROP)->val = -1;
 
   InstallSelector("-info-", SEL_INFO);
-  if ((sym = gParseContext.syms.lookup("-info-")))
+  if ((sym = parseContext->syms.lookup("-info-")))
     rootClass->addSelector(sym, T_PROP)->val = CLASSBIT;
 
   // Install 'self' and 'super' as objects.
-  sym = gParseContext.syms.installGlobal("self", S_OBJ);
+  sym = parseContext->syms.installGlobal("self", S_OBJ);
   sym->setVal((int)OBJ_SELF);
-  sym = gParseContext.syms.installGlobal("super", S_CLASS);
+  sym = parseContext->syms.installGlobal("super", S_CLASS);
   sym->setVal((int)OBJ_SUPER);
 }
 
@@ -116,11 +118,13 @@ void DefineClass() {
   theClass->num = classNum;
   theClass->sym = sym;
   theClass->file = superFile;
-  if (classNum > gParseContext.maxClassNum) gParseContext.maxClassNum = classNum;
+  if (classNum > gParseContext.maxClassNum)
+    gParseContext.maxClassNum = classNum;
   if (classNum >= 0 && gParseContext.classes[classNum] == 0)
     gParseContext.classes[classNum] = theClass;
   else {
-    Severe("%s is already class #%d.", gParseContext.classes[classNum]->name, classNum);
+    Severe("%s is already class #%d.", gParseContext.classes[classNum]->name,
+           classNum);
     return;
   }
 

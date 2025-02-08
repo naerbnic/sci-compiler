@@ -98,11 +98,11 @@ static std::vector<BuiltIn> builtIns = {
     {"switchto", S_KEYWORD, K_SWITCHTO},
 };
 
-void InstallBuiltIns() {
+void InstallBuiltIns(ParseContext* parseContext) {
   // Install the builtin symbol table.
 
   for (BuiltIn const& builtIn : builtIns) {
-    Symbol* sp = gParseContext.syms.installGlobal(builtIn.name, builtIn.type);
+    Symbol* sp = parseContext->syms.installGlobal(builtIn.name, builtIn.type);
     sp->setVal(builtIn.val);
   }
 }
