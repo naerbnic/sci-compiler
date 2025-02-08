@@ -6,6 +6,7 @@
 #include <string_view>
 #include <vector>
 
+#include "scic/symbol.hpp"
 #include "scic/symtbl.hpp"
 #include "scic/symtypes.hpp"
 
