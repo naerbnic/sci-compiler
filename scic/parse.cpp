@@ -14,7 +14,6 @@
 #include "scic/parse_class.hpp"
 #include "scic/parse_context.hpp"
 #include "scic/parse_object.hpp"
-#include "scic/pnode.hpp"
 #include "scic/proc.hpp"
 #include "scic/sc.hpp"
 #include "scic/selector.hpp"
@@ -23,9 +22,6 @@
 #include "scic/symtypes.hpp"
 #include "scic/token.hpp"
 #include "scic/toktypes.hpp"
-
-PNode::PNode(pn_t t)
-    : sym(0), val(0), type(t), lineNum(gInputState.GetTopLevelLineNum()) {}
 
 bool Parse() {
   InitAsm();
