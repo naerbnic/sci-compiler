@@ -426,10 +426,8 @@ void ANOpExtern::emit(OutputFile* out) {
 // Class ANCall
 ///////////////////////////////////////////////////
 
-ANCall::ANCall(Symbol* s) : target(nullptr) {
-  sym = s;
-  op = op_call;
-}
+ANCall::ANCall(std::string name)
+    : ANOpCode(op_call), name(std::move(name)), target(nullptr) {}
 
 size_t ANCall::size() {
   int arg_size = NumArgsSize();
@@ -453,14 +451,13 @@ size_t ANCall::size() {
 void ANCall::list(ListingFile* listFile) {
   listFile->ListOp(*offset, op_call);
   listFile->ListArg("$%-4x\t(%s)",
-                    SCIUWord(*target->offset - (*offset + size())),
-                    sym->name());
+                    SCIUWord(*target->offset - (*offset + size())), name);
   ListNumArgs(listFile, *offset + 1, numArgs);
 }
 
 void ANCall::emit(OutputFile* out) {
   if (!target || target->offset == UNDEFINED) {
-    Error("Undefined procedure: %s", sym->name());
+    Error("Undefined procedure: %s", name);
     return;
   }
 
@@ -572,7 +569,7 @@ void ANObjID::list(ListingFile* listFile) {
 }
 
 void ANObjID::emit(OutputFile* out) {
-  if (!sym->obj()) {
+  if (!sym) {
     Error("Undefined object from line %u: %s", sym->lineNum, sym->name());
     return;
   }

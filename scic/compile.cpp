@@ -341,7 +341,7 @@ static void MakeCall(AOpList* curList, PNode* pn) {
   // Compile the call.
   Symbol* sym = pn->sym;
   if (pn->type == PN_CALL) {
-    ANCall* call = curList->newNode<ANCall>(sym);
+    ANCall* call = curList->newNode<ANCall>(std::string(sym->name()));
 
     // If the destination procedure has not yet been defined, add
     // this node to the list of those waiting for its definition.
@@ -949,7 +949,6 @@ static void MakeProc(AList* curList, PNode* pn) {
   // they will be on a list hanging off the procedure's symbol table
   // entry (in the 'ref' property) (compiled by the first reference to the
   // procedure).  Let all these nodes know where this one is.
-  pn->sym->forwardRef.Resolve(an);
   pn->sym->setLoc(an);
 
   //	procedures and methods get special treatment:  the line number
@@ -1033,7 +1032,6 @@ void MakeObject(Object* theObj) {
     // If any nodes already compiled have this object as a target, they
     // will be on a list hanging off the object's symbol table entry.
     // Let all nodes know where this one is.
-    theObj->sym->forwardRef.Resolve(props);
     theObj->sym->setLoc(props);
   }
 
@@ -1060,7 +1058,7 @@ void MakeObject(Object* theObj) {
         methDict->entries.newNode<ANWord>(sp->sym->val());
         methDict->entries.newNode<ANMethod>(std::string(sp->sym->name()),
                                             (ANMethCode*)sp->an);
-        sp->sym->setLoc(nullptr);
+        sp->sym->forwardRef.Clear();
         ++numMeth->value;
       }
   }
@@ -1077,5 +1075,5 @@ void MakeText() {
 
 void MakeLabel(AOpList* curList, Symbol* dest) {
   auto* label = curList->newNode<ANLabel>();
-  dest->forwardRef.Resolve(label);
+  dest->setLoc(label);
 }

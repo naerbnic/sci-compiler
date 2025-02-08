@@ -276,14 +276,14 @@ struct ANOpExtern : ANOpCode
 
 // The ANCall class describes a call to a procedure in the current module.
 struct ANCall : ANOpCode {
-  ANCall(Symbol* s);
+  ANCall(std::string name);
 
   size_t size() override;
   void list(ListingFile* listFile) override;
   void emit(OutputFile*) override;
 
   uint32_t numArgs;  // number of arguments
-  Symbol* sym;       // symbol of procedure being called
+  std::string name;  // symbol of procedure being called
   ANode* target;     // target of call
 };
 
