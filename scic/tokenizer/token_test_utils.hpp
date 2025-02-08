@@ -7,7 +7,6 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "scic/tokenizer/char_stream.hpp"
 #include "scic/tokenizer/token.hpp"
 
 namespace tokenizer {

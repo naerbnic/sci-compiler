@@ -6,7 +6,7 @@
 #include <variant>
 #include <vector>
 
-#include "scic/tokenizer/char_stream.hpp"
+#include "scic/tokenizer/text_contents.hpp"
 
 namespace tokenizer {
 

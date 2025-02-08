@@ -7,7 +7,7 @@ cc_library(
     srcs = ["token.cpp"],
     hdrs = ["token.hpp"],
     deps = [
-        ":char_stream",
+        ":text_contents",
     ],
 )
 
@@ -41,9 +41,18 @@ cc_test(
     deps = [
         ":token_readers",
         ":token_test_utils",
+        "//util/status:status_matchers",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
-        "//util/status:status_matchers",
+    ],
+)
+
+cc_library(
+    name = "text_contents",
+    srcs = ["text_contents.cpp"],
+    hdrs = ["text_contents.hpp"],
+    deps = [
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -52,6 +61,7 @@ cc_library(
     srcs = ["char_stream.cpp"],
     hdrs = ["char_stream.hpp"],
     deps = [
+        ":text_contents",
         "@abseil-cpp//absl/strings",
     ],
 )
