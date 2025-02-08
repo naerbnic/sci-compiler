@@ -30,8 +30,6 @@
 
 static int InitialValue(VarList& theVars, int offset, int arraySize);
 
-static std::deque<std::unique_ptr<Public>> publicList;
-static int publicMax = -1;
 static constexpr std::string_view tooManyVars =
     "Too many variables. Max is %d.\n";
 
