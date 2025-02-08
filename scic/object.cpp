@@ -225,7 +225,8 @@ static void InstanceBody(Object* obj) {
   // Get any property or method definitions.
   gCurObj = obj;
   for (GetToken(); OpenP(symType()); GetToken()) {
-    setjmp(gRecoverBuf);
+    // The original code ignores the return value of setjmp.
+    (void)setjmp(gRecoverBuf);
     GetToken();
     switch (Keyword()) {
       case K_PROPLIST:

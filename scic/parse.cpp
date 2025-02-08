@@ -41,7 +41,8 @@ bool Parse() {
       if (symType() == S_END) break;
     }
 
-    setjmp(gRecoverBuf);
+    // The original code ignores the return value of setjmp.
+    (void)setjmp(gRecoverBuf);
 
     // The next token must be a keyword.  Dispatch to the appropriate
     // routines for the keyword.
