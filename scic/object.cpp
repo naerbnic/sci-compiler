@@ -9,9 +9,9 @@
 
 #include "scic/class.hpp"
 #include "scic/compile.hpp"
+#include "scic/parse_context.hpp"
 #include "scic/selector.hpp"
 #include "scic/symbol.hpp"
-#include "scic/symtbl.hpp"
 
 Object::Object() : sym(0), num(0), super(0), script(0), numProps(0), an(0) {}
 
@@ -51,7 +51,7 @@ Selector* Object::findSelectorByNum(int val) {
 Selector* Object::findSelector(std::string_view name) {
   // Return a pointer to the selector node which has the name 'name'.
 
-  Symbol* sym = gSyms.lookup(name);
+  Symbol* sym = gParseContext.syms.lookup(name);
   return sym ? findSelectorByNum(sym->val()) : 0;
 }
 

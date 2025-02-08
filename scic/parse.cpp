@@ -26,7 +26,7 @@
 bool Parse() {
   InitAsm();
 
-  gSyms.clearAsmPtrs();
+  gParseContext.syms.clearAsmPtrs();
 
   std::optional<TokenSlot> token;
   while ((token = NewToken())) {
@@ -41,7 +41,7 @@ bool Parse() {
     }
 
     // The original code ignores the return value of setjmp.
-    (void)setjmp(gRecoverBuf);
+    (void)setjmp(gParseContext.recoverBuf);
 
     // The next token must be a keyword.  Dispatch to the appropriate
     // routines for the keyword.

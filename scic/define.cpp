@@ -44,10 +44,10 @@ void Define() {
       return;
     }
 
-    Symbol* sym = gSyms.lookup(token->name());
+    Symbol* sym = gParseContext.syms.lookup(token->name());
     bool newSym = sym == 0;
     if (newSym)
-      sym = gSyms.installLocal(token->name(), S_DEFINE);
+      sym = gParseContext.syms.installLocal(token->name(), S_DEFINE);
     else if (sym->type != S_DEFINE)
       // This isn't just a re-'define' of the symbol, it's a change
       // in symbol type.
@@ -81,7 +81,7 @@ void Enum() {
     if (token->type() == S_NUM) {
       val = token->val();
     } else if (IsUndefinedIdent(*token)) {
-      Symbol* theSym = gSyms.installLocal(token->name(), S_DEFINE);
+      Symbol* theSym = gParseContext.syms.installLocal(token->name(), S_DEFINE);
 
       //	initializer expression?
       auto expr = LookupTok();
@@ -112,9 +112,9 @@ void GlobalDecl() {
     if (!var_num) break;
 
     // We only install into the symbol table for globals. We do not add
-    // global variables to the gGlobalVars list. That still has to be
+    // global variables to the gParseContext.globalVars list. That still has to be
     // done by Script0.
-    Symbol* theSym = gSyms.lookup(varName);
+    Symbol* theSym = gParseContext.syms.lookup(varName);
     if (theSym) {
       if (theSym->type != S_GLOBAL) {
         Error("Redefinition of %s as a global.", theSym->name());
@@ -130,7 +130,7 @@ void GlobalDecl() {
       }
     } else {
       // Install the symbol.
-      theSym = gSyms.installLocal(varName, S_GLOBAL);
+      theSym = gParseContext.syms.installLocal(varName, S_GLOBAL);
       theSym->setVal(*var_num);
     }
   }
@@ -165,7 +165,7 @@ void Global() {
       if (!var_num) break;
 
       // Try to get the symbol from the symbol table.
-      Symbol* theSym = gSyms.lookup(varName);
+      Symbol* theSym = gParseContext.syms.lookup(varName);
       if (theSym) {
         if (theSym->type != S_GLOBAL) {
           Error("Redefinition of %s as a global.", theSym->name());
@@ -181,15 +181,15 @@ void Global() {
         }
       } else {
         // Install the symbol.
-        theSym = gSyms.installLocal(varName, S_GLOBAL);
+        theSym = gParseContext.syms.installLocal(varName, S_GLOBAL);
         theSym->setVal(*var_num);
       }
       offset = theSym->val();
 
       // Get the initial value(s) of the variable and expand the size
       // of the block if more than one value is encountered.
-      n = InitialValue(gGlobalVars, offset, 1);
-      if (n == -1 || gGlobalVars.values.size() > gConfig->maxVars) {
+      n = InitialValue(gParseContext.globalVars, offset, 1);
+      if (n == -1 || gParseContext.globalVars.values.size() > gConfig->maxVars) {
         Error(tooManyVars, gConfig->maxVars);
         break;
       }
@@ -197,7 +197,7 @@ void Global() {
   }
 
   // Put the information back in the variable structure.
-  gGlobalVars.type = VAR_GLOBAL;
+  gParseContext.globalVars.type = VAR_GLOBAL;
 
   UnGetTok();
 }
@@ -220,7 +220,7 @@ void Local() {
     return;
   }
 
-  if (!gLocalVars.values.empty()) {
+  if (!gParseContext.localVars.values.empty()) {
     Error("Only one local statement allowed");
     return;
   }
@@ -231,7 +231,7 @@ void Local() {
     if (token.type() == S_OPEN_BRACKET) {
       auto ident = GetIdent();
       if (ident) {
-        theSym = gSyms.installLocal(ident->name(), S_LOCAL);
+        theSym = gParseContext.syms.installLocal(ident->name(), S_LOCAL);
         theSym->setVal(size);
         auto array_size = GetNumber("Array size");
         if (!array_size) break;
@@ -241,7 +241,7 @@ void Local() {
           Severe("no closing ']' in array declaration");
           break;
         }
-        n = InitialValue(gLocalVars, size, arraySize);
+        n = InitialValue(gParseContext.localVars, size, arraySize);
         size += std::max(n, arraySize);
         if (n == -1 || (std::size_t)(size) > gConfig->maxVars) {
           Error(tooManyVars, gConfig->maxVars);
@@ -253,9 +253,9 @@ void Local() {
       Definition();
 
     else if (IsUndefinedIdent(token)) {
-      theSym = gSyms.installLocal(token.name(), S_LOCAL);
+      theSym = gParseContext.syms.installLocal(token.name(), S_LOCAL);
       theSym->setVal(size);
-      n = InitialValue(gLocalVars, size, 1);
+      n = InitialValue(gParseContext.localVars, size, 1);
       size += n;
       if (n == -1 || (std::size_t)(size) > gConfig->maxVars) {
         Error(tooManyVars, gConfig->maxVars);
@@ -265,7 +265,7 @@ void Local() {
   }
 
   // Put the information back in the variable structure.
-  gLocalVars.type = VAR_LOCAL;
+  gParseContext.localVars.type = VAR_LOCAL;
 
   UnGetTok();
 }
@@ -296,9 +296,9 @@ void Extern() {
     else {
       // Install the symbol in both the symbol table and the
       // externals list.
-      Symbol* theSym = gSyms.lookup(token.name());
+      Symbol* theSym = gParseContext.syms.lookup(token.name());
       if (!theSym) {
-        theSym = gSyms.installLocal(token.name(), S_EXTERN);
+        theSym = gParseContext.syms.installLocal(token.name(), S_EXTERN);
       }
       auto entry = std::make_unique<Public>(theSym);
       auto* theEntry = entry.get();
@@ -319,8 +319,8 @@ void Extern() {
 }
 
 void InitPublics() {
-  publicList.clear();
-  publicMax = -1;
+  gParseContext.publicList.clear();
+  gParseContext.publicMax = -1;
 }
 
 void DoPublic() {
@@ -331,32 +331,32 @@ void DoPublic() {
   for (auto token = GetToken(); !CloseP(token.type()); token = GetToken()) {
     // Install the symbol in both the symbol table and the
     // publics list.
-    if (!(theSym = gSyms.lookup(token.name())) || theSym->type == S_EXTERN)
+    if (!(theSym = gParseContext.syms.lookup(token.name())) || theSym->type == S_EXTERN)
       theSym =
-          gSyms.installModule(token.name(), (sym_t)(!theSym ? S_OBJ : S_IDENT));
+          gParseContext.syms.installModule(token.name(), (sym_t)(!theSym ? S_OBJ : S_IDENT));
     auto theEntry = std::make_unique<Public>(theSym);
     auto* entryPtr = theEntry.get();
-    publicList.push_front(std::move(theEntry));
+    gParseContext.publicList.push_front(std::move(theEntry));
 
     auto entry_num = GetNumber("Entry #");
     if (!entry_num) break;
 
     // Keep track of the maximum numbered public entry.
     entryPtr->entry = *entry_num;
-    if (*entry_num > publicMax) publicMax = *entry_num;
+    if (*entry_num > gParseContext.publicMax) gParseContext.publicMax = *entry_num;
   }
 
   UnGetTok();
 
   // Generate the assembly nodes for the dispatch table.
-  MakeDispatch(publicMax);
+  MakeDispatch(gParseContext.publicMax);
 }
 
 Symbol* FindPublic(int n) {
   // Return a pointer to the symbol which is entry number 'n' in the
   // dispatch table.
 
-  for (auto const& entry : publicList) {
+  for (auto const& entry : gParseContext.publicList) {
     if (entry->entry == (uint32_t)n) return entry->sym;
   }
 

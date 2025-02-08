@@ -40,12 +40,12 @@ void Declaration(Object* obj, int type) {
       continue;
     }
 
-    Symbol* sym = gSyms.lookup(token.name());
+    Symbol* sym = gParseContext.syms.lookup(token.name());
     if (!sym && obj->num != OBJECTNUM) {
       // If the symbol is not currently defined, define it as
       // the next selector number.
       InstallSelector(token.name(), NewSelectorNum());
-      sym = gSyms.lookup(token.name());
+      sym = gParseContext.syms.lookup(token.name());
     }
 
     // If this selector is not in the current class, add it.
@@ -98,7 +98,7 @@ void Declaration(Object* obj, int type) {
 void MethodDef(Object* obj) {
   // _method-def ::= 'method' call-def expression*
 
-  SymTbl* symTbl = gSyms.add(ST_MINI);
+  SymTbl* symTbl = gParseContext.syms.add(ST_MINI);
   {
     auto node = CallDef(S_SELECT);
     if (node) {
@@ -121,27 +121,27 @@ void MethodDef(Object* obj) {
       }
     }
   }
-  gSyms.deactivate(symTbl);
+  gParseContext.syms.deactivate(symTbl);
 }
 
 static void InstanceBody(Object* obj) {
   // instance-body ::= (property-list | method-def | procedure)*
 
-  SymTbl* symTbl = gSyms.add(ST_MINI);
+  SymTbl* symTbl = gParseContext.syms.add(ST_MINI);
 
   jmp_buf savedBuf;
-  memcpy(savedBuf, gRecoverBuf, sizeof(jmp_buf));
+  memcpy(savedBuf, gParseContext.recoverBuf, sizeof(jmp_buf));
 
   // Get a pointer to the 'name' selector for this object and zero
   // out the property.
-  Selector* nameSelector = obj->findSelectorByNum(gNameSymbol->val());
+  Selector* nameSelector = obj->findSelectorByNum(gParseContext.nameSymbol->val());
   if (nameSelector) nameSelector->val = -1;
 
   // Get any property or method definitions.
-  gCurObj = obj;
+  gParseContext.curObj = obj;
   for (auto token = GetToken(); OpenP(token.type()); token = GetToken()) {
     // The original code ignores the return value of setjmp.
-    (void)setjmp(gRecoverBuf);
+    (void)setjmp(gParseContext.recoverBuf);
     token = GetToken();
     switch (Keyword(token)) {
       case K_PROPLIST:
@@ -172,8 +172,8 @@ static void InstanceBody(Object* obj) {
       case K_INSTANCE:
         // Oops!  Got out of synch!
         Error("Mismatched parentheses!");
-        memcpy(gRecoverBuf, savedBuf, sizeof(jmp_buf));
-        longjmp(gRecoverBuf, 1);
+        memcpy(gParseContext.recoverBuf, savedBuf, sizeof(jmp_buf));
+        longjmp(gParseContext.recoverBuf, 1);
 
       default:
         Severe("Only property and method definitions allowed: %s.",
@@ -186,7 +186,7 @@ static void InstanceBody(Object* obj) {
 
   UnGetTok();
 
-  memcpy(gRecoverBuf, savedBuf, sizeof(jmp_buf));
+  memcpy(gParseContext.recoverBuf, savedBuf, sizeof(jmp_buf));
 
   // If 'name' has not been given a value, give it the
   // name of the symbol.
@@ -212,9 +212,9 @@ static void InstanceBody(Object* obj) {
 
   // Compile code for the object.
   MakeObject(obj);
-  gCurObj = 0;
+  gParseContext.curObj = 0;
 
-  gSyms.deactivate(symTbl);
+  gParseContext.syms.deactivate(symTbl);
 }
 
 }  // namespace
@@ -234,7 +234,7 @@ void DoClass() {
   auto* sym = slot.symbol();
 
   if (!sym)
-    sym = gSyms.installClass(slot.name());
+    sym = gParseContext.syms.installClass(slot.name());
 
   else if (slot.type() != S_CLASS && slot.type() != S_OBJ) {
     Severe("Redefinition of %s.", slot.name());
@@ -256,9 +256,9 @@ void DoClass() {
 
     //	make sure the symbol is in the class symbol table
     if (sym->type != S_CLASS) {
-      auto symOwned = gSyms.remove(sym->name());
+      auto symOwned = gParseContext.syms.remove(sym->name());
       symOwned->type = S_CLASS;
-      gSyms.classSymTbl->add(std::move(symOwned));
+      gParseContext.syms.classSymTbl->add(std::move(symOwned));
     }
   }
 
@@ -287,7 +287,7 @@ void DoClass() {
     theClass->sym = sym;
     theClass->name = sym->name();
     sym->setObj(std::move(theClassOwned));
-    gClasses[classNum] = theClass;
+    gParseContext.classes[classNum] = theClass;
   }
 
   // Set the super-class number for this class.
@@ -309,7 +309,7 @@ void Instance() {
   auto slot = LookupTok();
   auto* objSym = slot.symbol();
   if (!objSym)
-    objSym = gSyms.installLocal(slot.name(), S_OBJ);
+    objSym = gParseContext.syms.installLocal(slot.name(), S_OBJ);
   else if (slot.type() == S_IDENT || slot.type() == S_OBJ) {
     objSym->type = S_OBJ;
     if (objSym->obj()) Error("Duplicate instance name: %s", objSym->name());

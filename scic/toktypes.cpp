@@ -43,21 +43,21 @@ ResolvedTokenSlot LookupTok() {
     return ResolvedTokenSlot::OfToken(std::move(token));
   }
 
-  Symbol* theSym = gSyms.lookup(token.name());
+  Symbol* theSym = gParseContext.syms.lookup(token.name());
 
   if (!theSym) {
     return ResolvedTokenSlot::OfToken(std::move(token));
   }
 
   if (theSym->type == S_SELECT) {
-    if (gCurObj && !gCurObj->selectors().empty()) {
+    if (gParseContext.curObj && !gParseContext.curObj->selectors().empty()) {
       // If the symbol is a property and we're in a method definition,
       //	access the symbol as a local variable.
 
       // A selector list is in effect -- check that the selector
       //	reference is legal (i.e. it is a property in the current
       //	selector list).
-      auto* sn = gCurObj->findSelectorByNum(theSym->val());
+      auto* sn = gParseContext.curObj->findSelectorByNum(theSym->val());
       if (!sn) {
         if (!gInParmList) {
           Error("Not a selector for current class/object: %s", theSym->name());
@@ -78,7 +78,7 @@ ResolvedTokenSlot GetSymbol() {
   // Get a token that is in the symbol table.
   Symbol* theSym;
   auto token = GetToken();
-  if (!(theSym = gSyms.lookup(token.name()))) {
+  if (!(theSym = gParseContext.syms.lookup(token.name()))) {
     Severe("%s not defined.", token.name());
     return ResolvedTokenSlot::OfToken(std::move(token));
   }
@@ -102,7 +102,7 @@ bool GetDefineSymbol() {
     Error("Defined symbol expected");
     return false;
   }
-  Symbol* sym = gSyms.lookup(token->name());
+  Symbol* sym = gParseContext.syms.lookup(token->name());
   if (!sym) return false;
   if (sym->type != S_DEFINE) {
     Error("Define expected");
@@ -123,7 +123,7 @@ bool IsIdent(TokenSlot const& token) {
 bool IsUndefinedIdent(TokenSlot const& token) {
   if (!IsIdent(token)) return false;
 
-  if (gSyms.lookup(token.name())) Warning("Redefinition of %s.", token.name());
+  if (gParseContext.syms.lookup(token.name())) Warning("Redefinition of %s.", token.name());
 
   return true;
 }
@@ -182,7 +182,7 @@ std::optional<TokenSlot> GetString(std::string_view errStr) {
 keyword_t Keyword(TokenSlot const& token_slot) {
   Symbol* theSym;
 
-  if (!(theSym = gSyms.lookup(token_slot.name())) || theSym->type != S_KEYWORD)
+  if (!(theSym = gParseContext.syms.lookup(token_slot.name())) || theSym->type != S_KEYWORD)
     return K_UNDEFINED;
   else {
     return (keyword_t)theSym->val();
@@ -231,8 +231,8 @@ bool IsVar(ResolvedTokenSlot const& token) {
       return true;
 
     case S_SELECT:
-      return gCurObj && gSelectorIsVar &&
-             (sn = gCurObj->findSelectorByNum(token.val())) &&
+      return gParseContext.curObj && gSelectorIsVar &&
+             (sn = gParseContext.curObj->findSelectorByNum(token.val())) &&
              sn->tag == T_PROP;
 
     default:
@@ -261,7 +261,7 @@ bool IsNumber(TokenSlot const& token) {
 
   auto token = GetToken();
   if (token.type() == S_IDENT) {
-    if (!(theSym = gSyms.lookup(token.name())) || theSym->type != S_SELECT) {
+    if (!(theSym = gParseContext.syms.lookup(token.name())) || theSym->type != S_SELECT) {
       Error("Selector required: %s", token.name());
       return ResolvedTokenSlot::OfToken(std::move(token));
     }

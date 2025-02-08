@@ -376,7 +376,7 @@ static void MakeObjID(AOpList* curList, PNode* pn) {
 
     // If the object is not defined yet, add this node to the list
     // of those waiting for the definition.
-    if (!sym->obj() || sym->obj() == gCurObj) {
+    if (!sym->obj() || sym->obj() == gParseContext.curObj) {
       sym->forwardRef.RegisterCallback(
           [an](ANode* target) { an->target = target; });
     } else {
@@ -941,7 +941,7 @@ static void MakeProc(AList* curList, PNode* pn) {
                       ? (ANCodeBlk*)curList->newNode<ANProcCode>(
                             std::string(pn->sym->name()))
                       : (ANCodeBlk*)curList->newNode<ANMethCode>(
-                            std::string(pn->sym->name()));
+                            std::string(pn->sym->name()), gParseContext.curObj);
 
   pn->sym->type = (sym_t)(pn->type == PN_PROC ? S_PROC : S_SELECT);
 

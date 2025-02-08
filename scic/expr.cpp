@@ -116,7 +116,7 @@ bool Expression(PNode* theNode, bool required) {
       case S_IDENT: {
         // Assume that all unknown identifiers are objects,
         // and fall through to object handling.
-        auto* theSym = gSyms.installModule(slot.name(), S_OBJ);
+        auto* theSym = gParseContext.syms.installModule(slot.name(), S_OBJ);
         theSym->setObj(nullptr);
         slot = ResolvedTokenSlot::OfSymbol(theSym);
       }
@@ -133,8 +133,8 @@ bool Expression(PNode* theNode, bool required) {
       case S_CLASS:
         pn = theNode->newChild(PN_CLASS);
         if ((uint32_t)slot.type() == OBJ_SUPER) {
-          pn->sym = gClasses[gCurObj->super]->sym;
-          pn->val = gClasses[gCurObj->super]->num;
+          pn->sym = gParseContext.classes[gParseContext.curObj->super]->sym;
+          pn->val = gParseContext.classes[gParseContext.curObj->super]->num;
         } else {
           pn->sym = slot.symbol();
           pn->val = pn->sym->obj()->num;
@@ -304,7 +304,7 @@ static bool _Expression(PNode* theNode) {
           case K_PROC:
             // Oops!  Got out of synch!
             Error("Mismatched parentheses!");
-            longjmp(gRecoverBuf, 1);
+            longjmp(gParseContext.recoverBuf, 1);
 
           default:
             Severe("Expected an expression here: %s", slot.name());
@@ -382,15 +382,15 @@ static bool Send(PNode* theNode, ResolvedTokenSlot const& slot) {
   // the destination of the send.
   if (slot.type() == S_CLASS && slot.hasVal(OBJ_SUPER)) {
     dn = pn->newChild(PN_SUPER);
-    dn->sym = gClasses[gCurObj->super]->sym;
-    dn->val = gClasses[gCurObj->super]->num;
+    dn->sym = gParseContext.classes[gParseContext.curObj->super]->sym;
+    dn->val = gParseContext.classes[gParseContext.curObj->super]->num;
     objName = "super";
     theSym = slot.symbol();
   } else {
     if (slot.is_resolved() && slot.type() == S_IDENT) {
       // If the symbol has not been previously defined, define it as
       // an undefined object in the global symbol table.
-      theSym = gSyms.installModule(slot.name(), S_OBJ);
+      theSym = gParseContext.syms.installModule(slot.name(), S_OBJ);
       theSym->clearAn();
       theSym->setObj(nullptr);
     } else {
@@ -445,7 +445,7 @@ static bool Message(PNode* theNode, Symbol* theSym) {
     }
 
     //	save off the receiver of these messages
-    Object* curReceiver = gReceiver;
+    Object* curReceiver = gParseContext.receiver;
 
     // Collect the arguments of the message.
     int nArgs;

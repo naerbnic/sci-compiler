@@ -68,7 +68,7 @@ Symbol* InstallSelector(std::string_view name, int value) {
   gSelectorAdded = true;
 
   // Install the selector in the selector symbol table.
-  Symbol* sym = gSyms.installSelector(name);
+  Symbol* sym = gParseContext.syms.installSelector(name);
   sym->setVal(value);
 
   return sym;
@@ -108,9 +108,9 @@ Symbol* GetSelector(Symbol* obj) {
 
   // Look up the identifier.  If it is not currently defined, define it as
   // the next selector number.
-  if (!(msgSel = gSyms.lookup(token.name()))) {
+  if (!(msgSel = gParseContext.syms.lookup(token.name()))) {
     InstallSelector(token.name(), NewSelectorNum());
-    msgSel = gSyms.lookup(token.name());
+    msgSel = gParseContext.syms.lookup(token.name());
     if (gConfig->showSelectors)
       Info("%s is being installed as a selector.", token.name());
   }
@@ -125,31 +125,31 @@ Symbol* GetSelector(Symbol* obj) {
   // Complain if the symbol is a variable, but a selector of the same name
   //	exists.
   if (IsVar(slot) && slot.type() != S_PROP && slot.type() != S_SELECT &&
-      gSyms.selectorSymTbl->lookup(slot.name())) {
+      gParseContext.syms.selectorSymTbl->lookup(slot.name())) {
     Error("%s is both a selector and a variable.", slot.name());
     return 0;
   }
 
   // The selector must be a selector for the object 'obj', if that
   // object is known.
-  gReceiver = 0;
+  gParseContext.receiver = 0;
   if (!IsVar(slot) && obj && (obj->type == S_OBJ || obj->type == S_CLASS) &&
       obj->obj()) {
     if (obj->hasVal(OBJ_SELF)) {
-      gReceiver = gCurObj;
+      gParseContext.receiver = gParseContext.curObj;
     } else if (obj->hasVal(OBJ_SUPER)) {
       /* Dont try to find super of RootObj */
-      if (gCurObj->super >= 0)
-        gReceiver = gClasses[gCurObj->super];
+      if (gParseContext.curObj->super >= 0)
+        gParseContext.receiver = gParseContext.classes[gParseContext.curObj->super];
       else {
-        gReceiver = gCurObj;
+        gParseContext.receiver = gParseContext.curObj;
         Severe("RootObj has no super.");
       }
     } else {
-      gReceiver = obj->obj();
+      gParseContext.receiver = obj->obj();
     }
 
-    if (!gReceiver->findSelectorByNum(slot.val())) {
+    if (!gParseContext.receiver->findSelectorByNum(slot.val())) {
       Error("Not a selector for %s: %s", obj->name(), slot.name());
       return 0;
     }

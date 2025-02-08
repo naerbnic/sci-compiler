@@ -21,9 +21,9 @@
 
 static void DefClassItems(Class* theClass, int what);
 
-void InstallObjects() {
+void InstallObjects(ParseContext* parseContext) {
   // Install 'RootObj' as the root of the class system.
-  Symbol* sym = gSyms.installClass("RootObj");
+  Symbol* sym = parseContext->syms.installClass("RootObj");
   auto rootClassOwned = std::make_unique<Class>();
   auto* rootClass = rootClassOwned.get();
   sym->setObj(std::move(rootClassOwned));
@@ -35,40 +35,42 @@ void InstallObjects() {
   // Install the root class' selectors in the symbol table and add them
   // to the root class.
   InstallSelector("-objID-", SEL_OBJID);
-  if ((sym = gSyms.lookup("-objID-")))
+  if ((sym = parseContext->syms.lookup("-objID-")))
     rootClass->addSelector(sym, T_PROP)->val = 0x1234;
 
   InstallSelector("-size-", SEL_SIZE);
-  if ((sym = gSyms.lookup("-size-"))) rootClass->addSelector(sym, T_PROP);
+  if ((sym = parseContext->syms.lookup("-size-")))
+    rootClass->addSelector(sym, T_PROP);
 
   InstallSelector("-propDict-", SEL_PROPDICT);
-  if ((sym = gSyms.lookup("-propDict-"))) {
+  if ((sym = parseContext->syms.lookup("-propDict-"))) {
     rootClass->addSelector(sym, T_PROPDICT);
   }
 
   InstallSelector("-methDict-", SEL_METHDICT);
-  if ((sym = gSyms.lookup("-methDict-")))
+  if ((sym = parseContext->syms.lookup("-methDict-")))
     rootClass->addSelector(sym, T_METHDICT);
 
   InstallSelector("-classScript-", SEL_CLASS_SCRIPT);
-  if ((sym = gSyms.lookup("-classScript-")))
+  if ((sym = parseContext->syms.lookup("-classScript-")))
     rootClass->addSelector(sym, T_PROP)->val = 0;
 
   InstallSelector("-script-", SEL_SCRIPT);
-  if ((sym = gSyms.lookup("-script-"))) rootClass->addSelector(sym, T_PROP);
+  if ((sym = parseContext->syms.lookup("-script-")))
+    rootClass->addSelector(sym, T_PROP);
 
   InstallSelector("-super-", SEL_SUPER);
-  if ((sym = gSyms.lookup("-super-")))
+  if ((sym = parseContext->syms.lookup("-super-")))
     rootClass->addSelector(sym, T_PROP)->val = -1;
 
   InstallSelector("-info-", SEL_INFO);
-  if ((sym = gSyms.lookup("-info-")))
+  if ((sym = parseContext->syms.lookup("-info-")))
     rootClass->addSelector(sym, T_PROP)->val = CLASSBIT;
 
   // Install 'self' and 'super' as objects.
-  sym = gSyms.installGlobal("self", S_OBJ);
+  sym = parseContext->syms.installGlobal("self", S_OBJ);
   sym->setVal((int)OBJ_SELF);
-  sym = gSyms.installGlobal("super", S_CLASS);
+  sym = parseContext->syms.installGlobal("super", S_CLASS);
   sym->setVal((int)OBJ_SUPER);
 }
 
@@ -83,11 +85,11 @@ void DefineClass() {
   auto slot = LookupTok();
   auto* sym = slot.symbol();
   if (!sym)
-    sym = gSyms.installClass(slot.name());
+    sym = gParseContext.syms.installClass(slot.name());
 
   else if (slot.type() == S_IDENT || slot.type() == S_OBJ) {
-    gSyms.del(slot.name());
-    sym = gSyms.installClass(slot.name());
+    gParseContext.syms.del(slot.name());
+    sym = gParseContext.syms.installClass(slot.name());
 
   } else {
     Severe("Redefinition of %s.", slot.name());
@@ -116,11 +118,13 @@ void DefineClass() {
   theClass->num = classNum;
   theClass->sym = sym;
   theClass->file = superFile;
-  if (classNum > gMaxClassNum) gMaxClassNum = classNum;
-  if (classNum >= 0 && gClasses[classNum] == 0)
-    gClasses[classNum] = theClass;
+  if (classNum > gParseContext.maxClassNum)
+    gParseContext.maxClassNum = classNum;
+  if (classNum >= 0 && gParseContext.classes[classNum] == 0)
+    gParseContext.classes[classNum] = theClass;
   else {
-    Severe("%s is already class #%d.", gClasses[classNum]->name, classNum);
+    Severe("%s is already class #%d.", gParseContext.classes[classNum]->name,
+           classNum);
     return;
   }
 
@@ -207,9 +211,9 @@ int GetClassNumber(Class* theClass) {
   // Return the first free class number.
 
   for (int i = 0; i < MAXCLASSES; ++i)
-    if (gClasses[i] == nullptr) {
-      gClasses[i] = theClass;
-      if (i > gMaxClassNum) gMaxClassNum = i;
+    if (gParseContext.classes[i] == nullptr) {
+      gParseContext.classes[i] = theClass;
+      if (i > gParseContext.maxClassNum) gParseContext.maxClassNum = i;
       return i;
     }
 
@@ -220,7 +224,7 @@ int GetClassNumber(Class* theClass) {
 }
 
 Class* FindClass(int n) {
-  for (auto* sp : gSyms.classSymTbl->symbols())
+  for (auto* sp : gParseContext.syms.classSymTbl->symbols())
     if (sp->obj() && sp->obj()->num == n) return (Class*)sp->obj();
 
   return 0;
@@ -234,7 +238,7 @@ Class* NextClass(int n) {
 
   cp = 0;
   m = 0x7fff;
-  for (auto* sp : gSyms.classSymTbl->symbols())
+  for (auto* sp : gParseContext.syms.classSymTbl->symbols())
     if (sp->obj()->num > n && sp->obj()->num < m) {
       cp = sp->obj();
       m = cp->num;
