@@ -46,14 +46,14 @@ void Define() {
 
   if (NextToken()) {
     if (symType() != S_IDENT) {
-      Severe("Identifier required: %s", gSymStr);
+      Severe("Identifier required: %s", gTokenState.symStr());
       return;
     }
 
-    Symbol* sym = gSyms.lookup(gSymStr);
+    Symbol* sym = gSyms.lookup(gTokenState.symStr());
     bool newSym = sym == 0;
     if (newSym)
-      sym = gSyms.installLocal(gSymStr, S_DEFINE);
+      sym = gSyms.installLocal(gTokenState.symStr(), S_DEFINE);
     else if (sym->type != S_DEFINE)
       // This isn't just a re-'define' of the symbol, it's a change
       // in symbol type.
@@ -62,7 +62,8 @@ void Define() {
     GetRest();
 
     if (!newSym) {
-      std::string_view newString = absl::StripAsciiWhitespace(gSymStr);
+      std::string_view newString =
+          absl::StripAsciiWhitespace(gTokenState.symStr());
       std::string_view oldString = absl::StripAsciiWhitespace(sym->str());
 
       if (newString != oldString) {
@@ -72,7 +73,7 @@ void Define() {
       }
     }
 
-    if (newSym) sym->setStr(gSymStr);
+    if (newSym) sym->setStr(gTokenState.symStr());
   }
 }
 
@@ -86,7 +87,7 @@ void Enum() {
       val = symVal();
 
     else if (IsUndefinedIdent()) {
-      Symbol* theSym = gSyms.installLocal(gSymStr, S_DEFINE);
+      Symbol* theSym = gSyms.installLocal(gTokenState.symStr(), S_DEFINE);
 
       //	initializer expression?
       LookupTok();
@@ -109,10 +110,10 @@ void GlobalDecl() {
 
   for (GetToken(); !CloseP(symType()); GetToken()) {
     if (!IsIdent()) {
-      Severe("Global variable name expected. Got: %s", gSymStr);
+      Severe("Global variable name expected. Got: %s", gTokenState.symStr());
       break;
     }
-    std::string varName = gSymStr;
+    std::string varName = gTokenState.symStr();
     if (!GetNumber("Variable #")) break;
 
     // We only install into the symbol table for globals. We do not add
@@ -164,7 +165,7 @@ void Global() {
     if (OpenP(symType()))
       Definition();
     else if (IsIdent()) {
-      std::string varName = gSymStr;
+      std::string varName = gTokenState.symStr();
       if (!GetNumber("Variable #")) break;
 
       // Try to get the symbol from the symbol table.
@@ -233,7 +234,7 @@ void Local() {
   for (GetToken(); !CloseP(symType()); GetToken()) {
     if (symType() == S_OPEN_BRACKET) {
       if (GetIdent()) {
-        theSym = gSyms.installLocal(gSymStr, S_LOCAL);
+        theSym = gSyms.installLocal(gTokenState.symStr(), S_LOCAL);
         theSym->setVal(size);
         if (!GetNumber("Array size")) break;
         arraySize = symVal();
@@ -254,7 +255,7 @@ void Local() {
       Definition();
 
     else if (IsUndefinedIdent()) {
-      theSym = gSyms.installLocal(gSymStr, S_LOCAL);
+      theSym = gSyms.installLocal(gTokenState.symStr(), S_LOCAL);
       theSym->setVal(size);
       n = InitialValue(gLocalVars, size, 1);
       size += n;
@@ -283,7 +284,7 @@ void Definition() {
       break;
 
     default:
-      Severe("define or enum expected: %s", gSymStr);
+      Severe("define or enum expected: %s", gTokenState.symStr());
   }
   CloseBlock();
 }
@@ -297,9 +298,9 @@ void Extern() {
     else {
       // Install the symbol in both the symbol table and the
       // externals list.
-      Symbol* theSym = gSyms.lookup(gSymStr);
+      Symbol* theSym = gSyms.lookup(gTokenState.symStr());
       if (!theSym) {
-        theSym = gSyms.installLocal(gSymStr, S_EXTERN);
+        theSym = gSyms.installLocal(gTokenState.symStr(), S_EXTERN);
       }
       auto entry = std::make_unique<Public>(theSym);
       auto* theEntry = entry.get();
@@ -330,8 +331,10 @@ void DoPublic() {
   for (GetToken(); !CloseP(symType()); GetToken()) {
     // Install the symbol in both the symbol table and the
     // publics list.
-    if (!(theSym = gSyms.lookup(gSymStr)) || theSym->type == S_EXTERN)
-      theSym = gSyms.installModule(gSymStr, (sym_t)(!theSym ? S_OBJ : S_IDENT));
+    if (!(theSym = gSyms.lookup(gTokenState.symStr())) ||
+        theSym->type == S_EXTERN)
+      theSym = gSyms.installModule(gTokenState.symStr(),
+                                   (sym_t)(!theSym ? S_OBJ : S_IDENT));
     auto theEntry = std::make_unique<Public>(theSym);
     auto* entryPtr = theEntry.get();
     publicList.push_front(std::move(theEntry));

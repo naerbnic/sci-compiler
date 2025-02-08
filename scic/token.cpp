@@ -25,10 +25,6 @@
 
 #define ALT_QUOTE '{'
 
-int gNestedCondCompile;
-std::string gSymStr;
-TokenSlot gTokSym;
-
 static constexpr std::string_view binDigits = "01";
 static constexpr std::string_view decDigits = "0123456789";
 static bool haveUnGet;
@@ -72,7 +68,7 @@ void GetToken() {
 
   // Save the token type and value returned, in case we want to 'unget'
   // the token after changing them.
-  lastTok = gTokSym;
+  lastTok = gTokenState.tokSym();
 }
 
 bool NewToken() {
@@ -81,7 +77,7 @@ bool NewToken() {
   Symbol* theSym;
 
   if (NextToken()) {
-    if (symType() == S_IDENT && (theSym = gSyms.lookup(gSymStr)) &&
+    if (symType() == S_IDENT && (theSym = gSyms.lookup(gTokenState.symStr())) &&
         theSym->type == S_DEFINE) {
       gInputState.SetStringInput(theSym->str());
       NewToken();
@@ -104,7 +100,7 @@ void GetRest(bool error) {
   if (error && gInputState.IsDone()) return;
 
   std::string_view ip = gInputState.GetRemainingLine();
-  gSymStr.clear();
+  gTokenState.symStr().clear();
   pLevel = 0;
   truncate = false;
 
@@ -141,12 +137,12 @@ void GetRest(bool error) {
     }
 
     if (!truncate) {
-      gSymStr.push_back(currCharAndAdvance(ip));
+      gTokenState.symStr().push_back(currCharAndAdvance(ip));
     } else {
       advance(ip);
     }
 
-    if (gSymStr.length() >= MaxTokenLen && !truncate) {
+    if (gTokenState.symStr().length() >= MaxTokenLen && !truncate) {
       if (!error) Warning("Define too long.  Truncated.");
       truncate = true;
     }
@@ -161,7 +157,7 @@ bool NextToken() {
 
   if (haveUnGet) {
     haveUnGet = false;
-    gTokSym = lastTok;
+    gTokenState.tokSym() = lastTok;
     return true;
   }
 
@@ -226,10 +222,10 @@ bool NextToken() {
   // character, but simply causes us to move to another input source.
 
   c = ip[0];
-  gSymStr.clear();
+  gTokenState.symStr().clear();
 
   if (IsTok(c)) {
-    gSymStr.push_back(c);
+    gTokenState.symStr().push_back(c);
     setSymType((sym_t)c);
     gInputState.SetRemainingLine(ip.substr(1));
     return true;
@@ -262,7 +258,7 @@ bool NextToken() {
       break;
     }
     if (IsIncl(c)) break;
-    gSymStr.push_back(c);
+    gTokenState.symStr().push_back(c);
     if (ip.empty()) {
       break;
     }
@@ -300,41 +296,45 @@ compiling:
     switch (GetPreprocessorToken()) {
       case PT_IF:
         if (!GetNumber("Constant expression")) setSymVal(0);
-        ++gNestedCondCompile;
+        ++gTokenState.nestedCondCompile();
         if (!symVal()) goto notCompiling;
         break;
 
       case PT_IFDEF:
-        ++gNestedCondCompile;
+        ++gTokenState.nestedCondCompile();
         if (!GetDefineSymbol()) goto notCompiling;
         break;
 
       case PT_IFNDEF:
-        ++gNestedCondCompile;
+        ++gTokenState.nestedCondCompile();
         if (GetDefineSymbol()) goto notCompiling;
         break;
 
       case PT_ELIF:
-        if (!gNestedCondCompile) Error("#elif without corresponding #if");
+        if (!gTokenState.nestedCondCompile())
+          Error("#elif without corresponding #if");
         goto gettingEndif;
 
       case PT_ELIFDEF:
-        if (!gNestedCondCompile) Error("#elifdef without corresponding #if");
+        if (!gTokenState.nestedCondCompile())
+          Error("#elifdef without corresponding #if");
         goto gettingEndif;
 
       case PT_ELIFNDEF:
-        if (!gNestedCondCompile) Error("#elifndef without corresponding #if");
+        if (!gTokenState.nestedCondCompile())
+          Error("#elifndef without corresponding #if");
         goto gettingEndif;
 
       case PT_ELSE:
-        if (!gNestedCondCompile) Error("#else without corresponding #if");
+        if (!gTokenState.nestedCondCompile())
+          Error("#else without corresponding #if");
         goto gettingEndif;
 
       case PT_ENDIF:
-        if (!gNestedCondCompile)
+        if (!gTokenState.nestedCondCompile())
           Error("#endif without corresponding #if");
         else
-          --gNestedCondCompile;
+          --gTokenState.nestedCondCompile();
         break;
 
       default:
@@ -376,7 +376,7 @@ notCompiling:
 
       case PT_ENDIF:
         if (!level) {
-          --gNestedCondCompile;
+          --gTokenState.nestedCondCompile();
           goto compiling;
         }
         --level;
@@ -403,7 +403,7 @@ gettingEndif:
 
       case PT_ENDIF:
         if (!level) {
-          --gNestedCondCompile;
+          --gTokenState.nestedCondCompile();
           goto compiling;
         }
         --level;
@@ -464,21 +464,21 @@ static void ReadNumber(std::string_view ip) {
   std::string_view validDigits;
 
   SCIWord val = 0;
-  gSymStr.clear();
+  gTokenState.symStr().clear();
 
   // Determine the sign of the number
   if (currChar(ip) != '-')
     sign = 1;
   else {
     sign = -1;
-    gSymStr.push_back(currCharAndAdvance(ip));
+    gTokenState.symStr().push_back(currCharAndAdvance(ip));
   }
 
   // Determine the base of the number
   base = 10;
   if (currChar(ip) == '%' || currChar(ip) == '$') {
     base = (currChar(ip) == '%') ? 2 : 16;
-    gSymStr.push_back(currCharAndAdvance(ip));
+    gTokenState.symStr().push_back(currCharAndAdvance(ip));
   }
   switch (base) {
     case 2:
@@ -503,7 +503,7 @@ static void ReadNumber(std::string_view ip) {
     }
     val = SCIWord((val * base) + char_index);
     advance(ip);
-    gSymStr.push_back(rawChar);
+    gTokenState.symStr().push_back(rawChar);
   }
 
   val *= sign;
@@ -520,7 +520,7 @@ static void ReadString(std::string_view ip) {
   uint32_t n;
 
   truncated = false;
-  gSymStr.clear();
+  gTokenState.symStr().clear();
   open = currCharAndAdvance(ip);
 
   setSymType(S_STRING);
@@ -543,13 +543,14 @@ static void ReadString(std::string_view ip) {
         break;
 
       case '_':
-        if (!truncated) gSymStr.push_back(' ');
+        if (!truncated) gTokenState.symStr().push_back(' ');
         break;
 
       case ' ':
       case '\t':
-        if (!gSymStr.empty() && gSymStr.back() != '\n' && !truncated) {
-          gSymStr.push_back(' ');
+        if (!gTokenState.symStr().empty() &&
+            gTokenState.symStr().back() != '\n' && !truncated) {
+          gTokenState.symStr().push_back(' ');
         }
         while ((c = currChar(ip)) == ' ' || c == '\t' || c == '\n') {
           advance(ip);
@@ -565,19 +566,19 @@ static void ReadString(std::string_view ip) {
           // Then just use char as is.
           switch (c) {
             case 'n':
-              if (!truncated) gSymStr.push_back('\n');
+              if (!truncated) gTokenState.symStr().push_back('\n');
               break;
             case 't':
-              if (!truncated) gSymStr.push_back('\t');
+              if (!truncated) gTokenState.symStr().push_back('\t');
               break;
             case 'r':
               if (!truncated) {
-                gSymStr.push_back('\r');
-                gSymStr.push_back('\n');
+                gTokenState.symStr().push_back('\r');
+                gTokenState.symStr().push_back('\n');
               }
               break;
             default:
-              if (!truncated) gSymStr.push_back(c);
+              if (!truncated) gTokenState.symStr().push_back(c);
               break;
           }
 
@@ -591,17 +592,17 @@ static void ReadString(std::string_view ip) {
           c = absl::ascii_tolower(c);
           int low_digit = hexDigits.find(c);
           n += (uint32_t)low_digit;
-          if (!truncated) gSymStr.push_back((char)n);
+          if (!truncated) gTokenState.symStr().push_back((char)n);
         }
 
         break;
 
       default:
-        if (!truncated) gSymStr.push_back(c);
+        if (!truncated) gTokenState.symStr().push_back(c);
         break;
     }
 
-    if (gSymStr.length() >= MaxTokenLen && !truncated) {
+    if (gTokenState.symStr().length() >= MaxTokenLen && !truncated) {
       Error("String too large.");
       truncated = true;
     }
@@ -625,37 +626,39 @@ static uint32_t altKey[] = {
 static void ReadKey(std::string_view ip) {
   setSymType(S_NUM);
 
-  gSymStr.clear();
-  while (!IsTerm(currChar(ip))) gSymStr.push_back(currCharAndAdvance(ip));
+  gTokenState.symStr().clear();
+  while (!IsTerm(currChar(ip)))
+    gTokenState.symStr().push_back(currCharAndAdvance(ip));
 
-  char firstChar = gSymStr[0];
+  char firstChar = gTokenState.symStr()[0];
 
   switch (firstChar) {
     case '^': {
       // A control key.
-      auto ctrlChar = gSymStr[1];
+      auto ctrlChar = gTokenState.symStr()[1];
       if (isalpha(ctrlChar))
         setSymVal(toupper(ctrlChar) - 0x40);
       else
-        Error("Not a valid control key: %s", gSymStr);
+        Error("Not a valid control key: %s", gTokenState.symStr());
       break;
     }
 
     case '@': {
       // An alt-key.
-      auto altChar = gSymStr[1];
+      auto altChar = gTokenState.symStr()[1];
       if (isalpha(altChar))
         setSymVal(altKey[toupper(altChar) - 'A'] << 8);
       else
-        Error("Not a valid alt key: %s", gSymStr);
+        Error("Not a valid alt key: %s", gTokenState.symStr());
       break;
     }
 
     case '#': {
       // A function key.
       int num;
-      if (!absl::SimpleAtoi(std::string_view(gSymStr).substr(1), &num)) {
-        Error("Not a valid function key: %s", gSymStr);
+      if (!absl::SimpleAtoi(std::string_view(gTokenState.symStr()).substr(1),
+                            &num)) {
+        Error("Not a valid function key: %s", gTokenState.symStr());
         break;
       }
       setSymVal((num + 58) << 8);
@@ -670,3 +673,7 @@ static void ReadKey(std::string_view ip) {
 
   gInputState.SetRemainingLine(ip);
 }
+
+TokenState::TokenState() : nested_cond_compile_(0) {}
+
+TokenState gTokenState;

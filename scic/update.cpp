@@ -112,15 +112,15 @@ void WritePropOffsets() {
   out.Write(resHdr, sizeof resHdr);
 
   while (NewToken()) {
-    theSym = gSyms.lookup(gSymStr);
+    theSym = gSyms.lookup(gTokenState.symStr());
     if (theSym->type != S_CLASS) {
-      Error("Not a class: %s", gSymStr);
+      Error("Not a class: %s", gTokenState.symStr());
       GetToken();
       continue;
     }
     cp = theSym->obj();
-    if (!LookupTok() || !(sel = cp->findSelectorByNum(gTokSym.val()))) {
-      Error("Not a selector for class %s: %s", cp->sym->name(), gSymStr);
+    if (!LookupTok() || !(sel = cp->findSelectorByNum(gTokenState.tokSym().val()))) {
+      Error("Not a selector for class %s: %s", cp->sym->name(), gTokenState.symStr());
       continue;
     }
 
