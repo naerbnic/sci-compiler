@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <variant>
 
 #include "scic/alist.hpp"
@@ -139,7 +140,7 @@ struct ANCodeBlk : ANode
 // reset the current list back to its original value when the code is
 // complete.
 {
-  ANCodeBlk(Symbol* s);
+  ANCodeBlk(std::string name);
 
   size_t size() override;
   void emit(OutputFile*) override;
@@ -147,7 +148,7 @@ struct ANCodeBlk : ANode
   void list(ListingFile* listFile) override;
   bool optimize() override;
 
-  Symbol* sym;
+  std::string name;  // name of procedure or method
   AOpList code;
 };
 
@@ -155,7 +156,7 @@ struct ANMethCode : ANCodeBlk
 // ANMethCode is just a listing-specific subclass of ANCodeBlk, which
 // generates "Method" rather than "Procedure" in the listing.
 {
-  ANMethCode(Symbol* s);
+  ANMethCode(std::string name);
 
   void list(ListingFile* listFile);
 
@@ -167,7 +168,7 @@ struct ANProcCode : ANCodeBlk
 // ANProcCode is just a listing-specific subclass of ANCodeBlk, which
 // generates "Procedure" rather than "Method" in the listing.
 {
-  ANProcCode(Symbol* s) : ANCodeBlk(s) {}
+  ANProcCode(std::string name) : ANCodeBlk(std::move(name)) {}
 
   void list(ListingFile* listFile);
 };

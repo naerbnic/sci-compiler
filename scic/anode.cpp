@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include "scic/alist.hpp"
 #include "scic/asm.hpp"
@@ -206,7 +207,7 @@ void ANObject::list(ListingFile* listFile) {
 // Class ANCodeBlk
 ///////////////////////////////////////////////////
 
-ANCodeBlk::ANCodeBlk(Symbol* s) : sym(s) {
+ANCodeBlk::ANCodeBlk(std::string name) : name(std::move(name)) {
   ANLabel::reset();
 
   if (!gCodeStart) gCodeStart = this;
@@ -230,7 +231,7 @@ bool ANCodeBlk::optimize() { return OptimizeProc(&code); }
 ///////////////////////////////////////////////////
 
 void ANProcCode::list(ListingFile* listFile) {
-  listFile->Listing("\n\nProcedure: (%s)\n", sym->name());
+  listFile->Listing("\n\nProcedure: (%s)\n", name);
   ANCodeBlk::list(listFile);
 }
 
@@ -238,10 +239,11 @@ void ANProcCode::list(ListingFile* listFile) {
 // Class ANMethCode
 ///////////////////////////////////////////////////
 
-ANMethCode::ANMethCode(Symbol* s) : ANCodeBlk(s), objSym(gCurObj->sym) {}
+ANMethCode::ANMethCode(std::string name)
+    : ANCodeBlk(std::move(name)), objSym(gCurObj->sym) {}
 
 void ANMethCode::list(ListingFile* listFile) {
-  listFile->Listing("\n\nMethod: (%s %s)\n", objSym->name(), sym->name());
+  listFile->Listing("\n\nMethod: (%s %s)\n", objSym->name(), name);
   ANCodeBlk::list(listFile);
 }
 

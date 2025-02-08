@@ -6,13 +6,13 @@
 #include <cstddef>
 #include <cstdint>
 #include <ranges>
+#include <string>
 
 #include "scic/alist.hpp"
 #include "scic/anode.hpp"
 #include "scic/asm.hpp"
 #include "scic/config.hpp"
 #include "scic/define.hpp"
-#include "scic/public.hpp"
 #include "scic/error.hpp"
 #include "scic/input.hpp"
 #include "scic/loop.hpp"
@@ -20,6 +20,7 @@
 #include "scic/opcodes.hpp"
 #include "scic/parse_context.hpp"
 #include "scic/pnode.hpp"
+#include "scic/public.hpp"
 #include "scic/sc.hpp"
 #include "scic/symtypes.hpp"
 #include "scic/text.hpp"
@@ -930,10 +931,12 @@ static void MakeProc(AList* curList, PNode* pn) {
   // Make a procedure node and point to the symbol for the procedure
   // (for listing purposes).
   ANCodeBlk* an = pn->type == PN_PROC
-                      ? (ANCodeBlk*)curList->newNode<ANProcCode>(pn->sym)
-                      : (ANCodeBlk*)curList->newNode<ANMethCode>(pn->sym);
+                      ? (ANCodeBlk*)curList->newNode<ANProcCode>(
+                            std::string(pn->sym->name()))
+                      : (ANCodeBlk*)curList->newNode<ANMethCode>(
+                            std::string(pn->sym->name()));
 
-  an->sym->type = (sym_t)(pn->type == PN_PROC ? S_PROC : S_SELECT);
+  pn->sym->type = (sym_t)(pn->type == PN_PROC ? S_PROC : S_SELECT);
 
   // If any nodes already compiled have this procedure as a target,
   // they will be on a list hanging off the procedure's symbol table
