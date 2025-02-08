@@ -98,9 +98,9 @@ static std::unique_ptr<PNode> _CallDef(sym_t theType) {
       break;
 
     case S_SELECT:
-      if (!theProc || !(sn = gCurObj->findSelectorByNum(theProc->val())) ||
+      if (!theProc || !(sn = gParseContext.curObj->findSelectorByNum(theProc->val())) ||
           IsProperty(sn)) {
-        Severe("%s is not a method for class %s", token.name(), gCurObj->name);
+        Severe("%s is not a method for class %s", token.name(), gParseContext.curObj->name);
         return 0;
       }
       break;
@@ -154,7 +154,7 @@ static int ParameterList() {
       }
 
     } else if (slot.type() == S_SELECT) {
-      if (gCurObj && gCurObj->findSelectorByNum(slot.val()))
+      if (gParseContext.curObj && gParseContext.curObj->findSelectorByNum(slot.val()))
         Error("%s is a selector for current object.", slot.name());
       else
         gSyms.installLocal(slot.name(), parmType)->setVal(parmOfs++);

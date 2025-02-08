@@ -130,18 +130,18 @@ static void InstanceBody(Object* obj) {
   SymTbl* symTbl = gSyms.add(ST_MINI);
 
   jmp_buf savedBuf;
-  memcpy(savedBuf, gRecoverBuf, sizeof(jmp_buf));
+  memcpy(savedBuf, gParseContext.recoverBuf, sizeof(jmp_buf));
 
   // Get a pointer to the 'name' selector for this object and zero
   // out the property.
-  Selector* nameSelector = obj->findSelectorByNum(gNameSymbol->val());
+  Selector* nameSelector = obj->findSelectorByNum(gParseContext.nameSymbol->val());
   if (nameSelector) nameSelector->val = -1;
 
   // Get any property or method definitions.
-  gCurObj = obj;
+  gParseContext.curObj = obj;
   for (auto token = GetToken(); OpenP(token.type()); token = GetToken()) {
     // The original code ignores the return value of setjmp.
-    (void)setjmp(gRecoverBuf);
+    (void)setjmp(gParseContext.recoverBuf);
     token = GetToken();
     switch (Keyword(token)) {
       case K_PROPLIST:
@@ -172,8 +172,8 @@ static void InstanceBody(Object* obj) {
       case K_INSTANCE:
         // Oops!  Got out of synch!
         Error("Mismatched parentheses!");
-        memcpy(gRecoverBuf, savedBuf, sizeof(jmp_buf));
-        longjmp(gRecoverBuf, 1);
+        memcpy(gParseContext.recoverBuf, savedBuf, sizeof(jmp_buf));
+        longjmp(gParseContext.recoverBuf, 1);
 
       default:
         Severe("Only property and method definitions allowed: %s.",
@@ -186,7 +186,7 @@ static void InstanceBody(Object* obj) {
 
   UnGetTok();
 
-  memcpy(gRecoverBuf, savedBuf, sizeof(jmp_buf));
+  memcpy(gParseContext.recoverBuf, savedBuf, sizeof(jmp_buf));
 
   // If 'name' has not been given a value, give it the
   // name of the symbol.
@@ -212,7 +212,7 @@ static void InstanceBody(Object* obj) {
 
   // Compile code for the object.
   MakeObject(obj);
-  gCurObj = 0;
+  gParseContext.curObj = 0;
 
   gSyms.deactivate(symTbl);
 }
@@ -287,7 +287,7 @@ void DoClass() {
     theClass->sym = sym;
     theClass->name = sym->name();
     sym->setObj(std::move(theClassOwned));
-    gClasses[classNum] = theClass;
+    gParseContext.classes[classNum] = theClass;
   }
 
   // Set the super-class number for this class.

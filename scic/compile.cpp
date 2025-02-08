@@ -376,7 +376,7 @@ static void MakeObjID(AOpList* curList, PNode* pn) {
 
     // If the object is not defined yet, add this node to the list
     // of those waiting for the definition.
-    if (!sym->obj() || sym->obj() == gCurObj) {
+    if (!sym->obj() || sym->obj() == gParseContext.curObj) {
       sym->forwardRef.RegisterCallback(
           [an](ANode* target) { an->target = target; });
     } else {

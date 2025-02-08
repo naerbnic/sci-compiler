@@ -112,7 +112,7 @@ void GlobalDecl() {
     if (!var_num) break;
 
     // We only install into the symbol table for globals. We do not add
-    // global variables to the gGlobalVars list. That still has to be
+    // global variables to the gParseContext.globalVars list. That still has to be
     // done by Script0.
     Symbol* theSym = gSyms.lookup(varName);
     if (theSym) {
@@ -188,8 +188,8 @@ void Global() {
 
       // Get the initial value(s) of the variable and expand the size
       // of the block if more than one value is encountered.
-      n = InitialValue(gGlobalVars, offset, 1);
-      if (n == -1 || gGlobalVars.values.size() > gConfig->maxVars) {
+      n = InitialValue(gParseContext.globalVars, offset, 1);
+      if (n == -1 || gParseContext.globalVars.values.size() > gConfig->maxVars) {
         Error(tooManyVars, gConfig->maxVars);
         break;
       }
@@ -197,7 +197,7 @@ void Global() {
   }
 
   // Put the information back in the variable structure.
-  gGlobalVars.type = VAR_GLOBAL;
+  gParseContext.globalVars.type = VAR_GLOBAL;
 
   UnGetTok();
 }
@@ -220,7 +220,7 @@ void Local() {
     return;
   }
 
-  if (!gLocalVars.values.empty()) {
+  if (!gParseContext.localVars.values.empty()) {
     Error("Only one local statement allowed");
     return;
   }
@@ -241,7 +241,7 @@ void Local() {
           Severe("no closing ']' in array declaration");
           break;
         }
-        n = InitialValue(gLocalVars, size, arraySize);
+        n = InitialValue(gParseContext.localVars, size, arraySize);
         size += std::max(n, arraySize);
         if (n == -1 || (std::size_t)(size) > gConfig->maxVars) {
           Error(tooManyVars, gConfig->maxVars);
@@ -255,7 +255,7 @@ void Local() {
     else if (IsUndefinedIdent(token)) {
       theSym = gSyms.installLocal(token.name(), S_LOCAL);
       theSym->setVal(size);
-      n = InitialValue(gLocalVars, size, 1);
+      n = InitialValue(gParseContext.localVars, size, 1);
       size += n;
       if (n == -1 || (std::size_t)(size) > gConfig->maxVars) {
         Error(tooManyVars, gConfig->maxVars);
@@ -265,7 +265,7 @@ void Local() {
   }
 
   // Put the information back in the variable structure.
-  gLocalVars.type = VAR_LOCAL;
+  gParseContext.localVars.type = VAR_LOCAL;
 
   UnGetTok();
 }
@@ -319,8 +319,8 @@ void Extern() {
 }
 
 void InitPublics() {
-  publicList.clear();
-  publicMax = -1;
+  gParseContext.publicList.clear();
+  gParseContext.publicMax = -1;
 }
 
 void DoPublic() {
@@ -336,27 +336,27 @@ void DoPublic() {
           gSyms.installModule(token.name(), (sym_t)(!theSym ? S_OBJ : S_IDENT));
     auto theEntry = std::make_unique<Public>(theSym);
     auto* entryPtr = theEntry.get();
-    publicList.push_front(std::move(theEntry));
+    gParseContext.publicList.push_front(std::move(theEntry));
 
     auto entry_num = GetNumber("Entry #");
     if (!entry_num) break;
 
     // Keep track of the maximum numbered public entry.
     entryPtr->entry = *entry_num;
-    if (*entry_num > publicMax) publicMax = *entry_num;
+    if (*entry_num > gParseContext.publicMax) gParseContext.publicMax = *entry_num;
   }
 
   UnGetTok();
 
   // Generate the assembly nodes for the dispatch table.
-  MakeDispatch(publicMax);
+  MakeDispatch(gParseContext.publicMax);
 }
 
 Symbol* FindPublic(int n) {
   // Return a pointer to the symbol which is entry number 'n' in the
   // dispatch table.
 
-  for (auto const& entry : publicList) {
+  for (auto const& entry : gParseContext.publicList) {
     if (entry->entry == (uint32_t)n) return entry->sym;
   }
 

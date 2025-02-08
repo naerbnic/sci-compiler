@@ -24,7 +24,7 @@ void InitAsm() {
   // Initialize the assembly list: dispose of any old list, then add nodes
   // for the number of local variables.
 
-  gLocalVars.kill();
+  gParseContext.localVars.kill();
 
   gTextStart = 0;
 
@@ -49,7 +49,7 @@ void InitAsm() {
 void Assemble(ListingFile* listFile) {
   // Assemble the list pointed to by asmHead.
 
-  auto vars = std::make_unique<ANVars>(gScript ? gLocalVars : gGlobalVars);
+  auto vars = std::make_unique<ANVars>(gScript ? gParseContext.localVars : gParseContext.globalVars);
   gSc->heapList->addAfter(gSc->heapList->front(), std::move(vars));
 
   // Set the offsets in the object list.

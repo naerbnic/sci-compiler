@@ -223,7 +223,7 @@ void ANProcCode::list(ListingFile* listFile) {
 ///////////////////////////////////////////////////
 
 ANMethCode::ANMethCode(std::string name)
-    : ANCodeBlk(std::move(name)), obj(gCurObj) {}
+    : ANCodeBlk(std::move(name)), obj(gParseContext.curObj) {}
 
 void ANMethCode::list(ListingFile* listFile) {
   listFile->Listing("\n\nMethod: (%s %s)\n", obj->name, name);

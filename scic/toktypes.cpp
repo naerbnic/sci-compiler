@@ -50,14 +50,14 @@ ResolvedTokenSlot LookupTok() {
   }
 
   if (theSym->type == S_SELECT) {
-    if (gCurObj && !gCurObj->selectors().empty()) {
+    if (gParseContext.curObj && !gParseContext.curObj->selectors().empty()) {
       // If the symbol is a property and we're in a method definition,
       //	access the symbol as a local variable.
 
       // A selector list is in effect -- check that the selector
       //	reference is legal (i.e. it is a property in the current
       //	selector list).
-      auto* sn = gCurObj->findSelectorByNum(theSym->val());
+      auto* sn = gParseContext.curObj->findSelectorByNum(theSym->val());
       if (!sn) {
         if (!gInParmList) {
           Error("Not a selector for current class/object: %s", theSym->name());
@@ -231,8 +231,8 @@ bool IsVar(ResolvedTokenSlot const& token) {
       return true;
 
     case S_SELECT:
-      return gCurObj && gSelectorIsVar &&
-             (sn = gCurObj->findSelectorByNum(token.val())) &&
+      return gParseContext.curObj && gSelectorIsVar &&
+             (sn = gParseContext.curObj->findSelectorByNum(token.val())) &&
              sn->tag == T_PROP;
 
     default:

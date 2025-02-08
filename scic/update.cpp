@@ -74,7 +74,7 @@ void WriteClassTbl() {
 
   // Allocate storage for the class table.
   std::vector<ClassTblEntry> classTbl;
-  classTbl.resize(gMaxClassNum + 1);
+  classTbl.resize(gParseContext.maxClassNum + 1);
 
   // Now walk through the class symbol table, entering the script
   // number of each class in its proper place in the table.
@@ -90,7 +90,7 @@ void WriteClassTbl() {
   std::string name = ResNameMake(MemResVocab, CLASSTBL_VOCAB);
   OutputFile out((gConfig->outDir / name).string());
   out.Write(resID, 2);
-  for (index = 0; index < gMaxClassNum + 1; ++index) {
+  for (index = 0; index < gParseContext.maxClassNum + 1; ++index) {
     out.WriteWord(classTbl[index].objID);
     out.WriteWord(classTbl[index].scriptNum);
   }
@@ -201,7 +201,7 @@ static void WriteClasses() {
   if (!(fp = fopen("classes", "w"))) Panic("Can't open 'classes' for output.");
 
   // Print the classes in heirarchical order.
-  PrintSubClasses(gClasses[0], 0, fp);
+  PrintSubClasses(gParseContext.classes[0], 0, fp);
 
   // Close the file.
   if (fclose(fp) == EOF) Panic("Error writing 'classes'");

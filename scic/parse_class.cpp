@@ -116,11 +116,11 @@ void DefineClass() {
   theClass->num = classNum;
   theClass->sym = sym;
   theClass->file = superFile;
-  if (classNum > gMaxClassNum) gMaxClassNum = classNum;
-  if (classNum >= 0 && gClasses[classNum] == 0)
-    gClasses[classNum] = theClass;
+  if (classNum > gParseContext.maxClassNum) gParseContext.maxClassNum = classNum;
+  if (classNum >= 0 && gParseContext.classes[classNum] == 0)
+    gParseContext.classes[classNum] = theClass;
   else {
-    Severe("%s is already class #%d.", gClasses[classNum]->name, classNum);
+    Severe("%s is already class #%d.", gParseContext.classes[classNum]->name, classNum);
     return;
   }
 
@@ -207,9 +207,9 @@ int GetClassNumber(Class* theClass) {
   // Return the first free class number.
 
   for (int i = 0; i < MAXCLASSES; ++i)
-    if (gClasses[i] == nullptr) {
-      gClasses[i] = theClass;
-      if (i > gMaxClassNum) gMaxClassNum = i;
+    if (gParseContext.classes[i] == nullptr) {
+      gParseContext.classes[i] = theClass;
+      if (i > gParseContext.maxClassNum) gParseContext.maxClassNum = i;
       return i;
     }
 

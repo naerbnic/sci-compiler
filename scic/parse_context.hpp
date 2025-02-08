@@ -13,18 +13,25 @@
 
 #define MAXCLASSES 512  // Maximum number of classes
 
-extern jmp_buf gRecoverBuf;
-extern absl::btree_map<int, Class*> gClasses;
-extern int gMaxClassNum;
+class ParseContext {
+ public:
+  ParseContext();
 
-extern Object* gCurObj;
-extern Symbol* gNameSymbol;
-extern Object* gReceiver;
+  jmp_buf recoverBuf;
+  absl::btree_map<int, Class*> classes;
+  int maxClassNum;
 
-extern VarList gGlobalVars;
-extern VarList gLocalVars;
+  Object* curObj;
+  Object* receiver;
+  Symbol* nameSymbol;
 
-extern std::deque<std::unique_ptr<Public>> publicList;
-extern int publicMax;
+  VarList globalVars;
+  VarList localVars;
+
+  std::deque<std::unique_ptr<Public>> publicList;
+  int publicMax;
+};
+
+extern ParseContext gParseContext;
 
 #endif

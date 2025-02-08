@@ -219,7 +219,7 @@ static void CompileFile(std::string_view fileName, bool listCode) {
   gSyms.delFreeTbls();
 
   // Look up the symbol for 'name', as it will be used in object.c.
-  gNameSymbol = gSyms.selectorSymTbl->lookup("name");
+  gParseContext.nameSymbol = gSyms.selectorSymTbl->lookup("name");
 
   // Open the source file.
 
