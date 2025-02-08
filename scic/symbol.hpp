@@ -17,10 +17,10 @@
 #include "absl/strings/str_format.h"
 #include "scic/object.hpp"
 #include "scic/public.hpp"
+#include "scic/reference.hpp"
 #include "scic/symtypes.hpp"
 
 struct ANode;
-struct ANReference;
 
 class Symbol {
   // The Symbol class is where information about identifiers resides.  Symbols
@@ -38,10 +38,9 @@ class Symbol {
   sym_t type;        // symbol type
   uint32_t lineNum;  //	where symbol was first defined
 
- private:
-  std::variant<ANode*, ANReference*>
-      sym_value_;  // pointer to symbol definition in the AList
+  ForwardReference<ANode*> forwardRef;
 
+ private:
   RefVal ref_val_;
 
  public:
@@ -50,21 +49,8 @@ class Symbol {
   }
   void clearName() { name_ = std::nullopt; }
 
-  ANode* an() {
-    auto* ptr = std::get_if<0>(&sym_value_);
-    return ptr ? *ptr : nullptr;
-  }
-  void clearAn() { sym_value_ = static_cast<ANode*>(nullptr); }
-  ANode* loc() {
-    auto* ptr = std::get_if<0>(&sym_value_);
-    return ptr ? *ptr : nullptr;
-  }
-  void setLoc(ANode* loc) { sym_value_ = loc; }
-  ANReference* ref() {
-    auto* ptr = std::get_if<1>(&sym_value_);
-    return ptr ? *ptr : nullptr;
-  }
-  void setRef(ANReference* ref) { sym_value_ = ref; }
+  void clearAn() { forwardRef.Clear(); }
+  void setLoc(ANode* loc) { forwardRef.Resolve(loc); }
 
   RefVal& refVal() { return ref_val_; }
   RefVal const& refVal() const { return ref_val_; }

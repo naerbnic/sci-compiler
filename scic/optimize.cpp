@@ -176,7 +176,7 @@ uint32_t OptimizeProc(AOpList* al) {
       case op_bnt:
       case op_jmp: {
         // Eliminate branches to branches.
-        ANOpCode* label = (ANOpCode*)((ANBranch*)it.get())->target();
+        ANOpCode* label = (ANOpCode*)((ANBranch*)it.get())->target;
         while (label) {
           // 'label' points to the label to which we are branching.  Search
           // for the first op-code following this label.
@@ -189,10 +189,10 @@ uint32_t OptimizeProc(AOpList* al) {
 
           // We're pointing to another jump.  Make its label ou
           // destination and keep trying to optimize.
-          if (tmp->target() == label)
+          if (tmp->target == label)
             label = 0;
           else {
-            ((ANBranch*)it.get())->setTarget(label = (ANOpCode*)tmp->target());
+            ((ANBranch*)it.get())->target = label = (ANOpCode*)tmp->target;
             ++nOptimizations;
           }
         }

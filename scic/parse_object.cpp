@@ -116,7 +116,8 @@ void MethodDef(Object* obj) {
 
         // Save the pointer to the method code.
         sn->tag = T_LOCAL;
-        sn->an = sym->an();
+        sym->forwardRef.RegisterCallback(
+            [sn](ANode* target) { sn->an = target; });
       }
     }
   }

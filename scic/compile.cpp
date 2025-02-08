@@ -345,11 +345,8 @@ static void MakeCall(AOpList* curList, PNode* pn) {
 
     // If the destination procedure has not yet been defined, add
     // this node to the list of those waiting for its definition.
-    if (sym->type == S_PROC && sym->val() == UNDEFINED)
-      call->addBackpatch(sym);
-    else
-      call->setTarget(sym->loc());
-
+    sym->forwardRef.RegisterCallback(
+        [call](ANode* target) { call->target = target; });
     call->numArgs = 2 * numArgs;
 
   } else {
@@ -379,10 +376,12 @@ static void MakeObjID(AOpList* curList, PNode* pn) {
 
     // If the object is not defined yet, add this node to the list
     // of those waiting for the definition.
-    if (!sym->obj() || sym->obj() == gCurObj)
-      an->addBackpatch(sym);
-    else
-      an->setTarget(sym->obj()->an);
+    if (!sym->obj() || sym->obj() == gCurObj) {
+      sym->forwardRef.RegisterCallback(
+          [an](ANode* target) { an->target = target; });
+    } else {
+      an->target = sym->obj()->an;
+    }
   }
 }
 
@@ -608,12 +607,14 @@ void MakeBranch(AOpList* curList, uint8_t theCode, ANode* bn, Symbol* dest) {
   // If the target of the branch has already been defined, point to
   // it.  Otherwise, add this node the the list of those waiting for
   // the target to be defined
-  if (bn)
-    an->setTarget(bn);
-  else if (dest)
-    an->addBackpatch(dest);
-  else
+  if (bn) {
+    an->target = bn;
+  } else if (dest) {
+    dest->forwardRef.RegisterCallback(
+        [an](ANode* target) { an->target = target; });
+  } else {
     Error("MakeBranch: bad call");
+  }
 }
 
 static void MakeComp(AOpList* curList, PNode* pn) {
@@ -948,9 +949,7 @@ static void MakeProc(AList* curList, PNode* pn) {
   // they will be on a list hanging off the procedure's symbol table
   // entry (in the 'ref' property) (compiled by the first reference to the
   // procedure).  Let all these nodes know where this one is.
-  if (pn->sym->ref()) {
-    pn->sym->ref()->backpatch(an);
-  }
+  pn->sym->forwardRef.Resolve(an);
   pn->sym->setLoc(an);
 
   //	procedures and methods get special treatment:  the line number
@@ -981,9 +980,12 @@ void MakeDispatch(int maxEntry) {
   gNumDispTblEntries->value = maxEntry + 1;
   for (int i = 0; i <= maxEntry; ++i) {
     ANDispatch* an = gDispTbl->entries.newNode<ANDispatch>();
-    if ((an->sym = FindPublic(i)))
-      // Add this to the backpatch list of the symbol.
-      an->addBackpatch(an->sym);
+    auto* sym = FindPublic(i);
+    if (sym) {
+      an->name = std::string(sym->name());
+      sym->forwardRef.RegisterCallback(
+          [an](ANode* target) { an->target = target; });
+    }
   }
 }
 
@@ -1031,7 +1033,7 @@ void MakeObject(Object* theObj) {
     // If any nodes already compiled have this object as a target, they
     // will be on a list hanging off the object's symbol table entry.
     // Let all nodes know where this one is.
-    if (theObj->sym->ref()) theObj->sym->ref()->backpatch(props);
+    theObj->sym->forwardRef.Resolve(props);
     theObj->sym->setLoc(props);
   }
 
@@ -1074,8 +1076,6 @@ void MakeText() {
 }
 
 void MakeLabel(AOpList* curList, Symbol* dest) {
-  if (dest->ref()) {
-    dest->ref()->backpatch(curList->newNode<ANLabel>());
-    dest->setRef(nullptr);
-  }
+  auto* label = curList->newNode<ANLabel>();
+  dest->forwardRef.Resolve(label);
 }

@@ -90,35 +90,17 @@ static void WriteNumArgs(OutputFile* out, int n) {
 }
 
 ///////////////////////////////////////////////////
-// Class ANReference
-///////////////////////////////////////////////////
-
-ANReference::ANReference() : value(static_cast<ANode*>(nullptr)), sym(0) {}
-
-void ANReference::addBackpatch(Symbol* sym) {
-  value = sym->ref();
-  sym->setRef(this);
-}
-
-void ANReference::backpatch(ANode* dest) {
-  //	warning:  backLink and target are unioned
-  ANReference* next = std::get<ANReference*>(value);
-  value = dest;
-  if (next) next->backpatch(dest);
-}
-
-///////////////////////////////////////////////////
 // Class ANDispatch
 ///////////////////////////////////////////////////
 
 void ANDispatch::list(ListingFile* listFile) {
   std::size_t curOfs = *offset;
 
-  if (target() && sym)
-    listFile->ListAsCode(curOfs, "dispatch\t$%-4x\t(%s)", *target()->offset,
-                         sym->name());
-  else if (sym)
-    listFile->ListAsCode(curOfs, "dispatch\t----\t(%s)", sym->name());
+  if (target && name)
+    listFile->ListAsCode(curOfs, "dispatch\t$%-4x\t(%s)", *target->offset,
+                         *name);
+  else if (name)
+    listFile->ListAsCode(curOfs, "dispatch\t----\t(%s)", *name);
   else
     listFile->ListAsCode(curOfs, "dispatch\t----");
 }
@@ -129,9 +111,9 @@ void ANDispatch::emit(OutputFile* out) {
   // If the destination of this dispatch entry is in the heap (i.e.
   // an object rather than code), it must be fixed up.
 
-  if (gSc->heapList->contains(target())) gSc->hunkList->addFixup(*offset);
+  if (gSc->heapList->contains(target)) gSc->hunkList->addFixup(*offset);
 
-  out->WriteWord((uint32_t)(target() && sym ? *target()->offset : 0));
+  out->WriteWord((uint32_t)(target && name ? *target->offset : 0));
 }
 
 ///////////////////////////////////////////////////
@@ -444,7 +426,7 @@ void ANOpExtern::emit(OutputFile* out) {
 // Class ANCall
 ///////////////////////////////////////////////////
 
-ANCall::ANCall(Symbol* s) {
+ANCall::ANCall(Symbol* s) : target(nullptr) {
   sym = s;
   op = op_call;
 }
@@ -454,10 +436,10 @@ size_t ANCall::size() {
 
   if (!gShrink)
     return (op & OP_BYTE ? 2 : 3) + arg_size;
-  else if (!sym->loc() || !target()->offset.has_value())
+  else if (!target || !target->offset.has_value())
     return 3 + arg_size;
 #if defined(OPTIMIZE_TRANSFERS)
-  else if (canOptimizeTransfer(*target()->offset, *offset + 5)) {
+  else if (canOptimizeTransfer(*target->offset, *offset + 5)) {
     op |= OP_BYTE;
     return 2 + arg_size;
   }
@@ -471,18 +453,18 @@ size_t ANCall::size() {
 void ANCall::list(ListingFile* listFile) {
   listFile->ListOp(*offset, op_call);
   listFile->ListArg("$%-4x\t(%s)",
-                    SCIUWord(*target()->offset - (*offset + size())),
+                    SCIUWord(*target->offset - (*offset + size())),
                     sym->name());
   ListNumArgs(listFile, *offset + 1, numArgs);
 }
 
 void ANCall::emit(OutputFile* out) {
-  if (!target() || target()->offset == UNDEFINED) {
+  if (!target || target->offset == UNDEFINED) {
     Error("Undefined procedure: %s", sym->name());
     return;
   }
 
-  int n = *target()->offset - (*offset + size());
+  int n = *target->offset - (*offset + size());
   out->WriteOp(op);
   if (op & OP_BYTE)
     out->WriteByte(n);
@@ -495,15 +477,15 @@ void ANCall::emit(OutputFile* out) {
 // Class ANBranch
 ///////////////////////////////////////////////////
 
-ANBranch::ANBranch(uint32_t o) { op = o; }
+ANBranch::ANBranch(uint32_t o) : target(nullptr) { op = o; }
 
 size_t ANBranch::size() {
   if (!gShrink)
     return op & OP_BYTE ? 2 : 3;
-  else if (!target() || !target()->offset.has_value())
+  else if (!target || !target->offset.has_value())
     return 3;
 #if defined(OPTIMIZE_TRANSFERS)
-  else if (canOptimizeTransfer(*target()->offset, *offset + 4)) {
+  else if (canOptimizeTransfer(*target->offset, *offset + 4)) {
     op |= OP_BYTE;
     return 2;
   }
@@ -517,12 +499,12 @@ size_t ANBranch::size() {
 void ANBranch::list(ListingFile* listFile) {
   listFile->ListOp(*offset, op);
   listFile->ListArg("$%-4x\t(.%d)",
-                    SCIUWord(*target()->offset - (*offset + size())),
-                    ((ANLabel*)target())->number);
+                    SCIUWord(*target->offset - (*offset + size())),
+                    ((ANLabel*)target)->number);
 }
 
 void ANBranch::emit(OutputFile* out) {
-  int n = *target()->offset - (*offset + size());
+  int n = *target->offset - (*offset + size());
 
   out->WriteOp(op);
   if (op & OP_BYTE)
@@ -586,7 +568,7 @@ size_t ANObjID::size() { return WORDSIZE; }
 
 void ANObjID::list(ListingFile* listFile) {
   listFile->ListOp(*offset, op);
-  listFile->ListArg("$%-4x\t(%s)", *target()->offset, sym->name());
+  listFile->ListArg("$%-4x\t(%s)", *target->offset, sym->name());
 }
 
 void ANObjID::emit(OutputFile* out) {
@@ -597,7 +579,7 @@ void ANObjID::emit(OutputFile* out) {
 
   out->WriteOp(op);
   gSc->hunkList->addFixup(*offset + 1);
-  out->WriteWord(*target()->offset);
+  out->WriteWord(*target->offset);
 }
 
 ///////////////////////////////////////////////////

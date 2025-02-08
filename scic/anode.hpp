@@ -10,7 +10,6 @@
 #include <string>
 #include <string_view>
 #include <utility>
-#include <variant>
 
 #include "scic/alist.hpp"
 #include "scic/listing.hpp"
@@ -24,39 +23,9 @@ class OutputFile;
 #define WORDSIZE 3
 
 struct ANode;
-struct ANReference;
 class Symbol;
 
-struct ANReference {
-  // This class is merged into subclasses of ANode via multiple inheritance
-  // as a mechanism for dealing with forward references to a symbol.  If the
-  // symbol being referenced has been defined, the 'target' property points
-  // to the ANode for the symbol.  Otherwise the symbol points to a list of
-  // ANReferences (linked through the 'backlink' property) which are waiting
-  // for the definition of the symbol.
-
-  ANReference();
-
-  virtual void backpatch(ANode*);
-  // Called when a symbol is defined.  It walks back through
-  // the list of references waiting for its definition,
-  // pointing their 'target' properties at the ANode of the
-  // symbol.
-
-  void addBackpatch(Symbol*);
-  // Called when a reference is made to a symbol which
-  // is not defined.  It adds this reference to the list of
-  //	those waiting for the symbol definition.
-
-  ANode* target() const { return std::get<ANode*>(value); }
-  void setTarget(ANode* target) { value = target; }
-
-  std::variant<ANode*, ANReference*> value;
-  Symbol* sym;  // symbol of thing being referenced
-};
-
-struct ANDispatch : ANode,
-                    ANReference
+struct ANDispatch : ANode
 // The ANDispatch class serves as the members of the dispatch table to
 // publicly defined procedures and objects.  There is one generated for
 // each line in the (public ...) statement in SCI.  These are added to
@@ -65,6 +34,9 @@ struct ANDispatch : ANode,
   size_t size() override;
   void list(ListingFile* listFile) override;
   void emit(OutputFile*) override;
+
+  std::optional<std::string> name;
+  ANode* target;
 };
 
 struct ANWord : ANode
@@ -302,10 +274,8 @@ struct ANOpExtern : ANOpCode
   std::string name;
 };
 
-struct ANCall : ANOpCode,
-                public ANReference
 // The ANCall class describes a call to a procedure in the current module.
-{
+struct ANCall : ANOpCode {
   ANCall(Symbol* s);
 
   size_t size() override;
@@ -313,19 +283,21 @@ struct ANCall : ANOpCode,
   void emit(OutputFile*) override;
 
   uint32_t numArgs;  // number of arguments
+  Symbol* sym;       // symbol of procedure being called
+  ANode* target;     // target of call
 };
 
-struct ANBranch : ANOpCode,
-                  ANReference
+struct ANBranch : ANOpCode
 // The ANBranch class represents a branch opcode.  The 'target' property
-// of the ANReference portion is the ANode (actually the ANLabel) to which
-// to branch.
+// is the ANode (actually the ANLabel) to which to branch.
 {
   ANBranch(uint32_t o);
 
   size_t size() override;
   void list(ListingFile* listFile) override;
   void emit(OutputFile*) override;
+
+  ANode* target;
 };
 
 struct ANVarAccess : ANOpCode
@@ -357,8 +329,7 @@ struct ANOpOfs : ANOpCode
   size_t ofs;  // the offset
 };
 
-struct ANObjID : ANOpCode,
-                 ANReference
+struct ANObjID : ANOpCode
 // The ANObjID class represents a reference to an object.  In the object
 // code, it is just the offset of the object within the code segment.
 // In the interpreter this gets fixed up at load time so that the opcode
@@ -369,6 +340,9 @@ struct ANObjID : ANOpCode,
   size_t size() override;
   void list(ListingFile* listFile) override;
   void emit(OutputFile*) override;
+
+  Symbol* sym;
+  ANode* target;
 };
 
 struct ANEffctAddr : ANVarAccess

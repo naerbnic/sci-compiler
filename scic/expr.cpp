@@ -117,7 +117,6 @@ bool Expression(PNode* theNode, bool required) {
         // Assume that all unknown identifiers are objects,
         // and fall through to object handling.
         auto* theSym = gSyms.installModule(slot.name(), S_OBJ);
-        theSym->clearAn();
         theSym->setObj(nullptr);
         slot = ResolvedTokenSlot::OfSymbol(theSym);
       }
