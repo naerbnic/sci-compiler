@@ -20,6 +20,7 @@ struct Class;
 struct Object {
   Object();
   Object(Class* theClass);
+  virtual ~Object() = default;
 
   void dupSelectors(Class*);
   Selector* findSelectorByNum(int val);
