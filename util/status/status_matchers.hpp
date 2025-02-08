@@ -80,7 +80,6 @@ class IsOkAndHoldsMatcher {
     testing::Matcher<ValueType> value_matcher_;
   };
 
- private:
   const ValueMatcher value_matcher_;
 };
 

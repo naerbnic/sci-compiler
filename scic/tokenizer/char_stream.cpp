@@ -9,6 +9,7 @@
 #include <string_view>
 #include <utility>
 
+#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 
 namespace tokenizer {
@@ -127,7 +128,7 @@ CharStream CharStream::FindNext(char c) const {
 
 CharStream CharStream::FindNextOf(std::string_view chars) const {
   std::string scratch;
-  if (chars.find('\n') != std::string_view::npos) {
+  if (absl::StrContains(chars, '\n')) {
     scratch = absl::StrCat("\r", chars);
     chars = scratch;
   }
@@ -142,7 +143,7 @@ CharStream CharStream::SkipChar(char c) const {
 
 CharStream CharStream::SkipCharsOf(std::string_view chars) const {
   std::string scratch;
-  if (chars.find('\n') != std::string_view::npos) {
+  if (absl::StrContains(chars, '\n')) {
     scratch = absl::StrCat("\r", chars);
     chars = scratch;
   }

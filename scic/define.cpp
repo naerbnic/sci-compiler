@@ -118,7 +118,7 @@ void GlobalDecl() {
     // We only install into the symbol table for globals. We do not add
     // global variables to the gGlobalVars list. That still has to be
     // done by Script0.
-    Symbol* theSym = gSyms.lookup(varName.c_str());
+    Symbol* theSym = gSyms.lookup(varName);
     if (theSym) {
       if (theSym->type != S_GLOBAL) {
         Error("Redefinition of %s as a global.", theSym->name());
@@ -134,7 +134,7 @@ void GlobalDecl() {
       }
     } else {
       // Install the symbol.
-      theSym = gSyms.installLocal(varName.c_str(), S_GLOBAL);
+      theSym = gSyms.installLocal(varName, S_GLOBAL);
       theSym->setVal(symVal());
     }
   }
@@ -168,7 +168,7 @@ void Global() {
       if (!GetNumber("Variable #")) break;
 
       // Try to get the symbol from the symbol table.
-      Symbol* theSym = gSyms.lookup(varName.c_str());
+      Symbol* theSym = gSyms.lookup(varName);
       if (theSym) {
         if (theSym->type != S_GLOBAL) {
           Error("Redefinition of %s as a global.", theSym->name());
@@ -184,7 +184,7 @@ void Global() {
         }
       } else {
         // Install the symbol.
-        theSym = gSyms.installLocal(varName.c_str(), S_GLOBAL);
+        theSym = gSyms.installLocal(varName, S_GLOBAL);
         theSym->setVal(symVal());
       }
       offset = theSym->val();

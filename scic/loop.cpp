@@ -3,6 +3,7 @@
 
 #include <cassert>
 
+#include "alist.hpp"
 #include "scic/anode.hpp"
 #include "scic/compile.hpp"
 #include "scic/opcodes.hpp"

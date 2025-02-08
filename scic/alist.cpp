@@ -81,7 +81,7 @@ void FixupList::initFixups() {
 void FixupList::listFixups(ListingFile* listFile) {
   std::size_t curOfs = fixOfs;
 
-  if (curOfs & 1) {
+  if ((curOfs & 1) != 0U) {
     listFile->ListByte(curOfs, 0);
     ++curOfs;
   }

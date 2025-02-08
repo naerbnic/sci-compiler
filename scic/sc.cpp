@@ -196,7 +196,7 @@ int main(int argc, char **argv) {
 
   // Compile the files.
   for (auto const &src_file : files) {
-    CompileFile(src_file.c_str(), listCode);
+    CompileFile(src_file, listCode);
   }
 
   // Write out the class table and unlock the class database.
