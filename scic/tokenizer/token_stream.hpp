@@ -22,6 +22,8 @@ class TokenStream {
         std::make_move_iterator(std::end(std::forward<C>(tokens))));
   }
 
+  bool HasNext() const { return !curr_tokens_.empty(); }
+
   std::optional<Token> NextToken() {
     if (curr_tokens_.empty()) {
       return std::nullopt;

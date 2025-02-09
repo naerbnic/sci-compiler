@@ -18,6 +18,8 @@ class TokenExpr {
 
   tokenizer::Token const& token() const;
 
+  void WriteTokens(std::vector<tokenizer::Token>* tokens) const;
+
  private:
   struct PImpl;
   std::shared_ptr<PImpl> pimpl_;
@@ -33,6 +35,8 @@ class ListExpr {
 
   absl::Span<Expr const> elements() const;
 
+  void WriteTokens(std::vector<tokenizer::Token>* tokens) const;
+
  private:
   struct PImpl;
   std::shared_ptr<PImpl> pimpl_;
@@ -45,6 +49,9 @@ class Expr {
 
   TokenExpr const* AsTokenExpr() const;
   ListExpr const* AsListExpr() const;
+
+  // Write these tokens back in order to the given vector.
+  void WriteTokens(std::vector<tokenizer::Token>* tokens) const;
 
  private:
   std::variant<TokenExpr, ListExpr> expr_;

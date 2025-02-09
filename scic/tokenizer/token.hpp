@@ -89,6 +89,14 @@ class Token {
   TextRange const& text_range() const { return text_range_; }
   TokenValue const& value() const { return value_; }
 
+  Ident const* AsIdent() const { return std::get_if<Ident>(&value_); }
+  Punct const* AsPunct() const { return std::get_if<Punct>(&value_); }
+  Number const* AsNumber() const { return std::get_if<Number>(&value_); }
+  String const* AsString() const { return std::get_if<String>(&value_); }
+  PreProcessor const* AsPreProcessor() const {
+    return std::get_if<PreProcessor>(&value_);
+  }
+
  private:
   TextRange text_range_;
   TokenValue value_;
