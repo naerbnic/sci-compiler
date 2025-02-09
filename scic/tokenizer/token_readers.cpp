@@ -354,7 +354,7 @@ absl::StatusOr<Token::TokenValue> ReadToken(CharStream& stream) {
   if (IsTok(*stream)) {
     // This is equivalent to our Punct struct.
     return Token::Punct{
-        .type = CharToPunctType(*stream),
+        .type = CharToPunctType(*stream++),
     };
   }
 
@@ -434,7 +434,6 @@ absl::StatusOr<std::optional<Token>> NextToken(CharStream& stream) {
 
   auto token_start = stream;
   ASSIGN_OR_RETURN(auto token_value, ReadToken(stream));
-
   return Token(token_start.GetTextTo(stream), token_value);
 }
 

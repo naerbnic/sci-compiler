@@ -35,6 +35,8 @@ class CharStream {
 
   bool TryConsumePrefix(std::string_view prefix);
 
+  TextRange GetText() const { return range_; }
+
  private:
   struct LineSpan {
     std::size_t start;

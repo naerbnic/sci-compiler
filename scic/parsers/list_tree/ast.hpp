@@ -5,6 +5,7 @@
 #include <variant>
 #include <vector>
 
+#include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "scic/tokenizer/token.hpp"
 
@@ -23,6 +24,11 @@ class TokenExpr {
  private:
   struct PImpl;
   std::shared_ptr<PImpl> pimpl_;
+
+  template <class Sink>
+  friend void AbslStringify(Sink& sink, TokenExpr const& expr) {
+    absl::Format(&sink, "Tok(%v)", expr.token());
+  }
 };
 
 class ListExpr {
@@ -40,6 +46,9 @@ class ListExpr {
  private:
   struct PImpl;
   std::shared_ptr<PImpl> pimpl_;
+
+  template <class Sink>
+  friend void AbslStringify(Sink& sink, ListExpr const& expr);
 };
 
 class Expr {
@@ -55,7 +64,30 @@ class Expr {
 
  private:
   std::variant<TokenExpr, ListExpr> expr_;
+
+  template <class Sink>
+  friend void AbslStringify(Sink& sink, Expr const& expr) {
+    if (auto* token_expr = expr.AsTokenExpr()) {
+      absl::Format(&sink, "%v", *token_expr);
+    } else if (auto* list_expr = expr.AsListExpr()) {
+      absl::Format(&sink, "%v", *list_expr);
+    }
+  }
 };
+
+template <class Sink>
+void AbslStringify(Sink& sink, ListExpr const& expr) {
+  sink.Append("List(");
+  bool first = true;
+  for (auto const& element : expr.elements()) {
+    if (!first) {
+      absl::Format(&sink, ", ");
+    }
+    absl::Format(&sink, "%v", element);
+    first = false;
+  }
+  sink.Append(")");
+}
 
 }  // namespace parser::list_tree
 
