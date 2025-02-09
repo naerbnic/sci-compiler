@@ -1,15 +1,12 @@
 #include "scic/tokenizer/token.hpp"
 
-#include <string>
 #include <utility>
 
 #include "scic/tokenizer/text_contents.hpp"
 
 namespace tokenizer {
 
-Token::Token(CharRange char_range, std::string raw_text, TokenValue value)
-    : char_range_(std::move(char_range)),
-      raw_text_(std::move(raw_text)),
-      value_(std::move(value)) {}
+Token::Token(TextRange text_range, TokenValue value)
+    : text_range_(std::move(text_range)), value_(std::move(value)) {}
 
 }  // namespace tokenizer

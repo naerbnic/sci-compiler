@@ -2,6 +2,8 @@
 
 #include <gtest/gtest.h>
 
+#include "scic/tokenizer/text_contents.hpp"
+
 namespace tokenizer {
 namespace {
 

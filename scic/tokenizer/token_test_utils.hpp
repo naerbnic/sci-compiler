@@ -7,6 +7,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "scic/tokenizer/text_contents.hpp"
 #include "scic/tokenizer/token.hpp"
 
 namespace tokenizer {
@@ -36,15 +37,13 @@ inline testing::Matcher<Token::PreProcessor const&> PreProcOf(
 }
 
 struct TokenSpec {
-  testing::Matcher<CharRange const&> char_range = testing::_;
-  testing::Matcher<std::string_view> raw_text = testing::_;
+  testing::Matcher<TextRange const&> text_range = testing::_;
   testing::Matcher<Token::TokenValue const&> value = testing::_;
 };
 
 inline testing::Matcher<Token const&> TokenOf(TokenSpec const& spec) {
   return testing::AllOf(
-      testing::Property("char_range", &Token::char_range, spec.char_range),
-      testing::Property("raw_text", &Token::raw_text, spec.raw_text),
+      testing::Property("text_range", &Token::text_range, spec.text_range),
       testing::Property("value", &Token::value, spec.value));
 }
 
@@ -55,6 +54,11 @@ inline testing::Matcher<Token const&> IdentTokenOf(
           .name = name,
       })),
   });
+}
+
+inline testing::Matcher<TextRange const&> TextRangeOf(
+    testing::Matcher<std::string_view> text) {
+  return testing::Property("contents", &TextRange::contents, text);
 }
 
 }  // namespace tokenizer

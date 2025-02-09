@@ -127,9 +127,9 @@ absl::StatusOr<int> ReadKey(CharStream& stream) {
         ++stream;
       }
       int num;
-      if (!absl::SimpleAtoi(start_pos.GetTextTo(stream), &num)) {
+      if (!absl::SimpleAtoi(start_pos.GetTextTo(stream).contents(), &num)) {
         return TokenError(start_pos, "Not a valid function key: %s",
-                          start_pos.GetTextTo(stream));
+                          start_pos.GetTextTo(stream).contents());
         break;
       }
       result = (num + 58) << 8;
@@ -406,8 +406,7 @@ absl::StatusOr<std::optional<Token>> NextToken(CharStream& stream) {
       auto start_of_line = stream;
       ASSIGN_OR_RETURN(auto preprocessor, ReadPreprocessor(stream));
       if (preprocessor) {
-        return Token(start_of_line.RangeTo(stream),
-                     std::string(start_of_line.GetTextTo(stream)),
+        return Token(start_of_line.GetTextTo(stream),
                      Token::TokenValue(*preprocessor));
       }
       at_start_of_line = false;
@@ -435,9 +434,7 @@ absl::StatusOr<std::optional<Token>> NextToken(CharStream& stream) {
   auto token_start = stream;
   ASSIGN_OR_RETURN(auto token_value, ReadToken(stream));
 
-  std::string raw_text(token_start.GetTextTo(stream));
-  auto char_range = token_start.RangeTo(stream);
-  return Token(char_range, raw_text, token_value);
+  return Token(token_start.GetTextTo(stream), token_value);
 }
 
 }  // namespace tokenizer

@@ -2,7 +2,6 @@
 #define TOKENIZER_TOKEN_HPP
 
 #include <string>
-#include <string_view>
 #include <variant>
 #include <vector>
 
@@ -85,15 +84,13 @@ class Token {
   using TokenValue = std::variant<Ident, String, Number, Punct, PreProcessor>;
 
   Token() = default;
-  Token(CharRange file_range, std::string raw_text, TokenValue value);
+  Token(TextRange text_range, TokenValue value);
 
-  CharRange const& char_range() const { return char_range_; }
-  std::string_view raw_text() const { return raw_text_; }
+  TextRange const& text_range() const { return text_range_; }
   TokenValue const& value() const { return value_; }
 
  private:
-  CharRange char_range_;
-  std::string raw_text_;
+  TextRange text_range_;
   TokenValue value_;
 };
 

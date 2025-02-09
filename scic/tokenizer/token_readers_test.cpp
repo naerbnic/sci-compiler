@@ -183,7 +183,7 @@ TEST(ReadTokenTest, SimpleCase) {
 TEST(NextTokenTest, SimpleCase) {
   auto stream = CharStream("foo");
   EXPECT_THAT(NextToken(stream), IsOkAndHolds(Optional(TokenOf({
-                                     .raw_text = "foo",
+                                     .text_range = TextRangeOf("foo"),
                                      .value = VariantWith(IdentOf({
                                          .name = "foo",
                                      })),
@@ -194,7 +194,7 @@ TEST(NextTokenTest, SimpleCase) {
 TEST(NextTokenTest, InitialWhitespaceIsSkipped) {
   auto stream = CharStream("  \n\tfoo");
   EXPECT_THAT(NextToken(stream), IsOkAndHolds(Optional(TokenOf({
-                                     .raw_text = "foo",
+                                     .text_range = TextRangeOf("foo"),
                                      .value = VariantWith(IdentOf({
                                          .name = "foo",
                                      })),
@@ -206,7 +206,7 @@ TEST(NextTokenTest, PreProcessorDirectiveWorksOnFirstLine) {
   auto stream = CharStream("#if foo\nbar");
   EXPECT_THAT(NextToken(stream),
               IsOkAndHolds(Optional(TokenOf({
-                  .raw_text = "#if foo",
+                  .text_range = TextRangeOf("#if foo"),
                   .value = VariantWith(PreProcOf({
                       .type = Token::PPT_IF,
                       .lineTokens = ElementsAre(IdentTokenOf("foo")),
@@ -221,7 +221,7 @@ TEST(NextTokenTest, PreProcessorDirectiveWorksOnAnotherLine) {
   auto stream = CharStream("    \n#if foo\nbar");
   EXPECT_THAT(NextToken(stream),
               IsOkAndHolds(Optional(TokenOf({
-                  .raw_text = "#if foo",
+                  .text_range = TextRangeOf("#if foo"),
                   .value = VariantWith(PreProcOf({
                       .type = Token::PPT_IF,
                       .lineTokens = ElementsAre(IdentTokenOf("foo")),

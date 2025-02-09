@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <memory>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -29,10 +30,12 @@ std::optional<std::pair<std::size_t, std::size_t>> FindNextNewline(
 }
 }  // namespace
 
-TextContents::TextContents() : TextContents("") {}
+TextContents::TextContents(std::string contents)
+    : TextContents("<string>", std::move(contents)) {}
 
-TextContents::TextContents(std::string_view contents)
-    : contents_(std::string(contents)) {
+TextContents::TextContents(std::string filename, std::string contents)
+    : filename_(std::make_shared<std::string>(std::move(filename))),
+      contents_(std::move(contents)) {
   std::size_t line_start_index = 0;
   while (auto newline = FindNextNewline(contents_, line_start_index)) {
     line_spans_.push_back({
@@ -86,5 +89,21 @@ CharOffset TextContents::GetOffset(std::size_t byte_offset) const {
   auto line_offset = byte_offset - lower_bound_iter->start;
   return CharOffset(byte_offset, line_index, line_offset);
 }
+
+TextRange TextRange::OfString(std::string contents) {
+  auto length = contents.size();
+  return TextRange(
+      std::make_shared<TextContents>("<string>", std::move(contents)), 0,
+      length);
+}
+
+TextRange TextRange::WithFilename(std::string filename, std::string contents) {
+  auto length = contents.size();
+  return TextRange(
+      std::make_shared<TextContents>(std::move(filename), std::move(contents)),
+      0, length);
+}
+
+TextRange::~TextRange() = default;
 
 }  // namespace tokenizer
