@@ -27,7 +27,7 @@ class TokenExpr {
 
   template <class Sink>
   friend void AbslStringify(Sink& sink, TokenExpr const& expr) {
-    absl::Format(&sink, "Tok(%v)", expr.token());
+    absl::Format(&sink, "%v", expr.token());
   }
 };
 
