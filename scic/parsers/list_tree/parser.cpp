@@ -330,6 +330,7 @@ class Parser {
       if (!next_expr) {
         return absl::InvalidArgumentError("Unexpected end of list.");
       }
+      elements.push_back(std::move(next_expr).value());
     }
   }
 

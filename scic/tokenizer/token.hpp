@@ -5,6 +5,7 @@
 #include <variant>
 #include <vector>
 
+#include "absl/strings/str_format.h"
 #include "scic/tokenizer/text_contents.hpp"
 
 namespace tokenizer {
@@ -100,6 +101,23 @@ class Token {
  private:
   TextRange text_range_;
   TokenValue value_;
+
+  template <class Sink>
+  friend void AbslStringify(Sink& sink, Token const& token) {
+    if (auto* ident = token.AsIdent()) {
+      absl::Format(&sink, "Ident(%v)", ident->name);
+    } else if (auto* string = token.AsString()) {
+      absl::Format(&sink, "String(%v)", string->decodedString);
+    } else if (auto* number = token.AsNumber()) {
+      absl::Format(&sink, "Number(%d)", number->value);
+    } else if (auto* punct = token.AsPunct()) {
+      absl::Format(&sink, "Punct(%d)", punct->type);
+    } else if (auto* preproc = token.AsPreProcessor()) {
+      absl::Format(&sink, "PreProc(%d)", preproc->type);
+    } else {
+      absl::Format(&sink, "Unknown");
+    }
+  }
 };
 
 }  // namespace tokenizer
