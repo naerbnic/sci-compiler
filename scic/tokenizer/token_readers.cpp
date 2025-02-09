@@ -16,6 +16,7 @@
 #include "absl/strings/str_format.h"
 #include "scic/chartype.hpp"
 #include "scic/tokenizer/char_stream.hpp"
+#include "scic/tokenizer/text_contents.hpp"
 #include "scic/tokenizer/token.hpp"
 #include "util/status/status_macros.hpp"
 
@@ -435,6 +436,19 @@ absl::StatusOr<std::optional<Token>> NextToken(CharStream& stream) {
   ASSIGN_OR_RETURN(auto token_value, ReadToken(stream));
 
   return Token(token_start.GetTextTo(stream), token_value);
+}
+
+absl::StatusOr<std::vector<Token>> TokenizeText(TextRange text) {
+  std::vector<Token> tokens;
+  CharStream stream(std::move(text));
+  while (true) {
+    ASSIGN_OR_RETURN(auto token, NextToken(stream));
+    if (!token) {
+      break;
+    }
+    tokens.push_back(*token);
+  }
+  return tokens;
 }
 
 }  // namespace tokenizer
