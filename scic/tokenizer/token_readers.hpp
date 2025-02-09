@@ -3,13 +3,17 @@
 
 #include <optional>
 #include <string>
+#include <vector>
 
 #include "absl/status/statusor.h"
 #include "scic/tokenizer/char_stream.hpp"
+#include "scic/tokenizer/text_contents.hpp"
 #include "scic/tokenizer/token.hpp"
 
 namespace tokenizer {
+
 absl::StatusOr<std::optional<Token>> NextToken(CharStream& stream);
+absl::StatusOr<std::vector<Token>> TokenizeText(TextRange text);
 
 // These are generally internal, and are provided for testing.
 absl::StatusOr<int> ReadKey(CharStream& stream);
