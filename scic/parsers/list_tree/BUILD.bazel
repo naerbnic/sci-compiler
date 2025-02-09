@@ -10,3 +10,17 @@ cc_library(
         "@abseil-cpp//absl/types:span",
     ],
 )
+
+cc_library(
+    name = "parser",
+    srcs = ["parser.cpp"],
+    hdrs = ["parser.hpp"],
+    deps = [
+        ":ast",
+        "//scic/tokenizer:token",
+        "//scic/tokenizer:token_stream",
+        "@abseil-cpp//absl/container:btree",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/types:span",
+    ],
+)
