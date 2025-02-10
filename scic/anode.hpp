@@ -297,7 +297,7 @@ struct ANBranch : ANOpCode
   void list(ListingFile* listFile) override;
   void emit(OutputFile*) override;
 
-  ANode* target;
+  ANLabel* target;
 };
 
 struct ANVarAccess : ANOpCode

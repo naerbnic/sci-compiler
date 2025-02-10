@@ -1,6 +1,7 @@
 #ifndef REFERENCE_HPP
 #define REFERENCE_HPP
 
+#include <stdexcept>
 #include <variant>
 #include <vector>
 
@@ -34,6 +35,10 @@ class ForwardReference {
 
   void Resolve(ResolveType value) {
     if (std::holds_alternative<ResolveType>(value_)) {
+      if (std::get<ResolveType>(value_) != value) {
+        throw std::runtime_error(
+            "ForwardReference already resolved with different value.");
+      }
       return;
     }
 
