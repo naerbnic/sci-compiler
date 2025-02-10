@@ -20,6 +20,7 @@
 #include "scic/tokenizer/token_readers.hpp"
 #include "util/status/status_macros.hpp"
 
+namespace parsers::list_tree {
 namespace {
 
 using ::tokenizer::TextRange;
@@ -40,7 +41,7 @@ absl::StatusOr<std::vector<Token>> TokenizeFile(
       TextRange::WithFilename(path.string(), buffer.str()));
 }
 
-class ToolIncludeContext : public parser::list_tree::IncludeContext {
+class ToolIncludeContext : public IncludeContext {
  public:
   ToolIncludeContext(std::vector<std::filesystem::path> include_paths)
       : include_paths_(std::move(include_paths)) {}
@@ -97,8 +98,7 @@ absl::StatusOr<int> RunMain(int argc, char** argv) {
 
   for (auto const& file : files) {
     ASSIGN_OR_RETURN(auto tokens, TokenizeFile(file));
-    ASSIGN_OR_RETURN(auto parsed, parser::list_tree::ParseListTree(
-                                      tokens, &include_context, {}));
+    ASSIGN_OR_RETURN(auto parsed, ParseListTree(tokens, &include_context, {}));
 
     // Print the parsed tree.
     absl::PrintF("Parsed %s:\n", file);
@@ -110,9 +110,10 @@ absl::StatusOr<int> RunMain(int argc, char** argv) {
 }
 
 }  // namespace
+}  // namespace parsers::list_tree
 
 int main(int argc, char** argv) {
-  auto result = RunMain(argc, argv);
+  auto result = parsers::list_tree::RunMain(argc, argv);
   if (!result.ok()) {
     std::cerr << "Error: " << result.status() << std::endl;
     return 1;

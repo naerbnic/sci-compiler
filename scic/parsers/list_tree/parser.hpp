@@ -10,7 +10,7 @@
 #include "scic/parsers/list_tree/ast.hpp"
 #include "scic/tokenizer/token.hpp"
 
-namespace parser::list_tree {
+namespace parsers::list_tree {
 
 class IncludeContext {
  public:

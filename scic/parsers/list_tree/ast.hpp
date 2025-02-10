@@ -9,7 +9,7 @@
 #include "absl/types/span.h"
 #include "scic/tokenizer/token.hpp"
 
-namespace parser::list_tree {
+namespace parsers::list_tree {
 
 class Expr;
 

@@ -18,7 +18,7 @@
 #include "scic/tokenizer/token_stream.hpp"
 #include "util/status/status_macros.hpp"
 
-namespace parser::list_tree {
+namespace parsers::list_tree {
 namespace {
 using ::tokenizer::Token;
 using ::tokenizer::TokenStream;
