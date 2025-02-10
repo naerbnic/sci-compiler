@@ -29,30 +29,34 @@ void TokenExpr::WriteTokens(std::vector<tokenizer::Token>* tokens) const {
 }
 
 struct ListExpr::PImpl {
+  Kind kind;
   std::vector<Expr> elements;
-  Token start_paren;
-  Token end_paren;
+  Token open_token;
+  Token close_token;
 };
 
-ListExpr::ListExpr(Token start_paren, Token end_paren,
+ListExpr::ListExpr(Kind kind, Token open_token, Token close_token,
                    std::vector<Expr> elements)
     : pimpl_(std::make_shared<PImpl>(PImpl{
+          .kind = kind,
           .elements = std::move(elements),
+          .open_token = std::move(open_token),
+          .close_token = std::move(close_token),
       })) {}
 
-Token const& ListExpr::start_paren() const { return pimpl_->start_paren; }
-Token const& ListExpr::end_paren() const { return pimpl_->end_paren; }
+Token const& ListExpr::open_token() const { return pimpl_->open_token; }
+Token const& ListExpr::close_token() const { return pimpl_->close_token; }
 
 absl::Span<Expr const> ListExpr::elements() const {
   return absl::MakeConstSpan(pimpl_->elements);
 }
 
 void ListExpr::WriteTokens(std::vector<tokenizer::Token>* tokens) const {
-  tokens->push_back(pimpl_->start_paren);
+  tokens->push_back(pimpl_->open_token);
   for (auto const& element : pimpl_->elements) {
     element.WriteTokens(tokens);
   }
-  tokens->push_back(pimpl_->end_paren);
+  tokens->push_back(pimpl_->close_token);
 }
 
 Expr::Expr(TokenExpr token_expr) : expr_(std::move(token_expr)) {}

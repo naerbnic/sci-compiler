@@ -33,11 +33,17 @@ class TokenExpr {
 
 class ListExpr {
  public:
-  ListExpr(tokenizer::Token start_paren, tokenizer::Token end_paren,
+  enum Kind {
+    PARENS,
+    BRACKETS,
+  };
+
+  ListExpr(Kind kind, tokenizer::Token open_token, tokenizer::Token close_token,
            std::vector<Expr> elements);
 
-  tokenizer::Token const& start_paren() const;
-  tokenizer::Token const& end_paren() const;
+  Kind kind() const;
+  tokenizer::Token const& open_token() const;
+  tokenizer::Token const& close_token() const;
 
   absl::Span<Expr const> elements() const;
 
@@ -89,6 +95,6 @@ void AbslStringify(Sink& sink, ListExpr const& expr) {
   sink.Append(")");
 }
 
-}  // namespace parser::list_tree
+}  // namespace parsers::list_tree
 
 #endif

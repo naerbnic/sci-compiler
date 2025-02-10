@@ -303,15 +303,35 @@ class Parser {
     }
 
     auto* punct = token->AsPunct();
-    if (punct && punct->type == Token::PCT_LPAREN) {
-      ASSIGN_OR_RETURN(auto list_expr, ParseList(std::move(token).value()));
-      return Expr(std::move(list_expr));
+    if (!punct) {
+      return Expr(TokenExpr(std::move(token).value()));
     }
 
-    return Expr(TokenExpr(std::move(token).value()));
+    ListExpr::Kind kind;
+    Token::PunctType close_punct;
+    switch (punct->type) {
+      case Token::PCT_LPAREN:
+        kind = ListExpr::Kind::PARENS;
+        close_punct = Token::PCT_RPAREN;
+        break;
+
+      case Token::PCT_LBRACKET:
+        kind = ListExpr::Kind::BRACKETS;
+        close_punct = Token::PCT_RBRACKET;
+        break;
+
+      default:
+        return Expr(TokenExpr(std::move(token).value()));
+    }
+
+    ASSIGN_OR_RETURN(auto list_expr,
+                     ParseList(kind, close_punct, std::move(token).value()));
+    return Expr(std::move(list_expr));
   }
 
-  absl::StatusOr<ListExpr> ParseList(Token start_paren) {
+  absl::StatusOr<ListExpr> ParseList(ListExpr::Kind kind,
+                                     Token::PunctType close_punct,
+                                     Token start_paren) {
     // We've already read the opening parenthesis.
     std::vector<Expr> elements;
 
@@ -322,9 +342,9 @@ class Parser {
       }
 
       auto* punct = next_token->AsPunct();
-      if (punct && punct->type == Token::PCT_RPAREN) {
-        return ListExpr(std::move(start_paren), std::move(next_token).value(),
-                        std::move(elements));
+      if (punct && punct->type == close_punct) {
+        return ListExpr(kind, std::move(start_paren),
+                        std::move(next_token).value(), std::move(elements));
       }
 
       pushed_tokens_.push_back(std::move(next_token).value());
@@ -478,4 +498,4 @@ absl::StatusOr<std::vector<Expr>> ParseListTree(
     exprs.push_back(std::move(*expr));
   }
 }
-}  // namespace parser::list_tree
+}  // namespace parsers::list_tree
