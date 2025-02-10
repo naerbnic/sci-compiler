@@ -1,0 +1,23 @@
+cc_library(
+    name = "ast",
+    srcs = ["ast.cpp"],
+    hdrs = ["ast.hpp"],
+    deps = [
+        "//scic/tokenizer:text_contents",
+        "//scic/tokenizer:token",
+        "@abseil-cpp//absl/strings:str_format",
+        "@abseil-cpp//absl/types:span",
+    ],
+)
+
+cc_test(
+    name = "ast_test",
+    srcs = ["ast_test.cpp"],
+    deps = [
+        ":ast",
+        "//scic/tokenizer:text_contents",
+        "//util/status:status_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
