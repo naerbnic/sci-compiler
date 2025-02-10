@@ -52,6 +52,7 @@ cc_library(
     srcs = ["text_contents.cpp"],
     hdrs = ["text_contents.hpp"],
     deps = [
+        "@abseil-cpp//absl/strings:str_format",
         "@abseil-cpp//absl/strings",
     ],
 )

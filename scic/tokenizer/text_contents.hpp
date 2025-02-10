@@ -10,6 +10,8 @@
 #include <utility>
 #include <vector>
 
+#include "absl/strings/str_format.h"
+
 namespace tokenizer {
 
 class CharOffset {
@@ -58,6 +60,14 @@ class FileRange {
  private:
   std::shared_ptr<std::string> filename_;
   CharRange range_;
+
+  template <class Sink>
+  friend void AbslStringify(Sink& sink, FileRange const& range) {
+    absl::Format(&sink, "%s:%d:%d-%d:%d", range.filename(),
+                 range.start().line_index() + 1,
+                 range.start().column_index() + 1, range.end().line_index() + 1,
+                 range.end().column_index() + 1);
+  }
 };
 
 class TextContents {

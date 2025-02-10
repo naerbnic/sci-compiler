@@ -11,6 +11,7 @@
 #include "absl/container/btree_map.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "scic/parsers/list_tree/ast.hpp"
 #include "scic/tokenizer/token.hpp"
@@ -228,7 +229,7 @@ class Parser {
         break;
     }
 
-    if (!condition_result) {
+    if (condition_result) {
       preproc_stack_.back().producing_tokens = true;
       preproc_stack_.back().case_triggered = true;
     }
@@ -239,18 +240,20 @@ class Parser {
   absl::StatusOr<bool> IsDef(absl::Span<Token const> tokens) {
     if (tokens.size() != 1) {
       // We need exactly one token.
-      return absl::InvalidArgumentError(
-          "Expected a single identifier for preprocessor condition.");
+      return absl::InvalidArgumentError(absl::StrFormat(
+          "Expected a single identifier for preprocessor condition. Got %d",
+          tokens.size()));
     }
 
     auto* ident = tokens[0].AsIdent();
 
     if (!ident) {
-      return curr_defines_.contains(ident->name);
+      return absl::InvalidArgumentError(absl::StrFormat(
+          "Expected an identifier for preprocessor condition. Got %v",
+          tokens[0]));
     }
 
-    return absl::InvalidArgumentError(
-        "Expected a single identifier for preprocessor condition.");
+    return curr_defines_.contains(ident->name);
   }
 
   absl::StatusOr<bool> IsTrue(absl::Span<Token const> tokens) {
@@ -379,8 +382,9 @@ class Parser {
 
     auto name = GetExprPlainIdent(rest_elements[0]);
     if (!name) {
-      return absl::InvalidArgumentError(
-          "First element of define must be an identifier.");
+      return absl::InvalidArgumentError(absl::StrFormat(
+          "First element of define must be an identifier. Got %v",
+          rest_elements[0]));
     }
 
     auto values = rest_elements.subspan(1);
