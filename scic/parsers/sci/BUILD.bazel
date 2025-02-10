@@ -5,6 +5,7 @@ cc_library(
     deps = [
         "//scic/tokenizer:text_contents",
         "//scic/tokenizer:token",
+        "//util:choice",
         "@abseil-cpp//absl/strings:str_format",
         "@abseil-cpp//absl/types:span",
     ],
