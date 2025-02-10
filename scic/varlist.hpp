@@ -21,7 +21,7 @@ struct Var {
 
 struct VarList {
   // Variable block definition.
-  VarList() : type(VAR_NONE), values(0) {}
+  VarList() : type(VAR_NONE) {}
 
   void kill();
 

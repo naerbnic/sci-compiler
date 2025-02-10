@@ -688,7 +688,6 @@ void ANVars::emit(OutputFile* out) {
     out->WriteWord(n);
     curOfs += 2;
   }
-  theVars.kill();
 }
 
 //////////////////////////////////////////////////////////////////////////////

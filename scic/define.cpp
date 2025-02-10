@@ -372,18 +372,20 @@ static int InitialValue(VarList& theVars, int offset, int arraySize) {
   // value is not a set of values ('num' rather than  '[num ...]'), the array
   // is filled with the single value passed.
 
+  if ((std::size_t)(offset + arraySize) > gConfig->maxVars) return -1;
+
+  // Whether or not we have initial values, we need to make sure we account
+  // for the full size of the array.
+  if (theVars.values.size() < (std::size_t)(offset + arraySize)) {
+    theVars.values.resize(offset + arraySize);
+  }
+
   // See if there are initial values.  Return 1 if not (by default, there
   // is one initial value of 0 for all variable declarations).
   auto slot = LookupTok();
   if (slot.type() != S_ASSIGN) {
     UnGetTok();
     return 1;
-  }
-
-  if ((std::size_t)(offset + arraySize) > gConfig->maxVars) return -1;
-
-  if (theVars.values.size() < (std::size_t)(offset + arraySize)) {
-    theVars.values.resize(offset + arraySize);
   }
 
   // See if the initialization is for an array.  If not, just get one
