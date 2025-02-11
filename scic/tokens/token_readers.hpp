@@ -7,10 +7,10 @@
 
 #include "absl/status/statusor.h"
 #include "scic/text/text_range.hpp"
-#include "scic/tokenizer/char_stream.hpp"
-#include "scic/tokenizer/token.hpp"
+#include "scic/tokens/char_stream.hpp"
+#include "scic/tokens/token.hpp"
 
-namespace tokenizer {
+namespace tokens {
 
 absl::StatusOr<std::optional<Token>> NextToken(CharStream& stream);
 absl::StatusOr<std::vector<Token>> TokenizeText(text::TextRange text);
@@ -24,6 +24,6 @@ absl::StatusOr<std::optional<Token::PreProcessor>> ReadPreprocessor(
     CharStream& stream);
 absl::StatusOr<Token::TokenValue> ReadToken(CharStream& stream);
 
-}  // namespace tokenizer
+}  // namespace tokens
 
 #endif

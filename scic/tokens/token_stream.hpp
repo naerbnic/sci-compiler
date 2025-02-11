@@ -6,9 +6,9 @@
 #include <optional>
 #include <utility>
 
-#include "scic/tokenizer/token.hpp"
+#include "scic/tokens/token.hpp"
 
-namespace tokenizer {
+namespace tokens {
 
 class TokenStream {
  public:
@@ -37,6 +37,6 @@ class TokenStream {
   std::deque<Token> curr_tokens_;
 };
 
-}  // namespace tokenizer
+}  // namespace tokens
 
 #endif

@@ -16,15 +16,15 @@
 #include "argparse/argparse.hpp"
 #include "scic/parsers/list_tree/parser.hpp"
 #include "scic/text/text_range.hpp"
-#include "scic/tokenizer/token.hpp"
-#include "scic/tokenizer/token_readers.hpp"
+#include "scic/tokens/token.hpp"
+#include "scic/tokens/token_readers.hpp"
 #include "util/status/status_macros.hpp"
 
 namespace parsers::list_tree {
 namespace {
 
 using ::text::TextRange;
-using ::tokenizer::Token;
+using ::tokens::Token;
 
 absl::StatusOr<std::vector<Token>> TokenizeFile(
     std::filesystem::path const& path) {
@@ -37,7 +37,7 @@ absl::StatusOr<std::vector<Token>> TokenizeFile(
   std::stringstream buffer;
   buffer << file.rdbuf();
 
-  return tokenizer::TokenizeText(
+  return tokens::TokenizeText(
       TextRange::WithFilename(path.string(), buffer.str()));
 }
 

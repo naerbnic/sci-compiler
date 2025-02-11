@@ -8,9 +8,9 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "scic/text/text_range.hpp"
-#include "scic/tokenizer/token.hpp"
+#include "scic/tokens/token.hpp"
 
-namespace tokenizer {
+namespace tokens {
 
 struct IdentSpec {
   testing::Matcher<std::string> name = testing::_;
@@ -61,6 +61,6 @@ inline testing::Matcher<text::TextRange const&> TextRangeOf(
   return testing::Property("contents", &text::TextRange::contents, text);
 }
 
-}  // namespace tokenizer
+}  // namespace tokens
 
 #endif

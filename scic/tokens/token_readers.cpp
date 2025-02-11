@@ -1,4 +1,4 @@
-#include "scic/tokenizer/token_readers.hpp"
+#include "scic/tokens/token_readers.hpp"
 
 #include <cctype>
 #include <cstdint>
@@ -16,11 +16,11 @@
 #include "absl/strings/str_format.h"
 #include "scic/chartype.hpp"
 #include "scic/text/text_range.hpp"
-#include "scic/tokenizer/char_stream.hpp"
-#include "scic/tokenizer/token.hpp"
+#include "scic/tokens/char_stream.hpp"
+#include "scic/tokens/token.hpp"
 #include "util/status/status_macros.hpp"
 
-namespace tokenizer {
+namespace tokens {
 
 namespace {
 
@@ -450,4 +450,4 @@ absl::StatusOr<std::vector<Token>> TokenizeText(text::TextRange text) {
   return tokens;
 }
 
-}  // namespace tokenizer
+}  // namespace tokens

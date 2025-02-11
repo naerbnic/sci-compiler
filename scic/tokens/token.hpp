@@ -8,7 +8,7 @@
 #include "absl/strings/str_format.h"
 #include "scic/text/text_range.hpp"
 
-namespace tokenizer {
+namespace tokens {
 
 // A value type representing a single parsed token.
 class Token {
@@ -120,6 +120,6 @@ class Token {
   }
 };
 
-}  // namespace tokenizer
+}  // namespace tokens
 
 #endif

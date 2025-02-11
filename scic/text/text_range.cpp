@@ -106,4 +106,4 @@ TextRange TextRange::WithFilename(std::string filename, std::string contents) {
 
 TextRange::~TextRange() = default;
 
-}  // namespace tokenizer
+}  // namespace tokens

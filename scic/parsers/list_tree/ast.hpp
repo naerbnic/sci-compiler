@@ -7,7 +7,7 @@
 
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
-#include "scic/tokenizer/token.hpp"
+#include "scic/tokens/token.hpp"
 
 namespace parsers::list_tree {
 
@@ -15,11 +15,11 @@ class Expr;
 
 class TokenExpr {
  public:
-  TokenExpr(tokenizer::Token token);
+  TokenExpr(tokens::Token token);
 
-  tokenizer::Token const& token() const;
+  tokens::Token const& token() const;
 
-  void WriteTokens(std::vector<tokenizer::Token>* tokens) const;
+  void WriteTokens(std::vector<tokens::Token>* tokens) const;
 
  private:
   struct PImpl;
@@ -38,16 +38,16 @@ class ListExpr {
     BRACKETS,
   };
 
-  ListExpr(Kind kind, tokenizer::Token open_token, tokenizer::Token close_token,
+  ListExpr(Kind kind, tokens::Token open_token, tokens::Token close_token,
            std::vector<Expr> elements);
 
   Kind kind() const;
-  tokenizer::Token const& open_token() const;
-  tokenizer::Token const& close_token() const;
+  tokens::Token const& open_token() const;
+  tokens::Token const& close_token() const;
 
   absl::Span<Expr const> elements() const;
 
-  void WriteTokens(std::vector<tokenizer::Token>* tokens) const;
+  void WriteTokens(std::vector<tokens::Token>* tokens) const;
 
  private:
   struct PImpl;
@@ -66,7 +66,7 @@ class Expr {
   ListExpr const* AsListExpr() const;
 
   // Write these tokens back in order to the given vector.
-  void WriteTokens(std::vector<tokenizer::Token>* tokens) const;
+  void WriteTokens(std::vector<tokens::Token>* tokens) const;
 
  private:
   std::variant<TokenExpr, ListExpr> expr_;

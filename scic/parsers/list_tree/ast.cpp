@@ -7,11 +7,11 @@
 #include <vector>
 
 #include "absl/types/span.h"
-#include "scic/tokenizer/token.hpp"
+#include "scic/tokens/token.hpp"
 
 namespace parsers::list_tree {
 
-using ::tokenizer::Token;
+using ::tokens::Token;
 
 struct TokenExpr::PImpl {
   Token token;
@@ -24,7 +24,7 @@ TokenExpr::TokenExpr(Token token)
 
 Token const& TokenExpr::token() const { return pimpl_->token; }
 
-void TokenExpr::WriteTokens(std::vector<tokenizer::Token>* tokens) const {
+void TokenExpr::WriteTokens(std::vector<tokens::Token>* tokens) const {
   tokens->push_back(pimpl_->token);
 }
 
@@ -51,7 +51,7 @@ absl::Span<Expr const> ListExpr::elements() const {
   return absl::MakeConstSpan(pimpl_->elements);
 }
 
-void ListExpr::WriteTokens(std::vector<tokenizer::Token>* tokens) const {
+void ListExpr::WriteTokens(std::vector<tokens::Token>* tokens) const {
   tokens->push_back(pimpl_->open_token);
   for (auto const& element : pimpl_->elements) {
     element.WriteTokens(tokens);
@@ -70,7 +70,7 @@ ListExpr const* Expr::AsListExpr() const {
   return std::get_if<ListExpr>(&expr_);
 }
 
-void Expr::WriteTokens(std::vector<tokenizer::Token>* tokens) const {
+void Expr::WriteTokens(std::vector<tokens::Token>* tokens) const {
   if (auto* token_expr = AsTokenExpr()) {
     token_expr->WriteTokens(tokens);
   } else if (auto* list_expr = AsListExpr()) {

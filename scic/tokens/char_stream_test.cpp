@@ -1,10 +1,10 @@
-#include "scic/tokenizer/char_stream.hpp"
+#include "scic/tokens/char_stream.hpp"
 
 #include <gtest/gtest.h>
 
 #include "scic/text/text_range.hpp"
 
-namespace tokenizer {
+namespace tokens {
 namespace {
 
 TEST(TextContentsTest, CalculatesCorrectNumberOfLines) {
@@ -84,4 +84,4 @@ TEST(CharStreamTest, StreamIsCopyable) {
 }
 
 }  // namespace
-}  // namespace tokenizer
+}  // namespace tokens

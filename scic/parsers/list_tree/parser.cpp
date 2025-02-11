@@ -14,14 +14,14 @@
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "scic/parsers/list_tree/ast.hpp"
-#include "scic/tokenizer/token.hpp"
-#include "scic/tokenizer/token_stream.hpp"
+#include "scic/tokens/token.hpp"
+#include "scic/tokens/token_stream.hpp"
 #include "util/status/status_macros.hpp"
 
 namespace parsers::list_tree {
 namespace {
-using ::tokenizer::Token;
-using ::tokenizer::TokenStream;
+using ::tokens::Token;
+using ::tokens::TokenStream;
 
 // Returns the name of the expression, if it is a token identifier with no
 // trailer.
@@ -124,39 +124,39 @@ class Parser {
     Condition condition;
     switch (preproc.type) {
       // Cases that start a new preprocessor frame.
-      case tokenizer::Token::PPT_IFDEF:
+      case tokens::Token::PPT_IFDEF:
         stack_change = StackChange::Push;
         condition = Condition::Def;
         break;
-      case tokenizer::Token::PPT_IFNDEF:
+      case tokens::Token::PPT_IFNDEF:
         stack_change = StackChange::Push;
         condition = Condition::NotDef;
         break;
-      case tokenizer::Token::PPT_IF:
+      case tokens::Token::PPT_IF:
         stack_change = StackChange::Push;
         condition = Condition::Cond;
         break;
 
         // Cases that keep a current preprocessor frame.
-      case tokenizer::Token::PPT_ELIFDEF:
+      case tokens::Token::PPT_ELIFDEF:
         stack_change = StackChange::Next;
         condition = Condition::Def;
         break;
-      case tokenizer::Token::PPT_ELIFNDEF:
+      case tokens::Token::PPT_ELIFNDEF:
         stack_change = StackChange::Next;
         condition = Condition::NotDef;
         break;
-      case tokenizer::Token::PPT_ELIF:
+      case tokens::Token::PPT_ELIF:
         stack_change = StackChange::Next;
         condition = Condition::Cond;
         break;
-      case tokenizer::Token::PPT_ELSE:
+      case tokens::Token::PPT_ELSE:
         stack_change = StackChange::Next;
         condition = Condition::Always;
         break;
 
         // Cases that pop a preprocessing frame.
-      case tokenizer::Token::PPT_ENDIF:
+      case tokens::Token::PPT_ENDIF:
         stack_change = StackChange::Pop;
         condition = Condition::Always;
         break;
@@ -479,9 +479,9 @@ class Parser {
 }  // namespace
 
 absl::StatusOr<std::vector<Expr>> ParseListTree(
-    std::vector<tokenizer::Token> initial_tokens,
+    std::vector<tokens::Token> initial_tokens,
     IncludeContext const* include_context,
-    absl::btree_map<std::string, std::vector<tokenizer::Token>> const&
+    absl::btree_map<std::string, std::vector<tokens::Token>> const&
         initial_defines) {
   auto token_stream = std::make_unique<TokenStream>();
   token_stream->PushTokens(std::move(initial_tokens));

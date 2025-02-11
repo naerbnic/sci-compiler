@@ -1,4 +1,4 @@
-#include "scic/tokenizer/char_stream.hpp"
+#include "scic/tokens/char_stream.hpp"
 
 #include <cstddef>
 #include <stdexcept>
@@ -9,7 +9,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "scic/text/text_range.hpp"
-namespace tokenizer {
+namespace tokens {
 
 CharStream::CharStream(std::string input)
     : range_(text::TextRange::OfString(std::move(input))) {}
@@ -126,4 +126,4 @@ std::size_t CharStream::IndexNotOf(std::string_view chars) const {
   return pos;
 }
 
-}  // namespace tokenizer
+}  // namespace tokens

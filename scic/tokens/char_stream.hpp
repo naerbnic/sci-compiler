@@ -7,7 +7,7 @@
 
 #include "scic/text/text_range.hpp"
 
-namespace tokenizer {
+namespace tokens {
 
 class CharStream {
  public:
@@ -52,6 +52,6 @@ class CharStream {
   text::TextRange range_;
 };
 
-}  // namespace tokenizer
+}  // namespace tokens
 
 #endif

@@ -6,7 +6,7 @@ cc_library(
     srcs = ["ast.cpp"],
     hdrs = ["ast.hpp"],
     deps = [
-        "//scic/tokenizer:token",
+        "//scic/tokens:token",
         "@abseil-cpp//absl/strings:str_format",
         "@abseil-cpp//absl/types:span",
     ],
@@ -18,8 +18,8 @@ cc_library(
     hdrs = ["parser.hpp"],
     deps = [
         ":ast",
-        "//scic/tokenizer:token",
-        "//scic/tokenizer:token_stream",
+        "//scic/tokens:token",
+        "//scic/tokens:token_stream",
         "//util/status:status_macros",
         "@abseil-cpp//absl/container:btree",
         "@abseil-cpp//absl/status:statusor",
@@ -32,8 +32,8 @@ cc_binary(
     srcs = ["parser_test_tool.cpp"],
     deps = [
         ":parser",
-        "//scic/tokenizer:token",
-        "//scic/tokenizer:token_readers",
+        "//scic/tokens:token",
+        "//scic/tokens:token_readers",
         "@argparse",
     ],
 )

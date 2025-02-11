@@ -4,7 +4,7 @@ cc_library(
     hdrs = ["ast.hpp"],
     deps = [
         "//scic/text:text_range",
-        "//scic/tokenizer:token",
+        "//scic/tokens:token",
         "//util:choice",
         "@abseil-cpp//absl/strings:str_format",
         "@abseil-cpp//absl/types:span",
