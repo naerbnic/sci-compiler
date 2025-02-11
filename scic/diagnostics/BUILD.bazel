@@ -1,0 +1,4 @@
+cc_library(
+    name = "diagnostics",
+    hdrs = ["diagnostics.hpp"],
+)
