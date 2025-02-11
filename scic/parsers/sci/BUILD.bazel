@@ -3,7 +3,7 @@ cc_library(
     srcs = ["ast.cpp"],
     hdrs = ["ast.hpp"],
     deps = [
-        "//scic/tokenizer:text_contents",
+        "//scic/text:text_range",
         "//scic/tokenizer:token",
         "//util:choice",
         "@abseil-cpp//absl/strings:str_format",
@@ -16,7 +16,7 @@ cc_test(
     srcs = ["ast_test.cpp"],
     deps = [
         ":ast",
-        "//scic/tokenizer:text_contents",
+        "//scic/text:text_range",
         "//util/status:status_matchers",
         "@googletest//:gtest",
         "@googletest//:gtest_main",

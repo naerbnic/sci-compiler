@@ -8,12 +8,12 @@
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
-#include "scic/tokenizer/text_contents.hpp"
+#include "scic/text/text_range.hpp"
 namespace tokenizer {
 
 CharStream::CharStream(std::string input)
-    : range_(TextRange::OfString(std::move(input))) {}
-CharStream::CharStream(TextRange input) : range_(std::move(input)) {}
+    : range_(text::TextRange::OfString(std::move(input))) {}
+CharStream::CharStream(text::TextRange input) : range_(std::move(input)) {}
 
 CharStream& CharStream::operator++() {
   Advance();
@@ -80,7 +80,7 @@ CharStream CharStream::SkipN(std::size_t n) const {
   return copy;
 }
 
-TextRange CharStream::GetTextTo(CharStream const& other) const {
+text::TextRange CharStream::GetTextTo(CharStream const& other) const {
   return range_.GetPrefixTo(other.range_);
 }
 

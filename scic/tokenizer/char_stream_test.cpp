@@ -2,13 +2,13 @@
 
 #include <gtest/gtest.h>
 
-#include "scic/tokenizer/text_contents.hpp"
+#include "scic/text/text_range.hpp"
 
 namespace tokenizer {
 namespace {
 
 TEST(TextContentsTest, CalculatesCorrectNumberOfLines) {
-  TextContents contents(
+  text::TextContents contents(
       "abc\n"
       "def\r"
       "ghi\r\n"
@@ -17,12 +17,12 @@ TEST(TextContentsTest, CalculatesCorrectNumberOfLines) {
 }
 
 TEST(TextContentsTest, TrailingNewlineCountsAsALine) {
-  TextContents contents("foobar\n");
+  text::TextContents contents("foobar\n");
   EXPECT_EQ(contents.num_lines(), 2);
 }
 
 TEST(TextContentsTest, GetLinesWorks) {
-  TextContents contents(
+  text::TextContents contents(
       "abc\n"
       "def\r"
       "ghi\r\n"
@@ -34,7 +34,7 @@ TEST(TextContentsTest, GetLinesWorks) {
 }
 
 TEST(TextContentsTest, GetLineIndexWorks) {
-  TextContents contents(
+  text::TextContents contents(
       "abc\n"
       "def\r"
       "ghi\r\n"

@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "absl/strings/str_format.h"
-#include "scic/tokenizer/text_contents.hpp"
+#include "scic/text/text_range.hpp"
 
 namespace tokenizer {
 
@@ -85,9 +85,9 @@ class Token {
   using TokenValue = std::variant<Ident, String, Number, Punct, PreProcessor>;
 
   Token() = default;
-  Token(TextRange text_range, TokenValue value);
+  Token(text::TextRange text_range, TokenValue value);
 
-  TextRange const& text_range() const { return text_range_; }
+  text::TextRange const& text_range() const { return text_range_; }
   TokenValue const& value() const { return value_; }
 
   Ident const* AsIdent() const { return std::get_if<Ident>(&value_); }
@@ -99,7 +99,7 @@ class Token {
   }
 
  private:
-  TextRange text_range_;
+  text::TextRange text_range_;
   TokenValue value_;
 
   template <class Sink>

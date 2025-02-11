@@ -1,4 +1,4 @@
-#include "scic/tokenizer/text_contents.hpp"
+#include "scic/text/text_range.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -9,7 +9,7 @@
 #include <string_view>
 #include <utility>
 
-namespace tokenizer {
+namespace text {
 
 namespace {
 

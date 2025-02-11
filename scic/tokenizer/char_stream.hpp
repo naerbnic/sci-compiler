@@ -5,7 +5,7 @@
 #include <string>
 #include <string_view>
 
-#include "scic/tokenizer/text_contents.hpp"
+#include "scic/text/text_range.hpp"
 
 namespace tokenizer {
 
@@ -13,7 +13,7 @@ class CharStream {
  public:
   CharStream() = default;
   CharStream(std::string text_range);
-  CharStream(TextRange text_range);
+  CharStream(text::TextRange text_range);
 
   CharStream& operator++();
   CharStream operator++(int);
@@ -30,12 +30,12 @@ class CharStream {
   CharStream SkipCharsOf(std::string_view chars) const;
   CharStream SkipN(std::size_t n) const;
 
-  TextRange GetTextTo(CharStream const& other) const;
+  text::TextRange GetTextTo(CharStream const& other) const;
   CharStream GetStreamTo(CharStream const& other) const;
 
   bool TryConsumePrefix(std::string_view prefix);
 
-  TextRange GetText() const { return range_; }
+  text::TextRange GetText() const { return range_; }
 
  private:
   struct LineSpan {
@@ -49,7 +49,7 @@ class CharStream {
   std::size_t IndexOf(std::string_view) const;
   std::size_t IndexNotOf(std::string_view) const;
 
-  TextRange range_;
+  text::TextRange range_;
 };
 
 }  // namespace tokenizer

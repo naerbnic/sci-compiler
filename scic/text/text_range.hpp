@@ -1,5 +1,5 @@
-#ifndef TOKENIZER_TEXT_CONTENTS_HPP
-#define TOKENIZER_TEXT_CONTENTS_HPP
+#ifndef TEXT_TEXT_RANGE_HPP
+#define TEXT_TEXT_RANGE_HPP
 
 #include <cstddef>
 #include <memory>
@@ -12,7 +12,7 @@
 
 #include "absl/strings/str_format.h"
 
-namespace tokenizer {
+namespace text {
 
 class CharOffset {
  public:
@@ -177,5 +177,6 @@ class TextRange {
   std::size_t end_offset_;
 };
 
-}  // namespace tokenizer
+}  // namespace text
+
 #endif

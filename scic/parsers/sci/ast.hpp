@@ -8,7 +8,7 @@
 #include <utility>
 #include <vector>
 
-#include "scic/tokenizer/text_contents.hpp"
+#include "scic/text/text_range.hpp"
 #include "util/choice.hpp"
 
 namespace parsers::sci {
@@ -55,11 +55,11 @@ template <class T>
 class TokenNode {
  public:
   using element_type = internal::NodeElementType<T>::type;
-  TokenNode(T value, tokenizer::TextRange text_range)
+  TokenNode(T value, text::TextRange text_range)
       : value_(std::move(value)), text_range_(std::move(text_range)) {}
 
   T const& value() const { return value_; }
-  tokenizer::TextRange const& text_range() const { return text_range_; }
+  text::TextRange const& text_range() const { return text_range_; }
 
   // Act as a smart pointer to the value. If the internal type is a pointer,
   // act as if it were transparent.
@@ -97,7 +97,7 @@ class TokenNode {
   }
 
   T value_;
-  tokenizer::TextRange text_range_;
+  text::TextRange text_range_;
 };
 
 // AST Nodes for the SCI language parse tree.
@@ -254,12 +254,12 @@ class ConstValueExpr {
 
 class RestExpr {
  public:
-  RestExpr(tokenizer::TextRange source) : source_(std::move(source)) {}
+  RestExpr(text::TextRange source) : source_(std::move(source)) {}
 
-  tokenizer::TextRange const& source() const { return source_; }
+  text::TextRange const& source() const { return source_; }
 
  private:
-  tokenizer::TextRange source_;
+  text::TextRange source_;
 };
 
 // A call expresion, of (<name> <arg> ...). Aside from control flow

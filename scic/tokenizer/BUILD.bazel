@@ -7,7 +7,7 @@ cc_library(
     srcs = ["token.cpp"],
     hdrs = ["token.hpp"],
     deps = [
-        ":text_contents",
+        "//scic/text:text_range",
         "@abseil-cpp//absl/strings:str_format",
     ],
 )
@@ -48,21 +48,11 @@ cc_test(
 )
 
 cc_library(
-    name = "text_contents",
-    srcs = ["text_contents.cpp"],
-    hdrs = ["text_contents.hpp"],
-    deps = [
-        "@abseil-cpp//absl/strings:str_format",
-        "@abseil-cpp//absl/strings",
-    ],
-)
-
-cc_library(
     name = "char_stream",
     srcs = ["char_stream.cpp"],
     hdrs = ["char_stream.hpp"],
     deps = [
-        ":text_contents",
+        "//scic/text:text_range",
         "@abseil-cpp//absl/strings",
     ],
 )

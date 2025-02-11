@@ -15,7 +15,7 @@
 #include "absl/strings/str_format.h"
 #include "argparse/argparse.hpp"
 #include "scic/parsers/list_tree/parser.hpp"
-#include "scic/tokenizer/text_contents.hpp"
+#include "scic/text/text_range.hpp"
 #include "scic/tokenizer/token.hpp"
 #include "scic/tokenizer/token_readers.hpp"
 #include "util/status/status_macros.hpp"
@@ -23,7 +23,7 @@
 namespace parsers::list_tree {
 namespace {
 
-using ::tokenizer::TextRange;
+using ::text::TextRange;
 using ::tokenizer::Token;
 
 absl::StatusOr<std::vector<Token>> TokenizeFile(
