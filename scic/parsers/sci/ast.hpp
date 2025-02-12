@@ -667,6 +667,15 @@ class ProcDef {
   std::unique_ptr<Expr> body_;
 };
 
+struct PropertyDef {
+  TokenNode<std::string> name;
+  TokenNode<int> value;
+};
+
+struct MethodNamesDecl {
+  std::vector<TokenNode<std::string>> names;
+};
+
 // A common class definition.
 //
 // Not to be confused with a (classdef) (which we confusingly call a
@@ -678,19 +687,10 @@ class ClassDef {
     Object,
   };
 
-  struct Property {
-    TokenNode<std::string> name;
-    TokenNode<int> value;
-  };
-
-  struct MethodNames {
-    std::vector<TokenNode<std::string>> names;
-  };
-
   ClassDef(Kind kind, TokenNode<std::string> name,
            std::optional<TokenNode<std::string>> parent,
-           std::vector<Property> properties,
-           std::optional<MethodNames> method_names,
+           std::vector<PropertyDef> properties,
+           std::optional<MethodNamesDecl> method_names,
            std::vector<ProcDef> methods)
       : kind_(kind),
         name_(std::move(name)),
@@ -704,8 +704,8 @@ class ClassDef {
   std::optional<TokenNode<std::string>> const& parent() const {
     return parent_;
   }
-  std::vector<Property> const& properties() const { return properties_; }
-  std::optional<MethodNames> const& method_names() const {
+  std::vector<PropertyDef> const& properties() const { return properties_; }
+  std::optional<MethodNamesDecl> const& method_names() const {
     return method_names_;
   }
   std::vector<ProcDef> const& methods() const { return methods_; }
@@ -714,9 +714,62 @@ class ClassDef {
   Kind kind_;
   TokenNode<std::string> name_;
   std::optional<TokenNode<std::string>> parent_;
-  std::vector<Property> properties_;
-  std::optional<MethodNames> method_names_;
+  std::vector<PropertyDef> properties_;
+  std::optional<MethodNamesDecl> method_names_;
   std::vector<ProcDef> methods_;
+};
+
+class ClassDecl {
+ public:
+  ClassDecl(TokenNode<std::string> name, TokenNode<int> script_num,
+            TokenNode<int> class_num, std::optional<TokenNode<int>> parent_num,
+            std::vector<PropertyDef> properties,
+            std::unique_ptr<MethodNamesDecl> method_names)
+      : name_(std::move(name)),
+        script_num_(std::move(script_num)),
+        class_num_(std::move(class_num)),
+        parent_num_(std::move(parent_num)),
+        properties_(std::move(properties)),
+        method_names_(std::move(method_names)) {}
+
+  TokenNode<std::string> const& name() const { return name_; }
+  TokenNode<int> const& script_num() const { return script_num_; }
+  TokenNode<int> const& class_num() const { return class_num_; }
+  std::optional<TokenNode<int>> const& parent_num() const {
+    return parent_num_;
+  }
+
+ private:
+  TokenNode<std::string> name_;
+  TokenNode<int> script_num_;
+  TokenNode<int> class_num_;
+  std::optional<TokenNode<int>> parent_num_;
+  std::vector<PropertyDef> properties_;
+  std::unique_ptr<MethodNamesDecl> method_names_;
+};
+
+class SelectorsDecl {
+ public:
+  struct Selector {
+    TokenNode<std::string> name;
+    TokenNode<int> id;
+  };
+
+  SelectorsDecl(std::vector<Selector> selectors)
+      : selectors_(std::move(selectors)) {}
+
+  std::vector<Selector> const& selectors() const { return selectors_; }
+
+ private:
+  std::vector<Selector> selectors_;
+};
+
+class Item
+    : public util::ChoiceBase<Item,  //
+                              ScriptNumDef, PublicDef, ExternDef, GlobalDeclDef,
+                              ModuleVarsDef, EnumDef, ProcDef, ClassDef,
+                              ClassDecl, SelectorsDecl> {
+  using ChoiceBase::ChoiceBase;
 };
 
 }  // namespace parsers::sci

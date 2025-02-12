@@ -7,6 +7,7 @@
 
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
+#include "scic/text/text_range.hpp"
 #include "scic/tokens/token.hpp"
 
 namespace parsers::list_tree {
@@ -18,6 +19,7 @@ class TokenExpr {
   TokenExpr(tokens::Token token);
 
   tokens::Token const& token() const;
+  text::TextRange const& text_range() const { return token().text_range(); }
 
   void WriteTokens(std::vector<tokens::Token>* tokens) const;
 

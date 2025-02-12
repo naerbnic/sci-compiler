@@ -5,6 +5,7 @@
 #ifndef ERRORS_ERRORS_HPP
 #define ERRORS_ERRORS_HPP
 
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -21,34 +22,51 @@ class Diagnostic {
     INFO,
   };
 
-  Diagnostic(Kind kind, text::TextRange const& text, std::string message)
-      : kind_(kind), text_(text), message_(std::move(message)) {}
+  Diagnostic(Kind kind, std::optional<text::TextRange> text,
+             std::string message)
+      : kind_(kind), text_(std::move(text)), message_(std::move(message)) {}
 
   Kind kind() const { return kind_; }
-  text::TextRange const& text() const { return text_; }
+  std::optional<text::TextRange> const& text() const { return text_; }
   std::string const& message() const { return message_; }
 
   template <class... Args>
-  static Diagnostic Error(text::TextRange const& text,
-                          absl::FormatSpec<Args...> spec, Args&&... args) {
+  static Diagnostic RangeError(text::TextRange const& text,
+                               absl::FormatSpec<Args...> spec, Args&&... args) {
     return Diagnostic(ERROR, text, absl::StrFormat(spec, args...));
   }
 
   template <class... Args>
-  static Diagnostic Warning(text::TextRange const& text,
-                            absl::FormatSpec<Args...> spec, Args&&... args) {
+  static Diagnostic RangeWarning(text::TextRange const& text,
+                                 absl::FormatSpec<Args...> spec,
+                                 Args&&... args) {
     return Diagnostic(WARNING, text, absl::StrFormat(spec, args...));
   }
 
   template <class... Args>
-  static Diagnostic Info(text::TextRange const& text,
-                         absl::FormatSpec<Args...> spec, Args&&... args) {
+  static Diagnostic RangeInfo(text::TextRange const& text,
+                              absl::FormatSpec<Args...> spec, Args&&... args) {
     return Diagnostic(INFO, text, absl::StrFormat(spec, args...));
+  }
+
+  template <class... Args>
+  static Diagnostic Error(absl::FormatSpec<Args...> spec, Args&&... args) {
+    return Diagnostic(ERROR, std::nullopt, absl::StrFormat(spec, args...));
+  }
+
+  template <class... Args>
+  static Diagnostic Warning(absl::FormatSpec<Args...> spec, Args&&... args) {
+    return Diagnostic(WARNING, std::nullopt, absl::StrFormat(spec, args...));
+  }
+
+  template <class... Args>
+  static Diagnostic Info(absl::FormatSpec<Args...> spec, Args&&... args) {
+    return Diagnostic(INFO, std::nullopt, absl::StrFormat(spec, args...));
   }
 
  private:
   Kind kind_;
-  text::TextRange text_;
+  std::optional<text::TextRange> text_;
   std::string message_;
 };
 

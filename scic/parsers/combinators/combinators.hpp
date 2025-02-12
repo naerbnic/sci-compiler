@@ -16,6 +16,32 @@
 
 namespace parsers {
 
+template <class... Values>
+class ParseResult;
+
+namespace internal {
+
+template <class T>
+std::vector<T> ConcatVectors(std::vector<T> a, std::vector<T> b) {
+  a.insert(a.end(), b.begin(), b.end());
+  return a;
+}
+
+template <template <class...> class Result, class T>
+struct WrapParseResultImpl {
+  using type = Result<T>;
+};
+
+template <template <class...> class Result, class T>
+struct WrapParseResultImpl<Result, Result<T>> {
+  using type = ParseResult<T>;
+};
+
+template <template <class...> class Result, class T>
+using WrapParseResult = typename WrapParseResultImpl<Result, T>::type;
+
+}  // namespace internal
+
 class ParseError {
  public:
   enum Kind {
@@ -43,7 +69,8 @@ class ParseError {
       std::vector<diag::Diagnostic> messages = messages_;
       messages.insert(messages.end(), other.messages_.begin(),
                       other.messages_.end());
-      return ParseError(kind_, std::move(messages_));
+      return ParseError(kind_,
+                        internal::ConcatVectors(messages_, other.messages_));
     }
     if (kind_ == FATAL) {
       return *this;
@@ -60,6 +87,29 @@ class ParseError {
   absl::Span<diag::Diagnostic const> messages() const { return messages_; }
 
  private:
+  template <template <class...> class Type, class... Values>
+  friend class ParseResultBase;
+
+  ParseError PrependDiagnostics(std::vector<diag::Diagnostic> messages) const& {
+    return ParseError(kind_,
+                      internal::ConcatVectors(std::move(messages), messages_));
+  }
+
+  ParseError&& PrependDiagnostics(std::vector<diag::Diagnostic> messages) && {
+    messages_ = internal::ConcatVectors(std::move(messages), messages_);
+    return std::move(*this);
+  }
+
+  ParseError AppendDiagnostics(std::vector<diag::Diagnostic> messages) const& {
+    return ParseError(kind_,
+                      internal::ConcatVectors(messages_, std::move(messages)));
+  }
+
+  ParseError&& AppendDiagnostics(std::vector<diag::Diagnostic> messages) && {
+    messages_ = internal::ConcatVectors(messages_, std::move(messages));
+    return std::move(*this);
+  }
+
   ParseError(Kind kind, std::vector<diag::Diagnostic> messages)
       : kind_(kind), messages_(std::move(messages)) {}
 
@@ -67,39 +117,40 @@ class ParseError {
   std::vector<diag::Diagnostic> messages_;
 };
 
-template <class... Values>
-class ParseResult {
+template <template <class...> class Type, class... Values>
+class ParseResultBase {
  public:
-  static ParseResult OfFailure(diag::Diagnostic error) {
-    return ParseResult(ParseError::Failure({std::move(error)}));
-  }
-  static ParseResult OfError(diag::Diagnostic error) {
-    return ParseResult(ParseError::Fatal({std::move(error)}));
-  }
-
-  ParseResult(Values&&... values)
-      : ParseResult(Success{
+  ParseResultBase(Values&&... values)
+      : ParseResultBase(Success{
             .value = std::tuple<Values...>(std::forward<Values>(values)...),
         }) {}
 
-  ParseResult(ParseError error) : value_(error) {}
+  ParseResultBase(ParseError error) : value_(error) {}
 
-  ParseResult& AddWarning(diag::Diagnostic warning) {
+  Type<Values...>& AddWarning(diag::Diagnostic warning) {
     if (std::holds_alternative<Success>(value_)) {
       std::get<Success>(value_).non_errors_.push_back(std::move(warning));
     }
     return *this;
   }
 
+  bool ok() const { return std::holds_alternative<Success>(value_); }
+  std::tuple<Values...> const& values() const& { return success().value; }
+  std::tuple<Values...>&& values() && {
+    return std::move(*this).success().value;
+  }
+  ParseError const& status() const& { return std::get<ParseError>(value_); }
+  ParseError&& status() && { return std::get<ParseError>(std::move(value_)); }
+
   // Inverts the result, turning a success into a failure, and a failure into a
   // success. A fatal error remains a fatal error.
-  ParseResult<> Invert() const {
+  Type<> Invert() const {
     if (std::holds_alternative<Success>(value_)) {
-      return ParseResult<>(ParseError::Failure({}));
+      return Type<>(ParseError::Failure({}));
     } else if (std::holds_alternative<ParseError>(value_)) {
       auto const& error = std::get<ParseError>(value_);
       if (error.kind() == ParseError::FAILURE) {
-        return ParseResult<>();
+        return Type<>();
       }
       return ParseResult<>(error);
     }
@@ -108,34 +159,108 @@ class ParseResult {
   // Composes two parse results together, concatenating the values if both are
   // successful, or merging the errors if either is an error.
   template <class... MoreValues>
-  ParseResult<Values..., MoreValues...> operator|(
-      ParseResult<MoreValues...> const& other) const {
-    if (std::holds_alternative<Success>(value_) &&
-        std::holds_alternative<Success>(other.value_)) {
-      auto& this_success = std::get<Success>(value_);
-      auto& other_success = std::get<Success>(other.value_);
-      return ParseResult<Values..., MoreValues...>(
-          std::tuple_cat(this_success.value, other_success.value));
+  Type<Values..., MoreValues...> operator|(Type<MoreValues...> other) const& {
+    using CatResult = Type<Values..., MoreValues...>;
+
+    if (ok() && other.ok()) {
+      auto&& this_success = std::move(*this).success();
+      auto&& other_success = std::move(other).success();
+      typename CatResult::Success success{
+          .value = std::tuple_cat(std::move(this_success.value),
+                                  std::move(other_success.value)),
+          .non_errors =
+              internal::ConcatVectors(std::move(this_success.non_errors),
+                                      std::move(other_success.non_errors)),
+      };
+      return CatResult(std::move(success));
     }
 
-    if (std::holds_alternative<ParseError>(value_) &&
-        std::holds_alternative<ParseError>(other.value_)) {
-      auto& this_error = std::get<ParseError>(value_);
-      auto& other_error = std::get<ParseError>(other.value_);
-      return ParseResult<Values..., MoreValues...>(ParseError::Failure(
-          std::vector<diag::Diagnostic>(this_error | other_error)));
+    if (!ok() && !other.ok()) {
+      return CatResult(std::move(*this).status() | std::move(other).status());
     }
 
-    if (std::holds_alternative<ParseError>(value_)) {
-      return ParseResult<Values..., MoreValues...>(
-          std::get<ParseError>(value_));
+    if (ok()) {
+      auto&& this_success = std::move(*this).success();
+      auto&& other_error = std::move(other).status();
+      ;
+      return CatResult(
+          std::move(other_error)
+              .PrependDiagnostics(std::move(this_success.non_errors)));
     }
-
-    return ParseResult<Values..., MoreValues...>(
-        std::get<ParseError>(other.value_));
+    auto&& this_error = std::move(*this).status();
+    auto&& other_success = std::move(other).success();
+    return CatResult(
+        std::move(this_error)
+            .AppendDiagnostics(std::move(other_success.non_errors)));
   }
 
- private:
+  template <class... MoreValues>
+  Type<Values..., MoreValues...> operator|(Type<MoreValues...> other) && {
+    using CatResult = Type<Values..., MoreValues...>;
+    if (ok() && other.ok()) {
+      auto&& this_success = std::move(*this).success();
+      auto&& other_success = std::move(other).success();
+      typename CatResult::Success success{
+          .value = std::tuple_cat(std::move(this_success.value),
+                                  std::move(other_success.value)),
+          .non_errors =
+              internal::ConcatVectors(std::move(this_success.non_errors),
+                                      std::move(other_success.non_errors)),
+      };
+      return CatResult(std::move(success));
+    }
+
+    if (!ok() && !other.ok()) {
+      return CatResult(std::move(*this).status() | std::move(other).status());
+    }
+
+    if (ok()) {
+      auto&& this_success = std::move(*this).success();
+      auto&& other_error = std::move(other).status();
+      ;
+      return CatResult(
+          std::move(other_error)
+              .PrependDiagnostics(std::move(this_success.non_errors)));
+    }
+    auto&& this_error = std::move(*this).status();
+    auto&& other_success = std::move(other).success();
+    return CatResult(
+        std::move(this_error)
+            .AppendDiagnostics(std::move(other_success.non_errors)));
+  }
+
+  template <class F>
+  auto Apply(F&& f) && {
+    using Result =
+        internal::WrapParseResult<Type, std::invoke_result_t<F&&, Values&&...>>;
+    if (std::holds_alternative<Success>(value_)) {
+      auto success = std::move(*this).success();
+      auto result =
+          Result(std::apply(std::forward<F>(f), std::move(success.value)));
+      result.PrependMessages(std::move(success.non_errors));
+      return result;
+    }
+    return Result{std::get<ParseError>(value_)};
+  }
+
+  template <class F>
+  auto Apply(F&& f) const& -> internal::WrapParseResult<
+      Type, std::invoke_result_t<F&&, Values const&...>> {
+    using Result =
+        internal::WrapParseResult<Type,
+                                  std::invoke_result_t<F&&, Values const&...>>;
+    if (std::holds_alternative<Success>(value_)) {
+      auto& success = std::get<Success>(value_);
+      auto result = Result(std::apply(std::forward<F>(f), success.value));
+      result.PrependMessages(success.non_errors);
+      return result;
+    }
+    return Result{std::get<ParseError>(value_)};
+  }
+
+ protected:
+  template <template <class...> class OtherType, class... OtherValues>
+  friend class ParseResultBase;
   // This follows the general idea in Rust's nom, with a difference between a
   // failure, which can be recovered from, and an error, which is a hard stop.
   struct Success {
@@ -144,11 +269,73 @@ class ParseResult {
     std::vector<diag::Diagnostic> non_errors;
   };
 
+  Success const& success() const& { return std::get<Success>(value_); }
+  Success& success() & { return std::get<Success>(value_); }
+  Success&& success() && { return std::get<Success>(std::move(value_)); }
+
+  void PrependMessages(std::vector<diag::Diagnostic> messages) {
+    if (ok()) {
+      auto& success_value = success();
+      success_value.non_errors = internal::ConcatVectors(
+          std::move(messages), std::move(success_value.non_errors));
+    }
+  }
+
   using ResultValue = std::variant<Success, ParseError>;
 
-  explicit ParseResult(ResultValue value) : value_(std::move(value)) {}
+  explicit ParseResultBase(ResultValue value) : value_(std::move(value)) {}
 
+ private:
   ResultValue value_;
+};
+
+template <class... Values>
+class ParseResult : public ParseResultBase<ParseResult, Values...> {
+  using Base = ParseResultBase<ParseResult, Values...>;
+
+ public:
+  static ParseResult OfFailure(diag::Diagnostic error) {
+    return ParseResult(ParseError::Failure({std::move(error)}));
+  }
+
+  static ParseResult OfError(diag::Diagnostic error) {
+    return ParseResult(ParseError::Fatal({std::move(error)}));
+  }
+
+  ParseResult(Values&&... values) : Base(std::forward<Values>(values)...) {}
+  ParseResult(ParseError error) : Base(std::move(error)) {}
+
+ private:
+  template <template <class...> class OtherType, class... OtherValues>
+  friend class ParseResultBase;
+
+  ParseResult(typename Base::ResultValue value) : Base(std::move(value)) {}
+};
+
+template <class Value>
+class ParseResult<Value> : public ParseResultBase<ParseResult, Value> {
+  using Base = ParseResultBase<ParseResult, Value>;
+
+ public:
+  static ParseResult OfFailure(diag::Diagnostic error) {
+    return ParseResult(ParseError::Failure({std::move(error)}));
+  }
+
+  static ParseResult OfError(diag::Diagnostic error) {
+    return ParseResult(ParseError::Fatal({std::move(error)}));
+  }
+
+  ParseResult(Value&& value) : Base(std::forward<Value>(value)) {}
+  ParseResult(ParseError error) : Base(std::move(error)) {}
+
+  Value const& value() const& { return std::get<0>(Base::values()); }
+  Value&& value() && { return std::get<0>(std::move(*this).Base::values()); }
+
+ private:
+  template <template <class...> class OtherType, class... OtherValues>
+  friend class ParseResultBase;
+
+  ParseResult(typename Base::ResultValue value) : Base(std::move(value)) {}
 };
 
 template <class... Values>

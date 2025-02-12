@@ -26,3 +26,15 @@ cc_test(
         "@googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "parser",
+    srcs = ["parser.cpp"],
+    hdrs = ["parser.hpp"],
+    deps = [
+        ":ast",
+        "//scic/diagnostics",
+        "//scic/parsers/combinators",
+        "//scic/parsers/list_tree:ast",
+    ],
+)
