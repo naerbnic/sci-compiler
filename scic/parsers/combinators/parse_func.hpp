@@ -1,8 +1,11 @@
 #ifndef PARSERS_COMBINATORS_PARSE_FUNC_HPP
 #define PARSERS_COMBINATORS_PARSE_FUNC_HPP
 
+#include <memory>
 #include <tuple>
+#include <type_traits>
 
+#include "scic/diagnostics/diagnostics.hpp"
 #include "scic/parsers/combinators/results.hpp"
 
 namespace parsers {
@@ -47,7 +50,43 @@ struct CallableTraitsBase<R (*)(Args...)> {
 template <class T>
 using CallableTraits = CallableTraitsBase<std::decay_t<T>>;
 
+template <class T>
+struct SimplifyParseReturnImpl;
+
+template <class R, class... Args>
+struct SimplifyParseReturnImpl<R(Args...)> {
+  using type = ExtractParseResult<R>(Args...);
+};
+
+template <class T>
+using SimplifyParseReturn = typename SimplifyParseReturnImpl<T>::type;
+
 }  // namespace internal
+
+template <class T>
+struct ParserTraits {
+ private:
+  using Traits = internal::CallableTraits<T>;
+
+ public:
+  using RawFuncT = Traits::FunctionType;
+  using BaseFuncT =
+      internal::SimplifyParseReturn<typename Traits::FunctionType>;
+  using ParseRet = WrapParseResult<typename Traits::ReturnType>;
+  using BaseRet = ExtractParseResult<typename Traits::ReturnType>;
+  using ArgsTuple = typename Traits::ArgsTuple;
+};
+
+template <class T>
+concept IsParser = requires() { typename ParserTraits<T>; };
+
+template <class T, class... Args>
+concept IsParserOf = requires() {
+  requires std::is_move_constructible_v<T>;
+  typename ParserTraits<T>;
+  requires std::convertible_to<typename ParserTraits<T>::ArgsTuple,
+                               std::tuple<Args...>>;
+};
 
 template <class T, class... Args>
 class ParserFuncBase {
@@ -65,12 +104,12 @@ class ParserFuncBase {
                                  ParseResult<T>>)
   ParserFuncBase(F f) : impl_(std::make_shared<Impl<F>>(std::move(f))) {}
 
-  ParseResult<T> operator()(Args... args) const {
+  ParseResult<T> operator()(Args&&... args) const {
     if (!impl_) {
       return ParseResult<T>::OfFailure(
           diag::Diagnostic::Error("Uninitialized."));
     }
-    return impl_->Parse(std::move(args)...);
+    return impl_->Parse(std::forward<Args>(args)...);
   }
 
  private:
@@ -102,13 +141,17 @@ template <class R, class... Args>
 struct ParseFunc<R(Args...)> : public ParserFuncBase<R, Args...> {
  public:
   ParseFunc() = default;
+  ParseFunc(ParseFunc const&) = default;
+  ParseFunc(ParseFunc&&) = default;
+  ParseFunc& operator=(ParseFunc const&) = default;
+  ParseFunc& operator=(ParseFunc&&) = default;
 
   template <class F>
   ParseFunc(F f) : ParserFuncBase<R, Args...>(std::move(f)) {}
 };
 
 template <class F>
-ParseFunc(F&& func)
-    -> ParseFunc<typename internal::CallableTraits<F>::FunctionType>;
+ParseFunc(F&& func) -> ParseFunc<internal::SimplifyParseReturn<
+    typename internal::CallableTraits<F>::FunctionType>>;
 }  // namespace parsers
 #endif

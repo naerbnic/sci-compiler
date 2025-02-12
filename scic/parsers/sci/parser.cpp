@@ -6,13 +6,13 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <type_traits>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "scic/diagnostics/diagnostics.hpp"
+#include "scic/parsers/combinators/parse_func.hpp"
 #include "scic/parsers/combinators/results.hpp"
 #include "scic/parsers/combinators/status.hpp"
 #include "scic/parsers/list_tree/ast.hpp"
@@ -49,11 +49,13 @@ ParseStatus RangeFailureOf(text::TextRange const& range,
       {diag::Diagnostic::RangeError(range, spec, args...)});
 }
 
-template <class F>
-  requires CallableParser<F, TreeExpr const&>
+// Parses a single tree expression from the input stream. On error, the
+// stream will not be affected.
+template <IsParserOf<TreeExpr const&> F>
 auto ParseOneTreeExpr(F parser) {
-  return [parser = std::move(parser)](
-             TreeExprSpan& exprs) -> ParseResultOf<F const&, TreeExprSpan&> {
+  using ParserInfo = ParserTraits<F>;
+  return [parser =
+              std::move(parser)](TreeExprSpan& exprs) -> ParserInfo::ParseRet {
     if (exprs.empty()) {
       return FailureOf("Expected item.");
     }
@@ -66,11 +68,13 @@ auto ParseOneTreeExpr(F parser) {
   };
 }
 
-template <class F>
-  requires CallableParser<F, TreeExprSpan&>
+// Parses a single list tree expression from the input span, applying the
+// given parser to the list contents.
+template <IsParserOf<TreeExprSpan&> F>
 auto ParseListExpr(F parser) {
-  return [parser = std::move(parser)](
-             TreeExpr const& expr) -> ParseResultOf<F const&, TreeExprSpan&> {
+  using ParserInfo = ParserTraits<F>;
+  return [parser =
+              std::move(parser)](TreeExpr const& expr) -> ParserInfo::ParseRet {
     if (!expr.has<ListExpr>()) {
       return RangeFailureOf(expr.as<TokenExpr>().token().text_range(),
                             "Expected list.");
@@ -81,27 +85,24 @@ auto ParseListExpr(F parser) {
   };
 }
 
-template <class F>
-  requires CallableParser<F, TokenExpr const&>
+template <IsParserOf<TokenExpr const&> F>
 auto ParseTokenExpr(F parser) {
-  return
-      [parser = std::move(parser)](
-          TreeExpr const& expr) -> ParseResultOf<F const&, TokenExpr const&> {
-        if (!expr.has<TokenExpr>()) {
-          return RangeFailureOf(expr.as<TokenExpr>().token().text_range(),
-                                "Expected list.");
-        }
-        return parser(expr.as<TokenExpr>());
-      };
+  using ParserInfo = ParserTraits<F>;
+  return [parser =
+              std::move(parser)](TreeExpr const& expr) -> ParserInfo::ParseRet {
+    if (!expr.has<TokenExpr>()) {
+      return RangeFailureOf(expr.as<TokenExpr>().token().text_range(),
+                            "Expected list.");
+    }
+    return parser(expr.as<TokenExpr>());
+  };
 }
 
-template <class F>
-  requires CallableParser<F, text::TextRange const&,
-                          tokens::Token::Ident const&>
+template <IsParserOf<text::TextRange const&, tokens::Token::Ident const&> F>
 auto ParseIdentToken(F parser) {
-  return [parser = std::move(parser)](TokenExpr const& token)
-             -> ParseResultOf<F const&, text::TextRange const&,
-                              tokens::Token::Ident const&> {
+  using ParserInfo = ParserTraits<F>;
+  return [parser = std::move(parser)](
+             TokenExpr const& token) -> ParserInfo::ParseRet {
     auto* ident = token.token().AsIdent();
     if (!ident) {
       return RangeFailureOf(token.text_range(), "Expected identifier token.");
@@ -111,11 +112,9 @@ auto ParseIdentToken(F parser) {
   };
 }
 
-template <class F>
-  requires CallableParser<F, text::TextRange const&,
-                          tokens::Token::Ident const&>
+template <IsParserOf<text::TextRange const&, tokens::Token::Ident const&> F>
 auto ParseOneIdentToken(F parser) {
-  return ParseTokenExpr(ParseIdentToken(std::move(parser)));
+  return ParseOneTreeExpr(ParseTokenExpr(ParseIdentToken(std::move(parser))));
 }
 
 ParseResult<TokenNode<std::string_view>> ParseSimpleIdentNameNodeView(
@@ -126,10 +125,12 @@ ParseResult<TokenNode<std::string_view>> ParseSimpleIdentNameNodeView(
   return TokenNode<std::string_view>(ident.name, range);
 }
 
-template <class F>
+// Ensures that a span parser consumes all elements in the input list.
+template <IsParserOf<TreeExprSpan&> F>
 auto ParseComplete(F parser) {
-  return [parser = std::move(parser)](
-             TreeExprSpan& exprs) -> ParseResultOf<F const&, TreeExprSpan&> {
+  using ParserInfo = ParserTraits<F>;
+  return [parser =
+              std::move(parser)](TreeExprSpan& exprs) -> ParserInfo::ParseRet {
     auto result = parser(exprs);
     if (result.ok() && !exprs.empty()) {
       return FailureOf("Unexpected trailing elements in list.");
@@ -138,26 +139,25 @@ auto ParseComplete(F parser) {
   };
 }
 
-template <class F>
-auto ParseOneListItem(TreeExprSpan& exprs, F&& parser)
-    -> std::invoke_result_t<F&&, TreeExprSpan&> {
+template <IsParserOf<TreeExprSpan&> F>
+auto ParseOneListItem(F parser) {
   return ParseOneTreeExpr(
-      ParseListExpr(ParseComplete(std::forward<F>(parser))))(exprs);
+      ParseListExpr(ParseComplete(std::forward<F>(parser))));
 }
 
 ParseResult<TokenNode<std::string_view>> ParseOneIdentTokenView(
     TreeExprSpan& exprs) {
-  return ParseOneTreeExpr(
-      ParseTokenExpr(ParseIdentToken(ParseSimpleIdentNameNodeView)))(exprs);
+  static auto const instance =
+      ParseFunc(ParseOneIdentToken(ParseSimpleIdentNameNodeView));
+  return instance(exprs);
 }
 
-template <class F>
-  requires CallableParser<F, TreeExprSpan&>
+template <IsParserOf<TreeExprSpan&> F>
 auto ParseUntilComplete(F parser) {
-  return [parser = std::move(parser)](TreeExprSpan& exprs)
-             -> ParseResult<
-                 std::vector<ParseResultElemOf<F const&, TreeExprSpan&>>> {
-    using ResultElem = ParseResultElemOf<F const&, TreeExprSpan&>;
+  using ParserInfo = ParserTraits<F>;
+  using ResultElem = ParserInfo::BaseRet;
+  return [parser = std::move(parser)](
+             TreeExprSpan& exprs) -> ParseResult<std::vector<ResultElem>> {
     std::vector<ResultElem> results;
     while (!exprs.empty()) {
       // Sanity check that at least one element gets consumed on success.
@@ -178,14 +178,14 @@ auto ParseUntilComplete(F parser) {
 //
 // We will attempt to parse each expression in the input list. If there are
 // any errors, the result will be the combination of all of the errors.
-template <class F>
-  requires CallableParser<F, TreeExpr const&>
+template <IsParserOf<TreeExpr const&> F>
 auto ParseEachTreeExpr(F parser) {
-  return [parser = std::move(parser)](TreeExprSpan& exprs)
-             -> ParseResult<
-                 std::vector<ParseResultElemOf<F const&, TreeExpr const&>>> {
+  using ParserInfo = ParserTraits<F>;
+  using ResultElem = ParserInfo::BaseRet;
+  return [parser = std::move(parser)](
+             TreeExprSpan& exprs) -> ParseResult<std::vector<ResultElem>> {
     std::optional<ParseStatus> curr_error;
-    std::vector<ParseResultElemOf<F const&, TreeExpr const&>> results;
+    std::vector<ResultElem> results;
     for (auto const& expr : exprs) {
       auto result = parser(expr);
       if (!result.ok()) {
@@ -207,6 +207,7 @@ auto ParseEachTreeExpr(F parser) {
     return results;
   };
 }
+
 ParseResult<Item> ParsePublicItem(TokenNode<std::string_view> const& keyword,
                                   TreeExprSpan& exprs) {
   ASSIGN_OR_RETURN(auto name, ParseOneIdentTokenView(exprs));
@@ -219,8 +220,8 @@ ParseResult<Item> UnimplementedParseItem(
                    keyword.text_range().GetRange().filename());
 }
 
-using ItemParser = std::function<ParseResult<Item>(
-    TokenNode<std::string_view> const& keyword, TreeExprSpan&)>;
+using ItemParser =
+    ParseFunc<Item(TokenNode<std::string_view> const& keyword, TreeExprSpan&)>;
 using ParserItemMap = std::map<std::string, ItemParser>;
 
 ParserItemMap const& TopLevelParsers() {

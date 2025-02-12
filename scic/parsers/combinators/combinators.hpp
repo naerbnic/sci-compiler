@@ -94,16 +94,6 @@ template <class Stream>
   requires Streamable<Stream>
 ElemStream(Stream&&) -> ElemStream<typename Stream::elem_type>;
 
-template <class Parser, class Elem, class = void>
-struct ParserTraits {
-  using result_type = std::invoke_result_t<Parser const&, ElemStream<Elem>&>;
-};
-
-template <class Parser, class Elem>
-struct ParserTraits<Parser, Elem, typename Parser::template result_type<Elem>> {
-  using result_type = typename Parser::template result_type<Elem>;
-};
-
 // Basic span element stream.
 
 template <class Elem>
