@@ -21,6 +21,7 @@
 #include "scic/error.hpp"
 #include "scic/input.hpp"
 #include "scic/sol.hpp"
+#include "scic/symbol.hpp"
 #include "scic/symtbl.hpp"
 #include "scic/symtypes.hpp"
 #include "scic/toktypes.hpp"
