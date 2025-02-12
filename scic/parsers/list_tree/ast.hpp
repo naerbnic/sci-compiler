@@ -2,13 +2,13 @@
 #define PARSER_LIST_TREE_AST_HPP
 
 #include <memory>
-#include <variant>
 #include <vector>
 
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "scic/text/text_range.hpp"
 #include "scic/tokens/token.hpp"
+#include "util/choice.hpp"
 
 namespace parsers::list_tree {
 
@@ -59,27 +59,18 @@ class ListExpr {
   friend void AbslStringify(Sink& sink, ListExpr const& expr);
 };
 
-class Expr {
+class Expr : public util::ChoiceBase<Expr, TokenExpr, ListExpr> {
+  using ChoiceBase::ChoiceBase;
+
  public:
-  explicit Expr(TokenExpr token_expr);
-  explicit Expr(ListExpr list_expr);
-
-  TokenExpr const* AsTokenExpr() const;
-  ListExpr const* AsListExpr() const;
-
-  // Write these tokens back in order to the given vector.
   void WriteTokens(std::vector<tokens::Token>* tokens) const;
 
  private:
-  std::variant<TokenExpr, ListExpr> expr_;
-
   template <class Sink>
   friend void AbslStringify(Sink& sink, Expr const& expr) {
-    if (auto* token_expr = expr.AsTokenExpr()) {
-      absl::Format(&sink, "%v", *token_expr);
-    } else if (auto* list_expr = expr.AsListExpr()) {
-      absl::Format(&sink, "%v", *list_expr);
-    }
+    expr.visit(
+        [&sink](ListExpr const& expr) { absl::Format(&sink, "%v", expr); },
+        [&sink](TokenExpr const& expr) { absl::Format(&sink, "%v", expr); });
   }
 };
 

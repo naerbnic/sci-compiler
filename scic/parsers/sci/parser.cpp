@@ -13,6 +13,10 @@
 namespace parsers::sci {
 namespace {
 
+using TreeExpr = list_tree::Expr;
+using ::parsers::list_tree::ListExpr;
+using ::parsers::list_tree::TokenExpr;
+
 using TreeExprSpan = absl::Span<list_tree::Expr const>;
 
 template <class F>
@@ -22,19 +26,16 @@ auto ParseOneListItem(TreeExprSpan& exprs, F&& parser)
     return ParseError::Failure({diag::Diagnostic::Error("Expected item.")});
   }
   auto const& front_expr = exprs.front();
-  auto* list = front_expr.AsListExpr();
-  if (!list) {
+  if (!front_expr.has<ListExpr>()) {
     return ParseError::Failure({diag::Diagnostic::RangeError(
-        front_expr.AsTokenExpr()->text_range(), "Expected list.")});
+        front_expr.as<TokenExpr>().text_range(), "Expected list.")});
   }
 
-  auto elements = list->elements();
+  auto elements = front_expr.as<ListExpr>().elements();
   auto result = parser(elements);
   if (result.ok() && !elements.empty()) {
-    return ParseError::Failure({diag::Diagnostic::RangeError(
-        elements.front().AsTokenExpr()->text_range(),
-        "Unexpected trailing "
-        "elements in list.")});
+    return ParseError::Failure(
+        {diag::Diagnostic::Error("Unexpected trailing elements in list.")});
   }
   exprs.remove_prefix(1);
   return result;

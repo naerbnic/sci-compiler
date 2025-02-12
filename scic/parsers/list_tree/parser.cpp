@@ -26,11 +26,10 @@ using ::tokens::TokenStream;
 // Returns the name of the expression, if it is a token identifier with no
 // trailer.
 std::optional<std::string_view> GetExprPlainIdent(Expr const& expr) {
-  auto* token_expr = expr.AsTokenExpr();
-  if (!token_expr) {
+  if (!expr.has<TokenExpr>()) {
     return std::nullopt;
   }
-  auto* ident = token_expr->token().AsIdent();
+  auto* ident = expr.as<TokenExpr>().token().AsIdent();
   if (!ident || ident->trailer != Token::Ident::None) {
     return std::nullopt;
   }
@@ -400,13 +399,12 @@ class ParserImpl {
       }
 
       // We handle two kinds of top-level expressions: An include, or a define.
-      auto* list_expr = expr->AsListExpr();
-      if (!list_expr) {
+      if (!expr->has<ListExpr>()) {
         // This isn't a list.
         return expr;
       }
 
-      auto const& elements = list_expr->elements();
+      auto const& elements = expr->as<ListExpr>().elements();
 
       if (elements.empty()) {
         // This list is empty.
@@ -463,16 +461,18 @@ class ParserImpl {
     }
 
     // An include argument can be a string or an identifier.
-    auto* token_expr = rest_elements[0].AsTokenExpr();
-    if (!token_expr) {
+    auto const& incl_value = rest_elements[0];
+    if (!incl_value.has<TokenExpr>()) {
       return absl::InvalidArgumentError(
           "Include argument must be either a string or symbol.");
     }
 
+    auto const& token_expr = incl_value.as<TokenExpr>();
+
     std::string_view include_path;
-    if (auto* string = token_expr->token().AsString()) {
+    if (auto* string = token_expr.token().AsString()) {
       include_path = string->decodedString;
-    } else if (auto* ident = token_expr->token().AsIdent()) {
+    } else if (auto* ident = token_expr.token().AsIdent()) {
       include_path = ident->name;
     } else {
       return absl::InvalidArgumentError(

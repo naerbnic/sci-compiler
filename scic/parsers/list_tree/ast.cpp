@@ -1,9 +1,7 @@
 #include "scic/parsers/list_tree/ast.hpp"
 
 #include <memory>
-#include <stdexcept>
 #include <utility>
-#include <variant>
 #include <vector>
 
 #include "absl/types/span.h"
@@ -59,25 +57,8 @@ void ListExpr::WriteTokens(std::vector<tokens::Token>* tokens) const {
   tokens->push_back(pimpl_->close_token);
 }
 
-Expr::Expr(TokenExpr token_expr) : expr_(std::move(token_expr)) {}
-Expr::Expr(ListExpr list_expr) : expr_(std::move(list_expr)) {}
-
-TokenExpr const* Expr::AsTokenExpr() const {
-  return std::get_if<TokenExpr>(&expr_);
-}
-
-ListExpr const* Expr::AsListExpr() const {
-  return std::get_if<ListExpr>(&expr_);
-}
-
 void Expr::WriteTokens(std::vector<tokens::Token>* tokens) const {
-  if (auto* token_expr = AsTokenExpr()) {
-    token_expr->WriteTokens(tokens);
-  } else if (auto* list_expr = AsListExpr()) {
-    list_expr->WriteTokens(tokens);
-  } else {
-    throw std::runtime_error("Invalid expression type");
-  }
+  visit([&](auto const& expr) { expr.WriteTokens(tokens); });
 }
 
 }  // namespace parsers::list_tree

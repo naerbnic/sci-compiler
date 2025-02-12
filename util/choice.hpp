@@ -58,8 +58,19 @@ class ChoiceBase {
   }
 
   template <class... Fs>
-  decltype(auto) visit(Fs&&... fs) {
+  decltype(auto) visit(Fs&&... fs) const& {
     return std::visit(Visitor<Fs...>{std::forward<Fs>(fs)...}, value_);
+  }
+
+  template <class... Fs>
+  decltype(auto) visit(Fs&&... fs) & {
+    return std::visit(Visitor<Fs...>{std::forward<Fs>(fs)...}, value_);
+  }
+
+  template <class... Fs>
+  decltype(auto) visit(Fs&&... fs) && {
+    return std::visit(Visitor<Fs...>{std::forward<Fs>(fs)...},
+                      std::move(value_));
   }
 
  protected:
