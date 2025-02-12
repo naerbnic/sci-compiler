@@ -36,15 +36,15 @@ concept CallableParser = requires(F const& parser, Args&&... args) {
 };
 
 template <class... Args>
-ParseError FailureOf(absl::FormatSpec<Args...> const& spec,
+ParseStatus FailureOf(absl::FormatSpec<Args...> const& spec,
                      Args const&... args) {
-  return ParseError::Failure({diag::Diagnostic::Error(spec, args...)});
+  return ParseStatus::Failure({diag::Diagnostic::Error(spec, args...)});
 }
 template <class... Args>
-ParseError RangeFailureOf(text::TextRange const& range,
+ParseStatus RangeFailureOf(text::TextRange const& range,
                           absl::FormatSpec<Args...> const& spec,
                           Args const&... args) {
-  return ParseError::Failure(
+  return ParseStatus::Failure(
       {diag::Diagnostic::RangeError(range, spec, args...)});
 }
 
@@ -183,7 +183,7 @@ auto ParseEachTreeExpr(F parser) {
   return [parser = std::move(parser)](TreeExprSpan& exprs)
              -> ParseResult<
                  std::vector<ParseResultElemOf<F const&, TreeExpr const&>>> {
-    std::optional<ParseError> curr_error;
+    std::optional<ParseStatus> curr_error;
     std::vector<ParseResultElemOf<F const&, TreeExpr const&>> results;
     for (auto const& expr : exprs) {
       auto result = parser(expr);
