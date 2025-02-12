@@ -161,16 +161,10 @@ class ParseResultBase {
   template <class... MoreValues>
   Type<Values..., MoreValues...> operator|(Type<MoreValues...> other) const& {
     using CatResult = Type<Values..., MoreValues...>;
-
     if (ok() && other.ok()) {
-      auto&& this_success = std::move(*this).success();
-      auto&& other_success = std::move(other).success();
       typename CatResult::Success success{
-          .value = std::tuple_cat(std::move(this_success.value),
-                                  std::move(other_success.value)),
-          .non_errors =
-              internal::ConcatVectors(std::move(this_success.non_errors),
-                                      std::move(other_success.non_errors)),
+          .value = std::tuple_cat(std::move(std::move(*this).values()),
+                                  std::move(std::move(other).values())),
       };
       return CatResult(std::move(success));
     }
@@ -180,32 +174,18 @@ class ParseResultBase {
     }
 
     if (ok()) {
-      auto&& this_success = std::move(*this).success();
-      auto&& other_error = std::move(other).status();
-      ;
-      return CatResult(
-          std::move(other_error)
-              .PrependDiagnostics(std::move(this_success.non_errors)));
+      return CatResult(std::move(other).status());
     }
-    auto&& this_error = std::move(*this).status();
-    auto&& other_success = std::move(other).success();
-    return CatResult(
-        std::move(this_error)
-            .AppendDiagnostics(std::move(other_success.non_errors)));
+    return CatResult(std::move(*this).status());
   }
 
   template <class... MoreValues>
   Type<Values..., MoreValues...> operator|(Type<MoreValues...> other) && {
     using CatResult = Type<Values..., MoreValues...>;
     if (ok() && other.ok()) {
-      auto&& this_success = std::move(*this).success();
-      auto&& other_success = std::move(other).success();
       typename CatResult::Success success{
-          .value = std::tuple_cat(std::move(this_success.value),
-                                  std::move(other_success.value)),
-          .non_errors =
-              internal::ConcatVectors(std::move(this_success.non_errors),
-                                      std::move(other_success.non_errors)),
+          .value = std::tuple_cat(std::move(std::move(*this).values()),
+                                  std::move(std::move(other).values())),
       };
       return CatResult(std::move(success));
     }
@@ -215,47 +195,29 @@ class ParseResultBase {
     }
 
     if (ok()) {
-      auto&& this_success = std::move(*this).success();
-      auto&& other_error = std::move(other).status();
-      ;
-      return CatResult(
-          std::move(other_error)
-              .PrependDiagnostics(std::move(this_success.non_errors)));
+      return CatResult(std::move(other).status());
     }
-    auto&& this_error = std::move(*this).status();
-    auto&& other_success = std::move(other).success();
-    return CatResult(
-        std::move(this_error)
-            .AppendDiagnostics(std::move(other_success.non_errors)));
+    return CatResult(std::move(*this).status());
   }
 
   template <class F>
   auto Apply(F&& f) && {
     using Result =
         internal::WrapParseResult<Type, std::invoke_result_t<F&&, Values&&...>>;
-    if (std::holds_alternative<Success>(value_)) {
-      auto success = std::move(*this).success();
-      auto result =
-          Result(std::apply(std::forward<F>(f), std::move(success.value)));
-      result.PrependMessages(std::move(success.non_errors));
-      return result;
+    if (ok()) {
+      return Result(std::apply(std::forward<F>(f), std::move(*this).values()));
     }
-    return Result{std::get<ParseError>(value_)};
+    return Result(std::move(*this).status());
   }
 
   template <class F>
-  auto Apply(F&& f) const& -> internal::WrapParseResult<
-      Type, std::invoke_result_t<F&&, Values const&...>> {
+  auto Apply(F&& f) const& {
     using Result =
-        internal::WrapParseResult<Type,
-                                  std::invoke_result_t<F&&, Values const&...>>;
-    if (std::holds_alternative<Success>(value_)) {
-      auto& success = std::get<Success>(value_);
-      auto result = Result(std::apply(std::forward<F>(f), success.value));
-      result.PrependMessages(success.non_errors);
-      return result;
+        internal::WrapParseResult<Type, std::invoke_result_t<F&&, Values&&...>>;
+    if (ok()) {
+      return Result(std::apply(std::forward<F>(f), std::move(*this).values()));
     }
-    return Result{std::get<ParseError>(value_)};
+    return Result(std::move(*this).status());
   }
 
  protected:
@@ -266,7 +228,6 @@ class ParseResultBase {
   struct Success {
     // The value this carries.
     std::tuple<Values...> value;
-    std::vector<diag::Diagnostic> non_errors;
   };
 
   Success const& success() const& { return std::get<Success>(value_); }
