@@ -32,35 +32,40 @@ class Diagnostic {
 
   template <class... Args>
   static Diagnostic RangeError(text::TextRange const& text,
-                               absl::FormatSpec<Args...> spec, Args&&... args) {
+                               absl::FormatSpec<Args...> const& spec,
+                               Args const&... args) {
     return Diagnostic(ERROR, text, absl::StrFormat(spec, args...));
   }
 
   template <class... Args>
   static Diagnostic RangeWarning(text::TextRange const& text,
-                                 absl::FormatSpec<Args...> spec,
-                                 Args&&... args) {
+                                 absl::FormatSpec<Args...> const& spec,
+                                 Args const&... args) {
     return Diagnostic(WARNING, text, absl::StrFormat(spec, args...));
   }
 
   template <class... Args>
   static Diagnostic RangeInfo(text::TextRange const& text,
-                              absl::FormatSpec<Args...> spec, Args&&... args) {
+                              absl::FormatSpec<Args...> const& spec,
+                              Args const&... args) {
     return Diagnostic(INFO, text, absl::StrFormat(spec, args...));
   }
 
   template <class... Args>
-  static Diagnostic Error(absl::FormatSpec<Args...> spec, Args&&... args) {
+  static Diagnostic Error(absl::FormatSpec<Args...> const& spec,
+                          Args const&... args) {
     return Diagnostic(ERROR, std::nullopt, absl::StrFormat(spec, args...));
   }
 
   template <class... Args>
-  static Diagnostic Warning(absl::FormatSpec<Args...> spec, Args&&... args) {
+  static Diagnostic Warning(absl::FormatSpec<Args...> const& spec,
+                            Args const&... args) {
     return Diagnostic(WARNING, std::nullopt, absl::StrFormat(spec, args...));
   }
 
   template <class... Args>
-  static Diagnostic Info(absl::FormatSpec<Args...> spec, Args&&... args) {
+  static Diagnostic Info(absl::FormatSpec<Args...> const& spec,
+                         Args const&... args) {
     return Diagnostic(INFO, std::nullopt, absl::StrFormat(spec, args...));
   }
 

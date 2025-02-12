@@ -16,9 +16,6 @@
 
 namespace parsers {
 
-template <class... Values>
-class ParseResult;
-
 namespace internal {
 
 template <class T>
@@ -28,17 +25,62 @@ std::vector<T> ConcatVectors(std::vector<T> a, std::vector<T> b) {
 }
 
 template <template <class...> class Result, class T>
-struct WrapParseResultImpl {
+struct WrapParseResultBaseImpl {
   using type = Result<T>;
+  using elem = T;
 };
 
 template <template <class...> class Result, class T>
-struct WrapParseResultImpl<Result, Result<T>> {
-  using type = ParseResult<T>;
+struct WrapParseResultBaseImpl<Result, Result<T>> {
+  using type = Result<T>;
+  using elem = T;
 };
 
 template <template <class...> class Result, class T>
-using WrapParseResult = typename WrapParseResultImpl<Result, T>::type;
+using WrapParseResultBase = typename WrapParseResultBaseImpl<Result, T>::type;
+
+// Marker trait, indicating that an internal constructor should be used
+// in the case of variadic templates.
+struct InnerCtorT {};
+static constexpr InnerCtorT InnerCtor = InnerCtorT{};
+
+// If we have a type that has a single operator(), extract the args and return
+// type.
+
+template <class T>
+struct MemberFunctionTraitsImpl;
+
+template <class Obj, class R, class... Args>
+struct MemberFunctionTraitsImpl<R (Obj::*)(Args...) const> {
+  using ReturnType = R;
+  using ArgsTuple = std::tuple<Args...>;
+  using FunctionType = R(Args...);
+};
+
+template <class T>
+struct MemberFunctionTraits : public MemberFunctionTraitsImpl<T> {};
+
+template <class T>
+struct CallableTraitsBase {
+ private:
+  using MemberTraits = MemberFunctionTraits<decltype(&T::operator())>;
+
+ public:
+  using ReturnType = typename MemberTraits::ReturnType;
+  using ArgsTuple = typename MemberTraits::ArgsTuple;
+  using FunctionType = typename MemberTraits::FunctionType;
+};
+
+// Function types
+template <class R, class... Args>
+struct CallableTraitsBase<R (*)(Args...)> {
+  using ReturnType = R;
+  using ArgsTuple = std::tuple<Args...>;
+  using FunctionType = R(Args...);
+};
+
+template <class T>
+using CallableTraits = CallableTraitsBase<std::decay_t<T>>;
 
 }  // namespace internal
 
@@ -121,9 +163,11 @@ template <template <class...> class Type, class... Values>
 class ParseResultBase {
  public:
   ParseResultBase(Values... values)
-      : ParseResultBase(Success{
-            .value = std::tuple<Values...>(std::move(values)...),
-        }) {}
+      : ParseResultBase(
+            internal::InnerCtor,
+            Success{
+                .value = std::tuple<Values...>(std::move(values)...),
+            }) {}
 
   ParseResultBase(ParseError error) : value_(error) {}
 
@@ -159,7 +203,7 @@ class ParseResultBase {
           .value = std::tuple_cat(std::move(std::move(*this).values()),
                                   std::move(std::move(other).values())),
       };
-      return CatResult(std::move(success));
+      return CatResult(internal::InnerCtor, std::move(success));
     }
 
     if (!ok() && !other.ok()) {
@@ -180,7 +224,7 @@ class ParseResultBase {
           .value = std::tuple_cat(std::move(std::move(*this).values()),
                                   std::move(std::move(other).values())),
       };
-      return CatResult(std::move(success));
+      return CatResult(internal::InnerCtor, std::move(success));
     }
 
     if (!ok() && !other.ok()) {
@@ -196,7 +240,8 @@ class ParseResultBase {
   template <class F>
   auto Apply(F&& f) && {
     using Result =
-        internal::WrapParseResult<Type, std::invoke_result_t<F&&, Values&&...>>;
+        internal::WrapParseResultBase<Type,
+                                      std::invoke_result_t<F&&, Values&&...>>;
     if (ok()) {
       return Result(std::apply(std::forward<F>(f), std::move(*this).values()));
     }
@@ -206,7 +251,8 @@ class ParseResultBase {
   template <class F>
   auto Apply(F&& f) const& {
     using Result =
-        internal::WrapParseResult<Type, std::invoke_result_t<F&&, Values&&...>>;
+        internal::WrapParseResultBase<Type,
+                                      std::invoke_result_t<F&&, Values&&...>>;
     if (ok()) {
       return Result(std::apply(std::forward<F>(f), std::move(*this).values()));
     }
@@ -237,7 +283,8 @@ class ParseResultBase {
 
   using ResultValue = std::variant<Success, ParseError>;
 
-  explicit ParseResultBase(ResultValue value) : value_(std::move(value)) {}
+  explicit ParseResultBase(internal::InnerCtorT const&, ResultValue value)
+      : value_(std::move(value)) {}
 
  private:
   ResultValue value_;
@@ -263,7 +310,8 @@ class ParseResult : public ParseResultBase<ParseResult, Values...> {
   template <template <class...> class OtherType, class... OtherValues>
   friend class ParseResultBase;
 
-  ParseResult(typename Base::ResultValue value) : Base(std::move(value)) {}
+  ParseResult(internal::InnerCtorT const&, typename Base::ResultValue value)
+      : Base(internal::InnerCtor, std::move(value)) {}
 };
 
 template <class Value>
@@ -294,6 +342,19 @@ class ParseResult<Value> : public ParseResultBase<ParseResult, Value> {
 
 template <class... Values>
 ParseResult(Values&&...) -> ParseResult<std::decay_t<Values>...>;
+
+template <class T>
+using WrapParseResult = internal::WrapParseResultBase<ParseResult, T>;
+
+template <class T>
+using ExtractParseResult =
+    typename internal::WrapParseResultBaseImpl<ParseResult, T>::elem;
+
+template <class F, class... Args>
+using ParseResultOf = WrapParseResult<std::invoke_result_t<F, Args...>>;
+
+template <class F, class... Args>
+using ParseResultElemOf = ExtractParseResult<std::invoke_result_t<F, Args...>>;
 
 template <class Stream>
 concept Streamable = requires(Stream& s) {
@@ -417,6 +478,68 @@ class SpanStream {
  private:
   absl::Span<Elem const> span_;
 };
+
+template <class T, class... Args>
+class ParserFuncBase {
+ public:
+  ParserFuncBase() = default;
+  ParserFuncBase(ParserFuncBase const&) = default;
+  ParserFuncBase(ParserFuncBase&&) = default;
+  ParserFuncBase& operator=(ParserFuncBase const&) = default;
+  ParserFuncBase& operator=(ParserFuncBase&&) = default;
+
+  template <class F>
+    requires(!std::same_as<std::decay_t<F>, ParserFuncBase> &&
+             std::invocable<F const&, Args...> &&
+             std::convertible_to<std::invoke_result_t<F const&, Args...>,
+                                 ParseResult<T>>)
+  ParserFuncBase(F f) : impl_(std::make_shared<Impl<F>>(std::move(f))) {}
+
+  ParseResult<T> operator()(Args... args) const {
+    if (!impl_) {
+      return ParseResult<T>::OfFailure(
+          diag::Diagnostic::Error("Uninitialized."));
+    }
+    return impl_->Parse(std::move(args)...);
+  }
+
+ private:
+  class ImplBase {
+   public:
+    virtual ~ImplBase() = default;
+
+    virtual ParseResult<T> Parse(Args...) const = 0;
+  };
+
+  template <class F>
+  class Impl : public ImplBase {
+   public:
+    explicit Impl(F f) : func_(std::move(f)) {}
+
+    ParseResult<T> Parse(Args... args) const override { return func_(args...); }
+
+   private:
+    F func_;
+  };
+
+  std::shared_ptr<ImplBase> impl_;
+};
+
+template <class T>
+struct ParseFunc;
+
+template <class R, class... Args>
+struct ParseFunc<R(Args...)> : public ParserFuncBase<R, Args...> {
+ public:
+  ParseFunc() = default;
+
+  template <class F>
+  ParseFunc(F f) : ParserFuncBase<R, Args...>(std::move(f)) {}
+};
+
+template <class F>
+ParseFunc(F&& func)
+    -> ParseFunc<typename internal::CallableTraits<F>::FunctionType>;
 
 }  // namespace parsers
 

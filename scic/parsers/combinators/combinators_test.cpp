@@ -92,5 +92,29 @@ TEST(ParseResultTest, BinaryMoveApplyWorks) {
   EXPECT_EQ(*new_result.value(), 11);
 }
 
+using FuncType = int(int, int);
+
+constexpr auto lambda = [](int a, int b) -> int { return 0; };
+
+static_assert(
+    std::tuple_size<internal::CallableTraits<int(int, int)>::ArgsTuple>() == 2);
+static_assert(
+    std::tuple_size<internal::CallableTraits<int (*)(int, int)>::ArgsTuple>() ==
+    2);
+static_assert(
+    std::tuple_size<internal::CallableTraits<decltype(lambda)>::ArgsTuple>() ==
+    2);
+
+template <class R>
+R ParseTakingFunc(ParseFunc<R(int, int)> func) {
+  return func(1, 2).value();
+}
+
+TEST(ParseFuncTest, TypeInferenceWorks) {
+  std::string_view result =
+      ParseTakingFunc(ParseFunc([](int, int) { return "foo"; }));
+  EXPECT_EQ(result, "foo");
+}
+
 }  // namespace
 }  // namespace parsers
