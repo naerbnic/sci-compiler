@@ -13,7 +13,8 @@
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "scic/diagnostics/diagnostics.hpp"
-#include "scic/parsers/combinators/combinators.hpp"
+#include "scic/parsers/combinators/results.hpp"
+#include "scic/parsers/combinators/status.hpp"
 #include "scic/parsers/list_tree/ast.hpp"
 #include "scic/parsers/sci/ast.hpp"
 #include "scic/text/text_range.hpp"
@@ -37,13 +38,13 @@ concept CallableParser = requires(F const& parser, Args&&... args) {
 
 template <class... Args>
 ParseStatus FailureOf(absl::FormatSpec<Args...> const& spec,
-                     Args const&... args) {
+                      Args const&... args) {
   return ParseStatus::Failure({diag::Diagnostic::Error(spec, args...)});
 }
 template <class... Args>
 ParseStatus RangeFailureOf(text::TextRange const& range,
-                          absl::FormatSpec<Args...> const& spec,
-                          Args const&... args) {
+                           absl::FormatSpec<Args...> const& spec,
+                           Args const&... args) {
   return ParseStatus::Failure(
       {diag::Diagnostic::RangeError(range, spec, args...)});
 }

@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "scic/parsers/combinators/combinators.hpp"
+#include "scic/parsers/combinators/results.hpp"
 #include "scic/parsers/list_tree/ast.hpp"
 #include "scic/parsers/sci/ast.hpp"
 

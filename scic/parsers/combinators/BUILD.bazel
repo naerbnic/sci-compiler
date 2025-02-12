@@ -4,7 +4,15 @@ package(
 
 cc_library(
     name = "combinators",
-    hdrs = ["combinators.hpp"],
+    srcs = [
+        "internal_util.hpp",
+    ],
+    hdrs = [
+        "combinators.hpp",
+        "parse_func.hpp",
+        "results.hpp",
+        "status.hpp",
+    ],
     deps = [
         "//util/status:status_macros",
         "@abseil-cpp//absl/status:statusor",

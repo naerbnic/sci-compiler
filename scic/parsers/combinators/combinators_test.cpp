@@ -8,6 +8,8 @@
 #include <utility>
 
 #include "absl/types/span.h"
+#include "scic/parsers/combinators/parse_func.hpp"
+#include "scic/parsers/combinators/results.hpp"
 
 namespace parsers {
 namespace {
