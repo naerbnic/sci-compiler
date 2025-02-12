@@ -1,0 +1,26 @@
+package(
+    default_visibility = ["//scic:scic_internal"],
+)
+
+cc_library(
+    name = "combinators",
+    hdrs = ["combinators.hpp"],
+    deps = [
+        "//util/status:status_macros",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/types:span",
+    ],
+)
+
+cc_test(
+    name = "combinators_test",
+    srcs = ["combinators_test.cpp"],
+    deps = [
+        ":combinators",
+        "//scic/diagnostics",
+        "//util/status:status_matchers",
+        "@abseil-cpp//absl/types:span",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
