@@ -37,19 +37,12 @@ std::optional<std::string_view> GetExprPlainIdent(Expr const& expr) {
   return ident->name;
 }
 
-class Parser {
+class ProcessedTokenStream {
  public:
-  Parser(
+  explicit ProcessedTokenStream(
       std::unique_ptr<TokenStream> token_stream,
-      absl::btree_map<std::string, std::vector<Token>> const& initial_defines,
-      IncludeContext const* include_context)
-      : token_stream_(std::move(token_stream)),
-        curr_defines_(std::move(initial_defines)),
-        include_context_(include_context) {
-    for (auto const& [key, value] : initial_defines) {
-      curr_defines_.insert_or_assign(key, value);
-    }
-  }
+      absl::btree_map<std::string, std::vector<Token>> defines)
+      : token_stream_(std::move(token_stream)), defines_(std::move(defines)) {}
 
   absl::StatusOr<std::optional<Token>> GetNextToken() {
     if (!pushed_tokens_.empty()) {
@@ -83,8 +76,8 @@ class Parser {
       if (ident && ident->trailer == Token::Ident::None) {
         // It's possible this could be defined. If so, we need to replace it
         // in the stream with the defined tokens.
-        auto define = curr_defines_.find(ident->name);
-        if (define != curr_defines_.end()) {
+        auto define = defines_.find(ident->name);
+        if (define != defines_.end()) {
           token_stream_->PushTokens(define->second);
           continue;
         }
@@ -94,6 +87,17 @@ class Parser {
     }
   }
 
+  void PushToken(Token token) { pushed_tokens_.push_back(std::move(token)); }
+
+  void PushRawTokens(std::vector<Token> tokens) {
+    token_stream_->PushTokens(std::move(tokens));
+  }
+
+  void SetDefinition(std::string_view name, std::vector<Token> tokens) {
+    defines_[name] = std::move(tokens);
+  }
+
+ private:
   absl::Status HandlePreProcessorToken(Token::PreProcessor const& preproc) {
     enum class StackChange {
       // Push a new frame
@@ -253,7 +257,7 @@ class Parser {
           tokens[0]));
     }
 
-    return curr_defines_.contains(ident->name);
+    return defines_.contains(ident->name);
   }
 
   absl::StatusOr<bool> IsTrue(absl::Span<Token const> tokens) {
@@ -279,8 +283,8 @@ class Parser {
         }
         previous_defs.insert(ident->name);
 
-        auto define = curr_defines_.find(ident->name);
-        if (define == curr_defines_.end()) {
+        auto define = defines_.find(ident->name);
+        if (define == defines_.end()) {
           return absl::InvalidArgumentError(
               "Undefined identifier in preprocessor condition.");
         }
@@ -296,8 +300,39 @@ class Parser {
     }
   }
 
+  // The state of the current preprocessor frame. There is one frame for
+  // each layer of context active during the parse.
+  struct PreProcessorFrame {
+    // Iff true, tokens that we are seeing from the token stream are being
+    // produced during parsing.
+    bool producing_tokens;
+
+    // If true, then a previous preprocessor directive at this frame has
+    // been triggered, such as an #if clause. This allows us to track if
+    // we should observe future #else or #elif clauses.
+    bool case_triggered;
+  };
+
+  // The stack of preprocessor frames. The top of the stack is the back end
+  // of the vector. If empty, we will always be producing tokens.
+  std::vector<PreProcessorFrame> preproc_stack_;
+
+  // Tokens that have been pushed to be returned again on the next call to
+  // GetNextToken().
+  std::vector<Token> pushed_tokens_;
+  std::unique_ptr<TokenStream> token_stream_;
+  absl::btree_map<std::string, std::vector<Token>> defines_;
+};
+
+class Parser {
+ public:
+  Parser(ProcessedTokenStream token_stream,
+         IncludeContext const* include_context)
+      : token_stream_(std::move(token_stream)),
+        include_context_(include_context) {}
+
   absl::StatusOr<std::optional<Expr>> ParseExpr() {
-    ASSIGN_OR_RETURN(auto token, GetNextToken());
+    ASSIGN_OR_RETURN(auto token, token_stream_.GetNextToken());
     if (!token) {
       return std::nullopt;
     }
@@ -336,7 +371,7 @@ class Parser {
     std::vector<Expr> elements;
 
     while (true) {
-      ASSIGN_OR_RETURN(auto next_token, GetNextToken());
+      ASSIGN_OR_RETURN(auto next_token, token_stream_.GetNextToken());
       if (!next_token) {
         return absl::InvalidArgumentError("Unexpected end of list.");
       }
@@ -347,7 +382,7 @@ class Parser {
                         std::move(next_token).value(), std::move(elements));
       }
 
-      pushed_tokens_.push_back(std::move(next_token).value());
+      token_stream_.PushToken(std::move(next_token).value());
 
       ASSIGN_OR_RETURN(auto next_expr, ParseExpr());
       if (!next_expr) {
@@ -415,7 +450,7 @@ class Parser {
       value_expr.WriteTokens(&value_tokens);
     }
 
-    curr_defines_.insert_or_assign(*name, std::move(value_tokens));
+    token_stream_.SetDefinition(*name, std::move(value_tokens));
     return absl::OkStatus();
   }
 
@@ -445,34 +480,13 @@ class Parser {
     }
     ASSIGN_OR_RETURN(auto tokens,
                      include_context_->LoadTokensFromInclude(include_path));
-    token_stream_->PushTokens(std::move(tokens));
+    token_stream_.PushRawTokens(std::move(tokens));
 
     return absl::OkStatus();
   }
 
  private:
-  // The state of the current preprocessor frame. There is one frame for
-  // each layer of context active during the parse.
-  struct PreProcessorFrame {
-    // Iff true, tokens that we are seeing from the token stream are being
-    // produced during parsing.
-    bool producing_tokens;
-
-    // If true, then a previous preprocessor directive at this frame has
-    // been triggered, such as an #if clause. This allows us to track if
-    // we should observe future #else or #elif clauses.
-    bool case_triggered;
-  };
-
-  // The stack of preprocessor frames. The top of the stack is the back end
-  // of the vector. If empty, we will always be producing tokens.
-  std::vector<PreProcessorFrame> preproc_stack_;
-
-  // Tokens that have been pushed to be returned again on the next call to
-  // GetNextToken().
-  std::vector<Token> pushed_tokens_;
-  std::unique_ptr<TokenStream> token_stream_;
-  absl::btree_map<std::string, std::vector<Token>> curr_defines_;
+  ProcessedTokenStream token_stream_;
   IncludeContext const* include_context_;
 };
 
@@ -486,7 +500,8 @@ absl::StatusOr<std::vector<Expr>> ParseListTree(
   auto token_stream = std::make_unique<TokenStream>();
   token_stream->PushTokens(std::move(initial_tokens));
 
-  Parser parser(std::move(token_stream), initial_defines, include_context);
+  Parser parser(ProcessedTokenStream(std::move(token_stream), initial_defines),
+                include_context);
 
   std::vector<Expr> exprs;
 
