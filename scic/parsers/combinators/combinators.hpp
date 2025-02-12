@@ -120,19 +120,12 @@ class ParseError {
 template <template <class...> class Type, class... Values>
 class ParseResultBase {
  public:
-  ParseResultBase(Values&&... values)
+  ParseResultBase(Values... values)
       : ParseResultBase(Success{
-            .value = std::tuple<Values...>(std::forward<Values>(values)...),
+            .value = std::tuple<Values...>(std::move(values)...),
         }) {}
 
   ParseResultBase(ParseError error) : value_(error) {}
-
-  Type<Values...>& AddWarning(diag::Diagnostic warning) {
-    if (std::holds_alternative<Success>(value_)) {
-      std::get<Success>(value_).non_errors_.push_back(std::move(warning));
-    }
-    return *this;
-  }
 
   bool ok() const { return std::holds_alternative<Success>(value_); }
   std::tuple<Values...> const& values() const& { return success().value; }
@@ -286,7 +279,7 @@ class ParseResult<Value> : public ParseResultBase<ParseResult, Value> {
     return ParseResult(ParseError::Fatal({std::move(error)}));
   }
 
-  ParseResult(Value&& value) : Base(std::forward<Value>(value)) {}
+  ParseResult(Value value) : Base(std::move(value)) {}
   ParseResult(ParseError error) : Base(std::move(error)) {}
 
   Value const& value() const& { return std::get<0>(Base::values()); }

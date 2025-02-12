@@ -1,5 +1,6 @@
 Checks:
 - abseil-*
+- cppcoreguidelines-rvalue-reference-param-not-moved
 - modernize-deprecated-headers
 - modernize-loop-convert
 - modernize-use-bool-literals
