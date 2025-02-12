@@ -41,7 +41,7 @@ class ProcessedTokenStream {
  public:
   explicit ProcessedTokenStream(
       std::unique_ptr<TokenStream> token_stream,
-      absl::btree_map<std::string, std::vector<Token>> defines)
+      absl::btree_map<std::string, std::vector<Token>>* defines)
       : token_stream_(std::move(token_stream)), defines_(std::move(defines)) {}
 
   absl::StatusOr<std::optional<Token>> GetNextToken() {
@@ -76,8 +76,8 @@ class ProcessedTokenStream {
       if (ident && ident->trailer == Token::Ident::None) {
         // It's possible this could be defined. If so, we need to replace it
         // in the stream with the defined tokens.
-        auto define = defines_.find(ident->name);
-        if (define != defines_.end()) {
+        auto define = defines_->find(ident->name);
+        if (define != defines_->end()) {
           token_stream_->PushTokens(define->second);
           continue;
         }
@@ -94,7 +94,7 @@ class ProcessedTokenStream {
   }
 
   void SetDefinition(std::string_view name, std::vector<Token> tokens) {
-    defines_[name] = std::move(tokens);
+    (*defines_)[name] = std::move(tokens);
   }
 
  private:
@@ -257,7 +257,7 @@ class ProcessedTokenStream {
           tokens[0]));
     }
 
-    return defines_.contains(ident->name);
+    return defines_->contains(ident->name);
   }
 
   absl::StatusOr<bool> IsTrue(absl::Span<Token const> tokens) {
@@ -283,8 +283,8 @@ class ProcessedTokenStream {
         }
         previous_defs.insert(ident->name);
 
-        auto define = defines_.find(ident->name);
-        if (define == defines_.end()) {
+        auto define = defines_->find(ident->name);
+        if (define == defines_->end()) {
           return absl::InvalidArgumentError(
               "Undefined identifier in preprocessor condition.");
         }
@@ -321,13 +321,13 @@ class ProcessedTokenStream {
   // GetNextToken().
   std::vector<Token> pushed_tokens_;
   std::unique_ptr<TokenStream> token_stream_;
-  absl::btree_map<std::string, std::vector<Token>> defines_;
+  absl::btree_map<std::string, std::vector<Token>>* defines_;
 };
 
-class Parser {
+class ParserImpl {
  public:
-  Parser(ProcessedTokenStream token_stream,
-         IncludeContext const* include_context)
+  ParserImpl(ProcessedTokenStream token_stream,
+             IncludeContext const* include_context)
       : token_stream_(std::move(token_stream)),
         include_context_(include_context) {}
 
@@ -492,16 +492,16 @@ class Parser {
 
 }  // namespace
 
-absl::StatusOr<std::vector<Expr>> ParseListTree(
-    std::vector<tokens::Token> initial_tokens,
-    IncludeContext const* include_context,
-    absl::btree_map<std::string, std::vector<tokens::Token>> const&
-        initial_defines) {
-  auto token_stream = std::make_unique<TokenStream>();
-  token_stream->PushTokens(std::move(initial_tokens));
+void Parser::AddDefine(std::string_view name, std::vector<Token> tokens) {
+  defines_[name] = std::move(tokens);
+}
 
-  Parser parser(ProcessedTokenStream(std::move(token_stream), initial_defines),
-                include_context);
+absl::StatusOr<std::vector<Expr>> Parser::ParseTree(std::vector<Token> tokens) {
+  auto token_stream = std::make_unique<TokenStream>();
+  token_stream->PushTokens(std::move(tokens));
+
+  ParserImpl parser(ProcessedTokenStream(std::move(token_stream), &defines_),
+                    include_context_);
 
   std::vector<Expr> exprs;
 
@@ -513,4 +513,5 @@ absl::StatusOr<std::vector<Expr>> ParseListTree(
     exprs.push_back(std::move(*expr));
   }
 }
+
 }  // namespace parsers::list_tree

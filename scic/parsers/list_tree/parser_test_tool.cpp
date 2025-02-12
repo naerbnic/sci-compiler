@@ -9,7 +9,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/container/btree_map.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
@@ -97,8 +96,9 @@ absl::StatusOr<int> RunMain(int argc, char** argv) {
   ToolIncludeContext include_context(std::move(include_paths));
 
   for (auto const& file : files) {
+    Parser parser(&include_context);
     ASSIGN_OR_RETURN(auto tokens, TokenizeFile(file));
-    ASSIGN_OR_RETURN(auto parsed, ParseListTree(tokens, &include_context, {}));
+    ASSIGN_OR_RETURN(auto parsed, parser.ParseTree(tokens));
 
     // Print the parsed tree.
     absl::PrintF("Parsed %s:\n", file);

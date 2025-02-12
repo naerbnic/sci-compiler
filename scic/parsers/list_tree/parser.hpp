@@ -20,12 +20,23 @@ class IncludeContext {
       std::string_view path) const = 0;
 };
 
-absl::StatusOr<std::vector<Expr>> ParseListTree(
-    std::vector<tokens::Token> initial_tokens,
-    IncludeContext const* include_context,
-    absl::btree_map<std::string, std::vector<tokens::Token>> const&
-        initial_defines);
+class Parser {
+ public:
+  Parser(IncludeContext const* include_context)
+      : include_context_(include_context) {}
 
-}  // namespace parser::list_tree
+  // Add a define to the current context. Any instances of a simple identifier
+  // with the given name will be substituted with the tokens provided.
+  void AddDefine(std::string_view name, std::vector<tokens::Token> tokens);
+
+  absl::StatusOr<std::vector<Expr>> ParseTree(
+      std::vector<tokens::Token> tokens);
+
+ private:
+  IncludeContext const* include_context_;
+  absl::btree_map<std::string, std::vector<tokens::Token>> defines_;
+};
+
+}  // namespace parsers::list_tree
 
 #endif
