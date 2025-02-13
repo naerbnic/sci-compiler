@@ -2,6 +2,7 @@
 #define UTIL_TYPES_TMPL
 
 #include <cstddef>
+#include <tuple>
 #include <type_traits>
 
 namespace util {
@@ -10,13 +11,18 @@ namespace util {
 template <template <class...> class Tmpl>
 struct TemplateTraits;
 
+template <class... Args>
+struct TypePack;
+
 namespace internal {
 
 template <class T, template <class...> class Tmpl>
-struct IsSpecialization : std::false_type {};
+struct SpecializationTraits : std::false_type {};
 
 template <template <class...> class Tmpl, class... Args>
-struct IsSpecialization<Tmpl<Args...>, Tmpl> : std::true_type {};
+struct SpecializationTraits<Tmpl<Args...>, Tmpl> : std::true_type {
+  using ArgsPack = TypePack<Args...>;
+};
 
 template <class T>
 struct IsTemplateTraitImpl : std::false_type {};
@@ -28,12 +34,21 @@ struct IsTemplateTraitImpl<TemplateTraits<Tmpl>> : std::true_type {};
 
 template <template <class...> class Tmpl>
 struct TemplateTraits {
+  // Is true if the class T is a specialization of the template.
   template <class T>
   static constexpr bool IsSpecialization =
-      internal::IsSpecialization<T, Tmpl>::value;
+      internal::SpecializationTraits<T, Tmpl>::value;
 
+  // Applies the given type arguments to the template, giving a new type.
   template <class... Args>
   using Apply = Tmpl<Args...>;
+
+  // If T is a specialization of the template, this is the type pack of the
+  // parameters.
+  template <class T>
+    requires IsSpecialization<T>
+  using SpecializationArgs =
+      typename internal::SpecializationTraits<T, Tmpl>::ArgsPack;
 };
 
 template <class T>
@@ -54,6 +69,9 @@ struct TypePack {
 
   template <template <class> class Mod>
   using Transform = TypePack<Mod<Args>...>;
+
+  template <std::size_t Idx>
+  using TypeAt = std::tuple_element_t<Idx, std::tuple<Args...>>;
 };
 
 template <class T>

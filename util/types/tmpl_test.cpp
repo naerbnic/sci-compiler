@@ -20,5 +20,11 @@ TEST(TmplTest, Type) {
                                std::vector<int>>);
 }
 
+TEST(TmplTest, SpecializationArgs) {
+  static_assert(
+      TemplateTraits<std::vector>::SpecializationArgs<std::vector<int>>::Size ==
+      2);
+}
+
 }  // namespace
 }  // namespace util
