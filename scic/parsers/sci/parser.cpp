@@ -6,7 +6,7 @@
 #include "scic/parsers/combinators/results.hpp"
 #include "scic/parsers/list_tree/ast.hpp"
 #include "scic/parsers/sci/ast.hpp"
-#include "scic/parsers/sci/item_parsers.h"
+#include "scic/parsers/sci/item_parsers.hpp"
 #include "scic/parsers/sci/parser_common.hpp"
 
 namespace parsers::sci {

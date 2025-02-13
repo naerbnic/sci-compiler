@@ -15,6 +15,23 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "parser_common",
+    hdrs = ["parser_common.hpp"],
+    deps = [
+        "//scic/diagnostics",
+        "//scic/parsers/combinators:parse_func",
+        "//scic/parsers/combinators:results",
+        "//scic/parsers/combinators:status",
+        "//scic/parsers/list_tree:ast",
+        "//scic/text:text_range",
+        "//scic/tokens:token",
+        "//util/status:status_macros",
+        "@abseil-cpp//absl/strings:str_format",
+        "@abseil-cpp//absl/types:span",
+    ],
+)
+
 cc_test(
     name = "ast_test",
     srcs = ["ast_test.cpp"],
@@ -28,18 +45,60 @@ cc_test(
 )
 
 cc_library(
+    name = "item_parsers",
+    srcs = [
+        "item_parsers.cpp",
+    ],
+    hdrs = [
+        "item_parsers.hpp",
+    ],
+    deps = [
+        ":ast",
+        ":parser_common",
+        "//scic/parsers/combinators:parse_func",
+    ],
+)
+
+cc_test(
+    name = "item_parsers_test",
+    srcs = ["item_parsers_test.cpp"],
+    deps = [
+        ":item_parsers",
+        ":parser_common",
+        "//scic/diagnostics",
+        "//util/status:status_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "parser",
     srcs = [
-        "item_parsers.cc",
-        "item_parsers.h",
         "parser.cpp",
-        "parser_common.hpp",
     ],
     hdrs = ["parser.hpp"],
     deps = [
         ":ast",
+        ":item_parsers",
+        ":parser_common",
         "//scic/diagnostics",
         "//scic/parsers/combinators",
         "//scic/parsers/list_tree:ast",
+    ],
+)
+
+cc_test(
+    name = "parser_test",
+    srcs = ["parser_test.cpp"],
+    deps = [
+        ":ast",
+        ":parser",
+        "//scic/diagnostics",
+        "//scic/parsers/combinators",
+        "//scic/parsers/list_tree:ast",
+        "//util/status:status_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )

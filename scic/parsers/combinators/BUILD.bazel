@@ -3,19 +3,47 @@ package(
 )
 
 cc_library(
-    name = "combinators",
-    srcs = [
-        "internal_util.hpp",
+    name = "internal_util",
+    hdrs = ["internal_util.hpp"],
+    visibility = ["//visibility:private"],
+)
+
+cc_library(
+    name = "status",
+    hdrs = ["status.hpp"],
+    deps = [
+        ":internal_util",
+        "//scic/diagnostics",
+        "@abseil-cpp//absl/types:span",
     ],
+)
+
+cc_library(
+    name = "results",
+    hdrs = ["results.hpp"],
+    deps = [
+        ":internal_util",
+        ":status",
+        "//scic/diagnostics",
+    ],
+)
+
+cc_library(
+    name = "parse_func",
+    hdrs = ["parse_func.hpp"],
+    deps = [
+        ":results",
+        "//scic/diagnostics",
+    ],
+)
+
+cc_library(
+    name = "combinators",
     hdrs = [
         "combinators.hpp",
-        "parse_func.hpp",
-        "results.hpp",
-        "status.hpp",
     ],
     deps = [
-        "//util/status:status_macros",
-        "@abseil-cpp//absl/status:statusor",
+        ":parse_func",
         "@abseil-cpp//absl/types:span",
     ],
 )
