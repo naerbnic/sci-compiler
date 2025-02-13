@@ -7,6 +7,27 @@ cc_library(
     hdrs = ["choice.hpp"],
 )
 
+cc_library(
+    name = "choice_matchers",
+    hdrs = ["choice_matchers.hpp"],
+    deps = [
+        ":choice",
+        "//util/types:name",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_test(
+    name = "choice_matchers_test",
+    srcs = ["choice_matchers_test.cpp"],
+    deps = [
+        ":choice",
+        ":choice_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
 cc_test(
     name = "choice_test",
     srcs = ["choice_test.cpp"],
