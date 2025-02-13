@@ -1,0 +1,37 @@
+package(
+    default_visibility = ["//:__subpackages__"],
+)
+
+cc_library(
+    name = "tmpl",
+    hdrs = ["tmpl.hpp"],
+)
+
+cc_test(
+    name = "tmpl_test",
+    srcs = ["tmpl_test.cpp"],
+    deps = [
+        ":tmpl",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "name",
+    hdrs = ["name.hpp"],
+    deps = [
+        "@abseil-cpp//absl/cleanup",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)
+
+cc_test(
+    name = "name_test",
+    srcs = ["name_test.cpp"],
+    deps = [
+        ":name",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
