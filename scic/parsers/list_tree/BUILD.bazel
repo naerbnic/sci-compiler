@@ -33,8 +33,7 @@ cc_test(
     deps = [
         ":ast_matchers",
         ":parser",
-        "//scic/tokens:token_readers",
-        "//scic/tokens:token_test_utils",
+        ":parser_test_utils",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -52,6 +51,18 @@ cc_library(
         "@abseil-cpp//absl/container:btree",
         "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/types:span",
+    ],
+)
+
+cc_library(
+    name = "parser_test_utils",
+    testonly = True,
+    srcs = ["parser_test_utils.cpp"],
+    hdrs = ["parser_test_utils.hpp"],
+    deps = [
+        ":ast",
+        ":parser",
+        "//scic/tokens:token_readers",
     ],
 )
 
