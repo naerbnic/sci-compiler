@@ -16,7 +16,7 @@ class Expr;
 
 class TokenExpr {
  public:
-  TokenExpr(tokens::Token token);
+  explicit TokenExpr(tokens::Token token);
 
   tokens::Token const& token() const;
   text::TextRange const& text_range() const { return token().text_range(); }

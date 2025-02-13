@@ -17,6 +17,30 @@ cc_library(
 )
 
 cc_library(
+    name = "ast_matchers",
+    testonly = True,
+    hdrs = ["ast_matchers.hpp"],
+    deps = [
+        ":ast",
+        "//util:choice_matchers",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_test(
+    name = "ast_matchers_test",
+    srcs = ["ast_matchers_test.cpp"],
+    deps = [
+        ":ast_matchers",
+        ":parser",
+        "//scic/tokens:token_readers",
+        "//scic/tokens:token_test_utils",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "parser",
     srcs = ["parser.cpp"],
     hdrs = ["parser.hpp"],
@@ -28,6 +52,20 @@ cc_library(
         "@abseil-cpp//absl/container:btree",
         "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/types:span",
+    ],
+)
+
+cc_test(
+    name = "parser_test",
+    srcs = ["parser_test.cpp"],
+    deps = [
+        ":ast_matchers",
+        ":parser",
+        "//scic/tokens:token",
+        "//scic/tokens:token_readers",
+        "//util/status:status_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 

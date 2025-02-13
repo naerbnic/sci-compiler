@@ -20,8 +20,17 @@
 
 namespace parsers::list_tree {
 namespace {
+
 using ::tokens::Token;
 using ::tokens::TokenStream;
+
+class EmptyIncludeContext : public IncludeContext {
+ public:
+  absl::StatusOr<std::vector<Token>> LoadTokensFromInclude(
+      std::string_view path) const override {
+    return absl::UnimplementedError("No includes.");
+  }
+};
 
 // Returns the name of the expression, if it is a token identifier with no
 // trailer.
@@ -491,6 +500,11 @@ class ParserImpl {
 };
 
 }  // namespace
+
+IncludeContext const* IncludeContext::GetEmpty() {
+  static EmptyIncludeContext empty_context;
+  return &empty_context;
+}
 
 void Parser::AddDefine(std::string_view name, std::vector<Token> tokens) {
   defines_[name] = std::move(tokens);

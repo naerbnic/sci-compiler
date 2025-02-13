@@ -53,11 +53,6 @@ class Token {
     Trailer trailer;
   };
 
-  // A Selector in a call (e.g. "mySelector:")
-  struct Selector {
-    std::string name;
-  };
-
   struct String {
     std::string decodedString;
   };

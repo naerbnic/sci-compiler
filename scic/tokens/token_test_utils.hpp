@@ -61,6 +61,25 @@ inline testing::Matcher<text::TextRange const&> TextRangeOf(
   return testing::Property("contents", &text::TextRange::contents, text);
 }
 
+inline Token MakeIdentToken(std::string_view name) {
+  return Token(text::TextRange::OfString(std::string(name)),
+               Token::Ident{.name = std::string(name)});
+}
+
+inline Token MakePunctToken(Token::PunctType type) {
+  return Token(text::TextRange::OfString(""), Token::Punct{.type = type});
+}
+
+inline Token MakeStringToken(std::string_view decoded_string) {
+  return Token(text::TextRange::OfString(std::string(decoded_string)),
+               Token::String{.decodedString = std::string(decoded_string)});
+}
+
+inline Token MakeNumberToken(int value) {
+  return Token(text::TextRange::OfString(std::to_string(value)),
+               Token::Number{.value = value});
+}
+
 }  // namespace tokens
 
 #endif

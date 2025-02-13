@@ -14,6 +14,8 @@ namespace parsers::list_tree {
 
 class IncludeContext {
  public:
+  static IncludeContext const* GetEmpty();
+  
   virtual ~IncludeContext() = default;
 
   virtual absl::StatusOr<std::vector<tokens::Token>> LoadTokensFromInclude(
