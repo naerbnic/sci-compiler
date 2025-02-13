@@ -32,6 +32,12 @@ struct IsTemplateTraitImpl<TemplateTraits<Tmpl>> : std::true_type {};
 
 }  // namespace internal
 
+template <class T>
+concept IsTemplateTrait = internal::IsTemplateTraitImpl<T>::value;
+
+template <class T>
+concept IsTypePack = internal::SpecializationTraits<T, TypePack>::value;
+
 template <template <class...> class Tmpl>
 struct TemplateTraits {
   // Is true if the class T is a specialization of the template.
@@ -43,6 +49,10 @@ struct TemplateTraits {
   template <class... Args>
   using Apply = Tmpl<Args...>;
 
+  template <class T>
+    requires IsTypePack<T>
+  using ApplyPack = typename T::template ApplyTemplate<Tmpl>;
+
   // If T is a specialization of the template, this is the type pack of the
   // parameters.
   template <class T>
@@ -50,9 +60,6 @@ struct TemplateTraits {
   using SpecializationArgs =
       typename internal::SpecializationTraits<T, Tmpl>::ArgsPack;
 };
-
-template <class T>
-concept IsTemplateTrait = internal::IsTemplateTraitImpl<T>::value;
 
 template <class... Args>
 struct TypePack {
@@ -73,9 +80,6 @@ struct TypePack {
   template <std::size_t Idx>
   using TypeAt = std::tuple_element_t<Idx, std::tuple<Args...>>;
 };
-
-template <class T>
-concept IsTypePack = TemplateTraits<TypePack>::IsSpecialization<T>;
 
 template <class T, class TmplTrait>
 concept IsSpecialization =
