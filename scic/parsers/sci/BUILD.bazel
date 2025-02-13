@@ -29,7 +29,12 @@ cc_test(
 
 cc_library(
     name = "parser",
-    srcs = ["parser.cpp"],
+    srcs = [
+        "item_parsers.cc",
+        "item_parsers.h",
+        "parser.cpp",
+        "parser_common.hpp",
+    ],
     hdrs = ["parser.hpp"],
     deps = [
         ":ast",
