@@ -90,7 +90,8 @@ class IsOkImpl {
   void DescribeTo(std::ostream* os) const { *os << "is OK"; }
   void DescribeNegationTo(std::ostream* os) const { *os << "is not OK"; }
   template <class T>
-  bool MatchAndExplain(T value, testing::MatchResultListener* listener) const {
+  bool MatchAndExplain(T const& value,
+                       testing::MatchResultListener* listener) const {
     if (!value.ok()) {
       *listener << "which is not OK: " << value.status();
       return false;
