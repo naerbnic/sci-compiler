@@ -56,6 +56,11 @@ cc_library(
         ":ast",
         ":parser_common",
         "//scic/parsers/combinators:parse_func",
+        "//scic/parsers/list_tree:parser",
+        "//scic/tokens:token_readers",
+        "@abseil-cpp//absl/status:status",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/types:span",
     ],
 )
 

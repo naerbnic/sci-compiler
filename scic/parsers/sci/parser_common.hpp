@@ -107,7 +107,7 @@ auto ParseOneIdentToken(F parser) {
   return ParseOneTreeExpr(ParseTokenExpr(ParseIdentToken(std::move(parser))));
 }
 
-ParseResult<TokenNode<std::string_view>> ParseSimpleIdentNameNodeView(
+inline ParseResult<TokenNode<std::string_view>> ParseSimpleIdentNameNodeView(
     text::TextRange const& range, tokens::Token::Ident const& ident) {
   if (ident.trailer != tokens::Token::Ident::None) {
     return RangeFailureOf(range, "Expected simple identifier.");
@@ -135,7 +135,7 @@ auto ParseOneListItem(F parser) {
       ParseListExpr(ParseComplete(std::forward<F>(parser))));
 }
 
-ParseResult<TokenNode<std::string_view>> ParseOneIdentTokenView(
+inline ParseResult<TokenNode<std::string_view>> ParseOneIdentTokenView(
     TreeExprSpan& exprs) {
   static auto const instance =
       ParseFunc(ParseOneIdentToken(ParseSimpleIdentNameNodeView));
