@@ -1,6 +1,7 @@
 #include "scic/parsers/sci/item_parsers.hpp"
 
 #include <map>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -78,6 +79,69 @@ ParseResult<VarDef> ParseVarDef(TreeExprSpan& exprs) {
   })(exprs);
 }
 
+ParseResult<ConstValue> ParseConstValue(list_tree::TokenExpr const& expr) {
+  if (auto num = expr.token().AsNumber()) {
+    return ConstValue(
+        NumConstValue(TokenNode<int>(num->value, expr.text_range())));
+  } else if (auto str = expr.token().AsString()) {
+    return ConstValue(StringConstValue(
+        TokenNode<std::string>(str->decodedString, expr.text_range())));
+  } else {
+    return RangeFailureOf(expr.text_range(), "Expected number or string.");
+  }
+}
+
+ParseResult<std::optional<InitialValue>> ParseInitialValue(
+    TreeExprSpan& exprs) {
+  if (StartsWith(IsIdentExprWith("="))(exprs)) {
+    return std::nullopt;
+  }
+
+  ASSIGN_OR_RETURN(auto assign_token, ParseOneLiteralIdent("=")(exprs));
+  return ParseOneTreeExpr(
+      [](TreeExpr const& expr) -> ParseResult<InitialValue> {
+        return expr.visit(
+            [](list_tree::TokenExpr const& expr) -> ParseResult<InitialValue> {
+              ASSIGN_OR_RETURN(auto value, ParseConstValue(expr));
+              return InitialValue(std::move(value));
+            },
+            [](list_tree::ListExpr const& expr) -> ParseResult<InitialValue> {
+              if (expr.kind() != list_tree::ListExpr::Kind::BRACKETS) {
+                return RangeFailureOf(
+                    expr.open_token().text_range(),
+                    "Expected initial value to be in brackets.");
+              }
+
+              auto elements = expr.elements();
+
+              ASSIGN_OR_RETURN(auto values,
+                               ParseUntilComplete(ParseOneTreeExpr(
+                                   ParseTokenExpr(ParseConstValue)))(elements));
+              return InitialValue(ArrayInitialValue(std::move(values)));
+            });
+      })(exprs);
+}
+
+ParseResult<ModuleVarsDef> ParseModuleVarsDef(ModuleVarsDef::Kind kind,
+                                              TreeExprSpan& exprs) {
+  ASSIGN_OR_RETURN(
+      auto entries,
+      ParseUntilComplete(
+          [](TreeExprSpan& exprs) -> ParseResult<ModuleVarsDef::Entry> {
+            ASSIGN_OR_RETURN(auto name, ParseVarDef(exprs));
+            ASSIGN_OR_RETURN(auto index, ParseOneNumberToken(exprs));
+            ASSIGN_OR_RETURN(auto initial_value, ParseInitialValue(exprs));
+
+            return ModuleVarsDef::Entry{
+                .name = std::move(name),
+                .index = std::move(index),
+                .initial_value = std::move(initial_value),
+            };
+          })(exprs));
+
+  return ModuleVarsDef(kind, std::move(entries));
+}
+
 }  // namespace
 
 ParseResult<Item> ParsePublicItem(TokenNode<std::string_view> const& keyword,
@@ -138,12 +202,14 @@ ParseResult<Item> ParseGlobalDeclItem(
 
 ParseResult<Item> ParseGlobalItem(TokenNode<std::string_view> const& keyword,
                                   TreeExprSpan& exprs) {
-  return UnimplementedParseItem(keyword, exprs);
+  return ParseModuleVarsDef(ModuleVarsDef::GLOBAL, exprs);
 }
+
 ParseResult<Item> ParseLocalItem(TokenNode<std::string_view> const& keyword,
                                  TreeExprSpan& exprs) {
-  return UnimplementedParseItem(keyword, exprs);
+  return ParseModuleVarsDef(ModuleVarsDef::LOCAL, exprs);
 }
+
 ParseResult<Item> ParseProcItem(TokenNode<std::string_view> const& keyword,
                                 TreeExprSpan& exprs) {
   return UnimplementedParseItem(keyword, exprs);

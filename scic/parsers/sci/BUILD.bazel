@@ -18,7 +18,9 @@ cc_library(
 cc_library(
     name = "parser_common",
     hdrs = ["parser_common.hpp"],
+    srcs = ["parser_common.cpp"],
     deps = [
+        ":ast",
         "//scic/diagnostics",
         "//scic/parsers/combinators:parse_func",
         "//scic/parsers/combinators:results",

@@ -11,6 +11,7 @@
 #include "scic/diagnostics/diagnostics.hpp"
 #include "scic/parsers/combinators/internal_util.hpp"
 #include "scic/parsers/combinators/status.hpp"
+#include "util/types/tmpl.hpp"
 
 namespace parsers {
 
@@ -210,8 +211,21 @@ class ParseResult<Value> : public ParseResultBase<ParseResult, Value> {
     return ParseResult(ParseStatus::Fatal({std::move(error)}));
   }
 
-  ParseResult(Value value) : Base(std::move(value)) {}
+  template <class U>
+    requires(std::constructible_from<Value, U &&> &&
+             !util::TemplateTraits<ParseResult>::IsSpecialization<U>)
+  ParseResult(U&& value) : Base(Value(std::forward<U>(value))) {}
   ParseResult(ParseStatus error) : Base(std::move(error)) {}
+
+  template <class U>
+    requires(!std::same_as<Value, U> && std::constructible_from<U, Value>)
+  operator ParseResult<U>() && {
+    if (this->ok()) {
+      return ParseResult<U>(std::move(*this).value());
+    } else {
+      return ParseResult<U>(std::move(*this).status());
+    }
+  }
 
   Value const& value() const& { return std::get<0>(Base::values()); }
   Value&& value() && { return std::get<0>(std::move(*this).Base::values()); }

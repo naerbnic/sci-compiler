@@ -615,7 +615,8 @@ class ModuleVarsDef {
 
   struct Entry {
     VarDef name;
-    std::optional<std::unique_ptr<InitialValue>> initial_value;
+    TokenNode<int> index;
+    std::optional<InitialValue> initial_value;
   };
 
   ModuleVarsDef(Kind kind, std::vector<Entry> entries)

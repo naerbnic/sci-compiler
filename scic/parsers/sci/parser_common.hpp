@@ -122,21 +122,11 @@ auto ParseOneIdentToken(F parser) {
   return ParseOneTreeExpr(ParseTokenExpr(ParseIdentToken(std::move(parser))));
 }
 
-inline ParseResult<TokenNode<std::string_view>> ParseSimpleIdentNameNodeView(
-    text::TextRange const& range, tokens::Token::Ident const& ident) {
-  if (ident.trailer != tokens::Token::Ident::None) {
-    return RangeFailureOf(range, "Expected simple identifier.");
-  }
-  return TokenNode<std::string_view>(ident.name, range);
-}
+ParseResult<TokenNode<std::string_view>> ParseSimpleIdentNameNodeView(
+    text::TextRange const& range, tokens::Token::Ident const& ident);
 
-inline ParseResult<TokenNode<std::string>> ParseSimpleIdentNameNode(
-    text::TextRange const& range, tokens::Token::Ident const& ident) {
-  if (ident.trailer != tokens::Token::Ident::None) {
-    return RangeFailureOf(range, "Expected simple identifier.");
-  }
-  return TokenNode<std::string>(ident.name, range);
-}
+ParseResult<TokenNode<std::string>> ParseSimpleIdentNameNode(
+    text::TextRange const& range, tokens::Token::Ident const& ident);
 
 // Ensures that a span parser consumes all elements in the input list.
 template <IsParserOf<TreeExprSpan&> F>
@@ -158,26 +148,27 @@ auto ParseOneListItem(F parser) {
       ParseListExpr(ParseComplete(std::forward<F>(parser))));
 }
 
-inline ParseResult<TokenNode<std::string_view>> ParseOneIdentTokenView(
-    TreeExprSpan& exprs) {
-  static auto const instance =
-      ParseFunc(ParseOneIdentToken(ParseSimpleIdentNameNodeView));
-  return instance(exprs);
-}
+// Read a standard identifier from the front of the expr stream with a
+// string_view
+ParseResult<TokenNode<std::string_view>> ParseOneIdentTokenView(
+    TreeExprSpan& exprs);
 
-inline ParseResult<TokenNode<std::string>> ParseOneIdentTokenNode(
-    TreeExprSpan& exprs) {
-  static auto const instance =
-      ParseFunc(ParseOneIdentToken(ParseSimpleIdentNameNode));
-  return instance(exprs);
-}
+// Read a standard identifier from the front of the expr stream with a
+// string
+ParseResult<TokenNode<std::string>> ParseOneIdentTokenNode(TreeExprSpan& exprs);
 
-inline ParseResult<TokenNode<int>> ParseOneNumberToken(TreeExprSpan& exprs) {
-  static auto const instance = ParseFunc(ParseOneTreeExpr(
-      ParseTokenExpr(ParseNumToken([](text::TextRange const& range, int num) {
-        return TokenNode<int>(num, range);
-      }))));
-  return instance(exprs);
+// Read a number from the front of the expr stream.
+ParseResult<TokenNode<int>> ParseOneNumberToken(TreeExprSpan& exprs);
+
+inline auto ParseOneLiteralIdent(std::string_view ident) {
+  return
+      [ident](TreeExprSpan& exprs) -> ParseResult<TokenNode<std::string_view>> {
+        ASSIGN_OR_RETURN(auto token, ParseOneIdentTokenView(exprs));
+        if (token.value() != ident) {
+          return RangeFailureOf(token.text_range(), "Expected '%s'.", ident);
+        }
+        return token;
+      };
 }
 
 template <IsParserOf<TreeExprSpan&> F>
