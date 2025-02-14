@@ -724,8 +724,7 @@ class ClassDecl {
  public:
   ClassDecl(TokenNode<std::string> name, TokenNode<int> script_num,
             TokenNode<int> class_num, std::optional<TokenNode<int>> parent_num,
-            std::vector<PropertyDef> properties,
-            std::unique_ptr<MethodNamesDecl> method_names)
+            std::vector<PropertyDef> properties, MethodNamesDecl method_names)
       : name_(std::move(name)),
         script_num_(std::move(script_num)),
         class_num_(std::move(class_num)),
@@ -746,7 +745,7 @@ class ClassDecl {
   TokenNode<int> class_num_;
   std::optional<TokenNode<int>> parent_num_;
   std::vector<PropertyDef> properties_;
-  std::unique_ptr<MethodNamesDecl> method_names_;
+  MethodNamesDecl method_names_;
 };
 
 class SelectorsDecl {

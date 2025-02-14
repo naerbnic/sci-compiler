@@ -2,6 +2,7 @@
 
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include "scic/parsers/combinators/results.hpp"
 #include "scic/parsers/sci/ast.hpp"
@@ -40,6 +41,12 @@ ParseResult<TokenNode<int>> ParseOneNumberToken(TreeExprSpan& exprs) {
   return ParseOneTreeExpr(
       ParseTokenExpr(ParseNumToken([](text::TextRange const& range, int num) {
         return TokenNode<int>(num, range);
+      })))(exprs);
+}
+ParseResult<TokenNode<std::string>> ParseOneStringToken(TreeExprSpan& exprs) {
+  return ParseOneTreeExpr(ParseTokenExpr(
+      ParseStringToken([](text::TextRange const& range, std::string str) {
+        return TokenNode<std::string>(std::move(str), range);
       })))(exprs);
 }
 }  // namespace parsers::sci

@@ -380,7 +380,64 @@ ParseResult<Item> ParseInstanceItem(TokenNode<std::string_view> const& keyword,
 
 ParseResult<Item> ParseClassDeclItem(TokenNode<std::string_view> const& keyword,
                                      TreeExprSpan& exprs) {
-  return UnimplementedParseItem(keyword, exprs);
+  ASSIGN_OR_RETURN(auto name, ParseOneIdentTokenNode(exprs));
+  ASSIGN_OR_RETURN(auto script_num_token,
+                   ParseOneLiteralIdent("script#")(exprs));
+  ASSIGN_OR_RETURN(auto script_num, ParseOneNumberToken(exprs));
+  ASSIGN_OR_RETURN(auto class_num_token, ParseOneLiteralIdent("class#")(exprs));
+  ASSIGN_OR_RETURN(auto class_num, ParseOneNumberToken(exprs));
+  ASSIGN_OR_RETURN(auto super_num_token, ParseOneLiteralIdent("super#")(exprs));
+  ASSIGN_OR_RETURN(auto super_num, ParseOneNumberToken(exprs));
+  ASSIGN_OR_RETURN(auto file_token, ParseOneLiteralIdent("file#")(exprs));
+  ASSIGN_OR_RETURN(auto file_name, ParseOneStringToken(exprs));
+
+  ASSIGN_OR_RETURN(auto inner_items,
+                   ParseUntilComplete(ParseClassDefInnerItem)(exprs));
+
+  std::optional<ClassPropertiesBlock> properties_block;
+  std::optional<MethodNamesDecl> method_names_block;
+
+  for (auto& inner_item : inner_items) {
+    RETURN_IF_ERROR(
+        std::move(inner_item)
+            .visit(
+                [&](ClassPropertiesBlock block) -> ParseStatus {
+                  if (properties_block) {
+                    return RangeFailureOf(
+                        name.text_range(),
+                        "Duplicate properties block in class definition.");
+                  }
+                  properties_block = std::move(block);
+                  return ParseStatus::Ok();
+                },
+                [&](MethodNamesDecl block) {
+                  if (method_names_block) {
+                    return RangeFailureOf(
+                        name.text_range(),
+                        "Duplicate method names block in class definition.");
+                  }
+                  method_names_block = std::move(block);
+                  return ParseStatus::Ok();
+                },
+                [&](ProcDef method) {
+                  return RangeFailureOf(
+                      name.text_range(),
+                      "Unexpected method definition in class declaration.");
+                }));
+  }
+
+  if (!properties_block) {
+    return RangeFailureOf(name.text_range(), "Missing properties block.");
+  }
+
+  if (!method_names_block) {
+    return RangeFailureOf(name.text_range(), "Missing method names block.");
+  }
+
+  return ClassDecl(std::move(name), std::move(script_num), std::move(class_num),
+                   std::move(super_num),
+                   std::move(properties_block->properties),
+                   std::move(method_names_block).value());
 }
 
 ParseResult<Item> ParseSelectorsItem(TokenNode<std::string_view> const& keyword,
@@ -392,4 +449,5 @@ ParseResult<Item> ParseItem(absl::Span<list_tree::Expr const>& exprs) {
   ASSIGN_OR_RETURN(auto name, ParseOneIdentTokenView(exprs));
   return GetItemParser(name.value())(name, exprs);
 }
+
 }  // namespace parsers::sci

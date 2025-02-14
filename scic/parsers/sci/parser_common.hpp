@@ -116,6 +116,19 @@ auto ParseNumToken(F parser) {
     return parser(token.text_range(), num->value);
   };
 }
+template <IsParserOf<text::TextRange const&, std::string const&> F>
+auto ParseStringToken(F parser) {
+  using ParserInfo = ParserTraits<F>;
+  return [parser = std::move(parser)](
+             list_tree::TokenExpr const& token) -> ParserInfo::ParseRet {
+    auto* str = token.token().AsString();
+    if (!str) {
+      return RangeFailureOf(token.text_range(), "Expected identifier token.");
+    }
+
+    return parser(token.text_range(), str->decodedString);
+  };
+}
 
 template <IsParserOf<text::TextRange const&, tokens::Token::Ident const&> F>
 auto ParseOneIdentToken(F parser) {
@@ -159,6 +172,7 @@ ParseResult<TokenNode<std::string>> ParseOneIdentTokenNode(TreeExprSpan& exprs);
 
 // Read a number from the front of the expr stream.
 ParseResult<TokenNode<int>> ParseOneNumberToken(TreeExprSpan& exprs);
+ParseResult<TokenNode<std::string>> ParseOneStringToken(TreeExprSpan& exprs);
 
 inline auto ParseOneLiteralIdent(std::string_view ident) {
   return
