@@ -442,7 +442,18 @@ ParseResult<Item> ParseClassDeclItem(TokenNode<std::string_view> const& keyword,
 
 ParseResult<Item> ParseSelectorsItem(TokenNode<std::string_view> const& keyword,
                                      TreeExprSpan& exprs) {
-  return UnimplementedParseItem(keyword, exprs);
+  ASSIGN_OR_RETURN(
+      auto entries,
+      ParseUntilComplete(
+          [](TreeExprSpan& exprs) -> ParseResult<SelectorsDecl::Entry> {
+            ASSIGN_OR_RETURN(auto name, ParseOneIdentTokenNode(exprs));
+            ASSIGN_OR_RETURN(auto id, ParseOneNumberToken(exprs));
+            return SelectorsDecl::Entry{
+                .name = std::move(name),
+                .id = std::move(id),
+            };
+          })(exprs));
+  return SelectorsDecl(std::move(entries));
 }
 
 ParseResult<Item> ParseItem(absl::Span<list_tree::Expr const>& exprs) {

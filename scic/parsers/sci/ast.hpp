@@ -750,18 +750,18 @@ class ClassDecl {
 
 class SelectorsDecl {
  public:
-  struct Selector {
+  struct Entry {
     TokenNode<std::string> name;
     TokenNode<int> id;
   };
 
-  SelectorsDecl(std::vector<Selector> selectors)
+  SelectorsDecl(std::vector<Entry> selectors)
       : selectors_(std::move(selectors)) {}
 
-  std::vector<Selector> const& selectors() const { return selectors_; }
+  std::vector<Entry> const& selectors() const { return selectors_; }
 
  private:
-  std::vector<Selector> selectors_;
+  std::vector<Entry> selectors_;
 };
 
 class Item
