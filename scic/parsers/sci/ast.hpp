@@ -184,15 +184,21 @@ class CallArgs {
     std::optional<TokenNode<std::string>> rest_var;
   };
 
-  explicit CallArgs(std::vector<std::unique_ptr<Expr>> args,
-                    std::optional<Rest>)
-      : args_(std::move(args)) {}
+  explicit CallArgs(std::vector<Expr> args, std::optional<Rest>);
+  ~CallArgs();
 
-  std::vector<std::unique_ptr<Expr>> const& args() const { return args_; }
+  // All of these are defaulted, but we need to define them in the .cpp file
+  // to avoid an incomplete type issue.
+  CallArgs(CallArgs const&) = delete;
+  CallArgs(CallArgs&&);
+  CallArgs& operator=(CallArgs const&) = delete;
+  CallArgs& operator=(CallArgs&&);
+
+  std::vector<Expr> const& args() const { return args_; }
   std::optional<Rest> const& rest() const { return rest_; }
 
  private:
-  std::vector<std::unique_ptr<Expr>> args_;
+  std::vector<Expr> args_;
   std::optional<Rest> rest_;
 };
 
@@ -266,10 +272,6 @@ class RestExpr {
 // are represented as calls.
 class CallExpr {
  public:
-  struct Rest {
-    std::optional<TokenNode<std::string>> rest_var;
-  };
-
   CallExpr(TokenNode<std::string> name, CallArgs call_args)
       : name_(std::move(name)), call_args_(std::move(call_args)) {}
 
@@ -279,7 +281,6 @@ class CallExpr {
  private:
   TokenNode<std::string> name_;
   CallArgs call_args_;
-  std::optional<Rest> rest_;
 };
 
 class ReturnExpr {
@@ -295,18 +296,8 @@ class ReturnExpr {
 
 class BreakExpr {
  public:
-  BreakExpr(std::optional<TokenNode<int>> level) : level_(std::move(level)) {}
-
-  std::optional<TokenNode<int>> const& level() const { return level_; }
-
- private:
-  std::optional<TokenNode<int>> level_;
-};
-
-class BreakIfExpr {
- public:
-  BreakIfExpr(std::optional<std::unique_ptr<Expr>> condition,
-              std::optional<TokenNode<int>> level)
+  BreakExpr(std::optional<std::unique_ptr<Expr>> condition,
+            std::optional<TokenNode<int>> level)
       : condition_(std::move(condition)), level_(std::move(level)) {}
 
   std::optional<std::unique_ptr<Expr>> const& condition() const {
@@ -321,19 +312,8 @@ class BreakIfExpr {
 
 class ContinueExpr {
  public:
-  ContinueExpr(std::optional<TokenNode<int>> level)
-      : level_(std::move(level)) {}
-
-  std::optional<TokenNode<int>> const& level() const { return level_; }
-
- private:
-  std::optional<TokenNode<int>> level_;
-};
-
-class ContIfExpr {
- public:
-  ContIfExpr(std::optional<std::unique_ptr<Expr>> condition,
-             std::optional<TokenNode<int>> level)
+  ContinueExpr(std::optional<std::unique_ptr<Expr>> condition,
+               std::optional<TokenNode<int>> level)
       : condition_(std::move(condition)), level_(std::move(level)) {}
 
   std::optional<std::unique_ptr<Expr>> const& condition() const {
@@ -344,6 +324,45 @@ class ContIfExpr {
  private:
   std::optional<std::unique_ptr<Expr>> condition_;
   std::optional<TokenNode<int>> level_;
+};
+
+// A while expression. If this is a repeat loop, the condition will be
+// std::nullopt.
+class WhileExpr {
+ public:
+  WhileExpr(std::optional<std::unique_ptr<Expr>> condition,
+            std::unique_ptr<Expr> body)
+      : condition_(std::move(condition)), body_(std::move(body)) {}
+
+  std::optional<std::unique_ptr<Expr>> const& condition() const {
+    return condition_;
+  }
+  Expr const& body() const { return *body_; }
+
+ private:
+  std::optional<std::unique_ptr<Expr>> condition_;
+  std::unique_ptr<Expr> body_;
+};
+
+class ForExpr {
+ public:
+  ForExpr(std::unique_ptr<Expr> init, std::unique_ptr<Expr> condition,
+          std::unique_ptr<Expr> update, std::unique_ptr<Expr> body)
+      : init_(std::move(init)),
+        condition_(std::move(condition)),
+        update_(std::move(update)),
+        body_(std::move(body)) {}
+
+  Expr const& init() const { return *init_; }
+  Expr const& condition() const { return *condition_; }
+  Expr const& update() const { return *update_; }
+  Expr const& body() const { return *body_; }
+
+ private:
+  std::unique_ptr<Expr> init_;
+  std::unique_ptr<Expr> condition_;
+  std::unique_ptr<Expr> update_;
+  std::unique_ptr<Expr> body_;
 };
 
 class IfExpr {
@@ -453,20 +472,20 @@ class IncDecExpr {
 
 class SelfSendTarget {};
 class SuperSendTarget {};
-class ExprSendTarget {
+class VarSendTarget {
  public:
-  explicit ExprSendTarget(std::unique_ptr<Expr> target)
+  explicit VarSendTarget(TokenNode<std::string> target)
       : target_(std::move(target)) {}
 
-  Expr const& target() const { return *target_; }
+  TokenNode<std::string> target() const { return target_; }
 
  private:
-  std::unique_ptr<Expr> target_;
+  TokenNode<std::string> target_;
 };
 
 class SendTarget
     : public util::ChoiceBase<SendTarget,  //
-                              SelfSendTarget, SuperSendTarget, ExprSendTarget> {
+                              SelfSendTarget, SuperSendTarget, VarSendTarget> {
   using ChoiceBase::ChoiceBase;
 };
 
@@ -528,21 +547,21 @@ class AssignExpr {
 
 class ExprList {
  public:
-  ExprList(std::vector<std::unique_ptr<Expr>> exprs)
-      : exprs_(std::move(exprs)) {}
+  ExprList(std::vector<Expr> exprs);
 
-  std::vector<std::unique_ptr<Expr>> const& exprs() const { return exprs_; }
+  std::vector<Expr> const& exprs() const { return exprs_; }
 
  private:
-  std::vector<std::unique_ptr<Expr>> exprs_;
+  std::vector<Expr> exprs_;
 };
 
-class Expr : public util::ChoiceBase<
-                 Expr,  //
-                 AddrOfExpr, SelectLitExpr, VarExpr, ArrayIndexExpr,
-                 ConstValueExpr, RestExpr, CallExpr, ReturnExpr, BreakExpr,
-                 BreakIfExpr, ContinueExpr, ContIfExpr, IfExpr, CondExpr,
-                 SwitchExpr, SwitchToExpr, SendExpr, AssignExpr, ExprList> {
+class Expr
+    : public util::ChoiceBase<Expr,  //
+                              AddrOfExpr, SelectLitExpr, VarExpr,
+                              ArrayIndexExpr, ConstValueExpr, RestExpr,
+                              CallExpr, ReturnExpr, BreakExpr, ContinueExpr,
+                              WhileExpr, ForExpr, IfExpr, CondExpr, SwitchExpr,
+                              SwitchToExpr, SendExpr, AssignExpr, ExprList> {
   using ChoiceBase::ChoiceBase;
 };
 

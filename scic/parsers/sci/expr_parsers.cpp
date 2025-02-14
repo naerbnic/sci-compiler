@@ -1,11 +1,13 @@
 #include "scic/parsers/sci/expr_parsers.hpp"
 
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 #include "scic/parsers/combinators/parse_func.hpp"
 #include "scic/parsers/combinators/results.hpp"
@@ -18,8 +20,8 @@
 namespace parsers::sci {
 namespace {
 
-using ExprParseFunc = ParseFunc<std::unique_ptr<Expr>(
-    TokenNode<std::string_view> keyword, TreeExprSpan&)>;
+using ExprParseFunc =
+    ParseFunc<Expr(TokenNode<std::string_view> keyword, TreeExprSpan&)>;
 
 using BuiltinsMap = std::map<std::string, ExprParseFunc>;
 
@@ -28,8 +30,80 @@ ParseResult<std::unique_ptr<Expr>> ParseExprPtr(TreeExprSpan& exprs) {
   return std::make_unique<Expr>(std::move(expr));
 }
 
+ParseResult<ExprList> ParseExprList(TreeExprSpan& exprs) {
+  ASSIGN_OR_RETURN(auto expr_list, ParseUntilComplete(ParseExpr)(exprs));
+  return ExprList(std::move(expr_list));
+}
+
+// Builtin Parsers
+
+ParseResult<ReturnExpr> ParseReturnExpr(TokenNode<std::string_view> keyword,
+                                        TreeExprSpan& exprs) {
+  std::optional<std::unique_ptr<Expr>> ret_value;
+  if (!exprs.empty()) {
+    ASSIGN_OR_RETURN(ret_value, ParseComplete(ParseExprPtr)(exprs));
+  }
+  return ReturnExpr(std::move(ret_value));
+}
+
+ParseResult<BreakExpr> ParseBreakExpr(TokenNode<std::string_view> keyword,
+                                      TreeExprSpan& exprs) {
+  std::optional<TokenNode<int>> index;
+  if (!exprs.empty()) {
+    ASSIGN_OR_RETURN(index, ParseOneNumberToken(exprs));
+  }
+  return BreakExpr(std::nullopt, std::move(index));
+}
+
+ParseResult<BreakExpr> ParseBreakIfExpr(TokenNode<std::string_view> keyword,
+                                        TreeExprSpan& exprs) {
+  ASSIGN_OR_RETURN(auto condition, ParseExprPtr(exprs));
+  std::optional<TokenNode<int>> index;
+  if (!exprs.empty()) {
+    ASSIGN_OR_RETURN(index, ParseOneNumberToken(exprs));
+  }
+  return BreakExpr(std::move(condition), std::move(index));
+}
+
+ParseResult<ContinueExpr> ParseContinueExpr(TokenNode<std::string_view> keyword,
+                                            TreeExprSpan& exprs) {
+  std::optional<TokenNode<int>> index;
+  if (!exprs.empty()) {
+    ASSIGN_OR_RETURN(index, ParseOneNumberToken(exprs));
+  }
+  return ContinueExpr(std::nullopt, std::move(index));
+}
+
+ParseResult<ContinueExpr> ParseContIfExpr(TokenNode<std::string_view> keyword,
+                                          TreeExprSpan& exprs) {
+  ASSIGN_OR_RETURN(auto condition, ParseExprPtr(exprs));
+  std::optional<TokenNode<int>> index;
+  if (!exprs.empty()) {
+    ASSIGN_OR_RETURN(index, ParseOneNumberToken(exprs));
+  }
+  return ContinueExpr(std::move(condition), std::move(index));
+}
+
+ParseResult<WhileExpr> ParseWhileExpr(TokenNode<std::string_view> keyword,
+                                      TreeExprSpan& exprs) {
+  ASSIGN_OR_RETURN(auto condition, ParseExprPtr(exprs));
+  ASSIGN_OR_RETURN(auto body, ParseExprPtr(exprs));
+  return WhileExpr(std::move(condition), std::move(body));
+}
+
+ParseResult<WhileExpr> ParseRepeatExpr(TokenNode<std::string_view> keyword,
+                                       TreeExprSpan& exprs) {
+  ASSIGN_OR_RETURN(auto body, ParseExprList(exprs));
+  return WhileExpr(std::nullopt, std::make_unique<Expr>(std::move(body)));
+}
+
 BuiltinsMap const& GetBuiltinParsers() {
-  static const BuiltinsMap instance = {};
+  static const BuiltinsMap instance = {
+      {"return", ParseReturnExpr},   {"break", ParseBreakExpr},
+      {"breakif", ParseBreakIfExpr}, {"continue", ParseContinueExpr},
+      {"contif", ParseContIfExpr},   {"while", ParseWhileExpr},
+      {"repeat", ParseRepeatExpr},
+  };
   return instance;
 }
 
@@ -65,17 +139,89 @@ ParseResult<ArrayIndexExpr> ParseArrayIndexExpr(TreeExprSpan const& exprs) {
   })(local_exprs);
 }
 
-ParseResult<SendExpr> ParseSendExpr(TokenNode<std::string> target,
-                                    TreeExprSpan& exprs) {}
-ParseResult<SendExpr> ParseCall(TokenNode<std::string> target,
-                                TreeExprSpan& exprs) {}
-
 bool IsSelectorIdent(tokens::Token const& token) {
   auto ident = token.AsIdent();
   if (!ident) {
     return false;
   }
   return ident->trailer == tokens::Token::Ident::None;
+}
+
+ParseResult<CallArgs> ParseCallArgs(TreeExprSpan& args) {
+  std::vector<Expr> arg_exprs;
+  std::optional<CallArgs::Rest> rest_expr;
+  while (!args.empty()) {
+    if (StartsWith(IsIdentExprWith("&rest"))(args)) {
+      ASSIGN_OR_RETURN(auto rest_token, ParseOneIdentTokenView(args));
+      std::optional<TokenNode<std::string>> rest_var;
+      if (!args.empty()) {
+        ASSIGN_OR_RETURN(rest_var, ParseOneIdentTokenNode(args));
+      }
+
+      if (!args.empty()) {
+        return RangeFailureOf(rest_token.text_range(),
+                              "Expected no more arguments after &rest clause.");
+      }
+    }
+  }
+
+  return CallArgs(std::move(arg_exprs), std::move(rest_expr));
+}
+
+ParseResult<SendClause> ParseSendClause(TreeExprSpan& exprs) {
+  ASSIGN_OR_RETURN(auto selector,
+                   ParseOneTreeExpr(ParseTokenExpr(ParseIdentNameNode))(exprs));
+  auto [name, trailer] = std::move(selector);
+  if (trailer == tokens::Token::Ident::None) {
+    return RangeFailureOf(
+        name.text_range(),
+        "Expected selector ending in '?' or ':' in send clause.");
+  }
+
+  auto clause_end =
+      std::ranges::find_if(exprs, IsTokenExprWith(IsSelectorIdent));
+
+  TreeExprSpan args = exprs.subspan(0, clause_end - exprs.begin());
+  // FIXME: This can cause the parse span to change on failure.
+  exprs = exprs.subspan(clause_end - exprs.begin());
+
+  if (trailer == tokens::Token::Ident::Question) {
+    if (!args.empty()) {
+      return RangeFailureOf(
+          name.text_range(),
+          "Getter selectors (ending in '?') should not have arguments.");
+    }
+
+    return PropReadSendClause(std::move(name));
+  }
+
+  ASSIGN_OR_RETURN(auto call_args, ParseCallArgs(args));
+
+  return MethodSendClause(std::move(name), std::move(call_args));
+}
+
+ParseResult<SendExpr> ParseSendExpr(TokenNode<std::string> target,
+                                    TreeExprSpan& exprs) {
+  SendTarget target_ast;
+  if (target.value() == "self") {
+    target_ast = SelfSendTarget();
+  } else if (target.value() == "super") {
+    target_ast = SuperSendTarget();
+  } else {
+    target_ast = VarSendTarget(std::move(target));
+  }
+
+  ASSIGN_OR_RETURN(auto clauses, ParseUntilComplete(ParseSendClause)(exprs));
+
+  return SendExpr(std::move(target_ast), std::move(clauses));
+}
+
+ParseResult<CallExpr> ParseCall(TokenNode<std::string> target,
+                                TreeExprSpan& exprs) {
+  ASSIGN_OR_RETURN(auto call_name, ParseOneIdentTokenNode(exprs));
+  ASSIGN_OR_RETURN(auto args, ParseCallArgs(exprs));
+
+  return CallExpr(std::move(call_name), std::move(args));
 }
 
 ParseResult<Expr> ParseSciListExpr(TreeExprSpan const& exprs) {
@@ -121,7 +267,8 @@ ParseResult<Expr> ParseExpr(TreeExprSpan& exprs) {
     return std::move(addr_of).value();
   }
 
-  // FIXME: Add logic for an &rest expression here.
+  // The original code has handling for a free-floating &rest expression,
+  // but it appears it can only show up in procedure calls and sends.
 
   return ParseOneTreeExpr([](TreeExpr const& expr) -> ParseResult<Expr> {
     return expr.visit(

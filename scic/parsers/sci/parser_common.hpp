@@ -148,6 +148,9 @@ ParseResult<TokenNode<std::string_view>> ParseSimpleIdentNameNodeView(
 ParseResult<TokenNode<std::string>> ParseSimpleIdentNameNode(
     text::TextRange const& range, tokens::Token::Ident const& ident);
 
+ParseResult<std::pair<TokenNode<std::string>, tokens::Token::Ident::Trailer>>
+ParseIdentNameNode(list_tree::TokenExpr const& token);
+
 // Ensures that a span parser consumes all elements in the input list.
 template <IsParserOf<TreeExprSpan&> F>
 auto ParseComplete(F parser) {

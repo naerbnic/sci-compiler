@@ -46,6 +46,16 @@ ParseResult<TokenNode<std::string>> ParseSimpleIdentNameNode(
   return TokenNode<std::string>(ident.name, range);
 }
 
+ParseResult<std::pair<TokenNode<std::string>, tokens::Token::Ident::Trailer>>
+ParseIdentNameNode(list_tree::TokenExpr const& token) {
+  auto* ident = token.token().AsIdent();
+  if (!ident) {
+    return RangeFailureOf(token.text_range(), "Expected identifier token.");
+  }
+  return std::make_pair(TokenNode<std::string>(ident->name, token.text_range()),
+                        ident->trailer);
+}
+
 ParseResult<TokenNode<std::string_view>> ParseOneIdentTokenView(
     TreeExprSpan& exprs) {
   return ParseOneIdentToken(ParseSimpleIdentNameNodeView)(exprs);
