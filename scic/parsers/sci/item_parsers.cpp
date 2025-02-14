@@ -11,9 +11,11 @@
 
 #include "absl/types/span.h"
 #include "scic/parsers/combinators/results.hpp"
+#include "scic/parsers/combinators/status.hpp"
 #include "scic/parsers/list_tree/ast.hpp"
 #include "scic/parsers/sci/ast.hpp"
 #include "scic/parsers/sci/parser_common.hpp"
+#include "util/choice.hpp"
 #include "util/status/status_macros.hpp"
 
 namespace parsers::sci {
@@ -40,7 +42,7 @@ ParserItemMap const& TopLevelParsers() {
         {"proc", ParseProcItem},
         {"class", ParseClassItem},
         {"instance", ParseInstanceItem},
-        {"class_def", ParseClassDefItem},
+        {"classdecl", ParseClassDeclItem},
         {"selectors", ParseSelectorsItem},
     });
   })());
@@ -92,6 +94,10 @@ ParseResult<ConstValue> ParseConstValue(list_tree::TokenExpr const& expr) {
   } else {
     return RangeFailureOf(expr.text_range(), "Expected number or string.");
   }
+}
+
+ParseResult<ConstValue> ParseOneConstValue(TreeExprSpan& exprs) {
+  return ParseOneTreeExpr(ParseTokenExpr(ParseConstValue))(exprs);
 }
 
 ParseResult<std::optional<InitialValue>> ParseInitialValue(
@@ -190,6 +196,105 @@ ParseResult<ProcDef> ParseProcDef(TokenNode<std::string_view> const& keyword,
                  std::move(signature.locals), nullptr);
 }
 
+// Parser helper types for parsing a Class body.
+
+struct ClassPropertiesBlock {
+  std::vector<PropertyDef> properties;
+};
+
+class ClassDefInnerItem
+    : public util::ChoiceBase<ClassDefInnerItem, ClassPropertiesBlock,
+                              MethodNamesDecl, ProcDef> {
+  using ChoiceBase::ChoiceBase;
+};
+
+ParseResult<PropertyDef> ParsePropertyDef(TreeExprSpan& exprs) {
+  ASSIGN_OR_RETURN(auto prop_name, ParseOneIdentTokenNode(exprs));
+  ASSIGN_OR_RETURN(auto value, ParseOneConstValue(exprs));
+  return PropertyDef{
+      .name = std::move(prop_name),
+      .value = std::move(value),
+  };
+}
+
+ParseResult<ClassDefInnerItem> ParseClassDefInnerItem(TreeExprSpan& exprs) {
+  ASSIGN_OR_RETURN(auto name, ParseOneIdentTokenView(exprs));
+  if (name.value() == "properties") {
+    ASSIGN_OR_RETURN(auto properties,
+                     ParseUntilComplete(ParsePropertyDef)(exprs));
+    return ClassPropertiesBlock{
+        .properties = std::move(properties),
+    };
+  } else if (name.value() == "methods") {
+    ASSIGN_OR_RETURN(auto method_names,
+                     ParseUntilComplete(ParseOneIdentTokenNode)(exprs));
+    return MethodNamesDecl{
+        .names = std::move(method_names),
+    };
+  } else if (name.value() == "method") {
+    return ParseProcDef(name, exprs);
+  } else {
+    return RangeFailureOf(name.text_range(), "Unknown class item: %s",
+                          name.value());
+  }
+}
+
+ParseResult<ClassDef> ParseClassDef(ClassDef::Kind kind,
+                                    TokenNode<std::string_view> const& keyword,
+                                    TreeExprSpan& exprs) {
+  ASSIGN_OR_RETURN(auto name, ParseOneIdentTokenNode(exprs));
+
+  std::optional<TokenNode<std::string>> parent;
+  if (StartsWith(IsIdentExprWith("of"))(exprs)) {
+    ASSIGN_OR_RETURN(auto of_token, ParseOneLiteralIdent("of")(exprs));
+    ASSIGN_OR_RETURN(parent, ParseOneIdentTokenNode(exprs));
+  }
+
+  ASSIGN_OR_RETURN(auto inner_items,
+                   ParseUntilComplete(ParseOneTreeExpr(
+                       ParseListExpr(ParseClassDefInnerItem)))(exprs));
+
+  std::optional<ClassPropertiesBlock> properties_block;
+  std::optional<MethodNamesDecl> method_names_block;
+  std::vector<ProcDef> methods;
+
+  for (auto& inner_item : inner_items) {
+    RETURN_IF_ERROR(
+        std::move(inner_item)
+            .visit(
+                [&](ClassPropertiesBlock block) -> ParseStatus {
+                  if (properties_block) {
+                    return RangeFailureOf(
+                        name.text_range(),
+                        "Duplicate properties block in class definition.");
+                  }
+                  properties_block = std::move(block);
+                  return ParseStatus::Ok();
+                },
+                [&](MethodNamesDecl block) {
+                  if (method_names_block) {
+                    return RangeFailureOf(
+                        name.text_range(),
+                        "Duplicate method names block in class definition.");
+                  }
+                  method_names_block = std::move(block);
+                  return ParseStatus::Ok();
+                },
+                [&](ProcDef method) {
+                  methods.push_back(std::move(method));
+                  return ParseStatus::Ok();
+                }));
+  }
+
+  if (!properties_block) {
+    return RangeFailureOf(name.text_range(), "Missing properties block.");
+  }
+
+  return ClassDef(kind, std::move(name), std::move(parent),
+                  std::move(properties_block->properties),
+                  std::move(method_names_block), std::move(methods));
+}
+
 }  // namespace
 
 ParseResult<Item> ParsePublicItem(TokenNode<std::string_view> const& keyword,
@@ -265,16 +370,19 @@ ParseResult<Item> ParseProcItem(TokenNode<std::string_view> const& keyword,
 
 ParseResult<Item> ParseClassItem(TokenNode<std::string_view> const& keyword,
                                  TreeExprSpan& exprs) {
-  return UnimplementedParseItem(keyword, exprs);
+  return ParseClassDef(ClassDef::CLASS, keyword, exprs);
 }
+
 ParseResult<Item> ParseInstanceItem(TokenNode<std::string_view> const& keyword,
                                     TreeExprSpan& exprs) {
+  return ParseClassDef(ClassDef::OBJECT, keyword, exprs);
+}
+
+ParseResult<Item> ParseClassDeclItem(TokenNode<std::string_view> const& keyword,
+                                     TreeExprSpan& exprs) {
   return UnimplementedParseItem(keyword, exprs);
 }
-ParseResult<Item> ParseClassDefItem(TokenNode<std::string_view> const& keyword,
-                                    TreeExprSpan& exprs) {
-  return UnimplementedParseItem(keyword, exprs);
-}
+
 ParseResult<Item> ParseSelectorsItem(TokenNode<std::string_view> const& keyword,
                                      TreeExprSpan& exprs) {
   return UnimplementedParseItem(keyword, exprs);

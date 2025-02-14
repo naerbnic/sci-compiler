@@ -29,7 +29,7 @@ ParseResult<Item> ParseClassItem(TokenNode<std::string_view> const& keyword,
                                  TreeExprSpan& exprs);
 ParseResult<Item> ParseInstanceItem(TokenNode<std::string_view> const& keyword,
                                     TreeExprSpan& exprs);
-ParseResult<Item> ParseClassDefItem(TokenNode<std::string_view> const& keyword,
+ParseResult<Item> ParseClassDeclItem(TokenNode<std::string_view> const& keyword,
                                     TreeExprSpan& exprs);
 ParseResult<Item> ParseSelectorsItem(TokenNode<std::string_view> const& keyword,
                                      TreeExprSpan& exprs);

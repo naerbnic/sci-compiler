@@ -670,7 +670,7 @@ class ProcDef {
 
 struct PropertyDef {
   TokenNode<std::string> name;
-  TokenNode<int> value;
+  ConstValue value;
 };
 
 struct MethodNamesDecl {
@@ -684,8 +684,8 @@ struct MethodNamesDecl {
 class ClassDef {
  public:
   enum Kind {
-    Class,
-    Object,
+    CLASS,
+    OBJECT,
   };
 
   ClassDef(Kind kind, TokenNode<std::string> name,
