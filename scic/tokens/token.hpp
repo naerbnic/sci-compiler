@@ -2,11 +2,11 @@
 #define TOKENIZER_TOKEN_HPP
 
 #include <string>
-#include <variant>
 #include <vector>
 
 #include "absl/strings/str_format.h"
 #include "scic/text/text_range.hpp"
+#include "util/choice.hpp"
 
 namespace tokens {
 
@@ -77,7 +77,10 @@ class Token {
     std::vector<Token> lineTokens;
   };
 
-  using TokenValue = std::variant<Ident, String, Number, Punct, PreProcessor>;
+  class TokenValue : public util::ChoiceBase<TokenValue, Ident, String, Number,
+                                             Punct, PreProcessor> {
+    using ChoiceBase::ChoiceBase;
+  };
 
   Token() = default;
   Token(text::TextRange text_range, TokenValue value);
@@ -85,12 +88,12 @@ class Token {
   text::TextRange const& text_range() const { return text_range_; }
   TokenValue const& value() const { return value_; }
 
-  Ident const* AsIdent() const { return std::get_if<Ident>(&value_); }
-  Punct const* AsPunct() const { return std::get_if<Punct>(&value_); }
-  Number const* AsNumber() const { return std::get_if<Number>(&value_); }
-  String const* AsString() const { return std::get_if<String>(&value_); }
+  Ident const* AsIdent() const { return value_.try_get<Ident>(); }
+  Punct const* AsPunct() const { return value_.try_get<Punct>(); }
+  Number const* AsNumber() const { return value_.try_get<Number>(); }
+  String const* AsString() const { return value_.try_get<String>(); }
   PreProcessor const* AsPreProcessor() const {
-    return std::get_if<PreProcessor>(&value_);
+    return value_.try_get<PreProcessor>();
   }
 
  private:

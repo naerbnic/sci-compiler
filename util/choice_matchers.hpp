@@ -2,6 +2,7 @@
 #define UTIL_CHOICE_MATCHERS_HPP
 
 #include <ostream>
+#include <type_traits>
 
 #include "gtest/gtest.h"
 #include "util/types/name.hpp"
@@ -26,12 +27,14 @@ class ChoiceOfImpl {
   }
 
   template <class T>
-  bool MatchAndExplain(T const& value, testing::MatchResultListener* listener) const {
-    if (!value.template has<ChoiceT>()) {
+  bool MatchAndExplain(T const& value,
+                       testing::MatchResultListener* listener) const {
+    if (!value.template has<std::decay_t<ChoiceT>>()) {
       *listener << "is not a choice of type " << TypeName<ChoiceT>();
       return false;
     }
-    return matcher_.MatchAndExplain(value.template as<ChoiceT>(), listener);
+    return matcher_.MatchAndExplain(value.template as<std::decay_t<ChoiceT>>(),
+                                    listener);
   }
 
  private:

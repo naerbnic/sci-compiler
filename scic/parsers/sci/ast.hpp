@@ -243,13 +243,12 @@ class ArrayIndexExpr {
 
 class ConstValueExpr {
  public:
-  ConstValueExpr(std::unique_ptr<ConstValue> value)
-      : value_(std::move(value)) {}
+  ConstValueExpr(ConstValue value) : value_(std::move(value)) {}
 
-  ConstValue const& value() const { return *value_; }
+  ConstValue const& value() const { return value_; }
 
  private:
-  std::unique_ptr<ConstValue> value_;
+  ConstValue value_;
 };
 
 class RestExpr {

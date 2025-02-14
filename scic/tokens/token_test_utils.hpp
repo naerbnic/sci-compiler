@@ -9,6 +9,7 @@
 #include "gtest/gtest.h"
 #include "scic/text/text_range.hpp"
 #include "scic/tokens/token.hpp"
+#include "util/choice_matchers.hpp"
 
 namespace tokens {
 
@@ -66,7 +67,7 @@ inline testing::Matcher<Token const&> TokenOf(TokenSpec const& spec) {
 inline testing::Matcher<Token const&> IdentTokenOf(
     testing::Matcher<std::string_view> name) {
   return TokenOf({
-      .value = testing::VariantWith(IdentOf({
+      .value = util::ChoiceOf(IdentOf({
           .name = name,
       })),
   });
@@ -74,21 +75,21 @@ inline testing::Matcher<Token const&> IdentTokenOf(
 
 inline testing::Matcher<Token const&> NumTokenOf(testing::Matcher<int> value) {
   return TokenOf({
-      .value = testing::VariantWith(NumberOf(value)),
+      .value = util::ChoiceOf(NumberOf(value)),
   });
 }
 
 inline testing::Matcher<Token const&> StringTokenOf(
     testing::Matcher<std::string_view> value) {
   return TokenOf({
-      .value = testing::VariantWith(StringOf(value)),
+      .value = util::ChoiceOf(StringOf(value)),
   });
 }
 
 inline testing::Matcher<Token const&> PunctTokenOf(
     testing::Matcher<Token::PunctType> value) {
   return TokenOf({
-      .value = testing::VariantWith(PunctOf(value)),
+      .value = util::ChoiceOf(PunctOf(value)),
   });
 }
 

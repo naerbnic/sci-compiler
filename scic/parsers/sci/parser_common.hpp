@@ -30,6 +30,7 @@ ParseStatus FailureOf(absl::FormatSpec<Args...> const& spec,
                       Args const&... args) {
   return ParseStatus::Failure({diag::Diagnostic::Error(spec, args...)});
 }
+
 template <class... Args>
 ParseStatus RangeFailureOf(text::TextRange const& range,
                            absl::FormatSpec<Args...> const& spec,
@@ -37,6 +38,12 @@ ParseStatus RangeFailureOf(text::TextRange const& range,
   return ParseStatus::Failure(
       {diag::Diagnostic::RangeError(range, spec, args...)});
 }
+
+// Tries to parse a punctuation token from the front of the expr stream,
+// returning std::nullopt if the token is not present. If valid, returns a
+// text range for the token. The token is consumed on success.
+std::optional<text::TextRange> TryParsePunct(tokens::Token::PunctType type,
+                                             TreeExprSpan& exprs);
 
 // Parses a single tree expression from the input stream. On error, the
 // stream will not be affected.

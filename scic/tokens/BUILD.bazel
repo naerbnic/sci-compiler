@@ -8,6 +8,7 @@ cc_library(
     hdrs = ["token.hpp"],
     deps = [
         "//scic/text:text_range",
+        "//util:choice",
         "@abseil-cpp//absl/strings:str_format",
     ],
 )
@@ -18,6 +19,7 @@ cc_library(
     hdrs = ["token_test_utils.hpp"],
     deps = [
         ":token",
+        "//util:choice_matchers",
         "@googletest//:gtest",
     ],
 )

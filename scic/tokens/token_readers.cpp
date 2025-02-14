@@ -391,8 +391,8 @@ absl::StatusOr<Token::TokenValue> ReadToken(CharStream& stream) {
   }
 
   // Read an identifier.
-
-  return ReadIdent(stream);
+  ASSIGN_OR_RETURN(auto ident, ReadIdent(stream));
+  return Token::TokenValue(ident);
 }
 
 absl::StatusOr<std::optional<Token>> NextToken(CharStream& stream) {

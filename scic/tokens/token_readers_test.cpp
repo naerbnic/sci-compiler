@@ -6,6 +6,7 @@
 #include "scic/tokens/char_stream.hpp"
 #include "scic/tokens/token.hpp"
 #include "scic/tokens/token_test_utils.hpp"
+#include "util/choice_matchers.hpp"
 #include "util/status/status_matchers.hpp"
 
 namespace tokens {
@@ -13,7 +14,6 @@ namespace {
 
 using ::testing::ElementsAre;
 using ::testing::Optional;
-using ::testing::VariantWith;
 using ::util::status::IsOkAndHolds;
 
 // ReadKeyTest
@@ -172,7 +172,7 @@ TEST(ReadIdentTest, SpecialCharsInIdentWork) {
 
 TEST(ReadTokenTest, SimpleCase) {
   auto stream = CharStream("foo");
-  EXPECT_THAT(ReadToken(stream), IsOkAndHolds(VariantWith(IdentOf({
+  EXPECT_THAT(ReadToken(stream), IsOkAndHolds(util::ChoiceOf(IdentOf({
                                      .name = "foo",
                                  }))));
   EXPECT_FALSE(stream);
@@ -184,7 +184,7 @@ TEST(NextTokenTest, SimpleCase) {
   auto stream = CharStream("foo");
   EXPECT_THAT(NextToken(stream), IsOkAndHolds(Optional(TokenOf({
                                      .text_range = TextRangeOf("foo"),
-                                     .value = VariantWith(IdentOf({
+                                     .value = util::ChoiceOf(IdentOf({
                                          .name = "foo",
                                      })),
                                  }))));
@@ -195,7 +195,7 @@ TEST(NextTokenTest, InitialWhitespaceIsSkipped) {
   auto stream = CharStream("  \n\tfoo");
   EXPECT_THAT(NextToken(stream), IsOkAndHolds(Optional(TokenOf({
                                      .text_range = TextRangeOf("foo"),
-                                     .value = VariantWith(IdentOf({
+                                     .value = util::ChoiceOf(IdentOf({
                                          .name = "foo",
                                      })),
                                  }))));
@@ -207,7 +207,7 @@ TEST(NextTokenTest, PreProcessorDirectiveWorksOnFirstLine) {
   EXPECT_THAT(NextToken(stream),
               IsOkAndHolds(Optional(TokenOf({
                   .text_range = TextRangeOf("#if foo"),
-                  .value = VariantWith(PreProcOf({
+                  .value = util::ChoiceOf(PreProcOf({
                       .type = Token::PPT_IF,
                       .lineTokens = ElementsAre(IdentTokenOf("foo")),
                   })),
@@ -222,7 +222,7 @@ TEST(NextTokenTest, PreProcessorDirectiveWorksOnAnotherLine) {
   EXPECT_THAT(NextToken(stream),
               IsOkAndHolds(Optional(TokenOf({
                   .text_range = TextRangeOf("#if foo"),
-                  .value = VariantWith(PreProcOf({
+                  .value = util::ChoiceOf(PreProcOf({
                       .type = Token::PPT_IF,
                       .lineTokens = ElementsAre(IdentTokenOf("foo")),
                   })),
