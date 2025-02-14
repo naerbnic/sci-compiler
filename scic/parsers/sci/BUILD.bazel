@@ -17,8 +17,8 @@ cc_library(
 
 cc_library(
     name = "parser_common",
-    hdrs = ["parser_common.hpp"],
     srcs = ["parser_common.cpp"],
+    hdrs = ["parser_common.hpp"],
     deps = [
         ":ast",
         "//scic/diagnostics",
@@ -104,6 +104,8 @@ cc_test(
         "//scic/diagnostics",
         "//scic/parsers/combinators",
         "//scic/parsers/list_tree:ast",
+        "//scic/parsers/list_tree:parser_test_utils",
+        "//util:choice_matchers",
         "//util/status:status_matchers",
         "@googletest//:gtest",
         "@googletest//:gtest_main",

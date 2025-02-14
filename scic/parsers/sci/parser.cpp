@@ -15,7 +15,7 @@ using ::parsers::list_tree::ListExpr;
 using ::parsers::list_tree::TokenExpr;
 
 ParseResult<std::vector<Item>> ParseItems(
-    std::vector<list_tree::Expr> const& exprs) {
+    absl::Span<TreeExpr const> exprs) {
   auto exprs_span = absl::MakeConstSpan(exprs);
 
   return ParseEachTreeExpr(ParseListExpr(ParseItem))(exprs_span);
