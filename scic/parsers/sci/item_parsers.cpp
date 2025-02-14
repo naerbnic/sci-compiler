@@ -1,10 +1,13 @@
 #include "scic/parsers/sci/item_parsers.hpp"
 
+#include <algorithm>
+#include <cstddef>
 #include <map>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 #include "absl/types/span.h"
 #include "scic/parsers/combinators/results.hpp"
@@ -142,6 +145,51 @@ ParseResult<ModuleVarsDef> ParseModuleVarsDef(ModuleVarsDef::Kind kind,
   return ModuleVarsDef(kind, std::move(entries));
 }
 
+ParseResult<ProcDef> ParseProcDef(TokenNode<std::string_view> const& keyword,
+                                  TreeExprSpan& exprs) {
+  // Format: ((method_name args... "&temp" locals...) body...)
+  struct Signature {
+    TokenNode<std::string> name;
+    std::vector<TokenNode<std::string>> args;
+    std::vector<VarDef> locals;
+  };
+
+  ASSIGN_OR_RETURN(
+      auto signature,
+      ParseOneListItem([](TreeExprSpan& exprs) -> ParseResult<Signature> {
+        ASSIGN_OR_RETURN(auto name, ParseOneIdentTokenNode(exprs));
+        // We need to find the "&temp" token, if it exists.
+        auto temp_token_it = std::ranges::find_if(exprs.begin(), exprs.end(),
+                                                  IsIdentExprWith("&temp"));
+        TreeExprSpan params_span;
+        TreeExprSpan locals_span;
+        if (temp_token_it == exprs.end()) {
+          params_span = exprs;
+          locals_span = {};
+        } else {
+          std::size_t temp_index = temp_token_it - exprs.begin();
+          params_span = exprs.subspan(0, temp_index);
+          locals_span = exprs.subspan(temp_index + 1);
+        }
+
+        ASSIGN_OR_RETURN(
+            auto args, ParseUntilComplete(ParseOneIdentTokenNode)(params_span));
+        ASSIGN_OR_RETURN(auto locals,
+                         ParseUntilComplete(ParseVarDef)(locals_span));
+        return Signature{
+            .name = std::move(name),
+            .args = std::move(args),
+            .locals = std::move(locals),
+        };
+      })(exprs));
+
+  // FIXME: ParseExpr not yet implemented
+  // ASSIGN_OR_RETURN(auto body, ParseUntilComplete(ParseExpr)(exprs));
+
+  return ProcDef(std::move(signature.name), std::move(signature.args),
+                 std::move(signature.locals), nullptr);
+}
+
 }  // namespace
 
 ParseResult<Item> ParsePublicItem(TokenNode<std::string_view> const& keyword,
@@ -212,8 +260,9 @@ ParseResult<Item> ParseLocalItem(TokenNode<std::string_view> const& keyword,
 
 ParseResult<Item> ParseProcItem(TokenNode<std::string_view> const& keyword,
                                 TreeExprSpan& exprs) {
-  return UnimplementedParseItem(keyword, exprs);
+  return ParseProcDef(keyword, exprs);
 }
+
 ParseResult<Item> ParseClassItem(TokenNode<std::string_view> const& keyword,
                                  TreeExprSpan& exprs) {
   return UnimplementedParseItem(keyword, exprs);
