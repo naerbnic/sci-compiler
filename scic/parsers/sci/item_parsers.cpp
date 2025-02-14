@@ -3,6 +3,7 @@
 #include <map>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include "absl/types/span.h"
 #include "scic/parsers/combinators/results.hpp"
@@ -52,12 +53,42 @@ ItemParser const& GetItemParser(std::string_view keyword) {
 
 ParseResult<Item> ParsePublicItem(TokenNode<std::string_view> const& keyword,
                                   TreeExprSpan& exprs) {
-  return UnimplementedParseItem(keyword, exprs);
+  ASSIGN_OR_RETURN(
+      auto entries,
+      ParseUntilComplete(
+          [](TreeExprSpan& exprs) -> ParseResult<PublicDef::Entry> {
+            ASSIGN_OR_RETURN(auto name, ParseOneIdentTokenNode(exprs));
+            ASSIGN_OR_RETURN(auto index, ParseOneNumberToken(exprs));
+
+            return PublicDef::Entry{
+                .name = name,
+                .index = index,
+            };
+          })(exprs));
+
+  return Item(PublicDef(std::move(entries)));
 }
+
 ParseResult<Item> ParseExternItem(TokenNode<std::string_view> const& keyword,
                                   TreeExprSpan& exprs) {
-  return UnimplementedParseItem(keyword, exprs);
+  ASSIGN_OR_RETURN(
+      auto entries,
+      ParseUntilComplete(
+          [](TreeExprSpan& exprs) -> ParseResult<ExternDef::Entry> {
+            ASSIGN_OR_RETURN(auto name, ParseOneIdentTokenNode(exprs));
+            ASSIGN_OR_RETURN(auto module_num, ParseOneNumberToken(exprs));
+            ASSIGN_OR_RETURN(auto index, ParseOneNumberToken(exprs));
+
+            return ExternDef::Entry{
+                .name = name,
+                .module_num = module_num,
+                .index = index,
+            };
+          })(exprs));
+
+  return Item(ExternDef(std::move(entries)));
 }
+
 ParseResult<Item> ParseGlobalDeclItem(
     TokenNode<std::string_view> const& keyword, TreeExprSpan& exprs) {
   return UnimplementedParseItem(keyword, exprs);

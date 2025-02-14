@@ -102,6 +102,20 @@ auto ParseIdentToken(F parser) {
   };
 }
 
+template <IsParserOf<text::TextRange const&, int> F>
+auto ParseNumToken(F parser) {
+  using ParserInfo = ParserTraits<F>;
+  return [parser = std::move(parser)](
+             list_tree::TokenExpr const& token) -> ParserInfo::ParseRet {
+    auto* num = token.token().AsNumber();
+    if (!num) {
+      return RangeFailureOf(token.text_range(), "Expected identifier token.");
+    }
+
+    return parser(token.text_range(), num->value);
+  };
+}
+
 template <IsParserOf<text::TextRange const&, tokens::Token::Ident const&> F>
 auto ParseOneIdentToken(F parser) {
   return ParseOneTreeExpr(ParseTokenExpr(ParseIdentToken(std::move(parser))));
@@ -113,6 +127,14 @@ inline ParseResult<TokenNode<std::string_view>> ParseSimpleIdentNameNodeView(
     return RangeFailureOf(range, "Expected simple identifier.");
   }
   return TokenNode<std::string_view>(ident.name, range);
+}
+
+inline ParseResult<TokenNode<std::string>> ParseSimpleIdentNameNode(
+    text::TextRange const& range, tokens::Token::Ident const& ident) {
+  if (ident.trailer != tokens::Token::Ident::None) {
+    return RangeFailureOf(range, "Expected simple identifier.");
+  }
+  return TokenNode<std::string>(ident.name, range);
 }
 
 // Ensures that a span parser consumes all elements in the input list.
@@ -139,6 +161,21 @@ inline ParseResult<TokenNode<std::string_view>> ParseOneIdentTokenView(
     TreeExprSpan& exprs) {
   static auto const instance =
       ParseFunc(ParseOneIdentToken(ParseSimpleIdentNameNodeView));
+  return instance(exprs);
+}
+
+inline ParseResult<TokenNode<std::string>> ParseOneIdentTokenNode(
+    TreeExprSpan& exprs) {
+  static auto const instance =
+      ParseFunc(ParseOneIdentToken(ParseSimpleIdentNameNode));
+  return instance(exprs);
+}
+
+inline ParseResult<TokenNode<int>> ParseOneNumberToken(TreeExprSpan& exprs) {
+  static auto const instance = ParseFunc(ParseOneTreeExpr(
+      ParseTokenExpr(ParseNumToken([](text::TextRange const& range, int num) {
+        return TokenNode<int>(num, range);
+      }))));
   return instance(exprs);
 }
 

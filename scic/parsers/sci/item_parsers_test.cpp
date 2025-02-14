@@ -14,15 +14,17 @@
 namespace parsers::sci {
 namespace {
 
-TokenNode<std::string_view> CreateDummyNode(std::string_view value) {
-  return TokenNode<std::string_view>(value, text::TextRange::OfString(""));
+TokenNode<std::string_view> StringViewTokenNode(std::string_view value) {
+  return TokenNode<std::string_view>(
+      value, text::TextRange::OfString(std::string(value)));
 }
 
 TEST(PublicTest, Unimplemented) {
-  auto exprs = list_tree::ParseExprsOrDie("a b c");
+  auto exprs = list_tree::ParseExprsOrDie("a 1 b 2");
   auto expr_span = absl::MakeConstSpan(exprs);
-  auto result = ParsePublicItem(CreateDummyNode("public"), expr_span);
-  EXPECT_FALSE(result.ok());
+  auto result = ParsePublicItem(StringViewTokenNode("public"), expr_span);
+  EXPECT_TRUE(result.ok());
+  EXPECT_THAT(result.value().as<PublicDef>().entries(), testing::SizeIs(2));
 }
 
 }  // namespace
