@@ -100,8 +100,8 @@ ParseResult<Expr> ParseSciListExpr(TreeExprSpan const& exprs) {
   }
 
   // This isn't a builtin, so we need to determine if it's a method send or a
-  // function call. A send expression will be an identifier with either a
-  // question mark or a colon after it.
+  // function call. The start of a send expression will be an identifier with
+  // either a question mark or a colon after it, which will be its selector.
 
   if (StartsWith(IsTokenExprWith(IsSelectorIdent))(local_exprs)) {
     return ParseSendExpr(std::move(name), local_exprs);
