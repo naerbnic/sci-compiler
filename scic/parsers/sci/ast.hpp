@@ -594,7 +594,7 @@ class ExternDef {
 class GlobalDeclDef {
  public:
   struct Entry {
-    std::unique_ptr<VarDef> name;
+    VarDef name;
     TokenNode<int> index;
   };
 
@@ -614,7 +614,7 @@ class ModuleVarsDef {
   };
 
   struct Entry {
-    std::unique_ptr<VarDef> name;
+    VarDef name;
     std::optional<std::unique_ptr<InitialValue>> initial_value;
   };
 

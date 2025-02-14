@@ -14,6 +14,8 @@
 
 namespace parsers::sci {
 
+namespace {
+
 ParseResult<Item> UnimplementedParseItem(
     TokenNode<std::string_view> const& keyword,
     absl::Span<list_tree::Expr const>& exprs) {
@@ -50,6 +52,33 @@ ItemParser const& GetItemParser(std::string_view keyword) {
   }
   return it->second;
 }
+
+ParseResult<VarDef> ParseVarDef(TreeExprSpan& exprs) {
+  return ParseOneTreeExpr([](TreeExpr const& expr) -> ParseResult<VarDef> {
+    return expr.visit(
+        [](list_tree::ListExpr const& list_expr) -> ParseResult<VarDef> {
+          if (list_expr.kind() != list_tree::ListExpr::Kind::BRACKETS) {
+            return RangeFailureOf(
+                list_expr.open_token().text_range(),
+                "Expected variable definition to be in parentheses.");
+          }
+          auto elements = list_expr.elements();
+          return ParseComplete([](TreeExprSpan& exprs) -> ParseResult<VarDef> {
+            ASSIGN_OR_RETURN(auto var_name, ParseOneIdentTokenNode(exprs));
+            ASSIGN_OR_RETURN(auto size, ParseOneNumberToken(exprs));
+            return VarDef(ArrayVarDef(std::move(var_name), std::move(size)));
+          })(elements);
+        },
+        [](list_tree::TokenExpr const& expr) -> ParseResult<VarDef> {
+          ASSIGN_OR_RETURN(
+              auto var_name,
+              ParseTokenExpr(ParseIdentToken(ParseSimpleIdentNameNode))(expr));
+          return VarDef(SingleVarDef(std::move(var_name)));
+        });
+  })(exprs);
+}
+
+}  // namespace
 
 ParseResult<Item> ParsePublicItem(TokenNode<std::string_view> const& keyword,
                                   TreeExprSpan& exprs) {
@@ -91,8 +120,22 @@ ParseResult<Item> ParseExternItem(TokenNode<std::string_view> const& keyword,
 
 ParseResult<Item> ParseGlobalDeclItem(
     TokenNode<std::string_view> const& keyword, TreeExprSpan& exprs) {
-  return UnimplementedParseItem(keyword, exprs);
+  ASSIGN_OR_RETURN(
+      auto entries,
+      ParseUntilComplete(
+          [](TreeExprSpan& exprs) -> ParseResult<GlobalDeclDef::Entry> {
+            ASSIGN_OR_RETURN(auto name, ParseVarDef(exprs));
+            ASSIGN_OR_RETURN(auto index, ParseOneNumberToken(exprs));
+
+            return GlobalDeclDef::Entry{
+                .name = std::move(name),
+                .index = index,
+            };
+          })(exprs));
+
+  return Item(GlobalDeclDef(std::move(entries)));
 }
+
 ParseResult<Item> ParseGlobalItem(TokenNode<std::string_view> const& keyword,
                                   TreeExprSpan& exprs) {
   return UnimplementedParseItem(keyword, exprs);

@@ -3,6 +3,7 @@
 
 #include <optional>
 #include <stdexcept>
+#include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -199,6 +200,57 @@ auto ParseUntilComplete(F parser) {
     }
     return results;
   };
+}
+
+template <class Pred, IsParserOf<TreeExpr const&> F>
+auto ParseIf(Pred pred, F parser) {
+  using ParserInfo = ParserTraits<F>;
+  using ResultElem = ParserInfo::BaseRet;
+  return [pred = std::move(pred), parser = std::move(parser)](
+             TreeExprSpan& exprs) -> ParseResult<std::optional<ResultElem>> {
+    // Make sure the pred is using a constant span.
+    TreeExprSpan const pred_span = exprs;
+    if (!pred(pred_span)) {
+      return std::nullopt;
+    }
+    return parser(exprs);
+  };
+}
+
+// A predicate that returns true if the input stream is empty, or if the first
+// element fits the given predicate.
+template <class Pred>
+auto StartsWith(Pred pred) {
+  return [pred = std::move(pred)](TreeExprSpan const& exprs) -> bool {
+    return !exprs.empty() && pred(exprs.front());
+  };
+}
+
+// A predicate that returns true if the input TreeExpr is a TokenExpr and the
+// token fits the given predicate.
+template <class Pred>
+auto IsTokenExprWith(Pred pred) {
+  return [pred = std::move(pred)](TreeExpr const& expr) -> bool {
+    if (!expr.has<list_tree::TokenExpr>()) {
+      return false;
+    }
+    return pred(expr.as<list_tree::TokenExpr>().token());
+  };
+}
+
+inline auto IsIdentTokenWith(std::string_view ident) {
+  return [ident](tokens::Token const& token) -> bool {
+    auto* ident_ptr = token.AsIdent();
+    if (!ident_ptr) {
+      return false;
+    }
+    return ident_ptr->name == ident &&
+           ident_ptr->trailer == tokens::Token::Ident::None;
+  };
+}
+
+inline auto IsIdentExprWith(std::string_view ident) {
+  return IsTokenExprWith(IsIdentTokenWith(ident));
 }
 
 // Parses a sequence of expressions, applying the given parser to each.

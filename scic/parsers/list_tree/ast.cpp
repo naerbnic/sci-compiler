@@ -42,6 +42,7 @@ ListExpr::ListExpr(Kind kind, Token open_token, Token close_token,
           .close_token = std::move(close_token),
       })) {}
 
+ListExpr::Kind ListExpr::kind() const { return pimpl_->kind; }
 Token const& ListExpr::open_token() const { return pimpl_->open_token; }
 Token const& ListExpr::close_token() const { return pimpl_->close_token; }
 
