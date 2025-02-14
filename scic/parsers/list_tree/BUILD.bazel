@@ -23,6 +23,7 @@ cc_library(
     deps = [
         ":ast",
         "//util:choice_matchers",
+        "//scic/tokens:token_test_utils",
         "@googletest//:gtest",
     ],
 )

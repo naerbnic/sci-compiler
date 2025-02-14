@@ -71,7 +71,7 @@ cc_test(
         ":item_parsers",
         ":parser_common",
         "//scic/diagnostics",
-        "//util/status:status_matchers",
+        "//scic/parsers/list_tree:parser_test_utils",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],

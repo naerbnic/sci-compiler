@@ -13,7 +13,7 @@
 namespace tokens {
 
 struct IdentSpec {
-  testing::Matcher<std::string> name = testing::_;
+  testing::Matcher<std::string_view> name = testing::_;
   testing::Matcher<Token::Ident::Trailer> trailer = Token::Ident::None;
 };
 
@@ -21,6 +21,22 @@ inline testing::Matcher<Token::Ident const&> IdentOf(IdentSpec const& spec) {
   return testing::AllOf(
       testing::Field("name", &Token::Ident::name, spec.name),
       testing::Field("trailer", &Token::Ident::trailer, spec.trailer));
+}
+
+inline testing::Matcher<Token::Number const&> NumberOf(
+    testing::Matcher<int> const& num) {
+  return testing::AllOf(testing::Field("name", &Token::Number::value, num));
+}
+
+inline testing::Matcher<Token::String const&> StringOf(
+    testing::Matcher<std::string_view> const& value) {
+  return testing::AllOf(
+      testing::Field("name", &Token::String::decodedString, value));
+}
+
+inline testing::Matcher<Token::Punct const&> PunctOf(
+    testing::Matcher<Token::PunctType> const& value) {
+  return testing::AllOf(testing::Field("name", &Token::Punct::type, value));
 }
 
 struct PreProcSpec {
@@ -48,11 +64,31 @@ inline testing::Matcher<Token const&> TokenOf(TokenSpec const& spec) {
 }
 
 inline testing::Matcher<Token const&> IdentTokenOf(
-    testing::Matcher<std::string> name) {
+    testing::Matcher<std::string_view> name) {
   return TokenOf({
       .value = testing::VariantWith(IdentOf({
           .name = name,
       })),
+  });
+}
+
+inline testing::Matcher<Token const&> NumTokenOf(testing::Matcher<int> value) {
+  return TokenOf({
+      .value = testing::VariantWith(NumberOf(value)),
+  });
+}
+
+inline testing::Matcher<Token const&> StringTokenOf(
+    testing::Matcher<std::string_view> value) {
+  return TokenOf({
+      .value = testing::VariantWith(StringOf(value)),
+  });
+}
+
+inline testing::Matcher<Token const&> PunctTokenOf(
+    testing::Matcher<Token::PunctType> value) {
+  return TokenOf({
+      .value = testing::VariantWith(PunctOf(value)),
   });
 }
 
