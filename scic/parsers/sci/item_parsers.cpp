@@ -15,6 +15,7 @@
 #include "scic/parsers/list_tree/ast.hpp"
 #include "scic/parsers/sci/ast.hpp"
 #include "scic/parsers/sci/const_value_parsers.hpp"
+#include "scic/parsers/sci/expr_parsers.hpp"
 #include "scic/parsers/sci/parser_common.hpp"
 #include "util/choice.hpp"
 #include "util/status/status_macros.hpp"
@@ -174,11 +175,10 @@ ParseResult<ProcDef> ParseProcDef(TokenNode<std::string_view> const& keyword,
         };
       })(exprs));
 
-  // FIXME: ParseExpr not yet implemented
-  // ASSIGN_OR_RETURN(auto body, ParseUntilComplete(ParseExpr)(exprs));
+  ASSIGN_OR_RETURN(auto body, ParseExprList(exprs));
 
   return ProcDef(std::move(signature.name), std::move(signature.args),
-                 std::move(signature.locals), nullptr);
+                 std::move(signature.locals), std::move(body));
 }
 
 // Parser helper types for parsing a Class body.

@@ -673,7 +673,7 @@ class EnumDef {
 class ProcDef {
  public:
   ProcDef(TokenNode<std::string> name, std::vector<TokenNode<std::string>> args,
-          std::vector<VarDef> locals, std::unique_ptr<Expr> body)
+          std::vector<VarDef> locals, Expr body)
       : name_(std::move(name)),
         args_(std::move(args)),
         locals_(std::move(locals)),
@@ -682,13 +682,13 @@ class ProcDef {
   TokenNode<std::string> const& name() const { return name_; }
   std::vector<TokenNode<std::string>> const& args() const { return args_; }
   std::vector<VarDef> const& locals() const { return locals_; }
-  Expr const& body() const { return *body_; }
+  Expr const& body() const { return body_; }
 
  private:
   TokenNode<std::string> name_;
   std::vector<TokenNode<std::string>> args_;
   std::vector<VarDef> locals_;
-  std::unique_ptr<Expr> body_;
+  Expr body_;
 };
 
 struct PropertyDef {

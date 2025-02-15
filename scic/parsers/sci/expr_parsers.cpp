@@ -31,11 +31,6 @@ ParseResult<std::unique_ptr<Expr>> ParseExprPtr(TreeExprSpan& exprs) {
   return std::make_unique<Expr>(std::move(expr));
 }
 
-ParseResult<ExprList> ParseExprList(TreeExprSpan& exprs) {
-  ASSIGN_OR_RETURN(auto expr_list, ParseUntilComplete(ParseExpr)(exprs));
-  return ExprList(std::move(expr_list));
-}
-
 // Builtin Parsers
 
 ParseResult<ReturnExpr> ParseReturnExpr(TokenNode<std::string_view> keyword,
@@ -374,35 +369,39 @@ ParseResult<CallArgs> ParseCallArgs(TreeExprSpan& args) {
 }
 
 ParseResult<SendClause> ParseSendClause(TreeExprSpan& exprs) {
-  ASSIGN_OR_RETURN(auto selector,
-                   ParseOneTreeExpr(ParseTokenExpr(ParseIdentNameNode))(exprs));
-  auto [name, trailer] = std::move(selector);
-  if (trailer == tokens::Token::Ident::None) {
-    return RangeFailureOf(
-        name.text_range(),
-        "Expected selector ending in '?' or ':' in send clause.");
-  }
+  return ParseOrRestore<TreeExpr const>(
+      [](TreeExprSpan& exprs) -> ParseResult<SendClause> {
+        ASSIGN_OR_RETURN(
+            auto selector,
+            ParseOneTreeExpr(ParseTokenExpr(ParseIdentNameNode))(exprs));
+        auto [name, trailer] = std::move(selector);
+        if (trailer == tokens::Token::Ident::None) {
+          return RangeFailureOf(
+              name.text_range(),
+              "Expected selector ending in '?' or ':' in send clause.");
+        }
 
-  auto clause_end =
-      std::ranges::find_if(exprs, IsTokenExprWith(IsSelectorIdent));
+        auto clause_end =
+            std::ranges::find_if(exprs, IsTokenExprWith(IsSelectorIdent));
 
-  TreeExprSpan args = exprs.subspan(0, clause_end - exprs.begin());
-  // FIXME: This can cause the parse span to change on failure.
-  exprs = exprs.subspan(clause_end - exprs.begin());
+        TreeExprSpan args = exprs.subspan(0, clause_end - exprs.begin());
+        // FIXME: This can cause the parse span to change on failure.
+        exprs = exprs.subspan(clause_end - exprs.begin());
 
-  if (trailer == tokens::Token::Ident::Question) {
-    if (!args.empty()) {
-      return RangeFailureOf(
-          name.text_range(),
-          "Getter selectors (ending in '?') should not have arguments.");
-    }
+        if (trailer == tokens::Token::Ident::Question) {
+          if (!args.empty()) {
+            return RangeFailureOf(
+                name.text_range(),
+                "Getter selectors (ending in '?') should not have arguments.");
+          }
 
-    return PropReadSendClause(std::move(name));
-  }
+          return PropReadSendClause(std::move(name));
+        }
 
-  ASSIGN_OR_RETURN(auto call_args, ParseCallArgs(args));
+        ASSIGN_OR_RETURN(auto call_args, ParseCallArgs(args));
 
-  return MethodSendClause(std::move(name), std::move(call_args));
+        return MethodSendClause(std::move(name), std::move(call_args));
+      })(exprs);
 }
 
 ParseResult<SendExpr> ParseSendExpr(TokenNode<std::string> target,
@@ -459,6 +458,11 @@ ParseResult<Expr> ParseSciListExpr(TreeExprSpan const& exprs) {
   } else {
     return ParseCall(std::move(name), local_exprs);
   }
+}
+
+ParseResult<ExprList> ParseExprList(TreeExprSpan& exprs) {
+  ASSIGN_OR_RETURN(auto expr_list, ParseUntilComplete(ParseExpr)(exprs));
+  return ExprList(std::move(expr_list));
 }
 
 ParseResult<Expr> ParseExpr(TreeExprSpan& exprs) {

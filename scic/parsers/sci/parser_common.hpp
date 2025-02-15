@@ -39,6 +39,22 @@ ParseStatus RangeFailureOf(text::TextRange const& range,
       {diag::Diagnostic::RangeError(range, spec, args...)});
 }
 
+// Runs the sub-parser, and if it fails, restores the input stream to its
+// original state.
+template <class T, class... Args, IsParserOf<Args..., absl::Span<T>&> P>
+auto ParseOrRestore(P parser) {
+  using ParserInfo = ParserTraits<P>;
+  return [parser = std::move(parser)](
+             Args&&... args, absl::Span<T>& span) -> ParserInfo::ParseRet {
+    auto start = span;
+    auto result = parser(span, std::forward<Args>(args)...);
+    if (!result.ok()) {
+      span = start;
+    }
+    return result;
+  };
+}
+
 // Tries to parse a punctuation token from the front of the expr stream,
 // returning std::nullopt if the token is not present. If valid, returns a
 // text range for the token. The token is consumed on success.

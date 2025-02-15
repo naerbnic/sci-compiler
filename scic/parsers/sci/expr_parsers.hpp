@@ -8,7 +8,8 @@
 namespace parsers::sci {
 
 ParseResult<Expr> ParseExpr(TreeExprSpan& exprs);
+ParseResult<ExprList> ParseExprList(TreeExprSpan& exprs);
 
-}
+}  // namespace parsers::sci
 
 #endif
