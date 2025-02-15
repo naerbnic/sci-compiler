@@ -10,6 +10,7 @@ cc_library(
         "//scic/text:text_range",
         "//scic/tokens:token",
         "//util:choice",
+        "//util/io:printer",
         "@abseil-cpp//absl/strings:str_format",
         "@abseil-cpp//absl/types:span",
     ],

@@ -22,7 +22,7 @@
 
 namespace util {
 namespace internal {
-std::string ComputeTypeName(std::type_info const& type_info) {
+inline std::string ComputeTypeName(std::type_info const& type_info) {
   auto* raw_name = type_info.name();
 #if defined(__clang__) || defined(__GNUC__)
   int status;

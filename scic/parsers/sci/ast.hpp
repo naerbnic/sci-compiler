@@ -10,6 +10,7 @@
 
 #include "scic/text/text_range.hpp"
 #include "util/choice.hpp"
+#include "util/io/printer.hpp"
 
 namespace parsers::sci {
 
@@ -113,6 +114,8 @@ class SingleVarDef {
 
  private:
   TokenNode<std::string> name_;
+
+  DEFINE_PRINTERS(SingleVarDef, "name", name_);
 };
 
 class ArrayVarDef {
@@ -126,6 +129,8 @@ class ArrayVarDef {
  private:
   TokenNode<std::string> name_;
   TokenNode<int> size_;
+
+  DEFINE_PRINTERS(ArrayVarDef, "name", name_, "size", size_);
 };
 
 class VarDef : public util::ChoiceBase<VarDef, SingleVarDef, ArrayVarDef> {
@@ -140,6 +145,8 @@ class NumConstValue {
 
  private:
   TokenNode<int> value_;
+
+  DEFINE_PRINTERS(NumConstValue, "value", value_);
 };
 
 class StringConstValue {
@@ -150,6 +157,7 @@ class StringConstValue {
 
  private:
   TokenNode<std::string> value_;
+  DEFINE_PRINTERS(StringConstValue, "value", value_);
 };
 
 class ConstValue
@@ -167,6 +175,8 @@ class ArrayInitialValue {
 
  private:
   std::vector<ConstValue> value_;
+
+  DEFINE_PRINTERS(ArrayInitialValue, "value", value_);
 };
 
 class InitialValue
@@ -200,6 +210,8 @@ class CallArgs {
  private:
   std::vector<Expr> args_;
   std::optional<Rest> rest_;
+
+  DEFINE_PRINTERS(CallArgs, "args", args_, "rest", rest_);
 };
 
 class AddrOfExpr {
@@ -210,6 +222,8 @@ class AddrOfExpr {
 
  private:
   std::unique_ptr<Expr> expr_;
+
+  DEFINE_PRINTERS(AddrOfExpr, "expr", expr_);
 };
 
 class SelectLitExpr {
@@ -221,6 +235,8 @@ class SelectLitExpr {
 
  private:
   TokenNode<std::string> selector_;
+
+  DEFINE_PRINTERS(SelectLitExpr, "selector", selector_);
 };
 
 // A plain variable reference.
@@ -232,6 +248,8 @@ class VarExpr {
 
  private:
   TokenNode<std::string> name_;
+
+  DEFINE_PRINTERS(VarExpr, "name", name_);
 };
 
 class ArrayIndexExpr {
@@ -245,6 +263,8 @@ class ArrayIndexExpr {
  private:
   TokenNode<std::string> var_name_;
   std::unique_ptr<Expr> index_;
+
+  DEFINE_PRINTERS(ArrayIndexExpr, "var_name", var_name_, "index", index_);
 };
 
 class ConstValueExpr {
@@ -255,6 +275,8 @@ class ConstValueExpr {
 
  private:
   ConstValue value_;
+
+  DEFINE_PRINTERS(ConstValueExpr, "value", value_);
 };
 
 // A call expresion, of (<name> <arg> ...). Aside from control flow
@@ -271,6 +293,8 @@ class CallExpr {
  private:
   TokenNode<std::string> name_;
   CallArgs call_args_;
+
+  DEFINE_PRINTERS(CallExpr, "name", name_, "call_args", call_args_);
 };
 
 class ReturnExpr {
@@ -282,6 +306,8 @@ class ReturnExpr {
 
  private:
   std::optional<std::unique_ptr<Expr>> expr_;
+
+  DEFINE_PRINTERS(ReturnExpr, "expr", expr_);
 };
 
 class BreakExpr {
@@ -298,6 +324,8 @@ class BreakExpr {
  private:
   std::optional<std::unique_ptr<Expr>> condition_;
   std::optional<TokenNode<int>> level_;
+
+  DEFINE_PRINTERS(BreakExpr, "condition", condition_, "level", level_);
 };
 
 class ContinueExpr {
@@ -314,6 +342,8 @@ class ContinueExpr {
  private:
   std::optional<std::unique_ptr<Expr>> condition_;
   std::optional<TokenNode<int>> level_;
+
+  DEFINE_PRINTERS(ContinueExpr, "condition", condition_, "level", level_);
 };
 
 // A while expression. If this is a repeat loop, the condition will be
@@ -332,6 +362,8 @@ class WhileExpr {
  private:
   std::optional<std::unique_ptr<Expr>> condition_;
   std::unique_ptr<Expr> body_;
+
+  DEFINE_PRINTERS(WhileExpr, "condition", condition_, "body", body_);
 };
 
 class ForExpr {
@@ -353,6 +385,9 @@ class ForExpr {
   std::unique_ptr<Expr> condition_;
   std::unique_ptr<Expr> update_;
   std::unique_ptr<Expr> body_;
+
+  DEFINE_PRINTERS(ForExpr, "init", init_, "condition", condition_, "update",
+                  update_, "body", body_);
 };
 
 class IfExpr {
@@ -373,6 +408,9 @@ class IfExpr {
   std::unique_ptr<Expr> condition_;
   std::unique_ptr<Expr> then_body_;
   std::optional<std::unique_ptr<Expr>> else_body_;
+
+  DEFINE_PRINTERS(IfExpr, "condition", condition_, "then_body", then_body_,
+                  "else_body", else_body_);
 };
 
 class CondExpr {
@@ -394,6 +432,8 @@ class CondExpr {
  private:
   std::vector<Branch> branches_;
   std::optional<std::unique_ptr<Expr>> else_body_;
+
+  DEFINE_PRINTERS(CondExpr, "branches", branches_, "else_body", else_body_);
 };
 
 class SwitchExpr {
@@ -419,6 +459,9 @@ class SwitchExpr {
   std::unique_ptr<Expr> switch_expr_;
   std::vector<Case> cases_;
   std::optional<std::unique_ptr<Expr>> else_case_;
+
+  DEFINE_PRINTERS(SwitchExpr, "switch_expr", switch_expr_, "cases", cases_,
+                  "else_case", else_case_);
 };
 
 class SwitchToExpr {
@@ -440,6 +483,9 @@ class SwitchToExpr {
   std::unique_ptr<Expr> switch_expr_;
   std::vector<std::unique_ptr<Expr>> cases_;
   std::optional<std::unique_ptr<Expr>> else_case_;
+
+  DEFINE_PRINTERS(SwitchToExpr, "switch_expr", switch_expr_, "cases", cases_,
+                  "else_case", else_case_);
 };
 
 class IncDecExpr {
@@ -460,8 +506,14 @@ class IncDecExpr {
   TokenNode<std::string> var_;
 };
 
-class SelfSendTarget {};
-class SuperSendTarget {};
+class SelfSendTarget {
+ private:
+  DEFINE_PRINTERS(SelfSendTarget);
+};
+class SuperSendTarget {
+ private:
+  DEFINE_PRINTERS(SuperSendTarget);
+};
 class VarSendTarget {
  public:
   explicit VarSendTarget(TokenNode<std::string> target)
@@ -471,6 +523,8 @@ class VarSendTarget {
 
  private:
   TokenNode<std::string> target_;
+
+  DEFINE_PRINTERS(VarSendTarget, "target", target_);
 };
 
 class SendTarget
@@ -488,6 +542,8 @@ class PropReadSendClause {
 
  private:
   TokenNode<std::string> prop_name_;
+
+  DEFINE_PRINTERS(PropReadSendClause, "prop_name", prop_name_);
 };
 
 class MethodSendClause {
@@ -501,6 +557,9 @@ class MethodSendClause {
  private:
   TokenNode<std::string> selector_;
   CallArgs call_args_;
+
+  DEFINE_PRINTERS(MethodSendClause, "selector", selector_, "call_args",
+                  call_args_);
 };
 
 class SendClause
@@ -520,6 +579,8 @@ class SendExpr {
  private:
   SendTarget target_;
   std::vector<SendClause> clauses_;
+
+  DEFINE_PRINTERS(SendExpr, "target", target_, "clauses", clauses_);
 };
 
 class AssignExpr {
@@ -548,6 +609,8 @@ class AssignExpr {
   Kind kind_;
   TokenNode<std::string> var_;
   std::unique_ptr<Expr> value_;
+
+  DEFINE_PRINTERS(AssignExpr, "kind", kind_, "var", var_, "value", value_);
 };
 
 class ExprList {
@@ -558,6 +621,8 @@ class ExprList {
 
  private:
   std::vector<Expr> exprs_;
+
+  DEFINE_PRINTERS(ExprList, "exprs", exprs_);
 };
 
 class Expr
@@ -581,6 +646,8 @@ class ScriptNumDef {
 
  private:
   TokenNode<int> script_num_;
+
+  DEFINE_PRINTERS(ScriptNumDef, "script_num", script_num_);
 };
 
 class PublicDef {
@@ -596,6 +663,8 @@ class PublicDef {
 
  private:
   std::vector<Entry> entries_;
+
+  DEFINE_PRINTERS(PublicDef, "entries", entries_);
 };
 
 class ExternDef {
@@ -612,6 +681,8 @@ class ExternDef {
 
  private:
   std::vector<Entry> entries_;
+
+  DEFINE_PRINTERS(ExternDef, "entries", entries_);
 };
 
 class GlobalDeclDef {
@@ -627,6 +698,8 @@ class GlobalDeclDef {
 
  private:
   std::vector<Entry> entries_;
+
+  DEFINE_PRINTERS(GlobalDeclDef, "entries", entries_);
 };
 
 class ModuleVarsDef {
@@ -651,6 +724,8 @@ class ModuleVarsDef {
  private:
   Kind kind_;
   std::vector<Entry> entries_;
+
+  DEFINE_PRINTERS(ModuleVarsDef, "kind", kind_, "entries", entries_);
 };
 
 class EnumDef {
@@ -668,6 +743,9 @@ class EnumDef {
  private:
   std::optional<TokenNode<int>> initial_value_;
   std::vector<Entry> entries_;
+
+  DEFINE_PRINTERS(EnumDef, "initial_value", initial_value_, "entries",
+                  entries_);
 };
 
 class ProcDef {
@@ -689,15 +767,24 @@ class ProcDef {
   std::vector<TokenNode<std::string>> args_;
   std::vector<VarDef> locals_;
   Expr body_;
+
+  DEFINE_PRINTERS(ProcDef, "name", name_, "args", args_, "locals", locals_,
+                  "body", body_);
 };
 
 struct PropertyDef {
   TokenNode<std::string> name;
   ConstValue value;
+
+ private:
+  DEFINE_PRINTERS(PropertyDef, "name", name, "value", value);
 };
 
 struct MethodNamesDecl {
   std::vector<TokenNode<std::string>> names;
+
+ private:
+  DEFINE_PRINTERS(MethodNamesDecl, "names", names);
 };
 
 // A common class definition.
@@ -741,6 +828,10 @@ class ClassDef {
   std::vector<PropertyDef> properties_;
   std::optional<MethodNamesDecl> method_names_;
   std::vector<ProcDef> methods_;
+
+  DEFINE_PRINTERS(ClassDef, "kind", kind_, "name", name_, "parent", parent_,
+                  "properties", properties_, "method_names", method_names_,
+                  "methods", methods_);
 };
 
 class ClassDecl {
@@ -769,6 +860,10 @@ class ClassDecl {
   std::optional<TokenNode<int>> parent_num_;
   std::vector<PropertyDef> properties_;
   MethodNamesDecl method_names_;
+
+  DEFINE_PRINTERS(ClassDecl, "name", name_, "script_num", script_num_,
+                  "class_num", class_num_, "parent_num", parent_num_,
+                  "properties", properties_, "method_names", method_names_);
 };
 
 class SelectorsDecl {
@@ -785,6 +880,8 @@ class SelectorsDecl {
 
  private:
   std::vector<Entry> selectors_;
+
+  DEFINE_PRINTERS(SelectorsDecl, "selectors", selectors_);
 };
 
 class Item

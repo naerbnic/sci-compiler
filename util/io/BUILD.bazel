@@ -21,3 +21,12 @@ cc_library(
         "@abseil-cpp//absl/strings:str_format",
     ],
 )
+
+cc_library(
+    name = "printer",
+    srcs = ["printer.hpp"],
+    deps = [
+        "//util/types:name",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)
