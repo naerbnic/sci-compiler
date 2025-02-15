@@ -7,6 +7,8 @@
 
 namespace parsers::sci {
 
+ParseResult<SendExpr> ParseSendExpr(SendTarget target, TreeExprSpan& exprs);
+
 ParseResult<Expr> ParseExpr(TreeExprSpan& exprs);
 ParseResult<ExprList> ParseExprList(TreeExprSpan& exprs);
 

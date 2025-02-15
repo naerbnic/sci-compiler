@@ -97,8 +97,9 @@ absl::StatusOr<int> RunMain(int argc, char** argv) {
 
   ToolIncludeContext include_context(std::move(include_paths));
 
+  list_tree::Parser parser(&include_context);
+
   for (auto const& file : files) {
-    list_tree::Parser parser(&include_context);
     ASSIGN_OR_RETURN(auto tokens, TokenizeFile(file));
     ASSIGN_OR_RETURN(auto parsed, parser.ParseTree(tokens));
     auto span = absl::MakeConstSpan(parsed);

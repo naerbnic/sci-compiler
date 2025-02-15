@@ -15,7 +15,7 @@ namespace parsers::list_tree {
 class IncludeContext {
  public:
   static IncludeContext const* GetEmpty();
-  
+
   virtual ~IncludeContext() = default;
 
   virtual absl::StatusOr<std::vector<tokens::Token>> LoadTokensFromInclude(
@@ -30,6 +30,8 @@ class Parser {
   // Add a define to the current context. Any instances of a simple identifier
   // with the given name will be substituted with the tokens provided.
   void AddDefine(std::string_view name, std::vector<tokens::Token> tokens);
+
+  auto const& defines() const { return defines_; }
 
   absl::StatusOr<std::vector<Expr>> ParseTree(
       std::vector<tokens::Token> tokens);

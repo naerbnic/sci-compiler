@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <memory>
 #include <optional>
+#include <ostream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -184,6 +185,11 @@ class TextRange {
                  file_range.start().column_index() + 1,
                  file_range.end().line_index() + 1,
                  file_range.end().column_index() + 1);
+  }
+
+  friend std::ostream& operator<<(std::ostream& os, TextRange const& range) {
+    absl::Format(&os, "%v", range);
+    return os;
   }
 };
 

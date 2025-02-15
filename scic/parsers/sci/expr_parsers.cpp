@@ -15,10 +15,12 @@
 #include "scic/parsers/sci/ast.hpp"
 #include "scic/parsers/sci/const_value_parsers.hpp"
 #include "scic/parsers/sci/parser_common.hpp"
+#include "scic/text/text_range.hpp"
 #include "scic/tokens/token.hpp"
 #include "util/status/status_macros.hpp"
 
 namespace parsers::sci {
+
 namespace {
 
 using ExprParseFunc =
@@ -192,7 +194,7 @@ ParseResult<SwitchExpr> ParseSwitchExpr(TokenNode<std::string_view> keyword,
             if (StartsWith(IsIdentExprWith("else"))(exprs)) {
               ASSIGN_OR_RETURN(auto else_token, ParseOneIdentTokenNode(exprs));
             } else {
-              ASSIGN_OR_RETURN(auto condition, ParseOneConstValue(exprs));
+              ASSIGN_OR_RETURN(condition, ParseOneConstValue(exprs));
             }
 
             ASSIGN_OR_RETURN(auto body, ParseExprList(exprs));
@@ -263,17 +265,26 @@ ParseResult<SwitchToExpr> ParseSwitchToExpr(TokenNode<std::string_view> keyword,
       return RangeFailureOf(keyword.text_range(),
                             "Got an else in the middle of the switch expr.");
     }
-    cases.push_back(std::make_unique<Expr>(std::move(case_clause.body)));
+    cases.push_back(std::move(case_clause.body));
   }
 
   return SwitchToExpr(std::move(switch_expr), std::move(cases),
                       std::move(else_body));
 }
 
+ParseResult<SendExpr> ParseSelfSendExpr(TokenNode<std::string_view> keyword,
+                                        TreeExprSpan& exprs) {
+  return ParseSendExpr(SelfSendTarget(), exprs);
+}
+ParseResult<SendExpr> ParseSuperSendExpr(TokenNode<std::string_view> keyword,
+                                         TreeExprSpan& exprs) {
+  return ParseSendExpr(SuperSendTarget(), exprs);
+}
+
 template <AssignExpr::Kind K>
 ParseResult<AssignExpr> ParseAssignExpr(TokenNode<std::string_view> keyword,
                                         TreeExprSpan& exprs) {
-  ASSIGN_OR_RETURN(auto var, ParseOneIdentTokenNode(exprs));
+  ASSIGN_OR_RETURN(auto var, ParseExprPtr(exprs));
   ASSIGN_OR_RETURN(auto value, ParseExprPtr(exprs));
   return AssignExpr(K, std::move(var), std::move(value));
 }
@@ -292,6 +303,8 @@ BuiltinsMap const& GetBuiltinParsers() {
       {"cond", ParseCondExpr},
       {"switch", ParseSwitchExpr},
       {"switchto", ParseSwitchToExpr},
+      {"self", ParseSelfSendExpr},
+      {"super", ParseSuperSendExpr},
       {"=", ParseAssignExpr<AssignExpr::Kind::DIRECT>},
       {"+=", ParseAssignExpr<AssignExpr::Kind::ADD>},
       {"-=", ParseAssignExpr<AssignExpr::Kind::SUB>},
@@ -362,7 +375,12 @@ ParseResult<CallArgs> ParseCallArgs(TreeExprSpan& args) {
         return RangeFailureOf(rest_token.text_range(),
                               "Expected no more arguments after &rest clause.");
       }
+
+      break;
     }
+
+    ASSIGN_OR_RETURN(auto arg_expr, ParseExpr(args));
+    arg_exprs.push_back(std::move(arg_expr));
   }
 
   return CallArgs(std::move(arg_exprs), std::move(rest_expr));
@@ -404,34 +422,19 @@ ParseResult<SendClause> ParseSendClause(TreeExprSpan& exprs) {
       })(exprs);
 }
 
-ParseResult<SendExpr> ParseSendExpr(TokenNode<std::string> target,
-                                    TreeExprSpan& exprs) {
-  SendTarget target_ast;
-  if (target.value() == "self") {
-    target_ast = SelfSendTarget();
-  } else if (target.value() == "super") {
-    target_ast = SuperSendTarget();
-  } else {
-    target_ast = VarSendTarget(std::move(target));
-  }
-
+ParseResult<SendExpr> ParseSendExpr(SendTarget target, TreeExprSpan& exprs) {
   ASSIGN_OR_RETURN(auto clauses, ParseUntilComplete(ParseSendClause)(exprs));
 
-  return SendExpr(std::move(target_ast), std::move(clauses));
+  return SendExpr(std::move(target), std::move(clauses));
 }
 
-ParseResult<CallExpr> ParseCall(TokenNode<std::string> target,
-                                TreeExprSpan& exprs) {
-  ASSIGN_OR_RETURN(auto call_name, ParseOneIdentTokenNode(exprs));
+ParseResult<CallExpr> ParseCall(Expr target, TreeExprSpan& exprs) {
   ASSIGN_OR_RETURN(auto args, ParseCallArgs(exprs));
 
-  return CallExpr(std::move(call_name), std::move(args));
+  return CallExpr(std::make_unique<Expr>(std::move(target)), std::move(args));
 }
 
 ParseResult<Expr> ParseSciListExpr(TreeExprSpan const& exprs) {
-  auto local_exprs = exprs;
-  ASSIGN_OR_RETURN(auto name, ParseOneIdentTokenNode(local_exprs));
-
   // There are three possibilities here:
   //
   // - The expression is a builtin function call
@@ -442,11 +445,20 @@ ParseResult<Expr> ParseSciListExpr(TreeExprSpan const& exprs) {
   // which it is. If it starts with a selector call it's a method send,
   // otherwise it's a function call.
 
-  auto const& builtins = GetBuiltinParsers();
-  if (auto it = builtins.find(name.value()); it != builtins.end()) {
-    return it->second(
-        TokenNode<std::string_view>(name.value(), name.text_range()),
-        local_exprs);
+  auto local_exprs = exprs;
+  std::optional<Expr> target_expr;
+  if (StartsWith(IsIdentExpr)(local_exprs)) {
+    ASSIGN_OR_RETURN(auto name, ParseOneIdentTokenNode(local_exprs));
+
+    auto const& builtins = GetBuiltinParsers();
+    if (auto it = builtins.find(name.value()); it != builtins.end()) {
+      return it->second(
+          TokenNode<std::string_view>(name.value(), name.text_range()),
+          local_exprs);
+    }
+    target_expr = VarExpr(std::move(name));
+  } else {
+    ASSIGN_OR_RETURN(target_expr, ParseExpr(local_exprs));
   }
 
   // This isn't a builtin, so we need to determine if it's a method send or a
@@ -454,9 +466,11 @@ ParseResult<Expr> ParseSciListExpr(TreeExprSpan const& exprs) {
   // either a question mark or a colon after it, which will be its selector.
 
   if (StartsWith(IsTokenExprWith(IsSelectorIdent))(local_exprs)) {
-    return ParseSendExpr(std::move(name), local_exprs);
+    return ParseSendExpr(
+        ExprSendTarget(std::make_unique<Expr>(std::move(target_expr).value())),
+        local_exprs);
   } else {
-    return ParseCall(std::move(name), local_exprs);
+    return ParseCall(std::move(target_expr).value(), local_exprs);
   }
 }
 

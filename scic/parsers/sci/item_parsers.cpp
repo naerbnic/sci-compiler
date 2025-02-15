@@ -152,7 +152,7 @@ ParseResult<ProcDef> ParseProcDef(TokenNode<std::string_view> const& keyword,
         ASSIGN_OR_RETURN(auto name, ParseOneIdentTokenNode(exprs));
         // We need to find the "&temp" token, if it exists.
         auto temp_token_it = std::ranges::find_if(exprs.begin(), exprs.end(),
-                                                  IsIdentExprWith("&temp"));
+                                                  IsIdentExprWith("&tmp"));
         TreeExprSpan params_span;
         TreeExprSpan locals_span;
         if (temp_token_it == exprs.end()) {

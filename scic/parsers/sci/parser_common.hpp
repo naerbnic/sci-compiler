@@ -280,8 +280,20 @@ inline auto IsIdentTokenWith(std::string_view ident) {
   };
 }
 
+inline auto IsIdentToken(tokens::Token const& token) {
+  auto* ident_ptr = token.AsIdent();
+  if (!ident_ptr) {
+    return false;
+  }
+  return ident_ptr->trailer == tokens::Token::Ident::None;
+}
+
 inline auto IsIdentExprWith(std::string_view ident) {
   return IsTokenExprWith(IsIdentTokenWith(ident));
+}
+
+inline bool IsIdentExpr(list_tree::Expr const& expr) {
+  return IsTokenExprWith(IsIdentToken)(expr);
 }
 
 // Parses a sequence of expressions, applying the given parser to each.

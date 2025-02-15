@@ -286,17 +286,17 @@ class ConstValueExpr {
 // are represented as calls.
 class CallExpr {
  public:
-  CallExpr(TokenNode<std::string> name, CallArgs call_args)
-      : name_(std::move(name)), call_args_(std::move(call_args)) {}
+  CallExpr(std::unique_ptr<Expr> target, CallArgs call_args)
+      : target_(std::move(target)), call_args_(std::move(call_args)) {}
 
-  TokenNode<std::string> const& name() const { return name_; }
+  Expr const& target() const { return *target_; }
   CallArgs const& call_args() const { return call_args_; }
 
  private:
-  TokenNode<std::string> name_;
+  std::unique_ptr<Expr> target_;
   CallArgs call_args_;
 
-  DEFINE_PRINTERS(CallExpr, "name", name_, "call_args", call_args_);
+  DEFINE_PRINTERS(CallExpr, "target", target_, "call_args", call_args_);
 };
 
 class ReturnExpr {
@@ -516,22 +516,22 @@ class SuperSendTarget {
  private:
   DEFINE_PRINTERS(SuperSendTarget);
 };
-class VarSendTarget {
+class ExprSendTarget {
  public:
-  explicit VarSendTarget(TokenNode<std::string> target)
+  explicit ExprSendTarget(std::unique_ptr<Expr> target)
       : target_(std::move(target)) {}
 
-  TokenNode<std::string> target() const { return target_; }
+  Expr const& target() const { return *target_; }
 
  private:
-  TokenNode<std::string> target_;
+  std::unique_ptr<Expr> target_;
 
-  DEFINE_PRINTERS(VarSendTarget, "target", target_);
+  DEFINE_PRINTERS(ExprSendTarget, "target", target_);
 };
 
 class SendTarget
     : public util::ChoiceBase<SendTarget,  //
-                              SelfSendTarget, SuperSendTarget, VarSendTarget> {
+                              SelfSendTarget, SuperSendTarget, ExprSendTarget> {
   using ChoiceBase::ChoiceBase;
 };
 
@@ -600,19 +600,21 @@ class AssignExpr {
     SHR,
     SHL,
   };
-  AssignExpr(Kind kind, TokenNode<std::string> var, std::unique_ptr<Expr> value)
-      : kind_(kind), var_(std::move(var)), value_(std::move(value)) {}
+  AssignExpr(Kind kind, std::unique_ptr<Expr> target,
+             std::unique_ptr<Expr> value)
+      : kind_(kind), target_(std::move(target)), value_(std::move(value)) {}
 
   Kind kind() const { return kind_; }
-  TokenNode<std::string> const& var() const { return var_; }
+  Expr const& target() const { return *target_; }
   Expr const& value() const { return *value_; }
 
  private:
   Kind kind_;
-  TokenNode<std::string> var_;
+  std::unique_ptr<Expr> target_;
   std::unique_ptr<Expr> value_;
 
-  DEFINE_PRINTERS(AssignExpr, "kind", kind_, "var", var_, "value", value_);
+  DEFINE_PRINTERS(AssignExpr, "kind", kind_, "target", target_, "value",
+                  value_);
 };
 
 class ExprList {
