@@ -32,11 +32,6 @@ struct WrapParseResultBaseImpl<Result, Result<T>> {
 template <template <class> class Result, class T>
 using WrapParseResultBase = typename WrapParseResultBaseImpl<Result, T>::type;
 
-// Marker trait, indicating that an internal constructor should be used
-// in the case of variadic templates.
-struct InnerCtorT {};
-static constexpr InnerCtorT InnerCtor = InnerCtorT{};
-
 }  // namespace internal
 
 template <class Value>
@@ -54,9 +49,9 @@ class ParseResult {
     requires(std::constructible_from<Value, U &&> &&
              !util::TemplateTraits<ParseResult>::IsSpecialization<U>)
   ParseResult(U&& values)
-      : ParseResult(internal::InnerCtor, Success{
-                                             .value = std::forward<U>(values),
-                                         }) {}
+      : ParseResult(Success{
+            .value = std::forward<U>(values),
+        }) {}
 
   ParseResult(ParseStatus error) : value_(error) {
     if (error.kind() == ParseStatus::OK) {
@@ -89,15 +84,11 @@ class ParseResult {
   };
   using ResultValue = std::variant<Success, ParseStatus>;
 
-  ParseResult(ResultValue value)
-      : ParseResult(internal::InnerCtor, std::move(value)) {}
+  ParseResult(Success value) : value_(std::move(value)) {}
 
   Success const& success() const& { return std::get<Success>(value_); }
   Success& success() & { return std::get<Success>(value_); }
   Success&& success() && { return std::get<Success>(std::move(value_)); }
-
-  explicit ParseResult(internal::InnerCtorT const&, ResultValue value)
-      : value_(std::move(value)) {}
 
   ResultValue value_;
 
