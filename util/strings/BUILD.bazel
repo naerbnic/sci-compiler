@@ -1,0 +1,16 @@
+cc_library(
+    name = "ref_str",
+    srcs = ["ref_str.cpp"],
+    hdrs = ["ref_str.hpp"],
+)
+
+cc_test(
+    name = "ref_str_test",
+    srcs = ["ref_str_test.cpp"],
+    deps = [
+        ":ref_str",
+        "@abseil-cpp//absl/strings:str_format",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
