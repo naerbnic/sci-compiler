@@ -105,8 +105,8 @@ auto ParseTokenExpr(F parser) {
               std::move(parser)](TreeExpr const& expr) -> ParserInfo::ParseRet {
     if (!expr.has<list_tree::TokenExpr>()) {
       return RangeFailureOf(
-          expr.as<list_tree::TokenExpr>().token().text_range(),
-          "Expected list.");
+          expr.as<list_tree::ListExpr>().open_token().text_range(),
+          "Expected token.");
     }
     return parser(expr.as<list_tree::TokenExpr>());
   };

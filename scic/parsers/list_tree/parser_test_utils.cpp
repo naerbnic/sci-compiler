@@ -1,12 +1,14 @@
 #include "scic/parsers/list_tree/parser_test_utils.hpp"
 
 #include <stdexcept>
+#include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
 
 #include "scic/parsers/list_tree/ast.hpp"
 #include "scic/parsers/list_tree/parser.hpp"
+#include "scic/text/text_range.hpp"
 #include "scic/tokens/token_readers.hpp"
 
 namespace parsers::list_tree {

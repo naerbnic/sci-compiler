@@ -13,6 +13,8 @@ namespace parsers::sci {
 using ItemParser =
     ParseFunc<Item(TokenNode<std::string_view> const&, TreeExprSpan&)>;
 
+ParseResult<Item> ParseScriptNumItem(TokenNode<std::string_view> const& keyword,
+                                     TreeExprSpan& exprs);
 ParseResult<Item> ParsePublicItem(TokenNode<std::string_view> const& keyword,
                                   TreeExprSpan& exprs);
 ParseResult<Item> ParseExternItem(TokenNode<std::string_view> const& keyword,
@@ -30,7 +32,7 @@ ParseResult<Item> ParseClassItem(TokenNode<std::string_view> const& keyword,
 ParseResult<Item> ParseInstanceItem(TokenNode<std::string_view> const& keyword,
                                     TreeExprSpan& exprs);
 ParseResult<Item> ParseClassDeclItem(TokenNode<std::string_view> const& keyword,
-                                    TreeExprSpan& exprs);
+                                     TreeExprSpan& exprs);
 ParseResult<Item> ParseSelectorsItem(TokenNode<std::string_view> const& keyword,
                                      TreeExprSpan& exprs);
 

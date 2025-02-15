@@ -36,6 +36,7 @@ using ParserItemMap = std::map<std::string, ItemParser>;
 ParserItemMap const& TopLevelParsers() {
   static ParserItemMap* instance = new ParserItemMap(([] {
     return ParserItemMap({
+        {"script#", ParseScriptNumItem},
         {"public", ParsePublicItem},
         {"extern", ParseExternItem},
         {"global_decl", ParseGlobalDeclItem},
@@ -78,9 +79,8 @@ ParseResult<VarDef> ParseVarDef(TreeExprSpan& exprs) {
           })(elements);
         },
         [](list_tree::TokenExpr const& expr) -> ParseResult<VarDef> {
-          ASSIGN_OR_RETURN(
-              auto var_name,
-              ParseTokenExpr(ParseIdentToken(ParseSimpleIdentNameNode))(expr));
+          ASSIGN_OR_RETURN(auto var_name,
+                           ParseIdentToken(ParseSimpleIdentNameNode)(expr));
           return VarDef(SingleVarDef(std::move(var_name)));
         });
   })(exprs);
@@ -88,7 +88,7 @@ ParseResult<VarDef> ParseVarDef(TreeExprSpan& exprs) {
 
 ParseResult<std::optional<InitialValue>> ParseInitialValue(
     TreeExprSpan& exprs) {
-  if (StartsWith(IsIdentExprWith("="))(exprs)) {
+  if (!StartsWith(IsIdentExprWith("="))(exprs)) {
     return std::nullopt;
   }
 
@@ -168,6 +168,8 @@ ParseResult<ProcDef> ParseProcDef(TokenNode<std::string_view> const& keyword,
             auto args, ParseUntilComplete(ParseOneIdentTokenNode)(params_span));
         ASSIGN_OR_RETURN(auto locals,
                          ParseUntilComplete(ParseVarDef)(locals_span));
+        // Set the expressions to empty, since we handled everything.
+        exprs = {};
         return Signature{
             .name = std::move(name),
             .args = std::move(args),
@@ -282,6 +284,12 @@ ParseResult<ClassDef> ParseClassDef(ClassDef::Kind kind,
 
 }  // namespace
 
+ParseResult<Item> ParseScriptNumItem(TokenNode<std::string_view> const& keyword,
+                                     TreeExprSpan& exprs) {
+  ASSIGN_OR_RETURN(auto script_num, ParseComplete(ParseOneNumberToken)(exprs));
+  return Item(ScriptNumDef(std::move(script_num)));
+}
+
 ParseResult<Item> ParsePublicItem(TokenNode<std::string_view> const& keyword,
                                   TreeExprSpan& exprs) {
   ASSIGN_OR_RETURN(
@@ -376,8 +384,9 @@ ParseResult<Item> ParseClassDeclItem(TokenNode<std::string_view> const& keyword,
   ASSIGN_OR_RETURN(auto file_token, ParseOneLiteralIdent("file#")(exprs));
   ASSIGN_OR_RETURN(auto file_name, ParseOneStringToken(exprs));
 
-  ASSIGN_OR_RETURN(auto inner_items,
-                   ParseUntilComplete(ParseClassDefInnerItem)(exprs));
+  ASSIGN_OR_RETURN(
+      auto inner_items,
+      ParseUntilComplete(ParseOneListItem(ParseClassDefInnerItem))(exprs));
 
   std::optional<ClassPropertiesBlock> properties_block;
   std::optional<MethodNamesDecl> method_names_block;
