@@ -47,6 +47,24 @@ cc_test(
 )
 
 cc_library(
+    name = "const_value_parsers",
+    srcs = [
+        "const_value_parsers.cpp",
+    ],
+    hdrs = [
+        "const_value_parsers.hpp",
+    ],
+    deps = [
+        ":ast",
+        ":parser_common",
+        "//scic/parsers/list_tree:parser",
+        "@abseil-cpp//absl/status:status",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/types:span",
+    ],
+)
+
+cc_library(
     name = "item_parsers",
     srcs = [
         "item_parsers.cpp",

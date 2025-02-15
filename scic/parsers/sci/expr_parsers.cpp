@@ -13,6 +13,7 @@
 #include "scic/parsers/combinators/results.hpp"
 #include "scic/parsers/list_tree/ast.hpp"
 #include "scic/parsers/sci/ast.hpp"
+#include "scic/parsers/sci/const_value_parsers.hpp"
 #include "scic/parsers/sci/parser_common.hpp"
 #include "scic/tokens/token.hpp"
 #include "util/status/status_macros.hpp"
@@ -97,12 +98,216 @@ ParseResult<WhileExpr> ParseRepeatExpr(TokenNode<std::string_view> keyword,
   return WhileExpr(std::nullopt, std::make_unique<Expr>(std::move(body)));
 }
 
+ParseResult<ForExpr> ParseForExpr(TokenNode<std::string_view> keyword,
+                                  TreeExprSpan& exprs) {
+  ASSIGN_OR_RETURN(auto init, ParseOneListItem(ParseExprList)(exprs));
+  ASSIGN_OR_RETURN(auto condition, ParseExprPtr(exprs));
+  ASSIGN_OR_RETURN(auto update, ParseOneListItem(ParseExprList)(exprs));
+  ASSIGN_OR_RETURN(auto body, ParseComplete(ParseExprList)(exprs));
+  return ForExpr(std::make_unique<Expr>(std::move(init)), std::move(condition),
+                 std::make_unique<Expr>(std::move(update)),
+                 std::make_unique<Expr>(std::move(body)));
+}
+
+ParseResult<IfExpr> ParseIfExpr(TokenNode<std::string_view> keyword,
+                                TreeExprSpan& exprs) {
+  ASSIGN_OR_RETURN(auto condition, ParseExprPtr(exprs));
+  ASSIGN_OR_RETURN(auto then_body, ParseExprPtr(exprs));
+  std::optional<std::unique_ptr<Expr>> else_body;
+  if (!exprs.empty()) {
+    ASSIGN_OR_RETURN(else_body, ParseExprPtr(exprs));
+  }
+  return IfExpr(std::move(condition), std::move(then_body),
+                std::move(else_body));
+}
+
+ParseResult<CondExpr> ParseCondExpr(TokenNode<std::string_view> keyword,
+                                    TreeExprSpan& exprs) {
+  // We create a separate branch clause type here to
+  // track where we find "else" clauses.
+  struct BranchClause {
+    // The condition. If std::nullopt, this is an else clause.
+    std::optional<std::unique_ptr<Expr>> condition;
+    std::unique_ptr<Expr> body;
+  };
+
+  ASSIGN_OR_RETURN(
+      auto branches,
+      ParseUntilComplete(ParseOneTreeExpr(
+          ParseListExpr([](TreeExprSpan& exprs) -> ParseResult<BranchClause> {
+            if (exprs.empty()) {
+              return FailureOf("Expected condition expression.");
+            }
+            std::optional<std::unique_ptr<Expr>> condition;
+            if (StartsWith(IsIdentExprWith("else"))(exprs)) {
+              ASSIGN_OR_RETURN(auto else_token, ParseOneIdentTokenNode(exprs));
+            } else {
+              ASSIGN_OR_RETURN(condition, ParseExprPtr(exprs));
+            }
+
+            ASSIGN_OR_RETURN(auto body, ParseExprList(exprs));
+
+            return BranchClause{
+                .condition = std::move(condition),
+                .body = std::make_unique<Expr>(std::move(body)),
+            };
+          })))(exprs));
+
+  std::optional<std::unique_ptr<Expr>> else_body;
+  if (branches.size() > 0 && !branches.back().condition) {
+    // The last entry is an else clause. Pop it off, and set the else body.
+    else_body = std::move(branches.back().body);
+    branches.pop_back();
+  }
+
+  std::vector<CondExpr::Branch> branch_ast;
+  for (auto& branch : branches) {
+    if (!branch.condition) {
+      return RangeFailureOf(keyword.text_range(),
+                            "Got an else in the middle of the cond expr.");
+    }
+    branch_ast.push_back(CondExpr::Branch{
+        .condition = std::move(branch.condition).value(),
+        .body = std::move(branch.body),
+    });
+  }
+
+  return CondExpr(std::move(branch_ast), std::move(else_body));
+}
+
+ParseResult<SwitchExpr> ParseSwitchExpr(TokenNode<std::string_view> keyword,
+                                        TreeExprSpan& exprs) {
+  ASSIGN_OR_RETURN(auto switch_expr, ParseExprPtr(exprs));
+  // We create a separate branch clause type here to
+  // track where we find "else" clauses.
+  struct CaseClause {
+    // The condition. If std::nullopt, this is an else clause.
+    std::optional<ConstValue> condition;
+    std::unique_ptr<Expr> body;
+  };
+
+  ASSIGN_OR_RETURN(
+      auto case_clauses,
+      ParseUntilComplete(ParseOneTreeExpr(
+          ParseListExpr([](TreeExprSpan& exprs) -> ParseResult<CaseClause> {
+            if (exprs.empty()) {
+              return FailureOf("Expected case value.");
+            }
+            std::optional<ConstValue> condition;
+            if (StartsWith(IsIdentExprWith("else"))(exprs)) {
+              ASSIGN_OR_RETURN(auto else_token, ParseOneIdentTokenNode(exprs));
+            } else {
+              ASSIGN_OR_RETURN(auto condition, ParseOneConstValue(exprs));
+            }
+
+            ASSIGN_OR_RETURN(auto body, ParseExprList(exprs));
+            return CaseClause{
+                .condition = std::move(condition),
+                .body = std::make_unique<Expr>(std::move(body)),
+            };
+          })))(exprs));
+
+  std::optional<std::unique_ptr<Expr>> else_body;
+  if (case_clauses.size() > 0 && !case_clauses.back().condition) {
+    // The last entry is an else clause. Pop it off, and set the else body.
+    else_body = std::move(case_clauses.back().body);
+    case_clauses.pop_back();
+  }
+  std::vector<SwitchExpr::Case> cases;
+  for (auto& case_clause : case_clauses) {
+    if (!case_clause.condition) {
+      return RangeFailureOf(keyword.text_range(),
+                            "Got an else in the middle of the switch expr.");
+    }
+    cases.push_back(SwitchExpr::Case{
+        .value = std::move(case_clause.condition).value(),
+        .body = std::move(case_clause.body),
+    });
+  }
+
+  return SwitchExpr(std::move(switch_expr), std::move(cases),
+                    std::move(else_body));
+}
+
+ParseResult<SwitchToExpr> ParseSwitchToExpr(TokenNode<std::string_view> keyword,
+                                            TreeExprSpan& exprs) {
+  ASSIGN_OR_RETURN(auto switch_expr, ParseExprPtr(exprs));
+  // We create a separate branch clause type here to
+  // track where we find "else" clauses.
+  struct CaseClause {
+    bool is_else;
+    std::unique_ptr<Expr> body;
+  };
+
+  ASSIGN_OR_RETURN(
+      auto case_clauses,
+      ParseUntilComplete(ParseOneTreeExpr(
+          ParseListExpr([](TreeExprSpan& exprs) -> ParseResult<CaseClause> {
+            bool is_else = false;
+            if (StartsWith(IsIdentExprWith("else"))(exprs)) {
+              ASSIGN_OR_RETURN(auto else_token, ParseOneIdentTokenNode(exprs));
+              is_else = true;
+            }
+
+            ASSIGN_OR_RETURN(auto body, ParseExprList(exprs));
+            return CaseClause{
+                .is_else = is_else,
+                .body = std::make_unique<Expr>(std::move(body)),
+            };
+          })))(exprs));
+
+  std::optional<std::unique_ptr<Expr>> else_body;
+  if (case_clauses.size() > 0 && case_clauses.back().is_else) {
+    // The last entry is an else clause. Pop it off, and set the else body.
+    else_body = std::move(case_clauses.back().body);
+    case_clauses.pop_back();
+  }
+  std::vector<std::unique_ptr<Expr>> cases;
+  for (auto& case_clause : case_clauses) {
+    if (case_clause.is_else) {
+      return RangeFailureOf(keyword.text_range(),
+                            "Got an else in the middle of the switch expr.");
+    }
+    cases.push_back(std::make_unique<Expr>(std::move(case_clause.body)));
+  }
+
+  return SwitchToExpr(std::move(switch_expr), std::move(cases),
+                      std::move(else_body));
+}
+
+template <AssignExpr::Kind K>
+ParseResult<AssignExpr> ParseAssignExpr(TokenNode<std::string_view> keyword,
+                                        TreeExprSpan& exprs) {
+  ASSIGN_OR_RETURN(auto var, ParseOneIdentTokenNode(exprs));
+  ASSIGN_OR_RETURN(auto value, ParseExprPtr(exprs));
+  return AssignExpr(K, std::move(var), std::move(value));
+}
+
 BuiltinsMap const& GetBuiltinParsers() {
   static const BuiltinsMap instance = {
-      {"return", ParseReturnExpr},   {"break", ParseBreakExpr},
-      {"breakif", ParseBreakIfExpr}, {"continue", ParseContinueExpr},
-      {"contif", ParseContIfExpr},   {"while", ParseWhileExpr},
+      {"return", ParseReturnExpr},
+      {"break", ParseBreakExpr},
+      {"breakif", ParseBreakIfExpr},
+      {"continue", ParseContinueExpr},
+      {"contif", ParseContIfExpr},
+      {"while", ParseWhileExpr},
       {"repeat", ParseRepeatExpr},
+      {"for", ParseForExpr},
+      {"if", ParseIfExpr},
+      {"cond", ParseCondExpr},
+      {"switch", ParseSwitchExpr},
+      {"switchto", ParseSwitchToExpr},
+      {"=", ParseAssignExpr<AssignExpr::Kind::DIRECT>},
+      {"+=", ParseAssignExpr<AssignExpr::Kind::ADD>},
+      {"-=", ParseAssignExpr<AssignExpr::Kind::SUB>},
+      {"*=", ParseAssignExpr<AssignExpr::Kind::MUL>},
+      {"/=", ParseAssignExpr<AssignExpr::Kind::DIV>},
+      {"mod=", ParseAssignExpr<AssignExpr::Kind::MOD>},
+      {"&=", ParseAssignExpr<AssignExpr::Kind::AND>},
+      {"|=", ParseAssignExpr<AssignExpr::Kind::OR>},
+      {"^=", ParseAssignExpr<AssignExpr::Kind::XOR>},
+      {">>=", ParseAssignExpr<AssignExpr::Kind::SHR>},
+      {"<<=", ParseAssignExpr<AssignExpr::Kind::SHL>},
   };
   return instance;
 }

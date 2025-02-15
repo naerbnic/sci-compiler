@@ -257,16 +257,6 @@ class ConstValueExpr {
   ConstValue value_;
 };
 
-class RestExpr {
- public:
-  RestExpr(text::TextRange source) : source_(std::move(source)) {}
-
-  text::TextRange const& source() const { return source_; }
-
- private:
-  text::TextRange source_;
-};
-
 // A call expresion, of (<name> <arg> ...). Aside from control flow
 // structures, and send expressions, other expressions of that form
 // are represented as calls.
@@ -409,7 +399,7 @@ class CondExpr {
 class SwitchExpr {
  public:
   struct Case {
-    std::unique_ptr<ConstValue> value;
+    ConstValue value;
     std::unique_ptr<Expr> body;
   };
 
@@ -534,13 +524,28 @@ class SendExpr {
 
 class AssignExpr {
  public:
-  AssignExpr(TokenNode<std::string> var, std::unique_ptr<Expr> value)
-      : var_(std::move(var)), value_(std::move(value)) {}
+  enum Kind {
+    DIRECT,
+    ADD,
+    SUB,
+    MUL,
+    DIV,
+    MOD,
+    AND,
+    OR,
+    XOR,
+    SHR,
+    SHL,
+  };
+  AssignExpr(Kind kind, TokenNode<std::string> var, std::unique_ptr<Expr> value)
+      : kind_(kind), var_(std::move(var)), value_(std::move(value)) {}
 
+  Kind kind() const { return kind_; }
   TokenNode<std::string> const& var() const { return var_; }
   Expr const& value() const { return *value_; }
 
  private:
+  Kind kind_;
   TokenNode<std::string> var_;
   std::unique_ptr<Expr> value_;
 };
@@ -558,9 +563,9 @@ class ExprList {
 class Expr
     : public util::ChoiceBase<Expr,  //
                               AddrOfExpr, SelectLitExpr, VarExpr,
-                              ArrayIndexExpr, ConstValueExpr, RestExpr,
-                              CallExpr, ReturnExpr, BreakExpr, ContinueExpr,
-                              WhileExpr, ForExpr, IfExpr, CondExpr, SwitchExpr,
+                              ArrayIndexExpr, ConstValueExpr, CallExpr,
+                              ReturnExpr, BreakExpr, ContinueExpr, WhileExpr,
+                              ForExpr, IfExpr, CondExpr, SwitchExpr,
                               SwitchToExpr, SendExpr, AssignExpr, ExprList> {
   using ChoiceBase::ChoiceBase;
 };
