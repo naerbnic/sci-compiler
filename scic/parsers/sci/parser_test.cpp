@@ -82,7 +82,7 @@ TEST(ParseItemsTest, Local) {
 
 TEST(ParseItemsTest, Proc) {
   auto result = TryParseItems(R"(
-        (proc (foo) (= a 1) (return))
+        (procedure (foo) (= a 1) (return))
     )");
 
   EXPECT_TRUE(result.ok());
