@@ -61,9 +61,6 @@ class ParseStatus {
   bool ok() const { return kind_ == OK; }
 
  private:
-  template <template <class...> class Type, class... Values>
-  friend class ParseResultBase;
-
   ParseStatus PrependDiagnostics(
       std::vector<diag::Diagnostic> messages) const& {
     return ParseStatus(kind_,

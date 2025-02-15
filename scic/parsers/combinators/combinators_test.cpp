@@ -8,7 +8,6 @@
 #include <utility>
 
 #include "absl/types/span.h"
-#include "scic/parsers/combinators/parse_func.hpp"
 #include "scic/parsers/combinators/results.hpp"
 
 namespace parsers {
@@ -55,67 +54,6 @@ TEST(ParseResultTest, MoveOnlyWorks) {
   std::unique_ptr<int> take_value = std::move(result).value();
   EXPECT_EQ(*take_value, 5);
   EXPECT_EQ(result.value(), nullptr);
-}
-
-TEST(ParseResultTest, SimpleApplyWorks) {
-  ParseResult<int> result(5);
-  auto new_result = result.Apply([](int value) { return value + 1; });
-  EXPECT_EQ(new_result.ok(), true);
-  EXPECT_EQ(new_result.value(), 6);
-}
-
-TEST(ParseResultTest, MoveOnlyApplyWorks) {
-  ParseResult<std::unique_ptr<int>> result(std::make_unique<int>(5));
-  auto new_result = std::move(result).Apply([](std::unique_ptr<int> value) {
-    return std::make_unique<int>(*value + 1);
-  });
-  EXPECT_EQ(new_result.ok(), true);
-  EXPECT_EQ(*new_result.value(), 6);
-}
-
-TEST(ParseResultTest, BinaryApplyWorks) {
-  ParseResult<int> result1(5);
-  ParseResult<int> result2(6);
-  auto new_result =
-      (result1 | result2).Apply([](int a, int b) { return a + b; });
-  EXPECT_EQ(new_result.ok(), true);
-  EXPECT_EQ(new_result.value(), 11);
-}
-
-TEST(ParseResultTest, BinaryMoveApplyWorks) {
-  ParseResult<std::unique_ptr<int>> result1(std::make_unique<int>(5));
-  ParseResult<std::unique_ptr<int>> result2(std::make_unique<int>(6));
-  auto new_result =
-      (std::move(result1) | std::move(result2))
-          .Apply([](std::unique_ptr<int> a, std::unique_ptr<int> b) {
-            return std::make_unique<int>(*a + *b);
-          });
-  EXPECT_EQ(new_result.ok(), true);
-  EXPECT_EQ(*new_result.value(), 11);
-}
-
-using FuncType = int(int, int);
-
-constexpr auto lambda = [](int a, int b) -> int { return 0; };
-
-static_assert(
-    std::tuple_size<internal::CallableTraits<int(int, int)>::ArgsTuple>() == 2);
-static_assert(
-    std::tuple_size<internal::CallableTraits<int (*)(int, int)>::ArgsTuple>() ==
-    2);
-static_assert(
-    std::tuple_size<internal::CallableTraits<decltype(lambda)>::ArgsTuple>() ==
-    2);
-
-template <class R>
-R ParseTakingFunc(ParseFunc<R(int, int)> func) {
-  return func(1, 2).value();
-}
-
-TEST(ParseFuncTest, TypeInferenceWorks) {
-  std::string_view result =
-      ParseTakingFunc(ParseFunc([](int, int) { return "foo"; }));
-  EXPECT_EQ(result, "foo");
 }
 
 }  // namespace
