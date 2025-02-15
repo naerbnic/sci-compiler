@@ -1,8 +1,11 @@
 #ifndef UTIL_OVERLOADED_HPP
 #define UTIL_OVERLOADED_HPP
 
+#include <ostream>
 #include <utility>
 #include <variant>
+
+#include "absl/strings/has_absl_stringify.h"
 
 namespace util {
 
@@ -78,6 +81,22 @@ class ChoiceBase {
   ChoiceBase(std::in_place_type_t<T>, Args&&... args)
       : value_(std::in_place_type<T>, std::forward<Args>(args)...) {}
   std::variant<Types...> value_;
+
+  friend std::ostream& operator<<(std::ostream& os, ChoiceBase const& choice)
+    requires(requires(Types const& t, std::ostream& os) {
+      { os << t } -> std::same_as<std::ostream&>;
+    } && ...)
+  {
+    return choice.visit(
+        [&os](auto const& value) -> std::ostream& { return (os << value); });
+  }
+
+  template <class Sink>
+  friend void AbslStringify(Sink& sink, ChoiceBase const& choice)
+    requires(absl::HasAbslStringify<Types>() && ...)
+  {
+    choice.visit([&sink](auto const& value) { AbslStringify(sink, value); });
+  }
 };
 
 }  // namespace util

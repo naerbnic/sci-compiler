@@ -5,6 +5,9 @@ package(
 cc_library(
     name = "choice",
     hdrs = ["choice.hpp"],
+    deps = [
+        "@abseil-cpp//absl/strings:str_format",
+    ],
 )
 
 cc_library(
