@@ -74,6 +74,7 @@ cc_library(
     ],
     deps = [
         ":ast",
+        ":const_value_parsers",
         ":parser_common",
         "//scic/parsers/combinators:parse_func",
         "//scic/parsers/list_tree:parser",
@@ -107,6 +108,7 @@ cc_library(
     ],
     deps = [
         ":ast",
+        ":const_value_parsers",
         ":parser_common",
         "//scic/parsers/combinators:parse_func",
         "//scic/parsers/list_tree:parser",
