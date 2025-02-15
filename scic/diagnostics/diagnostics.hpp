@@ -6,6 +6,7 @@
 #define ERRORS_ERRORS_HPP
 
 #include <optional>
+#include <ostream>
 #include <string>
 #include <utility>
 
@@ -73,6 +74,34 @@ class Diagnostic {
   Kind kind_;
   std::optional<text::TextRange> text_;
   std::string message_;
+
+  friend std::ostream& operator<<(std::ostream& os, Diagnostic const& diag) {
+    if (diag.text()) {
+      auto range = diag.text().value().GetRange();
+      os << range.filename() << ":" << (range.start().line_index() + 1) << ":"
+         << (range.start().column_index() + 1);
+      if (range.end().line_index() != range.start().line_index()) {
+        os << "-" << (range.end().line_index() + 1) << ":"
+           << (range.end().column_index() + 1);
+      } else if (range.end().column_index() != range.start().column_index()) {
+        os << "-" << (range.end().column_index() + 1);
+      }
+      os << ": ";
+    }
+    switch (diag.kind()) {
+      case ERROR:
+        os << "error: ";
+        break;
+      case WARNING:
+        os << "warning: ";
+        break;
+      case INFO:
+        os << "info: ";
+        break;
+    }
+
+    return os << diag.message();
+  }
 };
 
 class DiagnosticsSink {

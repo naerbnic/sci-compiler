@@ -1,6 +1,7 @@
 #ifndef PARSERS_COMBINATORS_STATUS_HPP
 #define PARSERS_COMBINATORS_STATUS_HPP
 
+#include <ostream>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -88,6 +89,46 @@ class ParseStatus {
 
   Kind kind_ = OK;
   std::vector<diag::Diagnostic> messages_;
+
+  friend std::ostream& operator<<(std::ostream& os, ParseStatus const& status) {
+    switch (status.kind()) {
+      case ParseStatus::OK:
+        return os << "OK";
+      case ParseStatus::FAILURE:
+        return os << "FAILURE";
+      case ParseStatus::FATAL:
+        return os << "FATAL";
+    }
+
+    os << "\n";
+    for (auto const& message : status.messages()) {
+      os << "  " << message << "\n";
+    }
+    return os;
+  }
+
+  template <class Sink>
+  friend void AbslStringify(Sink& sink, ParseStatus const& status) {
+    switch (status.kind()) {
+      case ParseStatus::OK:
+        sink.Append("OK");
+        return;
+      case ParseStatus::FAILURE:
+        sink.Append("FAILURE");
+        break;
+      case ParseStatus::FATAL:
+        sink.Append("FATAL");
+        break;
+    }
+
+    sink.Append("\n");
+
+    for (auto const& message : status.messages()) {
+      sink.Append("  ");
+      AbslStringify(sink, message);
+      sink.Append("\n");
+    }
+  }
 };
 }  // namespace parsers
 

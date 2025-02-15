@@ -1,6 +1,7 @@
 #ifndef PARSERS_COMBINATORS_RESULTS_HPP
 #define PARSERS_COMBINATORS_RESULTS_HPP
 
+#include <ostream>
 #include <stdexcept>
 #include <tuple>
 #include <type_traits>
@@ -8,6 +9,7 @@
 #include <variant>
 #include <vector>
 
+#include "absl/strings/has_absl_stringify.h"
 #include "scic/diagnostics/diagnostics.hpp"
 #include "scic/parsers/combinators/internal_util.hpp"
 #include "scic/parsers/combinators/status.hpp"
@@ -235,6 +237,30 @@ class ParseResult<Value> : public ParseResultBase<ParseResult, Value> {
   friend class ParseResultBase;
 
   ParseResult(typename Base::ResultValue value) : Base(std::move(value)) {}
+
+  friend std::ostream& operator<<(std::ostream& os,
+                                  ParseResult<Value> const& result)
+    requires(requires(Value const& v, std::ostream& os) {
+      { os << v } -> std::same_as<std::ostream&>;
+    })
+  {
+    if (result.ok()) {
+      return (os << result.value());
+    } else {
+      return (os << result.status());
+    }
+  }
+
+  template <class Sink>
+  friend void AbslStringify(Sink& os, ParseResult<Value> const& result)
+    requires(absl::HasAbslStringify<Value>())
+  {
+    if (result.ok()) {
+      return (os << result.value());
+    } else {
+      return (os << result.status());
+    }
+  }
 };
 
 template <class... Values>

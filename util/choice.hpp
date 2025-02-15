@@ -80,9 +80,11 @@ class ChoiceBase {
   template <class T, class... Args>
   ChoiceBase(std::in_place_type_t<T>, Args&&... args)
       : value_(std::in_place_type<T>, std::forward<Args>(args)...) {}
+
+ private:
   std::variant<Types...> value_;
 
-  friend std::ostream& operator<<(std::ostream& os, ChoiceBase const& choice)
+  friend std::ostream& operator<<(std::ostream& os, BaseT const& choice)
     requires(requires(Types const& t, std::ostream& os) {
       { os << t } -> std::same_as<std::ostream&>;
     } && ...)
@@ -92,7 +94,7 @@ class ChoiceBase {
   }
 
   template <class Sink>
-  friend void AbslStringify(Sink& sink, ChoiceBase const& choice)
+  friend void AbslStringify(Sink& sink, BaseT const& choice)
     requires(absl::HasAbslStringify<Types>() && ...)
   {
     choice.visit([&sink](auto const& value) { AbslStringify(sink, value); });
