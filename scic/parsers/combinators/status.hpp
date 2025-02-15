@@ -9,9 +9,17 @@
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "scic/diagnostics/diagnostics.hpp"
-#include "scic/parsers/combinators/internal_util.hpp"
 
 namespace parsers {
+namespace internal {
+
+template <class T>
+std::vector<T> ConcatVectors(std::vector<T> a, std::vector<T> b) {
+  a.insert(a.end(), b.begin(), b.end());
+  return a;
+}
+
+}  // namespace internal
 
 class ParseStatus {
  public:

@@ -3,16 +3,9 @@ package(
 )
 
 cc_library(
-    name = "internal_util",
-    hdrs = ["internal_util.hpp"],
-    visibility = ["//visibility:private"],
-)
-
-cc_library(
     name = "status",
     hdrs = ["status.hpp"],
     deps = [
-        ":internal_util",
         "//scic/diagnostics",
         "@abseil-cpp//absl/types:span",
     ],
@@ -22,7 +15,6 @@ cc_library(
     name = "results",
     hdrs = ["results.hpp"],
     deps = [
-        ":internal_util",
         ":status",
         "//scic/diagnostics",
         "//util/types:tmpl",
