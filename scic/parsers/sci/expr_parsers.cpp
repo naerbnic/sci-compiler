@@ -344,7 +344,7 @@ bool IsSelectorIdent(tokens::Token const& token) {
   if (!ident) {
     return false;
   }
-  return ident->trailer == tokens::Token::Ident::None;
+  return ident->trailer != tokens::Token::Ident::None;
 }
 
 ParseResult<CallArgs> ParseCallArgs(TreeExprSpan& args) {

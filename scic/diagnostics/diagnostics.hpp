@@ -75,6 +75,30 @@ class Diagnostic {
   std::optional<text::TextRange> text_;
   std::string message_;
 
+  template <class Sink>
+  friend void AbslStringify(Sink& sink, Diagnostic const& diag) {
+    switch (diag.kind()) {
+      case ERROR:
+        sink.Append("error: ");
+        break;
+      case WARNING:
+        sink.Append("warning: ");
+        break;
+      case INFO:
+        sink.Append("info: ");
+        break;
+    }
+
+    if (diag.text()) {
+      auto range = diag.text().value().GetRange();
+      absl::Format(&sink, "%s:%d:%d", range.filename(),
+                   range.start().line_index() + 1,
+                   range.start().column_index() + 1);
+    }
+
+    absl::Format(&sink, ": %s", diag.message());
+  }
+
   friend std::ostream& operator<<(std::ostream& os, Diagnostic const& diag) {
     if (diag.text()) {
       auto range = diag.text().value().GetRange();

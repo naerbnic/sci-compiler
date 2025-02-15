@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "scic/diagnostics/diagnostics.hpp"
 #include "scic/parsers/combinators/internal_util.hpp"
@@ -91,19 +92,7 @@ class ParseStatus {
   std::vector<diag::Diagnostic> messages_;
 
   friend std::ostream& operator<<(std::ostream& os, ParseStatus const& status) {
-    switch (status.kind()) {
-      case ParseStatus::OK:
-        return os << "OK";
-      case ParseStatus::FAILURE:
-        return os << "FAILURE";
-      case ParseStatus::FATAL:
-        return os << "FATAL";
-    }
-
-    os << "\n";
-    for (auto const& message : status.messages()) {
-      os << "  " << message << "\n";
-    }
+    absl::Format(&os, "%v", status);
     return os;
   }
 
@@ -125,7 +114,7 @@ class ParseStatus {
 
     for (auto const& message : status.messages()) {
       sink.Append("  ");
-      AbslStringify(sink, message);
+      absl::Format(&sink, "%v", message);
       sink.Append("\n");
     }
   }

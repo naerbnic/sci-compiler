@@ -99,6 +99,8 @@ class TokenNode {
 
   T value_;
   text::TextRange text_range_;
+
+  DEFINE_PRINTERS(TokenNode, "value", value_, "text_range", text_range_);
 };
 
 // AST Nodes for the SCI language parse tree.
@@ -673,6 +675,10 @@ class ExternDef {
     TokenNode<std::string> name;
     TokenNode<int> module_num;
     TokenNode<int> index;
+
+   private:
+    DEFINE_PRINTERS(Entry, "name", name, "module_num", module_num, "index",
+                    index);
   };
 
   ExternDef(std::vector<Entry> entries) : entries_(std::move(entries)) {}

@@ -42,7 +42,7 @@ ParserItemMap const& TopLevelParsers() {
         {"global_decl", ParseGlobalDeclItem},
         {"global", ParseGlobalItem},
         {"local", ParseLocalItem},
-        {"proc", ParseProcItem},
+        {"procedure", ParseProcItem},
         {"class", ParseClassItem},
         {"instance", ParseInstanceItem},
         {"classdecl", ParseClassDeclItem},

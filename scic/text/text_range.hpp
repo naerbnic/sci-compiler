@@ -175,6 +175,16 @@ class TextRange {
   std::shared_ptr<TextContents> contents_;
   std::size_t start_offset_;
   std::size_t end_offset_;
+
+  template <class Sink>
+  friend void AbslStringify(Sink& sink, TextRange const& range) {
+    auto file_range = range.GetRange();
+    absl::Format(&sink, "%s:%d:%d-%d:%d", file_range.filename(),
+                 file_range.start().line_index() + 1,
+                 file_range.start().column_index() + 1,
+                 file_range.end().line_index() + 1,
+                 file_range.end().column_index() + 1);
+  }
 };
 
 }  // namespace text
