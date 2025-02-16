@@ -3,52 +3,26 @@
 
 #include <cstddef>
 #include <functional>
+#include <type_traits>
 #include <utility>
 
 namespace util {
 
 namespace internal::strong_types {
-template <class Tag>
-concept IsTag = requires {
-  typename Tag::Value;
-  { Tag::is_const } -> std::convertible_to<bool>;
-};
 
-template <class Tag>
-  requires IsTag<Tag>
-struct TagInfo {
-  constexpr static bool has_view = requires(Tag::ViewStorage const& storage,
-                                            Tag::Value const& value) {
-    // Value type must be default convertible to the view type.
-    requires std::convertible_to<typename Tag::Value, typename Tag::View>;
-
-    // A new value must be constructible from the view type.
-    requires std::constructible_from<typename Tag::View, typename Tag::Value>;
-
-    // The view storage must be able to be copied.
-    requires std::copy_constructible<typename Tag::ViewStorage>;
-
-    // Can generate the storage from a value const reference.
-    {
-      Tag::ValueToStorage(value)
-    } -> std::convertible_to<typename Tag::ViewStorage>;
-
-    // Can create a view from a storage const reference.
-    { Tag::StorageToView(storage) } -> std::convertible_to<typename Tag::View>;
-  };
-};
-}  // namespace internal::strong_types
-
-// Forward declaration for views.
-template <class Tag>
-  requires internal::strong_types::IsTag<Tag> &&
-           internal::strong_types::TagInfo<Tag>::has_view
-class StrongView;
-
-namespace internal::strong_types {
-
-// A nice utility: inherit from a base class only if a condition is true.
-template <bool Inherit, class Base>
+/**
+ * @class InheritIf
+ * @brief A utility class used for conditional inheritance.
+ *
+ * This class template is used to conditionally inherit from a base class
+ * depending on a boolean template parameter. If the boolean parameter is true,
+ * the class inherits from the specified base class; otherwise, it does not.
+ *
+ * @tparam Condition A boolean template parameter that determines whether to
+ * inherit from the base class.
+ * @tparam Base The base class to inherit from if Condition is true.
+ */
+template <bool Condition, class Base>
 class InheritIf;
 
 template <class Base>
@@ -62,17 +36,73 @@ class InheritIf<false, Base> {
   ~InheritIf() = default;
 };
 
-// Create a base class that can be used add the View type to the
-// StrongValue, if it is available.
+template <class Tag>
+concept IsTag = requires {
+  typename Tag::Value;
+  { Tag::is_const } -> std::convertible_to<bool>;
+};
 
 template <class Tag>
-class ViewExtValueBase {
+concept IsTagWithView = IsTag<Tag> && requires(Tag::ViewStorage const& storage,
+                                               Tag::Value const& value) {
+  // Value type must be default convertible to the view type.
+  requires std::convertible_to<typename Tag::Value, typename Tag::View>;
+
+  // A new value must be constructible from the view type.
+  requires std::constructible_from<typename Tag::View, typename Tag::Value>;
+
+  // The view storage must be able to be copied.
+  requires std::copy_constructible<typename Tag::ViewStorage>;
+
+  // Can generate the storage from a value const reference.
+  {
+    Tag::ValueToStorage(value)
+  } -> std::convertible_to<typename Tag::ViewStorage>;
+
+  // Can create a view from a storage const reference.
+  { Tag::StorageToView(storage) } -> std::convertible_to<typename Tag::View>;
+};
+
+template <class Tag>
+  requires IsTag<Tag>
+struct TagInfo {
+  constexpr static bool is_const = Tag::is_const;
+  constexpr static bool is_copyable =
+      std::copy_constructible<typename Tag::Value> &&
+      std::is_copy_assignable_v<typename Tag::Value>;
+  constexpr static bool is_movable =
+      std::move_constructible<typename Tag::Value> &&
+      std::is_move_assignable_v<typename Tag::Value>;
+  constexpr static bool is_default_constructable =
+      std::is_default_constructible_v<typename Tag::Value>;
+  constexpr static bool has_view = IsTagWithView<Tag>;
+};
+
+}  // namespace internal::strong_types
+
+// Forward declaration for views.
+//
+// This has to happen after the definition of IsTagWithView, but before the
+// definition of ViewExtValueBase.
+template <class Tag>
+  requires internal::strong_types::IsTagWithView<Tag>
+class StrongView;
+
+namespace internal::strong_types {
+
+// A base class that is conditionally inherited if the tag has a view.
+template <class Tag>
+class ViewExtValueBaseImpl {
  protected:
-  ~ViewExtValueBase() = default;
+  ~ViewExtValueBaseImpl() = default;
 
  public:
   using View = StrongView<Tag>;
 };
+
+template <class Tag>
+using ViewExtValueBase =
+    InheritIf<TagInfo<Tag>::has_view, ViewExtValueBaseImpl<Tag>>;
 
 }  // namespace internal::strong_types
 
@@ -117,9 +147,7 @@ struct ReferenceTag {
 //   view from the view storage.
 template <class Tag>
   requires internal::strong_types::IsTag<Tag>
-class StrongValue : public internal::strong_types::InheritIf<
-                        internal::strong_types::TagInfo<Tag>::has_view,
-                        internal::strong_types::ViewExtValueBase<Tag>> {
+class StrongValue : public internal::strong_types::ViewExtValueBase<Tag> {
   using Value = typename Tag::Value;
 
  public:
@@ -164,8 +192,7 @@ class StrongValue : public internal::strong_types::InheritIf<
 
  private:
   template <class Tag2>
-    requires internal::strong_types::IsTag<Tag2> &&
-             internal::strong_types::TagInfo<Tag2>::has_view
+    requires internal::strong_types::IsTagWithView<Tag2>
   friend class StrongView;
 
   constexpr explicit StrongValue(Value value) : value_(std::move(value)) {}
@@ -173,8 +200,7 @@ class StrongValue : public internal::strong_types::InheritIf<
 };
 
 template <class Tag>
-  requires internal::strong_types::IsTag<Tag> &&
-           internal::strong_types::TagInfo<Tag>::has_view
+  requires internal::strong_types::IsTagWithView<Tag>
 class StrongView {
   using View = typename Tag::View;
 
