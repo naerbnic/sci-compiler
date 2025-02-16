@@ -3,6 +3,7 @@
 #include <map>
 #include <optional>
 #include <utility>
+#include <vector>
 
 #include "absl/types/span.h"
 #include "scic/diagnostics/diagnostics.hpp"
@@ -52,6 +53,20 @@ struct PassState {
   std::map<SymbolId, ProcInfo> procedures;
 };
 
+struct ItemRefs {
+  std::vector<sci::ScriptNumDef const*> script_nums;
+  std::vector<sci::PublicDef const*> publics;
+  std::vector<sci::PublicDef::Entry const*> public_entries;
+  std::vector<sci::ExternDef::Entry const*> externs;
+  std::vector<sci::GlobalDeclDef::Entry const*> global_decls;
+  std::vector<sci::ModuleVarsDef const*> module_vars;
+  std::vector<sci::ModuleVarsDef::Entry const*> module_vars_entries;
+  std::vector<sci::ProcDef const*> procedures;
+  std::vector<sci::ClassDef const*> class_defs;
+  std::vector<sci::ClassDecl const*> class_decls;
+  std::vector<sci::SelectorsDecl::Entry const*> selectors;
+};
+
 std::pair<SymbolId, IndexRange> ParseVarDef(sci::VarDef const& var,
                                             int base_index) {
   return var.visit(
@@ -71,10 +86,12 @@ std::pair<SymbolId, IndexRange> ParseVarDef(sci::VarDef const& var,
 ModuleEnvironment RunInitialPass(absl::Span<parsers::sci::Item const> items,
                                  diag::DiagnosticsSink* sink) {
   PassState state;
+  ItemRefs refs;
 
   for (auto const& item : items) {
     item.visit(
         [&](sci::ScriptNumDef const& item) {
+          refs.script_nums.push_back(&item);
           if (state.script_num) {
             sink->Error("Duplicate script number definition.");
             return;
@@ -82,10 +99,14 @@ ModuleEnvironment RunInitialPass(absl::Span<parsers::sci::Item const> items,
           state.script_num = item.script_num().value();
         },
         [&](sci::PublicDef const& item) {
-          // No need to do anything right now.
+          refs.publics.push_back(&item);
+          for (auto const& entry : item.entries()) {
+            refs.public_entries.push_back(&entry);
+          }
         },
         [&](sci::ExternDef const& item) {
           for (auto const& entry : item.entries()) {
+            refs.externs.push_back(&entry);
             auto sym_id = SymbolId::Create(entry.name.value());
             auto index = entry.index.value();
             auto module_id = entry.module_num.value();
@@ -110,6 +131,7 @@ ModuleEnvironment RunInitialPass(absl::Span<parsers::sci::Item const> items,
         },
         [&](sci::GlobalDeclDef const& item) {
           for (auto const& entry : item.entries()) {
+            refs.global_decls.push_back(&entry);
             // We have to parse the vardef, to get the name and the size.
             auto index = entry.index.value();
             auto [sym_id, range] = ParseVarDef(entry.name, index);
@@ -123,6 +145,7 @@ ModuleEnvironment RunInitialPass(absl::Span<parsers::sci::Item const> items,
           }
         },
         [&](sci::ModuleVarsDef const& item) {
+          refs.module_vars.push_back(&item);
           if (state.module_vars) {
             sink->Error("Duplicate module variable declaration.");
             return;
@@ -133,6 +156,7 @@ ModuleEnvironment RunInitialPass(absl::Span<parsers::sci::Item const> items,
           };
 
           for (auto const& entry : item.entries()) {
+            refs.module_vars_entries.push_back(&entry);
             auto index = entry.index.value();
             auto [sym_id, range] = ParseVarDef(entry.name, index);
 
@@ -145,6 +169,7 @@ ModuleEnvironment RunInitialPass(absl::Span<parsers::sci::Item const> items,
           }
         },
         [&](sci::ProcDef const& item) {
+          refs.procedures.push_back(&item);
           auto sym_id = SymbolId::Create(item.name().value());
           if (state.procedures.contains(sym_id)) {
             sink->Error("Duplicate procedure definition.");
@@ -153,6 +178,7 @@ ModuleEnvironment RunInitialPass(absl::Span<parsers::sci::Item const> items,
           state.procedures.emplace(std::move(sym_id), ProcInfo{});
         },
         [&](sci::ClassDef const& item) {
+          refs.class_defs.push_back(&item);
           auto sym_id = SymbolId::Create(item.name().value());
           if (state.class_defs.contains(sym_id)) {
             sink->Error("Duplicate class definition.");
@@ -163,6 +189,7 @@ ModuleEnvironment RunInitialPass(absl::Span<parsers::sci::Item const> items,
                                                       });
         },
         [&](sci::ClassDecl const& item) {
+          refs.class_decls.push_back(&item);
           auto sym_id = SymbolId::Create(item.name().value());
           if (state.class_decls.contains(sym_id)) {
             sink->Error("Duplicate class declaration.");
@@ -172,6 +199,7 @@ ModuleEnvironment RunInitialPass(absl::Span<parsers::sci::Item const> items,
         },
         [&](sci::SelectorsDecl const& item) {
           for (auto const& entry : item.selectors()) {
+            refs.selectors.push_back(&entry);
             auto sym_id = SelectorId::Create(entry.name.value());
             auto index = entry.id.value();
 
@@ -185,9 +213,17 @@ ModuleEnvironment RunInitialPass(absl::Span<parsers::sci::Item const> items,
         });
   }
 
-  if (!state.script_num) {
-    sink->Error("Missing (script# ...)");
+  std::optional<int> script_num;
+
+  if (refs.script_nums.size() > 1) {
+    sink->Error("Multiple script number definitions.");
+  } else if (refs.script_nums.empty()) {
+    sink->Error("Missing script number definition.");
+  } else {
+    script_num = refs.script_nums.front()->script_num().value();
   }
+
+  
 
   return ModuleEnvironment{};
 }
