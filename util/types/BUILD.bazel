@@ -3,6 +3,21 @@ package(
 )
 
 cc_library(
+    name = "any_storage",
+    hdrs = ["any_storage.hpp"],
+)
+
+cc_test(
+    name = "any_storage_test",
+    srcs = ["any_storage_test.cpp"],
+    deps = [
+        ":any_storage",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "tmpl",
     hdrs = ["tmpl.hpp"],
 )
@@ -31,6 +46,25 @@ cc_test(
     srcs = ["name_test.cpp"],
     deps = [
         ":name",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "opt",
+    hdrs = ["opt.hpp"],
+    deps = [
+        ":any_storage",
+        ":tmpl",
+    ],
+)
+
+cc_test(
+    name = "opt_test",
+    srcs = ["opt_test.cpp"],
+    deps = [
+        ":opt",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
