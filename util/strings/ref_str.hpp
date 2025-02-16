@@ -46,6 +46,28 @@ class RefStr {
   // Converts the reference to a string_view.
   operator std::string_view() const;
 
+  // Basic comparisons
+  bool operator==(RefStr const& other) const {
+    return std::string_view(*this) == std::string_view(other);
+  }
+
+  auto operator<=>(RefStr const& other) const {
+    return std::string_view(*this) <=> std::string_view(other);
+  }
+
+  // These are necessary to disambiguate the comparison, since we have an
+  // implicit conversion from a string literal.
+  template <std::size_t N>
+  bool operator==(const char (&other)[N]) const {
+    return std::string_view(*this) == std::string_view(other);
+  }
+
+  template <std::size_t N>
+  auto operator<=>(const char (&other)[N]) const {
+    return std::string_view(*this) <=> other;
+  }
+
+  // Directo comparisons to string_view.
   bool operator==(std::string_view const& other) const {
     return std::string_view(*this) == other;
   }
