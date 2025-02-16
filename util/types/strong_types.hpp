@@ -116,13 +116,13 @@ class StrongValue : public internal::strong_types::ViewExtValueBase<Tag> {
     return StrongValue(std::move(value));
   }
 
-  StrongValue(StrongValue const&) = default;
-  StrongValue(StrongValue&&) = default;
+  constexpr StrongValue(StrongValue const&) = default;
+  constexpr StrongValue(StrongValue&&) = default;
 
-  ~StrongValue() = default;
+  constexpr ~StrongValue() = default;
 
-  StrongValue& operator=(StrongValue const&) = default;
-  StrongValue& operator=(StrongValue&&) = default;
+  constexpr StrongValue& operator=(StrongValue const&) = default;
+  constexpr StrongValue& operator=(StrongValue&&) = default;
 
   constexpr Value const& value() const& { return value_; }
 
@@ -157,7 +157,7 @@ class StrongValue : public internal::strong_types::ViewExtValueBase<Tag> {
              internal::strong_types::TagInfo<Tag>::has_view
   friend class StrongView;
 
-  explicit StrongValue(Value value) : value_(std::move(value)) {}
+  constexpr explicit StrongValue(Value value) : value_(std::move(value)) {}
   Value value_;
 };
 
