@@ -141,8 +141,8 @@ ParseResult<ProcDef> ParseProcDef(TokenNode<std::string_view> const& keyword,
                                   TreeExprSpan& exprs) {
   // Format: ((method_name args... "&temp" locals...) body...)
   struct Signature {
-    TokenNode<std::string> name;
-    std::vector<TokenNode<std::string>> args;
+    TokenNode<util::RefStr> name;
+    std::vector<TokenNode<util::RefStr>> args;
     std::vector<VarDef> locals;
   };
 
@@ -231,7 +231,7 @@ ParseResult<ClassDef> ParseClassDef(ClassDef::Kind kind,
                                     TreeExprSpan& exprs) {
   ASSIGN_OR_RETURN(auto name, ParseOneIdentTokenNode(exprs));
 
-  std::optional<TokenNode<std::string>> parent;
+  std::optional<TokenNode<util::RefStr>> parent;
   if (StartsWith(IsIdentExprWith("of"))(exprs)) {
     ASSIGN_OR_RETURN(auto of_token, ParseOneLiteralIdent("of")(exprs));
     ASSIGN_OR_RETURN(parent, ParseOneIdentTokenNode(exprs));

@@ -3,7 +3,6 @@
 
 #include <memory>
 #include <optional>
-#include <string>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -11,6 +10,7 @@
 #include "scic/text/text_range.hpp"
 #include "util/choice.hpp"
 #include "util/io/printer.hpp"
+#include "util/strings/ref_str.hpp"
 
 namespace parsers::sci {
 
@@ -110,26 +110,26 @@ class TokenNode {
 
 class SingleVarDef {
  public:
-  SingleVarDef(TokenNode<std::string> name) : name_(std::move(name)) {}
+  SingleVarDef(TokenNode<util::RefStr> name) : name_(std::move(name)) {}
 
-  TokenNode<std::string> const& name() const { return name_; }
+  TokenNode<util::RefStr> const& name() const { return name_; }
 
  private:
-  TokenNode<std::string> name_;
+  TokenNode<util::RefStr> name_;
 
   DEFINE_PRINTERS(SingleVarDef, "name", name_);
 };
 
 class ArrayVarDef {
  public:
-  ArrayVarDef(TokenNode<std::string> name, TokenNode<int> size)
+  ArrayVarDef(TokenNode<util::RefStr> name, TokenNode<int> size)
       : name_(std::move(name)), size_(std::move(size)) {}
 
-  TokenNode<std::string> const& name() const { return name_; }
+  TokenNode<util::RefStr> const& name() const { return name_; }
   TokenNode<int> const& size() const { return size_; }
 
  private:
-  TokenNode<std::string> name_;
+  TokenNode<util::RefStr> name_;
   TokenNode<int> size_;
 
   DEFINE_PRINTERS(ArrayVarDef, "name", name_, "size", size_);
@@ -153,12 +153,12 @@ class NumConstValue {
 
 class StringConstValue {
  public:
-  StringConstValue(TokenNode<std::string> value) : value_(std::move(value)) {}
+  StringConstValue(TokenNode<util::RefStr> value) : value_(std::move(value)) {}
 
-  TokenNode<std::string> const& value() const { return value_; }
+  TokenNode<util::RefStr> const& value() const { return value_; }
 
  private:
-  TokenNode<std::string> value_;
+  TokenNode<util::RefStr> value_;
   DEFINE_PRINTERS(StringConstValue, "value", value_);
 };
 
@@ -193,7 +193,7 @@ class Expr;
 class CallArgs {
  public:
   struct Rest {
-    std::optional<TokenNode<std::string>> rest_var;
+    std::optional<TokenNode<util::RefStr>> rest_var;
   };
 
   explicit CallArgs(std::vector<Expr> args, std::optional<Rest>);
@@ -230,13 +230,13 @@ class AddrOfExpr {
 
 class SelectLitExpr {
  public:
-  SelectLitExpr(TokenNode<std::string> selector)
+  SelectLitExpr(TokenNode<util::RefStr> selector)
       : selector_(std::move(selector)) {}
 
-  TokenNode<std::string> const& selector() const { return selector_; }
+  TokenNode<util::RefStr> const& selector() const { return selector_; }
 
  private:
-  TokenNode<std::string> selector_;
+  TokenNode<util::RefStr> selector_;
 
   DEFINE_PRINTERS(SelectLitExpr, "selector", selector_);
 };
@@ -244,26 +244,26 @@ class SelectLitExpr {
 // A plain variable reference.
 class VarExpr {
  public:
-  VarExpr(TokenNode<std::string> name) : name_(std::move(name)) {}
+  VarExpr(TokenNode<util::RefStr> name) : name_(std::move(name)) {}
 
-  TokenNode<std::string> const& name() const { return name_; }
+  TokenNode<util::RefStr> const& name() const { return name_; }
 
  private:
-  TokenNode<std::string> name_;
+  TokenNode<util::RefStr> name_;
 
   DEFINE_PRINTERS(VarExpr, "name", name_);
 };
 
 class ArrayIndexExpr {
  public:
-  ArrayIndexExpr(TokenNode<std::string> var_name, std::unique_ptr<Expr> index)
+  ArrayIndexExpr(TokenNode<util::RefStr> var_name, std::unique_ptr<Expr> index)
       : var_name_(std::move(var_name)), index_(std::move(index)) {}
 
-  TokenNode<std::string> const& var_name() const { return var_name_; }
+  TokenNode<util::RefStr> const& var_name() const { return var_name_; }
   Expr const& index() const { return *index_; }
 
  private:
-  TokenNode<std::string> var_name_;
+  TokenNode<util::RefStr> var_name_;
   std::unique_ptr<Expr> index_;
 
   DEFINE_PRINTERS(ArrayIndexExpr, "var_name", var_name_, "index", index_);
@@ -497,15 +497,15 @@ class IncDecExpr {
     DEC,
   };
 
-  IncDecExpr(Kind kind, TokenNode<std::string> var)
+  IncDecExpr(Kind kind, TokenNode<util::RefStr> var)
       : kind_(kind), var_(std::move(var)) {}
 
   Kind kind() const { return kind_; }
-  TokenNode<std::string> const& var() const { return var_; }
+  TokenNode<util::RefStr> const& var() const { return var_; }
 
  private:
   Kind kind_;
-  TokenNode<std::string> var_;
+  TokenNode<util::RefStr> var_;
 };
 
 class SelfSendTarget {
@@ -537,27 +537,27 @@ class SendTarget
 
 class PropReadSendClause {
  public:
-  explicit PropReadSendClause(TokenNode<std::string> prop_name)
+  explicit PropReadSendClause(TokenNode<util::RefStr> prop_name)
       : prop_name_(std::move(prop_name)) {}
 
-  TokenNode<std::string> const& prop_name() const { return prop_name_; }
+  TokenNode<util::RefStr> const& prop_name() const { return prop_name_; }
 
  private:
-  TokenNode<std::string> prop_name_;
+  TokenNode<util::RefStr> prop_name_;
 
   DEFINE_PRINTERS(PropReadSendClause, "prop_name", prop_name_);
 };
 
 class MethodSendClause {
  public:
-  MethodSendClause(TokenNode<std::string> method_name, CallArgs call_args)
+  MethodSendClause(TokenNode<util::RefStr> method_name, CallArgs call_args)
       : selector_(std::move(method_name)), call_args_(std::move(call_args)) {}
 
-  TokenNode<std::string> const& selector() const { return selector_; }
+  TokenNode<util::RefStr> const& selector() const { return selector_; }
   CallArgs const& call_args() const { return call_args_; }
 
  private:
-  TokenNode<std::string> selector_;
+  TokenNode<util::RefStr> selector_;
   CallArgs call_args_;
 
   DEFINE_PRINTERS(MethodSendClause, "selector", selector_, "call_args",
@@ -657,7 +657,7 @@ class ScriptNumDef {
 class PublicDef {
  public:
   struct Entry {
-    TokenNode<std::string> name;
+    TokenNode<util::RefStr> name;
     TokenNode<int> index;
   };
 
@@ -674,7 +674,7 @@ class PublicDef {
 class ExternDef {
  public:
   struct Entry {
-    TokenNode<std::string> name;
+    TokenNode<util::RefStr> name;
     TokenNode<int> module_num;
     TokenNode<int> index;
 
@@ -739,7 +739,7 @@ class ModuleVarsDef {
 class EnumDef {
  public:
   struct Entry {
-    TokenNode<std::string> name;
+    TokenNode<util::RefStr> name;
     TokenNode<int> value;
   };
 
@@ -758,21 +758,22 @@ class EnumDef {
 
 class ProcDef {
  public:
-  ProcDef(TokenNode<std::string> name, std::vector<TokenNode<std::string>> args,
-          std::vector<VarDef> locals, Expr body)
+  ProcDef(TokenNode<util::RefStr> name,
+          std::vector<TokenNode<util::RefStr>> args, std::vector<VarDef> locals,
+          Expr body)
       : name_(std::move(name)),
         args_(std::move(args)),
         locals_(std::move(locals)),
         body_(std::move(body)) {}
 
-  TokenNode<std::string> const& name() const { return name_; }
-  std::vector<TokenNode<std::string>> const& args() const { return args_; }
+  TokenNode<util::RefStr> const& name() const { return name_; }
+  std::vector<TokenNode<util::RefStr>> const& args() const { return args_; }
   std::vector<VarDef> const& locals() const { return locals_; }
   Expr const& body() const { return body_; }
 
  private:
-  TokenNode<std::string> name_;
-  std::vector<TokenNode<std::string>> args_;
+  TokenNode<util::RefStr> name_;
+  std::vector<TokenNode<util::RefStr>> args_;
   std::vector<VarDef> locals_;
   Expr body_;
 
@@ -781,7 +782,7 @@ class ProcDef {
 };
 
 struct PropertyDef {
-  TokenNode<std::string> name;
+  TokenNode<util::RefStr> name;
   ConstValue value;
 
  private:
@@ -789,7 +790,7 @@ struct PropertyDef {
 };
 
 struct MethodNamesDecl {
-  std::vector<TokenNode<std::string>> names;
+  std::vector<TokenNode<util::RefStr>> names;
 
  private:
   DEFINE_PRINTERS(MethodNamesDecl, "names", names);
@@ -806,8 +807,8 @@ class ClassDef {
     OBJECT,
   };
 
-  ClassDef(Kind kind, TokenNode<std::string> name,
-           std::optional<TokenNode<std::string>> parent,
+  ClassDef(Kind kind, TokenNode<util::RefStr> name,
+           std::optional<TokenNode<util::RefStr>> parent,
            std::vector<PropertyDef> properties,
            std::optional<MethodNamesDecl> method_names,
            std::vector<ProcDef> methods)
@@ -819,8 +820,8 @@ class ClassDef {
         methods_(std::move(methods)) {}
 
   Kind kind() const { return kind_; }
-  TokenNode<std::string> const& name() const { return name_; }
-  std::optional<TokenNode<std::string>> const& parent() const {
+  TokenNode<util::RefStr> const& name() const { return name_; }
+  std::optional<TokenNode<util::RefStr>> const& parent() const {
     return parent_;
   }
   std::vector<PropertyDef> const& properties() const { return properties_; }
@@ -831,8 +832,8 @@ class ClassDef {
 
  private:
   Kind kind_;
-  TokenNode<std::string> name_;
-  std::optional<TokenNode<std::string>> parent_;
+  TokenNode<util::RefStr> name_;
+  std::optional<TokenNode<util::RefStr>> parent_;
   std::vector<PropertyDef> properties_;
   std::optional<MethodNamesDecl> method_names_;
   std::vector<ProcDef> methods_;
@@ -844,7 +845,7 @@ class ClassDef {
 
 class ClassDecl {
  public:
-  ClassDecl(TokenNode<std::string> name, TokenNode<int> script_num,
+  ClassDecl(TokenNode<util::RefStr> name, TokenNode<int> script_num,
             TokenNode<int> class_num, std::optional<TokenNode<int>> parent_num,
             std::vector<PropertyDef> properties, MethodNamesDecl method_names)
       : name_(std::move(name)),
@@ -854,7 +855,7 @@ class ClassDecl {
         properties_(std::move(properties)),
         method_names_(std::move(method_names)) {}
 
-  TokenNode<std::string> const& name() const { return name_; }
+  TokenNode<util::RefStr> const& name() const { return name_; }
   TokenNode<int> const& script_num() const { return script_num_; }
   TokenNode<int> const& class_num() const { return class_num_; }
   std::optional<TokenNode<int>> const& parent_num() const {
@@ -862,7 +863,7 @@ class ClassDecl {
   }
 
  private:
-  TokenNode<std::string> name_;
+  TokenNode<util::RefStr> name_;
   TokenNode<int> script_num_;
   TokenNode<int> class_num_;
   std::optional<TokenNode<int>> parent_num_;
@@ -877,7 +878,7 @@ class ClassDecl {
 class SelectorsDecl {
  public:
   struct Entry {
-    TokenNode<std::string> name;
+    TokenNode<util::RefStr> name;
     TokenNode<int> id;
   };
 

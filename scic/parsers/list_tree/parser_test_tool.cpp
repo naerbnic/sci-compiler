@@ -18,6 +18,7 @@
 #include "scic/tokens/token.hpp"
 #include "scic/tokens/token_readers.hpp"
 #include "util/status/status_macros.hpp"
+#include "util/strings/ref_str.hpp"
 
 namespace parsers::list_tree {
 namespace {
@@ -37,7 +38,7 @@ absl::StatusOr<std::vector<Token>> TokenizeFile(
   buffer << file.rdbuf();
 
   return tokens::TokenizeText(
-      TextRange::WithFilename(path.string(), buffer.str()));
+      TextRange::WithFilename(util::RefStr(path.string()), buffer.str()));
 }
 
 class ToolIncludeContext : public IncludeContext {

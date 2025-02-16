@@ -9,6 +9,7 @@ cc_library(
     deps = [
         "//scic/text:text_range",
         "//util:choice",
+        "//util/strings:ref_str",
         "@abseil-cpp//absl/strings:str_format",
     ],
 )
@@ -20,6 +21,7 @@ cc_library(
     deps = [
         ":token",
         "//util:choice_matchers",
+        "//util/strings:ref_str",
         "@googletest//:gtest",
     ],
 )
@@ -33,6 +35,7 @@ cc_library(
         ":token",
         "//scic:chartype",
         "//util/status:status_macros",
+        "//util/strings:ref_str",
         "@abseil-cpp//absl/status:statusor",
     ],
 )

@@ -22,8 +22,8 @@ cc_library(
     hdrs = ["ast_matchers.hpp"],
     deps = [
         ":ast",
-        "//util:choice_matchers",
         "//scic/tokens:token_test_utils",
+        "//util:choice_matchers",
         "@googletest//:gtest",
     ],
 )
@@ -88,6 +88,7 @@ cc_binary(
         ":parser",
         "//scic/tokens:token",
         "//scic/tokens:token_readers",
+        "//util/strings:ref_str",
         "@argparse",
     ],
 )

@@ -3,7 +3,6 @@
 
 #include <optional>
 #include <stdexcept>
-#include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -139,7 +138,7 @@ auto ParseNumToken(F parser) {
     return parser(token.text_range(), num->value);
   };
 }
-template <IsParserOf<text::TextRange const&, std::string const&> F>
+template <IsParserOf<text::TextRange const&, util::RefStr const&> F>
 auto ParseStringToken(F parser) {
   using ParserInfo = ParserTraits<F>;
   return [parser = std::move(parser)](
@@ -161,10 +160,10 @@ auto ParseOneIdentToken(F parser) {
 ParseResult<TokenNode<std::string_view>> ParseSimpleIdentNameNodeView(
     text::TextRange const& range, tokens::Token::Ident const& ident);
 
-ParseResult<TokenNode<std::string>> ParseSimpleIdentNameNode(
+ParseResult<TokenNode<util::RefStr>> ParseSimpleIdentNameNode(
     text::TextRange const& range, tokens::Token::Ident const& ident);
 
-ParseResult<std::pair<TokenNode<std::string>, tokens::Token::Ident::Trailer>>
+ParseResult<std::pair<TokenNode<util::RefStr>, tokens::Token::Ident::Trailer>>
 ParseIdentNameNode(list_tree::TokenExpr const& token);
 
 // Ensures that a span parser consumes all elements in the input list.
@@ -194,11 +193,12 @@ ParseResult<TokenNode<std::string_view>> ParseOneIdentTokenView(
 
 // Read a standard identifier from the front of the expr stream with a
 // string
-ParseResult<TokenNode<std::string>> ParseOneIdentTokenNode(TreeExprSpan& exprs);
+ParseResult<TokenNode<util::RefStr>> ParseOneIdentTokenNode(
+    TreeExprSpan& exprs);
 
 // Read a number from the front of the expr stream.
 ParseResult<TokenNode<int>> ParseOneNumberToken(TreeExprSpan& exprs);
-ParseResult<TokenNode<std::string>> ParseOneStringToken(TreeExprSpan& exprs);
+ParseResult<TokenNode<util::RefStr>> ParseOneStringToken(TreeExprSpan& exprs);
 
 inline auto ParseOneLiteralIdent(std::string_view ident) {
   return

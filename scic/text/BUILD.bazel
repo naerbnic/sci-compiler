@@ -7,6 +7,7 @@ cc_library(
     srcs = ["text_range.cpp"],
     hdrs = ["text_range.hpp"],
     deps = [
+        "//util/strings:ref_str",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
     ],

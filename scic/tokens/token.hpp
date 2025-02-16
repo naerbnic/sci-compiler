@@ -1,12 +1,12 @@
 #ifndef TOKENIZER_TOKEN_HPP
 #define TOKENIZER_TOKEN_HPP
 
-#include <string>
 #include <vector>
 
 #include "absl/strings/str_format.h"
 #include "scic/text/text_range.hpp"
 #include "util/choice.hpp"
+#include "util/strings/ref_str.hpp"
 
 namespace tokens {
 
@@ -49,12 +49,12 @@ class Token {
     };
     // The name of the identifier. This may not exactly match the raw string
     // if some kind of escape sequence is used.
-    std::string name;
+    util::RefStr name;
     Trailer trailer;
   };
 
   struct String {
-    std::string decodedString;
+    util::RefStr decodedString;
   };
 
   struct Number {

@@ -19,6 +19,7 @@
 #include "scic/tokens/char_stream.hpp"
 #include "scic/tokens/token.hpp"
 #include "util/status/status_macros.hpp"
+#include "util/strings/ref_str.hpp"
 
 namespace tokens {
 
@@ -279,7 +280,7 @@ absl::StatusOr<Token::Ident> ReadIdent(CharStream& stream) {
     ident.push_back(*stream++);
   }
   return Token::Ident{
-      .name = std::move(ident),
+      .name = util::RefStr(ident),
       .trailer = trailer,
   };
 }
@@ -370,7 +371,7 @@ absl::StatusOr<Token::TokenValue> ReadToken(CharStream& stream) {
   if (*stream == '"' || *stream == ALT_QUOTE) {
     ASSIGN_OR_RETURN(auto parsed_string, ReadString(stream));
     return Token::String{
-        .decodedString = parsed_string,
+        .decodedString = util::RefStr(parsed_string),
     };
   }
 

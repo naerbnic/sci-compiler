@@ -1,7 +1,6 @@
 #include "scic/parsers/sci/parser_common.hpp"
 
 #include <optional>
-#include <string>
 #include <string_view>
 #include <utility>
 
@@ -38,22 +37,22 @@ ParseResult<TokenNode<std::string_view>> ParseSimpleIdentNameNodeView(
   return TokenNode<std::string_view>(ident.name, range);
 }
 
-ParseResult<TokenNode<std::string>> ParseSimpleIdentNameNode(
+ParseResult<TokenNode<util::RefStr>> ParseSimpleIdentNameNode(
     text::TextRange const& range, tokens::Token::Ident const& ident) {
   if (ident.trailer != tokens::Token::Ident::None) {
     return RangeFailureOf(range, "Expected simple identifier.");
   }
-  return TokenNode<std::string>(ident.name, range);
+  return TokenNode<util::RefStr>(ident.name, range);
 }
 
-ParseResult<std::pair<TokenNode<std::string>, tokens::Token::Ident::Trailer>>
+ParseResult<std::pair<TokenNode<util::RefStr>, tokens::Token::Ident::Trailer>>
 ParseIdentNameNode(list_tree::TokenExpr const& token) {
   auto* ident = token.token().AsIdent();
   if (!ident) {
     return RangeFailureOf(token.text_range(), "Expected identifier token.");
   }
-  return std::make_pair(TokenNode<std::string>(ident->name, token.text_range()),
-                        ident->trailer);
+  return std::make_pair(
+      TokenNode<util::RefStr>(ident->name, token.text_range()), ident->trailer);
 }
 
 ParseResult<TokenNode<std::string_view>> ParseOneIdentTokenView(
@@ -61,7 +60,7 @@ ParseResult<TokenNode<std::string_view>> ParseOneIdentTokenView(
   return ParseOneIdentToken(ParseSimpleIdentNameNodeView)(exprs);
 }
 
-ParseResult<TokenNode<std::string>> ParseOneIdentTokenNode(
+ParseResult<TokenNode<util::RefStr>> ParseOneIdentTokenNode(
     TreeExprSpan& exprs) {
   return ParseOneIdentToken(ParseSimpleIdentNameNode)(exprs);
 }
@@ -72,10 +71,10 @@ ParseResult<TokenNode<int>> ParseOneNumberToken(TreeExprSpan& exprs) {
         return TokenNode<int>(num, range);
       })))(exprs);
 }
-ParseResult<TokenNode<std::string>> ParseOneStringToken(TreeExprSpan& exprs) {
+ParseResult<TokenNode<util::RefStr>> ParseOneStringToken(TreeExprSpan& exprs) {
   return ParseOneTreeExpr(ParseTokenExpr(
-      ParseStringToken([](text::TextRange const& range, std::string str) {
-        return TokenNode<std::string>(std::move(str), range);
+      ParseStringToken([](text::TextRange const& range, util::RefStr str) {
+        return TokenNode<util::RefStr>(std::move(str), range);
       })))(exprs);
 }
 }  // namespace parsers::sci

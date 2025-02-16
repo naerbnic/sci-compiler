@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "absl/strings/str_format.h"
+#include "util/strings/ref_str.hpp"
 
 namespace text {
 
@@ -50,16 +51,16 @@ class CharRange {
 class FileRange {
  public:
   FileRange() = default;
-  FileRange(std::shared_ptr<std::string> filename, CharRange range)
+  FileRange(util::RefStr filename, CharRange range)
       : filename_(std::move(filename)), range_(range) {}
 
-  std::string_view filename() const { return *filename_; }
+  std::string_view filename() const { return filename_; }
   CharRange const& range() const { return range_; }
   CharOffset const& start() const { return range_.start(); }
   CharOffset const& end() const { return range_.end(); }
 
  private:
-  std::shared_ptr<std::string> filename_;
+  util::RefStr filename_;
   CharRange range_;
 
   template <class Sink>
@@ -74,10 +75,10 @@ class FileRange {
 class TextContents {
  public:
   TextContents(std::string contents);
-  TextContents(std::string filename, std::string contents);
+  TextContents(util::RefStr filename, std::string contents);
 
   std::size_t size() const { return contents_.size(); }
-  std::shared_ptr<std::string> const& filename() const { return filename_; }
+  util::RefStr const& filename() const { return filename_; }
   std::string_view contents() const { return contents_; }
   std::size_t num_lines() const { return line_spans_.size(); }
   std::string_view GetLine(std::size_t line_index) const;
@@ -92,7 +93,7 @@ class TextContents {
     std::size_t end;
   };
 
-  std::shared_ptr<std::string> filename_;
+  util::RefStr filename_;
   std::string contents_;
   std::vector<LineSpan> line_spans_;
 };
@@ -100,7 +101,7 @@ class TextContents {
 class TextRange {
  public:
   static TextRange OfString(std::string contents);
-  static TextRange WithFilename(std::string filename, std::string contents);
+  static TextRange WithFilename(util::RefStr filename, std::string contents);
 
   TextRange() = default;
   ~TextRange();

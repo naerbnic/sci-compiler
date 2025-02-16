@@ -4,7 +4,6 @@
 #include <map>
 #include <memory>
 #include <optional>
-#include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -18,6 +17,7 @@
 #include "scic/text/text_range.hpp"
 #include "scic/tokens/token.hpp"
 #include "util/status/status_macros.hpp"
+#include "util/strings/ref_str.hpp"
 
 namespace parsers::sci {
 
@@ -26,7 +26,7 @@ namespace {
 using ExprParseFunc =
     ParseFunc<Expr(TokenNode<std::string_view> keyword, TreeExprSpan&)>;
 
-using BuiltinsMap = std::map<std::string, ExprParseFunc>;
+using BuiltinsMap = std::map<util::RefStr, ExprParseFunc>;
 
 ParseResult<std::unique_ptr<Expr>> ParseExprPtr(TreeExprSpan& exprs) {
   ASSIGN_OR_RETURN(auto expr, ParseExpr(exprs));
@@ -366,7 +366,7 @@ ParseResult<CallArgs> ParseCallArgs(TreeExprSpan& args) {
   while (!args.empty()) {
     if (StartsWith(IsIdentExprWith("&rest"))(args)) {
       ASSIGN_OR_RETURN(auto rest_token, ParseOneIdentTokenView(args));
-      std::optional<TokenNode<std::string>> rest_var;
+      std::optional<TokenNode<util::RefStr>> rest_var;
       if (!args.empty()) {
         ASSIGN_OR_RETURN(rest_var, ParseOneIdentTokenNode(args));
       }
@@ -504,14 +504,14 @@ ParseResult<Expr> ParseExpr(TreeExprSpan& exprs) {
                                         "Expected simple identifier.");
                 }
                 return VarExpr(
-                    TokenNode<std::string>(ident.name, token.text_range()));
+                    TokenNode<util::RefStr>(ident.name, token.text_range()));
               },
               [&](tokens::Token::Number const& num) -> ParseResult<Expr> {
                 return ConstValueExpr(NumConstValue(
                     TokenNode<int>(num.value, token.text_range())));
               },
               [&](tokens::Token::String const& str) -> ParseResult<Expr> {
-                return ConstValueExpr(StringConstValue(TokenNode<std::string>(
+                return ConstValueExpr(StringConstValue(TokenNode<util::RefStr>(
                     str.decodedString, token.text_range())));
               },
               [&](auto const&) -> ParseResult<Expr> {

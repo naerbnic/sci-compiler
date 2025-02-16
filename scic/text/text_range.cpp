@@ -9,6 +9,8 @@
 #include <string_view>
 #include <utility>
 
+#include "util/strings/ref_str.hpp"
+
 namespace text {
 
 namespace {
@@ -33,9 +35,8 @@ std::optional<std::pair<std::size_t, std::size_t>> FindNextNewline(
 TextContents::TextContents(std::string contents)
     : TextContents("<string>", std::move(contents)) {}
 
-TextContents::TextContents(std::string filename, std::string contents)
-    : filename_(std::make_shared<std::string>(std::move(filename))),
-      contents_(std::move(contents)) {
+TextContents::TextContents(util::RefStr filename, std::string contents)
+    : filename_(std::move(filename)), contents_(std::move(contents)) {
   std::size_t line_start_index = 0;
   while (auto newline = FindNextNewline(contents_, line_start_index)) {
     line_spans_.push_back({
@@ -97,7 +98,7 @@ TextRange TextRange::OfString(std::string contents) {
       length);
 }
 
-TextRange TextRange::WithFilename(std::string filename, std::string contents) {
+TextRange TextRange::WithFilename(util::RefStr filename, std::string contents) {
   auto length = contents.size();
   return TextRange(
       std::make_shared<TextContents>(std::move(filename), std::move(contents)),
@@ -106,4 +107,4 @@ TextRange TextRange::WithFilename(std::string filename, std::string contents) {
 
 TextRange::~TextRange() = default;
 
-}  // namespace tokens
+}  // namespace text

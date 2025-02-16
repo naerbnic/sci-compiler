@@ -10,6 +10,7 @@
 #include "scic/text/text_range.hpp"
 #include "scic/tokens/token.hpp"
 #include "util/choice_matchers.hpp"
+#include "util/strings/ref_str.hpp"
 
 namespace tokens {
 
@@ -100,7 +101,7 @@ inline testing::Matcher<text::TextRange const&> TextRangeOf(
 
 inline Token MakeIdentToken(std::string_view name) {
   return Token(text::TextRange::OfString(std::string(name)),
-               Token::Ident{.name = std::string(name)});
+               Token::Ident{.name = util::RefStr(name)});
 }
 
 inline Token MakePunctToken(Token::PunctType type) {
@@ -109,7 +110,7 @@ inline Token MakePunctToken(Token::PunctType type) {
 
 inline Token MakeStringToken(std::string_view decoded_string) {
   return Token(text::TextRange::OfString(std::string(decoded_string)),
-               Token::String{.decodedString = std::string(decoded_string)});
+               Token::String{.decodedString = util::RefStr(decoded_string)});
 }
 
 inline Token MakeNumberToken(int value) {
