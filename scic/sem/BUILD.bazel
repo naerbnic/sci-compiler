@@ -1,0 +1,16 @@
+# Libraries for semantic analysis of SCI scripts.
+
+package(
+    default_visibility = ["//scic:scic_internal"],
+)
+
+cc_library(
+    name = "symbol",
+    srcs = ["symbol.cpp"],
+    hdrs = ["symbol.hpp"],
+    deps = [
+        "//util:choice",
+        "//util/strings:ref_str",
+        "//util/types:strong_types",
+    ],
+)

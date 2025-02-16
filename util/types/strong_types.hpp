@@ -153,8 +153,8 @@ class StrongValue : public internal::strong_types::ViewExtValueBase<Tag> {
 
  private:
   template <class Tag2>
-    requires internal::strong_types::IsTag<Tag> &&
-             internal::strong_types::TagInfo<Tag>::has_view
+    requires internal::strong_types::IsTag<Tag2> &&
+             internal::strong_types::TagInfo<Tag2>::has_view
   friend class StrongView;
 
   constexpr explicit StrongValue(Value value) : value_(std::move(value)) {}

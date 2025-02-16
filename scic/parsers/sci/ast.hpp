@@ -736,26 +736,6 @@ class ModuleVarsDef {
   DEFINE_PRINTERS(ModuleVarsDef, "kind", kind_, "entries", entries_);
 };
 
-class EnumDef {
- public:
-  struct Entry {
-    TokenNode<util::RefStr> name;
-    TokenNode<int> value;
-  };
-
-  EnumDef(std::optional<TokenNode<int>> initial_value,
-          std::vector<Entry> entries)
-      : initial_value_(std::move(initial_value)),
-        entries_(std::move(entries)) {}
-
- private:
-  std::optional<TokenNode<int>> initial_value_;
-  std::vector<Entry> entries_;
-
-  DEFINE_PRINTERS(EnumDef, "initial_value", initial_value_, "entries",
-                  entries_);
-};
-
 class ProcDef {
  public:
   ProcDef(TokenNode<util::RefStr> name,
@@ -893,11 +873,10 @@ class SelectorsDecl {
   DEFINE_PRINTERS(SelectorsDecl, "selectors", selectors_);
 };
 
-class Item
-    : public util::ChoiceBase<Item,  //
-                              ScriptNumDef, PublicDef, ExternDef, GlobalDeclDef,
-                              ModuleVarsDef, EnumDef, ProcDef, ClassDef,
-                              ClassDecl, SelectorsDecl> {
+class Item : public util::ChoiceBase<Item,  //
+                                     ScriptNumDef, PublicDef, ExternDef,
+                                     GlobalDeclDef, ModuleVarsDef, ProcDef,
+                                     ClassDef, ClassDecl, SelectorsDecl> {
   using ChoiceBase::ChoiceBase;
 };
 

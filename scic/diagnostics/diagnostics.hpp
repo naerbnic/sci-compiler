@@ -135,22 +135,39 @@ class DiagnosticsSink {
   virtual void AddDiagnostic(Diagnostic diagnostic) = 0;
 
   template <typename... Args>
-  void Error(text::TextRange const& text, absl::FormatSpec<Args...> format,
-             Args&&... args) {
-    AddDiagnostic(Diagnostic::Error(text, format, std::forward<Args>(args)...));
+  void Error(absl::FormatSpec<Args...> format, Args&&... args) {
+    AddDiagnostic(Diagnostic::Error(format, std::forward<Args>(args)...));
   }
 
   template <typename... Args>
-  void Warning(text::TextRange const& text, absl::FormatSpec<Args...> format,
-               Args&&... args) {
+  void Warning(absl::FormatSpec<Args...> format, Args&&... args) {
+    AddDiagnostic(Diagnostic::Warning(format, std::forward<Args>(args)...));
+  }
+
+  template <typename... Args>
+  void Info(absl::FormatSpec<Args...> format, Args&&... args) {
+    AddDiagnostic(Diagnostic::Info(format, std::forward<Args>(args)...));
+  }
+
+  template <typename... Args>
+  void RangeError(text::TextRange const& text, absl::FormatSpec<Args...> format,
+                  Args&&... args) {
     AddDiagnostic(
-        Diagnostic::Warning(text, format, std::forward<Args>(args)...));
+        Diagnostic::RangeError(text, format, std::forward<Args>(args)...));
   }
 
   template <typename... Args>
-  void Info(text::TextRange const& text, absl::FormatSpec<Args...> format,
-            Args&&... args) {
-    AddDiagnostic(Diagnostic::Info(text, format, std::forward<Args>(args)...));
+  void RangeWarning(text::TextRange const& text,
+                    absl::FormatSpec<Args...> format, Args&&... args) {
+    AddDiagnostic(
+        Diagnostic::RangeWarning(text, format, std::forward<Args>(args)...));
+  }
+
+  template <typename... Args>
+  void RangeInfo(text::TextRange const& text, absl::FormatSpec<Args...> format,
+                 Args&&... args) {
+    AddDiagnostic(
+        Diagnostic::RangeInfo(text, format, std::forward<Args>(args)...));
   }
 };
 

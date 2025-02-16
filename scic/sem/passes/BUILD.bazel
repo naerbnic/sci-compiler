@@ -1,0 +1,17 @@
+# Libraries for semantic analysis of SCI scripts.
+
+package(
+    default_visibility = ["//scic:scic_internal"],
+)
+
+cc_library(
+    name = "initial_pass",
+    srcs = ["initial_pass.cpp"],
+    hdrs = ["initial_pass.hpp"],
+    deps = [
+        "//scic/diagnostics",
+        "//scic/parsers/sci:ast",
+        "//scic/sem:symbol",
+        "//util:choice",
+    ],
+)
