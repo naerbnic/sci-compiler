@@ -69,3 +69,18 @@ cc_test(
         "@googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "strong_types",
+    hdrs = ["strong_types.hpp"],
+)
+
+cc_test(
+    name = "strong_types_test",
+    srcs = ["strong_types_test.cpp"],
+    deps = [
+        ":strong_types",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
