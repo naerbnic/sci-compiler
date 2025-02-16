@@ -3,7 +3,6 @@
 
 #include <cstddef>
 #include <functional>
-#include <type_traits>
 #include <utility>
 
 namespace util {
@@ -40,6 +39,7 @@ struct TagInfo {
 };
 }  // namespace internal::strong_types
 
+// Forward declaration for views.
 template <class Tag>
   requires internal::strong_types::IsTag<Tag> &&
            internal::strong_types::TagInfo<Tag>::has_view
@@ -47,17 +47,26 @@ class StrongView;
 
 namespace internal::strong_types {
 
+// A nice utility: inherit from a base class only if a condition is true.
+template <bool Inherit, class Base>
+class InheritIf;
+
+template <class Base>
+class InheritIf<true, Base> : public Base {
+ protected:
+  ~InheritIf() = default;
+};
+template <class Base>
+class InheritIf<false, Base> {
+ protected:
+  ~InheritIf() = default;
+};
+
 // Create a base class that can be used add the View type to the
 // StrongValue, if it is available.
 
-template <class Tag, class = void>
-class ViewExtValueBase {
- protected:
-  ~ViewExtValueBase() = default;
-};
-
 template <class Tag>
-class ViewExtValueBase<Tag, std::enable_if_t<TagInfo<Tag>::has_view>> {
+class ViewExtValueBase {
  protected:
   ~ViewExtValueBase() = default;
 
@@ -108,7 +117,9 @@ struct ReferenceTag {
 //   view from the view storage.
 template <class Tag>
   requires internal::strong_types::IsTag<Tag>
-class StrongValue : public internal::strong_types::ViewExtValueBase<Tag> {
+class StrongValue : public internal::strong_types::InheritIf<
+                        internal::strong_types::TagInfo<Tag>::has_view,
+                        internal::strong_types::ViewExtValueBase<Tag>> {
   using Value = typename Tag::Value;
 
  public:
