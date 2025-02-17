@@ -43,6 +43,39 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "common",
+    hdrs = ["common.hpp"],
+)
+
+cc_library(
+    name = "resource",
+    srcs = ["resource.cpp"],
+    hdrs = ["resource.hpp"],
+    deps = [
+        ":common",
+        ":memtype",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)
+
+cc_library(
+    name = "memtype",
+    hdrs = ["memtype.hpp"],
+)
+
+cc_library(
+    name = "casts",
+    hdrs = ["casts.hpp"],
+)
+
+cc_library(
+    name = "list",
+    srcs = ["list.cpp"],
+    hdrs = ["list.hpp"],
+    deps = [":casts"],
+)
+
 cc_binary(
     name = "scic",
     srcs = [
@@ -56,10 +89,8 @@ cc_binary(
         "banner.hpp",
         "builtins.cpp",
         "builtins.hpp",
-        "casts.hpp",
         "class.cpp",
         "class.hpp",
-        "common.hpp",
         "compile.cpp",
         "compile.hpp",
         "compiler.cpp",
@@ -73,13 +104,10 @@ cc_binary(
         "expr.hpp",
         "global_compiler.cpp",
         "global_compiler.hpp",
-        "list.cpp",
-        "list.hpp",
         "listing.cpp",
         "listing.hpp",
         "loop.cpp",
         "loop.hpp",
-        "memtype.hpp",
         "object.cpp",
         "object.hpp",
         "opcodes.hpp",
@@ -124,9 +152,13 @@ cc_binary(
     ],
     visibility = ["//visibility:public"],
     deps = [
+        ":casts",
         ":chartype",
+        ":common",
         ":config",
         ":input",
+        ":list",
+        ":memtype",
         ":symtypes",
         ":text",
         ":varlist",
