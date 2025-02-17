@@ -13,10 +13,10 @@
 #include <string_view>
 #include <utility>
 
+#include "absl/strings/str_format.h"
 #include "scic/alist.hpp"
 #include "scic/common.hpp"
 #include "scic/config.hpp"
-#include "scic/error.hpp"
 #include "scic/listing.hpp"
 #include "scic/opcodes.hpp"
 #include "scic/optimize.hpp"
@@ -462,7 +462,7 @@ void ANCall::list(ListingFile* listFile) {
 
 void ANCall::emit(FixupContext* fixup_ctxt, OutputFile* out) {
   if (!target || !target->offset.has_value()) {
-    Error("Undefined procedure: %s", name);
+    throw std::runtime_error(absl::StrFormat("Undefined procedure: %s", name));
     return;
   }
 
