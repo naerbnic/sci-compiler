@@ -15,6 +15,7 @@
 
 #include "absl/strings/str_format.h"
 #include "scic/class.hpp"
+#include "scic/common.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
 #include "scic/input.hpp"
@@ -25,7 +26,6 @@
 #include "scic/parse_context.hpp"
 #include "scic/resource.hpp"
 #include "scic/selector.hpp"
-#include "scic/sol.hpp"
 #include "scic/symtbl.hpp"
 #include "scic/symtypes.hpp"
 #include "scic/token.hpp"

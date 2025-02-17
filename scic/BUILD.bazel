@@ -26,6 +26,23 @@ cc_library(
     hdrs = ["text.hpp"],
 )
 
+cc_library(
+    name = "varlist",
+    srcs = ["varlist.cpp"],
+    hdrs = ["varlist.hpp"],
+    deps = [":symtypes"],
+)
+
+cc_library(
+    name = "input",
+    srcs = ["input.cpp"],
+    hdrs = ["input.hpp"],
+    deps = [
+        "@abseil-cpp//absl/cleanup",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)
+
 cc_binary(
     name = "scic",
     srcs = [
@@ -56,8 +73,6 @@ cc_binary(
         "expr.hpp",
         "global_compiler.cpp",
         "global_compiler.hpp",
-        "input.cpp",
-        "input.hpp",
         "list.cpp",
         "list.hpp",
         "listing.cpp",
@@ -105,19 +120,18 @@ cc_binary(
         "toktypes.hpp",
         "update.cpp",
         "update.hpp",
-        "varlist.cpp",
-        "varlist.hpp",
         "vocab.hpp",
     ],
     visibility = ["//visibility:public"],
     deps = [
         ":chartype",
         ":config",
+        ":input",
         ":symtypes",
         ":text",
+        ":varlist",
         "//util/platform",
         "@abseil-cpp//absl/base:nullability",
-        "@abseil-cpp//absl/cleanup",
         "@abseil-cpp//absl/container:btree",
         "@abseil-cpp//absl/debugging:failure_signal_handler",
         "@abseil-cpp//absl/debugging:stacktrace",

@@ -6,8 +6,8 @@
 #include <string>
 
 #include "absl/strings/str_format.h"
+#include "scic/common.hpp"
 #include "scic/memtype.hpp"
-#include "scic/sol.hpp"
 
 std::string ResNameMake(MemType type, int num) {
   //	a quick and dirty way of avoiding bringing in the interpreter's

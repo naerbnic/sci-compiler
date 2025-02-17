@@ -18,7 +18,6 @@
 
 #include "absl/cleanup/cleanup.h"
 #include "absl/strings/str_format.h"
-#include "scic/error.hpp"
 
 InputState gInputState;
 
@@ -149,7 +148,8 @@ void InputState::SetIncludePath(std::vector<std::string> const& extra_paths) {
 void InputState::OpenTopLevelFile(std::filesystem::path const& fileName,
                                   bool required) {
   if (!inputStack_.empty()) {
-    Warning("Top level file specified with other input sources open");
+    throw std::runtime_error(
+        "Top level file specified with other input sources open");
   }
 
   OpenFileAsInput(fileName, required);
@@ -168,7 +168,8 @@ void InputState::OpenFileAsInput(std::filesystem::path const& fileName,
   }
 
   if (!file) {
-    if (required) Panic("Can't open \"%s\"", fileName);
+    if (required)
+      throw std::runtime_error(absl::StrFormat("Can't open \"%s\"", fileName));
   }
 
   auto cleanup = absl::Cleanup([&] { fclose(file); });
