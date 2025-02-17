@@ -946,7 +946,7 @@ static void MakeProc(AList* curList, PNode* pn) {
                       ? (ANCodeBlk*)curList->newNode<ANProcCode>(
                             std::string(pn->sym->name()))
                       : (ANCodeBlk*)curList->newNode<ANMethCode>(
-                            std::string(pn->sym->name()));
+                            std::string(pn->sym->name()), gCurObj);
 
   pn->sym->type = (sym_t)(pn->type == PN_PROC ? S_PROC : S_SELECT);
 

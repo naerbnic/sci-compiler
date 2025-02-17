@@ -14,7 +14,6 @@
 #include <utility>
 
 #include "scic/alist.hpp"
-#include "scic/asm.hpp"
 #include "scic/common.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
@@ -23,7 +22,6 @@
 #include "scic/opcodes.hpp"
 #include "scic/optimize.hpp"
 #include "scic/output.hpp"
-#include "scic/parse_context.hpp"
 #include "scic/symtypes.hpp"
 #include "scic/text.hpp"
 #include "scic/varlist.hpp"
@@ -226,8 +224,8 @@ void ANProcCode::list(ListingFile* listFile) {
 // Class ANMethCode
 ///////////////////////////////////////////////////
 
-ANMethCode::ANMethCode(std::string name)
-    : ANCodeBlk(std::move(name)), obj(gCurObj) {}
+ANMethCode::ANMethCode(std::string name, Object* obj)
+    : ANCodeBlk(std::move(name)), obj(obj) {}
 
 void ANMethCode::list(ListingFile* listFile) {
   listFile->Listing("\n\nMethod: (%s %s)\n", obj->name, name);
