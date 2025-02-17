@@ -946,7 +946,7 @@ static void MakeProc(AList* curList, PNode* pn) {
                       ? (ANCodeBlk*)curList->newNode<ANProcCode>(
                             std::string(pn->sym->name()))
                       : (ANCodeBlk*)curList->newNode<ANMethCode>(
-                            std::string(pn->sym->name()), gCurObj);
+                            std::string(pn->sym->name()), gCurObj->name);
 
   pn->sym->type = (sym_t)(pn->type == PN_PROC ? S_PROC : S_SELECT);
 
@@ -999,8 +999,8 @@ void MakeObject(Object* theObj) {
 
   {
     // Create the object ID node.
-    ANObject* obj =
-        gSc->heapList->getList()->newNodeBefore<ANObject>(nullptr, theObj);
+    ANObject* obj = gSc->heapList->getList()->newNodeBefore<ANObject>(
+        nullptr, theObj->name);
     theObj->an = obj;
 
     // Create the table of properties.
@@ -1041,7 +1041,7 @@ void MakeObject(Object* theObj) {
   }
 
   // The rest of the object goes into hunk, as it never changes.
-  gSc->hunkList->getList()->newNodeBefore<ANObject>(gCodeStart, theObj);
+  gSc->hunkList->getList()->newNodeBefore<ANObject>(gCodeStart, theObj->name);
 
   // If this a class, add the property dictionary.
   ANObjTable* propDict = gSc->hunkList->getList()->newNodeBefore<ANObjTable>(

@@ -18,7 +18,6 @@
 #include "scic/config.hpp"
 #include "scic/error.hpp"
 #include "scic/listing.hpp"
-#include "scic/object.hpp"
 #include "scic/opcodes.hpp"
 #include "scic/optimize.hpp"
 #include "scic/output.hpp"
@@ -180,10 +179,10 @@ void ANText::emit(FixupContext* fixup_ctxt, OutputFile* out) {
 // Class ANObject
 ///////////////////////////////////////////////////
 
-ANObject::ANObject(Object* obj) : obj(obj) {}
+ANObject::ANObject(std::string name) : name(std::move(name)) {}
 
 void ANObject::list(ListingFile* listFile) {
-  listFile->Listing("\nObject: %-20s", obj->name);
+  listFile->Listing("\nObject: %-20s", name);
 }
 
 ///////////////////////////////////////////////////
@@ -224,11 +223,11 @@ void ANProcCode::list(ListingFile* listFile) {
 // Class ANMethCode
 ///////////////////////////////////////////////////
 
-ANMethCode::ANMethCode(std::string name, Object* obj)
-    : ANCodeBlk(std::move(name)), obj(obj) {}
+ANMethCode::ANMethCode(std::string name, std::string obj_name)
+    : ANCodeBlk(std::move(name)), obj_name(std::move(obj_name)) {}
 
 void ANMethCode::list(ListingFile* listFile) {
-  listFile->Listing("\n\nMethod: (%s %s)\n", obj->name, name);
+  listFile->Listing("\n\nMethod: (%s %s)\n", obj_name, name);
   ANCodeBlk::list(listFile);
 }
 
