@@ -15,6 +15,7 @@
 
 #include "scic/alist.hpp"
 #include "scic/asm.hpp"
+#include "scic/common.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
 #include "scic/listing.hpp"
@@ -23,7 +24,6 @@
 #include "scic/optimize.hpp"
 #include "scic/output.hpp"
 #include "scic/parse_context.hpp"
-#include "scic/sol.hpp"
 #include "scic/symbol.hpp"
 #include "scic/symtypes.hpp"
 #include "scic/text.hpp"

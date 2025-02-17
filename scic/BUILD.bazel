@@ -95,7 +95,6 @@ cc_binary(
         "selector.hpp",
         "share.cpp",
         "share.hpp",
-        "sol.hpp",
         "symbol.cpp",
         "symbol.hpp",
         "symtbl.cpp",

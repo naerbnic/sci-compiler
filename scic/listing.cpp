@@ -14,11 +14,11 @@
 #include "absl/functional/function_ref.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
+#include "scic/common.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
 #include "scic/opcodes.hpp"
 #include "scic/sc.hpp"
-#include "scic/sol.hpp"
 
 #define JUST_OP 0  // Only operator -- no arguments
 #define OP_ARGS 1  // Operator takes arguments
