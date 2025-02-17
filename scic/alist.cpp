@@ -4,7 +4,6 @@
 
 #include <cstddef>
 
-#include "scic/anode.hpp"
 #include "scic/listing.hpp"
 #include "scic/output.hpp"
 

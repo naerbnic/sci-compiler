@@ -13,16 +13,12 @@
 
 #include "scic/alist.hpp"
 #include "scic/listing.hpp"
-
-class OutputFile;
+#include "scic/output.hpp"
 
 // Sizes of parameters
 #define OPSIZE 1
 #define BYTESIZE 2
 #define WORDSIZE 3
-
-struct ANode;
-class Symbol;
 
 template <class T>
 struct ANComposite : ANode {
