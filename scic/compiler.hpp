@@ -25,7 +25,6 @@ struct Compiler {
   VarList localVars;
   int lastLineNum;
   ANTable* dispTbl;
-  ANWord* numDispTblEntries;
 };
 
 #endif

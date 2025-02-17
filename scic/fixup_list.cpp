@@ -4,7 +4,6 @@
 
 #include "scic/alist.hpp"
 #include "scic/anode.hpp"
-#include "scic/common.hpp"
 #include "scic/config.hpp"
 #include "scic/listing.hpp"
 #include "scic/output.hpp"
@@ -48,40 +47,6 @@ class ANWordPadding : public ANode {
     }
   }
   // Emits the object code for the node to the output file.
-};
-
-class ANComputedWord : public ANode {
- public:
-  size_t size() override { return 2; }
-  void list(ListingFile* listFile) override {
-    listFile->ListWord(*offset, value());
-  }
-  void emit(OutputFile* out) override { out->WriteWord(value()); }
-
- protected:
-  virtual SCIWord value() const = 0;
-};
-
-class ANOffsetWord : public ANComputedWord {
- public:
-  ANOffsetWord(ANode* target, std::size_t rel_offset)
-      : target(target), rel_offset(rel_offset) {}
-
-  ANode* target;
-  std::size_t rel_offset;
-
- protected:
-  SCIWord value() const override { return *target->offset + rel_offset; }
-};
-
-class ANCountWord : public ANComputedWord {
- public:
-  ANCountWord(AList* target) : target(target) {}
-
-  AList* target;
-
- protected:
-  SCIWord value() const override { return target->length(); }
 };
 
 }  // namespace

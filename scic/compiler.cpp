@@ -70,8 +70,9 @@ void Compiler::InitAsm() {
   // space to indicate whether script has far text (dummy)
   hunkBody->newNode<ANWord>();
 
-  numDispTblEntries = hunkBody->newNode<ANWord>();
+  auto* numDispTblEntries = hunkBody->newNode<ANCountWord>(nullptr);
   dispTbl = hunkBody->newNode<ANTable>("dispatch table");
+  numDispTblEntries->target = dispTbl->getList();
 
   gCodeStart = 0;
 }
@@ -138,7 +139,6 @@ void Compiler::MakeDispatch(PublicList const& publicList) {
   for (auto const& pub : publicList) {
     maxEntry = std::max(pub->entry, maxEntry);
   }
-  numDispTblEntries->value = maxEntry + 1;
   for (int i = 0; i <= maxEntry; ++i) {
     ANDispatch* an = dispTbl->getList()->newNode<ANDispatch>();
     auto* sym = FindPublic(publicList, i);
