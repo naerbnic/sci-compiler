@@ -118,13 +118,4 @@ void WriteWarning(std::string_view text) {
   if (gNumWarnings + gNumErrors == 1) beep();
 }
 
-[[noreturn]] void WritePanic(std::string_view text) {
-  error_impl::WriteOutput("Fatal: ");
-  error_impl::WriteOutput(text);
-  error_impl::WriteOutput("\n");
-
-  beep();
-  exit(3);
-}
-
 }  // namespace error_impl

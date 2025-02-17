@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -138,7 +139,7 @@ static void WriteSelector() {
   FILE* fp;
 
   if (!(fp = fopen("selector", "w")))
-    Panic("Can't open 'selector' for output.");
+    throw std::runtime_error("Can't open 'selector' for output.");
   fseek(fp, 0L, SEEK_SET);
 
   absl::FPrintF(fp, "(selectors\n");
@@ -147,13 +148,14 @@ static void WriteSelector() {
 
   absl::FPrintF(fp, ")\n");
 
-  if (fclose(fp) == EOF) Panic("Error writing selector file");
+  if (fclose(fp) == EOF)
+    throw std::runtime_error("Error writing selector file");
 }
 
 static void WriteClassDefs() {
   FILE* fp;
   if (!(fp = fopen("classdef", "w")))
-    Panic("Can't open 'classdef' for output.");
+    throw std::runtime_error("Can't open 'classdef' for output.");
 
   int classNum = -1;
   for (Class* cp = NextClass(classNum); cp; cp = NextClass(classNum)) {
@@ -191,20 +193,21 @@ static void WriteClassDefs() {
     absl::FPrintF(fp, ")\n\n\n");
   }
 
-  if (fclose(fp) == EOF) Panic("Error writing classdef");
+  if (fclose(fp) == EOF) throw std::runtime_error("Error writing classdef");
 }
 
 static void WriteClasses() {
   FILE* fp;
 
   // Open the file 'classes', on which this heirarchy is printed.
-  if (!(fp = fopen("classes", "w"))) Panic("Can't open 'classes' for output.");
+  if (!(fp = fopen("classes", "w")))
+    throw std::runtime_error("Can't open 'classes' for output.");
 
   // Print the classes in heirarchical order.
   PrintSubClasses(gClasses[0], 0, fp);
 
   // Close the file.
-  if (fclose(fp) == EOF) Panic("Error writing 'classes'");
+  if (fclose(fp) == EOF) throw std::runtime_error("Error writing 'classes'");
 }
 
 static void PrintSubClasses(Class* sp, int level, FILE* fp) {

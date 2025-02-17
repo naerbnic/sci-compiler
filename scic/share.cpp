@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <ctime>
 #include <memory>
+#include <stdexcept>
 
 #include "scic/config.hpp"
 #include "scic/error.hpp"
@@ -29,7 +30,8 @@ void Lock() {
 
   // Create the semaphore file.  If we can't do so, loop until we can.
   if (!fileLock->LockFile()) {
-    if (gConfig->abortIfLocked) Panic("Access to database denied");
+    if (gConfig->abortIfLocked)
+      throw std::runtime_error("Access to database denied");
     fprintf(stderr, "Waiting for access to class database");
     time(&then);
     while (!fileLock->LockFile()) {

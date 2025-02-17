@@ -16,7 +16,6 @@
 #include "absl/strings/str_format.h"
 #include "scic/common.hpp"
 #include "scic/config.hpp"
-#include "scic/error.hpp"
 #include "scic/opcodes.hpp"
 #include "scic/sc.hpp"
 
@@ -253,7 +252,8 @@ class ListingFileImpl : public ListingFile {
     char buf[512];
     for (; sourceLineNum_ < num; sourceLineNum_++) {
       if (!fgets(buf, sizeof buf, sourceFile_)) {
-        Panic("Can't read source line %d", sourceLineNum_);
+        throw std::runtime_error(
+            absl::StrFormat("Can't read source line %d", sourceLineNum_));
       }
     }
     ListingNoCRLF("%s", buf);
@@ -313,12 +313,14 @@ std::unique_ptr<ListingFile> ListingFile::Open(
   FILE* sourceFile = nullptr;
 
   if (!(listFile = fopen(listName.string().c_str(), "wt"))) {
-    Panic("Can't open %s for listing", listName.string());
+    throw std::runtime_error(
+        absl::StrFormat("Can't open %s for listing", listName.string()));
   }
 
   if (gConfig->includeDebugInfo) {
     if (!(sourceFile = fopen(std::string(sourceFileName).c_str(), "rt")))
-      Panic("Can't open %s for source lines in listing", sourceFileName);
+      throw std::runtime_error(absl::StrFormat(
+          "Can't open %s for source lines in listing", sourceFileName));
   }
 
   auto result = std::make_unique<ListingFileImpl>(listFile, sourceFile);

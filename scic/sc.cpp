@@ -9,12 +9,15 @@
 #include <filesystem>
 #include <iostream>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <vector>
 
+#include "absl/cleanup/cleanup.h"
 #include "absl/debugging/failure_signal_handler.h"
 #include "absl/debugging/symbolize.h"
+#include "absl/strings/str_format.h"
 #include "argparse/argparse.hpp"
 #include "scic/asm.hpp"
 #include "scic/banner.hpp"
@@ -165,7 +168,8 @@ int main(int argc, char **argv) {
   }
 
   // See if the first file to be compiled exists.  If not, exit.
-  if (!FileExists(files[0])) Panic("Can't find %s", files[0]);
+  if (!FileExists(files[0]))
+    throw std::runtime_error(absl::StrFormat("Can't find %s", files[0]));
 
   // Set the include path.
   gInputState.SetIncludePath(cli_include_path);
@@ -176,7 +180,7 @@ int main(int argc, char **argv) {
   InstallBuiltIns();
   InstallObjects();
   Lock();
-  std::atexit(Unlock);
+  auto unlock = absl::Cleanup([] { Unlock(); });
   gNumErrors = gNumWarnings = 0;
   gInputState.OpenFileAsInput(selector_file, true);
   Parse();
@@ -258,7 +262,7 @@ static void ShowInfo() {
 
 static void InstallCommandLineDefine(std::string_view str) {
   if (str.empty()) {
-    Panic("-D flag used without symbol to define");
+    throw std::runtime_error("-D flag used without symbol to define");
   }
   std::string_view token;
   std::string_view value;
@@ -271,7 +275,9 @@ static void InstallCommandLineDefine(std::string_view str) {
     value = str.substr(eq_index + 1);
   }
 
-  if (gSyms.lookup(token)) Panic("'%s' has already been defined", token);
+  if (gSyms.lookup(token))
+    throw std::runtime_error(
+        absl::StrFormat("'%s' has already been defined", token));
 
   Symbol *sym = gSyms.installGlobal(token, S_DEFINE);
   sym->setStr(std::string(value));
@@ -283,6 +289,7 @@ static SciTargetArch GetTargetArchitecture(std::string_view str) {
   } else if (str == "SCI_2") {
     return SciTargetArch::SCI_2;
   } else {
-    Panic("Invalid target architecture: %s", str);
+    throw std::runtime_error(
+        absl::StrFormat("Invalid target architecture: %s", str));
   }
 }

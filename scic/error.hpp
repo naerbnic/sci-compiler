@@ -27,9 +27,6 @@ void Severe(absl::FormatSpec<Args...> const&, Args const&... args);
 template <class... Args>
 void Warning(absl::FormatSpec<Args...> const&, Args const&... args);
 
-template <class... Args>
-[[noreturn]] void Panic(absl::FormatSpec<Args...> const&, Args const&... args);
-
 extern int gNumErrors;
 extern int gNumWarnings;
 
@@ -43,7 +40,6 @@ void WriteInfo(std::string_view text);
 void WriteOutput(std::string_view text);
 void WriteSevere(std::string_view text);
 void WriteWarning(std::string_view text);
-[[noreturn]] void WritePanic(std::string_view text);
 
 }  // namespace error_impl
 
@@ -76,12 +72,6 @@ void Severe(absl::FormatSpec<Args...> const& spec, Args const&... args) {
 template <class... Args>
 void Warning(absl::FormatSpec<Args...> const& spec, Args const&... args) {
   error_impl::WriteWarning(absl::StrFormat(spec, args...));
-}
-
-template <class... Args>
-[[noreturn]] void Panic(absl::FormatSpec<Args...> const& spec,
-                        Args const&... args) {
-  error_impl::WritePanic(absl::StrFormat(spec, args...));
 }
 
 #endif

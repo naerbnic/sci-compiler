@@ -164,6 +164,7 @@ cc_binary(
         ":varlist",
         "//util/platform",
         "@abseil-cpp//absl/base:nullability",
+        "@abseil-cpp//absl/cleanup",
         "@abseil-cpp//absl/container:btree",
         "@abseil-cpp//absl/debugging:failure_signal_handler",
         "@abseil-cpp//absl/debugging:stacktrace",
