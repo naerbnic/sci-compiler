@@ -17,7 +17,6 @@
 #include "scic/asm.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
-#include "scic/global_compiler.hpp"
 #include "scic/listing.hpp"
 #include "scic/object.hpp"
 #include "scic/opcodes.hpp"
@@ -107,11 +106,11 @@ void ANDispatch::list(ListingFile* listFile) {
 
 size_t ANDispatch::size() { return 2; }
 
-void ANDispatch::emit(OutputFile* out) {
+void ANDispatch::emit(FixupContext* fixup_ctxt, OutputFile* out) {
   // If the destination of this dispatch entry is in the heap (i.e.
   // an object rather than code), it must be fixed up.
 
-  if (gSc->heapList->contains(target)) gSc->hunkList->addFixup(*offset);
+  if (fixup_ctxt->HeapHasNode(target)) fixup_ctxt->AddFixup(*offset);
 
   out->WriteWord((uint32_t)(target && name ? *target->offset : 0));
 }
@@ -126,7 +125,9 @@ size_t ANWord::size() { return 2; }
 
 void ANWord::list(ListingFile* listFile) { listFile->ListWord(*offset, value); }
 
-void ANWord::emit(OutputFile* out) { out->WriteWord(value); }
+void ANWord::emit(FixupContext* fixup_ctxt, OutputFile* out) {
+  out->WriteWord(value);
+}
 
 ///////////////////////////////////////////////////
 // Class ANTable
@@ -146,7 +147,9 @@ void ANTable::list(ListingFile* listFile) {
   for (auto& entry : entries) entry.list(listFile);
 }
 
-void ANTable::emit(OutputFile* out) { entries.emit(out); }
+void ANTable::emit(FixupContext* fixup_ctxt, OutputFile* out) {
+  entries.emit(fixup_ctxt, out);
+}
 
 ///////////////////////////////////////////////////
 // Class ANObjTable
@@ -172,7 +175,7 @@ void ANText::list(ListingFile* listFile) {
   listFile->ListText(*offset, text->str);
 }
 
-void ANText::emit(OutputFile* out) {
+void ANText::emit(FixupContext* fixup_ctxt, OutputFile* out) {
   out->WriteNullTerminatedString(text->str);
 }
 
@@ -198,7 +201,9 @@ ANCodeBlk::ANCodeBlk(std::string name) : name(std::move(name)) {
 
 size_t ANCodeBlk::size() { return code.size(); }
 
-void ANCodeBlk::emit(OutputFile* out) { code.emit(out); }
+void ANCodeBlk::emit(FixupContext* fixup_ctxt, OutputFile* out) {
+  code.emit(fixup_ctxt, out);
+}
 
 size_t ANCodeBlk::setOffset(size_t ofs) {
   offset = ofs;
@@ -243,7 +248,9 @@ void ANProp::list(ListingFile* listFile) {
                        name);
 }
 
-void ANProp::emit(OutputFile* out) { out->WriteWord(value()); }
+void ANProp::emit(FixupContext* fixup_ctxt, OutputFile* out) {
+  out->WriteWord(value());
+}
 
 std::string_view ANIntProp::desc() { return "prop"; }
 
@@ -251,9 +258,9 @@ uint32_t ANIntProp::value() { return val; }
 
 ANTextProp::ANTextProp(std::string name, int v) : ANProp(std::move(name), v) {}
 
-void ANTextProp::emit(OutputFile* out) {
-  gSc->heapList->addFixup(*offset);
-  ANProp::emit(out);
+void ANTextProp::emit(FixupContext* fixup_ctxt, OutputFile* out) {
+  fixup_ctxt->AddFixup(*offset);
+  ANProp::emit(fixup_ctxt, out);
 }
 
 std::string_view ANTextProp::desc() { return "text"; }
@@ -281,7 +288,9 @@ size_t ANOpCode::size() { return 1; }
 
 void ANOpCode::list(ListingFile* listFile) { listFile->ListOp(*offset, op); }
 
-void ANOpCode::emit(OutputFile* out) { out->WriteOp(op); }
+void ANOpCode::emit(FixupContext* fixup_ctxt, OutputFile* out) {
+  out->WriteOp(op);
+}
 
 ///////////////////////////////////////////////////
 // Class ANLabel
@@ -295,7 +304,7 @@ size_t ANLabel::size() { return 0; }
 
 void ANLabel::list(ListingFile* listFile) { listFile->Listing(".%d", number); }
 
-void ANLabel::emit(OutputFile*) {}
+void ANLabel::emit(FixupContext*, OutputFile*) {}
 
 ///////////////////////////////////////////////////
 // Class ANOpUnsign
@@ -324,7 +333,7 @@ void ANOpUnsign::list(ListingFile* listFile) {
     listFile->ListArg("$%-4x\t(%s)", (SCIUWord)value, *name);
 }
 
-void ANOpUnsign::emit(OutputFile* out) {
+void ANOpUnsign::emit(FixupContext* fixup_ctxt, OutputFile* out) {
   out->WriteOp(op);
   if (op & OP_BYTE)
     out->WriteByte(value);
@@ -351,7 +360,7 @@ void ANOpSign::list(ListingFile* listFile) {
     listFile->ListArg("$%-4x\t(%s)", (SCIUWord)value, *name);
 }
 
-void ANOpSign::emit(OutputFile* out) {
+void ANOpSign::emit(FixupContext* fixup_ctxt, OutputFile* out) {
   out->WriteOp(op);
   if (op & OP_BYTE)
     out->WriteByte(value);
@@ -406,7 +415,7 @@ void ANOpExtern::list(ListingFile* listFile) {
   ListNumArgs(listFile, *offset + 1, numArgs);
 }
 
-void ANOpExtern::emit(OutputFile* out) {
+void ANOpExtern::emit(FixupContext* fixup_ctxt, OutputFile* out) {
   out->WriteOp(op);
   if ((op & ~OP_BYTE) == op_calle) {
     if (op & OP_BYTE)
@@ -455,7 +464,7 @@ void ANCall::list(ListingFile* listFile) {
   ListNumArgs(listFile, *offset + 1, numArgs);
 }
 
-void ANCall::emit(OutputFile* out) {
+void ANCall::emit(FixupContext* fixup_ctxt, OutputFile* out) {
   if (!target || !target->offset.has_value()) {
     Error("Undefined procedure: %s", name);
     return;
@@ -500,7 +509,7 @@ void ANBranch::list(ListingFile* listFile) {
                     ((ANLabel*)target)->number);
 }
 
-void ANBranch::emit(OutputFile* out) {
+void ANBranch::emit(FixupContext* fixup_ctxt, OutputFile* out) {
   int n = *target->offset - (*offset + size());
 
   out->WriteOp(op);
@@ -528,7 +537,7 @@ void ANVarAccess::list(ListingFile* listFile) {
     listFile->ListArg("$%-4x", addr);
 }
 
-void ANVarAccess::emit(OutputFile* out) {
+void ANVarAccess::emit(FixupContext* fixup_ctxt, OutputFile* out) {
   out->WriteOp(op);
   if (op & OP_BYTE)
     out->WriteByte(addr);
@@ -549,9 +558,9 @@ void ANOpOfs::list(ListingFile* listFile) {
   listFile->ListArg("$%-4x", gTextStart + ofs);
 }
 
-void ANOpOfs::emit(OutputFile* out) {
+void ANOpOfs::emit(FixupContext* fixup_ctxt, OutputFile* out) {
   out->WriteOp(op);
-  gSc->hunkList->addFixup(*offset + 1);
+  fixup_ctxt->AddFixup(*offset + 1);
   out->WriteWord(gTextStart + ofs);
 }
 
@@ -568,14 +577,14 @@ void ANObjID::list(ListingFile* listFile) {
   listFile->ListArg("$%-4x\t(%s)", *target->offset, sym->name());
 }
 
-void ANObjID::emit(OutputFile* out) {
+void ANObjID::emit(FixupContext* fixup_ctxt, OutputFile* out) {
   if (!sym) {
     Error("Undefined object from line %u: %s", sym->lineNum, sym->name());
     return;
   }
 
   out->WriteOp(op);
-  gSc->hunkList->addFixup(*offset + 1);
+  fixup_ctxt->AddFixup(*offset + 1);
   out->WriteWord(*target->offset);
 }
 
@@ -593,7 +602,7 @@ void ANEffctAddr::list(ListingFile* listFile) {
   listFile->ListArg("$%-4x\t(%s)", addr, *name);
 }
 
-void ANEffctAddr::emit(OutputFile* out) {
+void ANEffctAddr::emit(FixupContext* fixup_ctxt, OutputFile* out) {
   out->WriteOp(op);
   if (op & OP_BYTE) {
     out->WriteByte(eaType);
@@ -618,7 +627,7 @@ void ANSend::list(ListingFile* listFile) {
   ListNumArgs(listFile, *offset + 1, numArgs);
 }
 
-void ANSend::emit(OutputFile* out) {
+void ANSend::emit(FixupContext* fixup_ctxt, OutputFile* out) {
   out->WriteOp(op);
   WriteNumArgs(out, numArgs);
 }
@@ -640,7 +649,7 @@ void ANSuper::list(ListingFile* listFile) {
   ListNumArgs(listFile, *offset + 1, numArgs);
 }
 
-void ANSuper::emit(OutputFile* out) {
+void ANSuper::emit(FixupContext* fixup_ctxt, OutputFile* out) {
   out->WriteOp(op);
   if (op & OP_BYTE)
     out->WriteByte(classNum);
@@ -674,7 +683,7 @@ void ANVars::list(ListingFile* listFile) {
   listFile->Listing("\n");
 }
 
-void ANVars::emit(OutputFile* out) {
+void ANVars::emit(FixupContext* fixup_ctxt, OutputFile* out) {
   int curOfs = *offset;
   out->WriteWord(theVars.values.size());
   curOfs += 2;
@@ -683,7 +692,7 @@ void ANVars::emit(OutputFile* out) {
     int n = var.value;
     if (var.type == S_STRING) {
       n += gTextStart;
-      gSc->heapList->addFixup(curOfs);
+      fixup_ctxt->AddFixup(curOfs);
     }
     out->WriteWord(n);
     curOfs += 2;
@@ -708,7 +717,7 @@ void ANFileName::list(ListingFile* listFile) {
   }
 }
 
-void ANFileName::emit(OutputFile* out) {
+void ANFileName::emit(FixupContext* fixup_ctxt, OutputFile* out) {
   switch (gConfig->targetArch) {
     case SciTargetArch::SCI_1_1:
       break;
@@ -750,7 +759,7 @@ void ANLineNum::list(ListingFile* listFile) {
   }
 }
 
-void ANLineNum::emit(OutputFile* out) {
+void ANLineNum::emit(FixupContext* fixup_ctxt, OutputFile* out) {
   switch (gConfig->targetArch) {
     case SciTargetArch::SCI_1_1:
       break;

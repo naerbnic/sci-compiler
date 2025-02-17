@@ -25,7 +25,7 @@ size_t ANode::setOffset(size_t ofs) {
   return ofs + size();
 }
 
-void ANode::emit(OutputFile*) {}
+void ANode::emit(FixupContext*, OutputFile*) {}
 
 void ANode::list(ListingFile* listFile) {}
 
@@ -111,9 +111,9 @@ void FixupList::list(ListingFile* listFile) {
   listFixups(listFile);
 }
 
-void FixupList::emit(OutputFile* out) {
+void FixupList::emit(FixupContext* fixup_ctxt, OutputFile* out) {
   initFixups();
-  list_.emit(out);
+  list_.emit(fixup_ctxt, out);
   emitFixups(out);
 }
 

@@ -78,8 +78,8 @@ void Assemble(ListingFile* listFile) {
   absl::FPrintF(infoFile, "%s\n", gInputState.GetTopLevelFileName());
   fclose(infoFile);
 
-  gSc->heapList->emit(obj_files.heap.get());
-  gSc->hunkList->emit(obj_files.hunk.get());
+  gSc->heapList->emit(gSc.get(), obj_files.heap.get());
+  gSc->hunkList->emit(gSc.get(), obj_files.hunk.get());
 
   // Now generate object code.
   listFile->Listing(
