@@ -19,7 +19,6 @@ void CompileExpr(AOpList* curList, PNode* pn);
 void MakeBranch(AOpList* curList, uint8_t type, ANLabel* target);
 void MakeBranch(AOpList* curList, uint8_t type,
                 ForwardReference<ANLabel*>* target);
-void MakeDispatch(int maxNum);
 void MakeObject(Object* theObj);
 void MakeText();
 void MakeLabel(AOpList* curList, ForwardReference<ANLabel*>* ref);

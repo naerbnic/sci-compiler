@@ -2,6 +2,8 @@
 #define PUBLIC_HPP
 
 #include <cstdint>
+#include <deque>
+#include <memory>
 
 #include "scic/selector.hpp"
 
@@ -14,5 +16,7 @@ struct Public {
   int script;      // script number
   uint32_t entry;  // index in dispatch table
 };
+
+using PublicList = std::deque<std::unique_ptr<Public>>;
 
 #endif

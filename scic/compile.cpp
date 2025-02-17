@@ -11,7 +11,6 @@
 #include "scic/alist.hpp"
 #include "scic/anode.hpp"
 #include "scic/config.hpp"
-#include "scic/define.hpp"
 #include "scic/error.hpp"
 #include "scic/fixup_list.hpp"
 #include "scic/global_compiler.hpp"
@@ -974,23 +973,6 @@ static void MakeProc(AList* curList, PNode* pn) {
     an->code.newNode<ANLineNum>(gInputState.GetTopLevelLineNum());
   }
   an->code.newNode<ANOpCode>(op_ret);
-}
-
-void MakeDispatch(int maxEntry) {
-  // Compile the dispatch table which goes at the start of this script.
-
-  // Now cycle through the publicly declared procedures/objects,
-  // creating asmNodes for a table of their offsets.
-  gSc->numDispTblEntries->value = maxEntry + 1;
-  for (int i = 0; i <= maxEntry; ++i) {
-    ANDispatch* an = gSc->dispTbl->entries.newNode<ANDispatch>();
-    auto* sym = FindPublic(i);
-    if (sym) {
-      an->name = std::string(sym->name());
-      sym->forwardRef.RegisterCallback(
-          [an](ANode* target) { an->target = target; });
-    }
-  }
 }
 
 void MakeObject(Object* theObj) {

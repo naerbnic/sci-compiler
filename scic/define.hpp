@@ -4,6 +4,7 @@
 #ifndef DEFINE_HPP
 #define DEFINE_HPP
 
+#include "scic/public.hpp"
 #include "scic/selector.hpp"
 
 void Define();
@@ -12,7 +13,7 @@ void GlobalDecl();
 void Global();
 void Local();
 void DoPublic();
-Symbol* FindPublic(int);
+Symbol* FindPublic(PublicList const& publicList, int);
 void Extern();
 void InitPublics();
 void Definition();

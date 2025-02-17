@@ -1,8 +1,6 @@
 #include "scic/parse_context.hpp"
 
 #include <csetjmp>
-#include <deque>
-#include <memory>
 
 #include "absl/container/btree_map.h"
 #include "scic/class.hpp"
@@ -21,5 +19,5 @@ Symbol* gNameSymbol;
 VarList gLocalVars;
 VarList gGlobalVars;
 
-std::deque<std::unique_ptr<Public>> publicList;
+PublicList publicList;
 int publicMax = -1;

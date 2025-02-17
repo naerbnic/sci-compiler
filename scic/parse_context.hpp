@@ -2,8 +2,6 @@
 #define PARSE_CONTEXT_HPP
 
 #include <csetjmp>
-#include <deque>
-#include <memory>
 
 #include "absl/container/btree_map.h"
 #include "scic/class.hpp"
@@ -24,7 +22,7 @@ extern Object* gReceiver;
 extern VarList gGlobalVars;
 extern VarList gLocalVars;
 
-extern std::deque<std::unique_ptr<Public>> publicList;
+extern PublicList publicList;
 extern int publicMax;
 
 #endif

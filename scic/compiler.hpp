@@ -8,6 +8,7 @@
 #include "scic/anode.hpp"
 #include "scic/fixup_list.hpp"
 #include "scic/listing.hpp"
+#include "scic/public.hpp"
 #include "scic/varlist.hpp"
 
 struct Compiler : public FixupContext {
@@ -19,6 +20,8 @@ struct Compiler : public FixupContext {
 
   void InitAsm();
   void Assemble(ListingFile* listFile);
+
+  void MakeDispatch(PublicList const& publicList);
 
   std::unique_ptr<FixupList> heapList;
   std::unique_ptr<CodeList> hunkList;

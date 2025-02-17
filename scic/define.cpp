@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <deque>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -17,6 +16,7 @@
 #include "scic/compile.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
+#include "scic/global_compiler.hpp"
 #include "scic/parse.hpp"
 #include "scic/parse_context.hpp"
 #include "scic/public.hpp"
@@ -343,16 +343,15 @@ void DoPublic() {
 
     // Keep track of the maximum numbered public entry.
     entryPtr->entry = *entry_num;
-    if (*entry_num > publicMax) publicMax = *entry_num;
   }
 
   UnGetTok();
 
   // Generate the assembly nodes for the dispatch table.
-  MakeDispatch(publicMax);
+  gSc->MakeDispatch(publicList);
 }
 
-Symbol* FindPublic(int n) {
+Symbol* FindPublic(PublicList const& publicList, int n) {
   // Return a pointer to the symbol which is entry number 'n' in the
   // dispatch table.
 

@@ -1,20 +1,26 @@
 #include "scic/compiler.hpp"
 
+#include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <memory>
+#include <string>
 #include <utility>
 
 #include "absl/strings/str_format.h"
 #include "scic/alist.hpp"
 #include "scic/anode.hpp"
+#include "scic/define.hpp"
 #include "scic/fixup_list.hpp"
 #include "scic/input.hpp"
 #include "scic/listing.hpp"
 #include "scic/output.hpp"
 #include "scic/parse_context.hpp"
+#include "scic/public.hpp"
 #include "scic/sc.hpp"
+#include "scic/symbol.hpp"
 
 Compiler::Compiler() {
   hunkList = std::make_unique<CodeList>();
@@ -28,10 +34,6 @@ bool Compiler::HeapHasNode(ANode* node) const {
 }
 
 void Compiler::AddFixup(std::size_t ofs) { heapList->addFixup(ofs); }
-
-ANTable* gDispTbl;
-int gLastLineNum;
-ANWord* gNumDispTblEntries;
 
 void Compiler::InitAsm() {
   // Initialize the assembly list: dispose of any old list, then add nodes
@@ -53,8 +55,8 @@ void Compiler::InitAsm() {
   // space to indicate whether script has far text (dummy)
   hunkList->newNode<ANWord>();
 
-  gNumDispTblEntries = hunkList->newNode<ANWord>();
-  gDispTbl = hunkList->newNode<ANTable>("dispatch table");
+  numDispTblEntries = hunkList->newNode<ANWord>();
+  dispTbl = hunkList->newNode<ANTable>("dispatch table");
 
   gCodeStart = 0;
 }
@@ -107,4 +109,25 @@ void Compiler::Assemble(ListingFile* listFile) {
 
   heapList->clear();
   hunkList->clear();
+}
+
+void Compiler::MakeDispatch(PublicList const& publicList) {
+  // Compile the dispatch table which goes at the start of this script.
+
+  // Now cycle through the publicly declared procedures/objects,
+  // creating asmNodes for a table of their offsets.
+  std::uint32_t maxEntry = 0;
+  for (auto const& pub : publicList) {
+    maxEntry = std::max(pub->entry, maxEntry);
+  }
+  numDispTblEntries->value = maxEntry + 1;
+  for (int i = 0; i <= maxEntry; ++i) {
+    ANDispatch* an = dispTbl->entries.newNode<ANDispatch>();
+    auto* sym = FindPublic(publicList, i);
+    if (sym) {
+      an->name = std::string(sym->name());
+      sym->forwardRef.RegisterCallback(
+          [an](ANode* target) { an->target = target; });
+    }
+  }
 }
