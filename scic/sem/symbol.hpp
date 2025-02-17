@@ -38,6 +38,10 @@ struct GlobalIndexTag : IntBaseTag {};
 // An index into the global table of symbols.
 using GlobalIndex = util::StrongValue<GlobalIndexTag>;
 
+struct LocalIndexTag : IntBaseTag {};
+
+using LocalIndex = util::StrongValue<LocalIndexTag>;
+
 struct ModuleIdTag : IntBaseTag {};
 // The id of a module, a.k.a. the script number.
 using ModuleId = util::StrongValue<ModuleIdTag>;
@@ -47,12 +51,24 @@ constexpr ModuleId kKernelModuleId = ModuleId::Create(-1);
 struct PublicIndexTag : IntBaseTag {};
 using PublicIndex = util::StrongValue<PublicIndexTag>;
 
+struct ClassSpeciesTag : IntBaseTag {};
+using ClassSpecies = util::StrongValue<ClassSpeciesTag>;
+
 class Symbol {
  public:
-  // A global defined variable.
+  // These symbol value types are derived from the original code, and the
+  // various calls to the SymTbls::install* methods.
+
+  //  A global defined variable.
   struct Global {
     // The global index of the variable.
     GlobalIndex index;
+  };
+
+  // A local variable.
+  struct ModuleVar {
+    LocalIndex index;
+    int array_size;
   };
 
   // An external symbol reference.
@@ -63,7 +79,13 @@ class Symbol {
     PublicIndex public_index;
   };
 
-  struct Object {};
+  struct Object {
+    // Original code has a reference to an Object, but we will put it directly
+    // in the symbol for now.
+    ClassSpecies parent_class;
+  };
+
+  struct Procedure {};
 
   class Value : public util::ChoiceBase<Value, Global, Extern> {};
 
