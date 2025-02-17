@@ -9,7 +9,6 @@
 
 #include "absl/strings/str_format.h"
 #include "scic/input.hpp"
-#include "scic/share.hpp"
 #include "scic/symbol.hpp"
 #include "scic/token.hpp"
 #include "util/platform/platform.hpp"
@@ -64,7 +63,6 @@ void WriteError(std::string_view text) {
 
   beep();
 
-  Unlock();
   exit(3);
 }
 
@@ -126,8 +124,6 @@ void WriteWarning(std::string_view text) {
   error_impl::WriteOutput("\n");
 
   beep();
-
-  Unlock();
   exit(3);
 }
 

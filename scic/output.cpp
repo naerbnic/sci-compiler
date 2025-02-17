@@ -13,20 +13,23 @@
 #include <cstdlib>
 #include <cstring>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
 
+#include "absl/strings/str_format.h"
 #include "scic/common.hpp"
 #include "scic/config.hpp"
-#include "scic/error.hpp"
 #include "scic/memtype.hpp"
 #include "scic/resource.hpp"
 #include "util/platform/platform.hpp"
 
 OutputFile::OutputFile(std::string fileName) : fileName(fileName) {
   fp = CreateOutputFile(fileName);
-  if (!fp) Panic("Can't open output file %s", fileName);
+  if (!fp)
+    throw std::runtime_error(
+        absl::StrFormat("Can't open output file %s", fileName));
 }
 
 OutputFile::~OutputFile() { fclose(fp); }
@@ -68,7 +71,7 @@ void OutputFile::WriteByte(uint8_t b) { Write(&b, sizeof b); }
 
 void OutputFile::Write(const void* mp, size_t len) {
   if (fwrite(mp, 1, len, fp) != static_cast<std::size_t>(len))
-    Panic("Error writing %s", fileName);
+    throw std::runtime_error(absl::StrFormat("Error writing %s", fileName));
 }
 
 //////////////////////////////////////////////////////////////////////////////

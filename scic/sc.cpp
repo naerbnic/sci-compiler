@@ -4,6 +4,7 @@
 #include "scic/sc.hpp"
 
 #include <cstddef>
+#include <cstdlib>
 #include <exception>
 #include <filesystem>
 #include <iostream>
@@ -175,6 +176,7 @@ int main(int argc, char **argv) {
   InstallBuiltIns();
   InstallObjects();
   Lock();
+  std::atexit(Unlock);
   gNumErrors = gNumWarnings = 0;
   gInputState.OpenFileAsInput(selector_file, true);
   Parse();
@@ -199,7 +201,6 @@ int main(int argc, char **argv) {
   // Write out the class table and unlock the class database.
   WriteClassTbl();
   if (gConfig->writeOffsets) WritePropOffsets();
-  Unlock();
 
   return totalErrors != 0;
 }
