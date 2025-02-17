@@ -9,6 +9,23 @@ package_group(
     ],
 )
 
+cc_library(
+    name = "config",
+    srcs = ["config.cpp"],
+    hdrs = ["config.hpp"],
+)
+
+cc_library(
+    name = "symtypes",
+    hdrs = ["symtypes.hpp"],
+)
+
+cc_library(
+    name = "text",
+    srcs = ["text.cpp"],
+    hdrs = ["text.hpp"],
+)
+
 cc_binary(
     name = "scic",
     srcs = [
@@ -30,8 +47,6 @@ cc_binary(
         "compile.hpp",
         "compiler.cpp",
         "compiler.hpp",
-        "config.cpp",
-        "config.hpp",
         "debug_utils.hpp",
         "define.cpp",
         "define.hpp",
@@ -85,9 +100,6 @@ cc_binary(
         "symbol.hpp",
         "symtbl.cpp",
         "symtbl.hpp",
-        "symtypes.hpp",
-        "text.cpp",
-        "text.hpp",
         "token.cpp",
         "token.hpp",
         "toktypes.cpp",
@@ -101,6 +113,9 @@ cc_binary(
     visibility = ["//visibility:public"],
     deps = [
         ":chartype",
+        ":config",
+        ":symtypes",
+        ":text",
         "//util/platform",
         "@abseil-cpp//absl/base:nullability",
         "@abseil-cpp//absl/cleanup",
