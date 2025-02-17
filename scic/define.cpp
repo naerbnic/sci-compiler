@@ -220,7 +220,7 @@ void Local() {
     return;
   }
 
-  if (!gLocalVars.values.empty()) {
+  if (!gSc->localVars.values.empty()) {
     Error("Only one local statement allowed");
     return;
   }
@@ -241,7 +241,7 @@ void Local() {
           Severe("no closing ']' in array declaration");
           break;
         }
-        n = InitialValue(gLocalVars, size, arraySize);
+        n = InitialValue(gSc->localVars, size, arraySize);
         size += std::max(n, arraySize);
         if (n == -1 || (std::size_t)(size) > gConfig->maxVars) {
           Error(tooManyVars, gConfig->maxVars);
@@ -255,7 +255,7 @@ void Local() {
     else if (IsUndefinedIdent(token)) {
       theSym = gSyms.installLocal(token.name(), S_LOCAL);
       theSym->setVal(size);
-      n = InitialValue(gLocalVars, size, 1);
+      n = InitialValue(gSc->localVars, size, 1);
       size += n;
       if (n == -1 || (std::size_t)(size) > gConfig->maxVars) {
         Error(tooManyVars, gConfig->maxVars);
@@ -265,7 +265,7 @@ void Local() {
   }
 
   // Put the information back in the variable structure.
-  gLocalVars.type = VAR_LOCAL;
+  gSc->localVars.type = VAR_LOCAL;
 
   UnGetTok();
 }

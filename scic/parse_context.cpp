@@ -16,7 +16,6 @@ Object* gCurObj;
 Object* gReceiver;
 Symbol* gNameSymbol;
 
-VarList gLocalVars;
 VarList gGlobalVars;
 
 PublicList publicList;

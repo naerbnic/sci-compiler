@@ -20,7 +20,6 @@ extern Symbol* gNameSymbol;
 extern Object* gReceiver;
 
 extern VarList gGlobalVars;
-extern VarList gLocalVars;
 
 extern PublicList publicList;
 extern int publicMax;

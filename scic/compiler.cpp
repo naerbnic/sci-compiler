@@ -80,7 +80,7 @@ void Compiler::InitAsm() {
 void Compiler::Assemble(ListingFile* listFile) {
   // Assemble the list pointed to by asmHead.
 
-  auto vars = std::make_unique<ANVars>(gScript ? gLocalVars : gGlobalVars);
+  auto vars = std::make_unique<ANVars>(gScript ? localVars : gGlobalVars);
   heapList->getList()->addFront(std::move(vars));
 
   // Set the offsets in the object list.
