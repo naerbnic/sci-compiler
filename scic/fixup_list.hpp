@@ -31,21 +31,16 @@ class FixupList {
   void emit(HeapContext*, OutputFile*);
   size_t setOffset(size_t ofs);
 
-  // Increment the number of elements needing fixup.  This is
-  // called each time we generate an ANode requiring fixup.
-
-  void initFixups();
-  // Called once the module has been compiled to allocate space
-  // for the fixup table based on 'numFixups'.
-
-  void listFixups(ListingFile* listFile);
-  // List the fixup table.
-
-  void emitFixups(OutputFile*);
-  // Emit the fixup table to the object file.
-
-  // The word at offset 'ofs' in the object file needs relocation.
-  // Add the offset to the fixup table.
+  /**
+   * @brief Adds a fixup to the list.
+   *
+   * This method adds a fixup to the internal list, associating a node with a
+   * relative offset.
+   *
+   * @param node A pointer to the ANode object that represents the node to be
+   * fixed up.
+   * @param rel_ofs The relative offset where the fixup should be applied.
+   */
   void addFixup(ANode* node, std::size_t rel_ofs);
 
   bool contains(ANode* ln) {
@@ -80,13 +75,6 @@ class FixupList {
   AList list_;
   ANTable* bodyTable_;
   ANTable* fixupTable_;
-};
-
-struct CodeList : FixupList {
-  // The CodeList class specializes the FixupList class for actual p-code,
-  // which is the only sort of AList currently optimized.
-
-  void optimize();
 };
 
 #endif

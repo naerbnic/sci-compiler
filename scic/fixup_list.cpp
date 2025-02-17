@@ -4,7 +4,7 @@
 
 #include "scic/alist.hpp"
 #include "scic/anode.hpp"
-#include "scic/config.hpp"
+#include "scic/anode_impls.hpp"
 #include "scic/listing.hpp"
 #include "scic/output.hpp"
 
@@ -75,10 +75,6 @@ FixupList::~FixupList() {}
 
 size_t FixupList::setOffset(size_t ofs) { return list_.setOffset(ofs); }
 
-void FixupList::initFixups() {}
-
-void FixupList::listFixups(ListingFile* listFile) { list_.list(listFile); }
-
 void FixupList::addFixup(ANode* node, std::size_t rel_ofs) {
   fixupTable_->getList()->newNode<ANOffsetWord>(node, rel_ofs);
 }
@@ -86,39 +82,10 @@ void FixupList::addFixup(ANode* node, std::size_t rel_ofs) {
 void FixupList::list(ListingFile* listFile) { list_.list(listFile); }
 
 void FixupList::emit(HeapContext* heap_ctxt, OutputFile* out) {
-  initFixups();
   {
     FixupListContext fixup_ctxt(this, heap_ctxt);
     list_.collectFixups(&fixup_ctxt);
     fixupTable_->getList()->setOffset(*fixupTable_->offset);
   }
   list_.emit(out);
-}
-
-///////////////////////////////////////////////////
-// Class CodeList
-///////////////////////////////////////////////////
-
-void CodeList::optimize() {
-  if (!gConfig->noOptimize) {
-    for (auto it = list_.iter(); it; ++it)
-      while (it->optimize())
-        ;
-  }
-
-  // Make a first pass, resolving offsets and converting to byte offsets
-  // where possible.
-  setOffset(0);
-
-  // Continue resolving and converting to byte offsets until we've shrunk
-  // the code as far as it will go.
-  while (true) {
-    bool changed = false;
-    for (auto it = list_.iter(); it; ++it) {
-      changed |= it->tryShrink();
-    }
-    if (!changed) break;
-
-    setOffset(0);
-  }
 }

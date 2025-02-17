@@ -9,6 +9,7 @@
 
 #include "scic/alist.hpp"
 #include "scic/anode.hpp"
+#include "scic/anode_impls.hpp"
 #include "scic/fixup_list.hpp"
 #include "scic/listing.hpp"
 #include "scic/public.hpp"
@@ -35,7 +36,7 @@ struct Compiler {
 
  private:
   std::unique_ptr<FixupList> heapList;
-  std::unique_ptr<CodeList> hunkList;
+  std::unique_ptr<FixupList> hunkList;
   AList* textList;
   std::map<std::string, ANText*, std::less<>> textNodes;
 };

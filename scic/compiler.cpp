@@ -13,7 +13,9 @@
 #include "absl/strings/str_format.h"
 #include "scic/alist.hpp"
 #include "scic/anode.hpp"
+#include "scic/anode_impls.hpp"
 #include "scic/common.hpp"
+#include "scic/config.hpp"
 #include "scic/define.hpp"
 #include "scic/fixup_list.hpp"
 #include "scic/input.hpp"
@@ -115,10 +117,34 @@ class ANStringVar : public ANComputedWord {
   ANText* text;
 };
 
+void OptimizeHunk(AList* alist) {
+  if (!gConfig->noOptimize) {
+    for (auto it = alist->iter(); it; ++it)
+      while (it->optimize())
+        ;
+  }
+
+  // Make a first pass, resolving offsets and converting to byte offsets
+  // where possible.
+  alist->setOffset(0);
+
+  // Continue resolving and converting to byte offsets until we've shrunk
+  // the code as far as it will go.
+  while (true) {
+    bool changed = false;
+    for (auto it = alist->iter(); it; ++it) {
+      changed |= it->tryShrink();
+    }
+    if (!changed) break;
+
+    alist->setOffset(0);
+  }
+}
+
 }  // namespace
 
 Compiler::Compiler() {
-  hunkList = std::make_unique<CodeList>();
+  hunkList = std::make_unique<FixupList>();
   heapList = std::make_unique<FixupList>();
 }
 
@@ -130,8 +156,8 @@ void Compiler::InitAsm() {
 
   localVars.kill();
 
+  hunkList = std::make_unique<FixupList>();
   heapList = std::make_unique<FixupList>();
-  hunkList = std::make_unique<CodeList>();
 
   //	setup the debugging info
   lastLineNum = 0;
@@ -165,7 +191,7 @@ void Compiler::Assemble(ListingFile* listFile) {
   heapList->setOffset(0);
 
   // Optimize the code, setting all the offsets.
-  hunkList->optimize();
+  OptimizeHunk(hunkList->getList());
 
   // Reset the offsets in the object list to get the current code
   // offsets.
