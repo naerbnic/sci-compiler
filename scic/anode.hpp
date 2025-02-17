@@ -439,6 +439,6 @@ struct ANLineNum : ANOpCode {
 };
 
 extern ANCodeBlk* gCodeStart;
-extern uint32_t gTextStart;
+extern ANTable* gTextTable;
 
 #endif

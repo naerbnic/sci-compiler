@@ -26,7 +26,7 @@
 #include "scic/varlist.hpp"
 
 ANCodeBlk* gCodeStart;
-uint32_t gTextStart;
+ANTable* gTextTable;
 
 #define OPTIMIZE_TRANSFERS
 
@@ -159,15 +159,11 @@ ANObjTable::ANObjTable(std::string nameStr) : ANTable(nameStr) {}
 
 ANText::ANText(Text* tp) : text(tp) {}
 
-size_t ANText::setOffset(size_t ofs) {
-  if (!gTextStart) gTextStart = ofs;
-  return ANode::setOffset(ofs);
-}
+size_t ANText::setOffset(size_t ofs) { return ANode::setOffset(ofs); }
 
 size_t ANText::size() { return text->str.size() + 1; }
 
 void ANText::list(ListingFile* listFile) {
-  if (gTextStart == offset) listFile->Listing("\n\n");
   listFile->ListText(*offset, text->str);
 }
 
@@ -259,7 +255,7 @@ void ANTextProp::emit(FixupContext* fixup_ctxt, OutputFile* out) {
 
 std::string_view ANTextProp::desc() { return "text"; }
 
-uint32_t ANTextProp::value() { return val + gTextStart; }
+uint32_t ANTextProp::value() { return val + *gTextTable->offset; }
 
 std::string_view ANOfsProp::desc() { return "ofs"; }
 
@@ -549,13 +545,13 @@ size_t ANOpOfs::size() { return WORDSIZE; }
 
 void ANOpOfs::list(ListingFile* listFile) {
   listFile->ListOp(*offset, op);
-  listFile->ListArg("$%-4x", gTextStart + ofs);
+  listFile->ListArg("$%-4x", *gTextTable->offset + ofs);
 }
 
 void ANOpOfs::emit(FixupContext* fixup_ctxt, OutputFile* out) {
   out->WriteOp(op);
   fixup_ctxt->AddFixup(*offset + 1);
-  out->WriteWord(gTextStart + ofs);
+  out->WriteWord(*gTextTable->offset + ofs);
 }
 
 ///////////////////////////////////////////////////
@@ -666,7 +662,7 @@ void ANVars::list(ListingFile* listFile) {
 
   for (Var const& var : theVars.values) {
     int n = var.value;
-    if (var.type == S_STRING) n += gTextStart;
+    if (var.type == S_STRING) n += *gTextTable->offset;
     listFile->ListWord(curOfs, n);
     curOfs += 2;
   }
@@ -681,7 +677,7 @@ void ANVars::emit(FixupContext* fixup_ctxt, OutputFile* out) {
   for (Var const& var : theVars.values) {
     int n = var.value;
     if (var.type == S_STRING) {
-      n += gTextStart;
+      n += *gTextTable->offset;
       fixup_ctxt->AddFixup(curOfs);
     }
     out->WriteWord(n);

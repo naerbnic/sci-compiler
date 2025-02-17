@@ -1059,7 +1059,8 @@ void MakeText() {
 
   // terminate the object portion of the heap with a null word
   gSc->heapList->newNode<ANWord>();
-  for (Text* tp : gText.items()) gSc->heapList->newNode<ANText>(tp);
+  gTextTable = gSc->heapList->getList()->newNode<ANTable>("text");
+  for (Text* tp : gText.items()) gTextTable->entries.newNode<ANText>(tp);
 }
 
 void MakeLabel(AOpList* curList, ForwardReference<ANLabel*>* dest) {

@@ -41,8 +41,6 @@ void Compiler::InitAsm() {
 
   localVars.kill();
 
-  gTextStart = 0;
-
   heapList->clear();
   hunkList->clear();
 
