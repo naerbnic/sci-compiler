@@ -191,8 +191,6 @@ void ANObject::list(ListingFile* listFile) {
 
 ANCodeBlk::ANCodeBlk(std::string name) : name(std::move(name)) {
   ANLabel::reset();
-
-  if (!gCodeStart) gCodeStart = this;
 }
 
 size_t ANCodeBlk::size() { return code.size(); }

@@ -947,6 +947,8 @@ static void MakeProc(AList* curList, PNode* pn) {
                       : (ANCodeBlk*)curList->newNode<ANMethCode>(
                             std::string(pn->sym->name()), gCurObj->name);
 
+  if (!gCodeStart) gCodeStart = an;
+
   pn->sym->type = (sym_t)(pn->type == PN_PROC ? S_PROC : S_SELECT);
 
   // If any nodes already compiled have this procedure as a target,
