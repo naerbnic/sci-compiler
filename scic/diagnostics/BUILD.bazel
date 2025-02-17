@@ -7,5 +7,6 @@ cc_library(
     hdrs = ["diagnostics.hpp"],
     deps = [
         "//scic/text:text_range",
+        "@abseil-cpp//absl/strings:str_format",
     ],
 )

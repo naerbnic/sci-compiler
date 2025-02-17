@@ -31,7 +31,6 @@ cc_library(
         "//scic/text:text_range",
         "//scic/tokens:token",
         "//util/status:status_macros",
-        "//util/strings:ref_str",
         "@abseil-cpp//absl/strings:str_format",
         "@abseil-cpp//absl/types:span",
     ],
@@ -43,8 +42,6 @@ cc_test(
     deps = [
         ":ast",
         "//scic/text:text_range",
-        "//util/status:status_matchers",
-        "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
 )
@@ -60,11 +57,9 @@ cc_library(
     deps = [
         ":ast",
         ":parser_common",
-        "//scic/parsers/list_tree:parser",
+        "//scic/parsers/combinators:results",
+        "//scic/parsers/list_tree:ast",
         "//util/strings:ref_str",
-        "@abseil-cpp//absl/status:status",
-        "@abseil-cpp//absl/status:statusor",
-        "@abseil-cpp//absl/types:span",
     ],
 )
 
@@ -82,11 +77,11 @@ cc_library(
         ":expr_parsers",
         ":parser_common",
         "//scic/parsers/combinators:parse_func",
-        "//scic/parsers/list_tree:parser",
-        "//scic/tokens:token_readers",
-        "//util/strings:ref_str",
-        "@abseil-cpp//absl/status:status",
-        "@abseil-cpp//absl/status:statusor",
+        "//scic/parsers/combinators:results",
+        "//scic/parsers/combinators:status",
+        "//scic/parsers/list_tree:ast",
+        "//util:choice",
+        "//util/status:status_macros",
         "@abseil-cpp//absl/types:span",
     ],
 )
@@ -95,11 +90,11 @@ cc_test(
     name = "item_parsers_test",
     srcs = ["item_parsers_test.cpp"],
     deps = [
+        ":ast",
         ":item_parsers",
-        ":parser_common",
-        "//scic/diagnostics",
         "//scic/parsers/list_tree:parser_test_utils",
-        "@googletest//:gtest",
+        "//scic/text:text_range",
+        "@abseil-cpp//absl/types:span",
         "@googletest//:gtest_main",
     ],
 )
@@ -117,12 +112,12 @@ cc_library(
         ":const_value_parsers",
         ":parser_common",
         "//scic/parsers/combinators:parse_func",
-        "//scic/parsers/list_tree:parser",
-        "//scic/tokens:token_readers",
+        "//scic/parsers/combinators:results",
+        "//scic/parsers/list_tree:ast",
+        "//scic/text:text_range",
+        "//scic/tokens:token",
+        "//util/status:status_macros",
         "//util/strings:ref_str",
-        "@abseil-cpp//absl/status:status",
-        "@abseil-cpp//absl/status:statusor",
-        "@abseil-cpp//absl/types:span",
     ],
 )
 
@@ -136,9 +131,9 @@ cc_library(
         ":ast",
         ":item_parsers",
         ":parser_common",
-        "//scic/diagnostics",
-        "//scic/parsers/combinators",
+        "//scic/parsers/combinators:results",
         "//scic/parsers/list_tree:ast",
+        "@abseil-cpp//absl/types:span",
     ],
 )
 
@@ -148,12 +143,9 @@ cc_test(
     deps = [
         ":ast",
         ":parser",
-        "//scic/diagnostics",
-        "//scic/parsers/combinators",
-        "//scic/parsers/list_tree:ast",
+        "//scic/parsers/combinators:results",
         "//scic/parsers/list_tree:parser_test_utils",
         "//util:choice_matchers",
-        "//util/status:status_matchers",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -164,9 +156,16 @@ cc_binary(
     srcs = ["parser_test_tool.cpp"],
     deps = [
         ":parser",
+        "//scic/parsers/list_tree:parser",
+        "//scic/text:text_range",
         "//scic/tokens:token",
         "//scic/tokens:token_readers",
+        "//util/status:status_macros",
         "//util/strings:ref_str",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings:str_format",
+        "@abseil-cpp//absl/types:span",
         "@argparse",
     ],
 )

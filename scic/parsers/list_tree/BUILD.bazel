@@ -9,6 +9,7 @@ cc_library(
     srcs = ["ast.cpp"],
     hdrs = ["ast.hpp"],
     deps = [
+        "//scic/text:text_range",
         "//scic/tokens:token",
         "//util:choice",
         "@abseil-cpp//absl/strings:str_format",
@@ -22,8 +23,10 @@ cc_library(
     hdrs = ["ast_matchers.hpp"],
     deps = [
         ":ast",
+        "//scic/tokens:token",
         "//scic/tokens:token_test_utils",
         "//util:choice_matchers",
+        "@abseil-cpp//absl/types:span",
         "@googletest//:gtest",
     ],
 )
@@ -33,8 +36,8 @@ cc_test(
     srcs = ["ast_matchers_test.cpp"],
     deps = [
         ":ast_matchers",
-        ":parser",
         ":parser_test_utils",
+        "//scic/tokens:token",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -50,7 +53,9 @@ cc_library(
         "//scic/tokens:token_stream",
         "//util/status:status_macros",
         "@abseil-cpp//absl/container:btree",
+        "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings:str_format",
         "@abseil-cpp//absl/types:span",
     ],
 )
@@ -63,6 +68,7 @@ cc_library(
     deps = [
         ":ast",
         ":parser",
+        "//scic/text:text_range",
         "//scic/tokens:token_readers",
     ],
 )
@@ -73,10 +79,6 @@ cc_test(
     deps = [
         ":ast_matchers",
         ":parser",
-        "//scic/tokens:token",
-        "//scic/tokens:token_readers",
-        "//util/status:status_matchers",
-        "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
 )
@@ -86,9 +88,14 @@ cc_binary(
     srcs = ["parser_test_tool.cpp"],
     deps = [
         ":parser",
+        "//scic/text:text_range",
         "//scic/tokens:token",
         "//scic/tokens:token_readers",
+        "//util/status:status_macros",
         "//util/strings:ref_str",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings:str_format",
         "@argparse",
     ],
 )

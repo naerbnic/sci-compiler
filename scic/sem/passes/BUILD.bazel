@@ -12,6 +12,6 @@ cc_library(
         "//scic/diagnostics",
         "//scic/parsers/sci:ast",
         "//scic/sem:symbol",
-        "//util:choice",
+        "@abseil-cpp//absl/types:span",
     ],
 )

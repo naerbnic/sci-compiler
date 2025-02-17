@@ -7,6 +7,7 @@ cc_library(
     hdrs = ["status.hpp"],
     deps = [
         "//scic/diagnostics",
+        "@abseil-cpp//absl/strings:str_format",
         "@abseil-cpp//absl/types:span",
     ],
 )
@@ -18,6 +19,7 @@ cc_library(
         ":status",
         "//scic/diagnostics",
         "//util/types:tmpl",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -35,10 +37,7 @@ cc_library(
     hdrs = [
         "combinators.hpp",
     ],
-    deps = [
-        ":parse_func",
-        "@abseil-cpp//absl/types:span",
-    ],
+    deps = ["@abseil-cpp//absl/types:span"],
 )
 
 cc_test(
@@ -46,10 +45,8 @@ cc_test(
     srcs = ["combinators_test.cpp"],
     deps = [
         ":combinators",
-        "//scic/diagnostics",
-        "//util/status:status_matchers",
+        ":results",
         "@abseil-cpp//absl/types:span",
-        "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
 )

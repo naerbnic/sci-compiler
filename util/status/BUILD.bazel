@@ -12,7 +12,7 @@ cc_library(
     testonly = True,
     hdrs = ["status_matchers.hpp"],
     deps = [
-        ":status_macros",
+        "@abseil-cpp//absl/status",
         "@googletest//:gtest",
     ],
 )

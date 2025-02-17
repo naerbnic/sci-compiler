@@ -27,7 +27,6 @@ cc_test(
     srcs = ["tmpl_test.cpp"],
     deps = [
         ":tmpl",
-        "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
 )

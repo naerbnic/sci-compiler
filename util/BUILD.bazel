@@ -5,16 +5,13 @@ package(
 cc_library(
     name = "choice",
     hdrs = ["choice.hpp"],
-    deps = [
-        "@abseil-cpp//absl/strings:str_format",
-    ],
+    deps = ["@abseil-cpp//absl/strings"],
 )
 
 cc_library(
     name = "choice_matchers",
     hdrs = ["choice_matchers.hpp"],
     deps = [
-        ":choice",
         "//util/types:name",
         "@googletest//:gtest",
     ],
@@ -36,7 +33,6 @@ cc_test(
     srcs = ["choice_test.cpp"],
     deps = [
         ":choice",
-        "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
 )
