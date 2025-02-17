@@ -10,6 +10,7 @@
 
 #include "absl/strings/str_format.h"
 #include "scic/anode.hpp"
+#include "scic/compiler.hpp"
 #include "scic/input.hpp"
 #include "scic/listing.hpp"
 #include "scic/output.hpp"

@@ -11,6 +11,7 @@
 #include "scic/compile.hpp"
 #include "scic/config.hpp"
 #include "scic/define.hpp"
+#include "scic/compiler.hpp"
 #include "scic/error.hpp"
 #include "scic/expr.hpp"
 #include "scic/input.hpp"

@@ -11,13 +11,13 @@
 #include <string_view>
 #include <utility>
 
+#include "scic/common.hpp"
 #include "scic/define.hpp"
 #include "scic/error.hpp"
 #include "scic/object.hpp"
 #include "scic/parse.hpp"
 #include "scic/parse_context.hpp"
 #include "scic/pnode.hpp"
-#include "scic/sc.hpp"
 #include "scic/selector.hpp"
 #include "scic/symbol.hpp"
 #include "scic/symtbl.hpp"
@@ -55,7 +55,7 @@ static bool Assignment(PNode*, int);
 static bool Rest(PNode*);
 static pn_t PNType(sym_t);
 
-bool ExprList(PNode* theNode, bool required) {
+bool ExprList(PNode* theNode, RequiredState required) {
   // expression-list ::= expression*
 
   int numExpr;
@@ -64,7 +64,8 @@ bool ExprList(PNode* theNode, bool required) {
 
   // Get the expressions making up the list.  Even if an expression
   // list is required, only the first expression is required.
-  for (numExpr = 0; Expression(pn.get(), required); ++numExpr) required = false;
+  for (numExpr = 0; Expression(pn.get(), required); ++numExpr)
+    required = OPTIONAL;
 
   // If we successfully got an expression, add it to the parse tree,
   // otherwise delete it.
@@ -72,10 +73,10 @@ bool ExprList(PNode* theNode, bool required) {
     theNode->addChild(std::move(pn));
   }
 
-  return !required;
+  return required != REQUIRED;
 }
 
-bool Expression(PNode* theNode, bool required) {
+bool Expression(PNode* theNode, RequiredState required) {
   // expression ::=	number |
   //				method |
   //				variable |
@@ -91,7 +92,7 @@ bool Expression(PNode* theNode, bool required) {
 
   if (slot.type() == (sym_t)'@') {
     auto* addrof = theNode->newChild(PN_ADDROF);
-    isExpr = Expression(addrof, true);
+    isExpr = Expression(addrof, REQUIRED);
   } else if (IsVar(slot)) {
     UnGetTok();
     isExpr = Variable(theNode);
@@ -153,7 +154,7 @@ bool Expression(PNode* theNode, bool required) {
         break;
 
       default:
-        if (required)
+        if (required == REQUIRED)
           Severe("Expression required: %s", slot.name());
         else
           UnGetTok();

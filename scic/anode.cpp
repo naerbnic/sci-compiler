@@ -15,6 +15,7 @@
 
 #include "scic/alist.hpp"
 #include "scic/asm.hpp"
+#include "scic/compiler.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
 #include "scic/listing.hpp"
@@ -23,7 +24,6 @@
 #include "scic/optimize.hpp"
 #include "scic/output.hpp"
 #include "scic/parse_context.hpp"
-#include "scic/sc.hpp"
 #include "scic/sol.hpp"
 #include "scic/symbol.hpp"
 #include "scic/symtypes.hpp"
@@ -456,7 +456,7 @@ void ANCall::list(ListingFile* listFile) {
 }
 
 void ANCall::emit(OutputFile* out) {
-  if (!target || target->offset == UNDEFINED) {
+  if (!target || !target->offset.has_value()) {
     Error("Undefined procedure: %s", name);
     return;
   }

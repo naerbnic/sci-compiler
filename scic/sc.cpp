@@ -19,6 +19,7 @@
 #include "scic/banner.hpp"
 #include "scic/builtins.hpp"
 #include "scic/compile.hpp"
+#include "scic/compiler.hpp"
 #include "scic/config.hpp"
 #include "scic/define.hpp"
 #include "scic/error.hpp"
@@ -35,7 +36,6 @@
 #include "scic/update.hpp"
 #include "util/platform/platform.hpp"
 
-std::unique_ptr<Compiler> gSc;
 int gScript;
 
 static int totalErrors;
@@ -44,11 +44,6 @@ static void CompileFile(std::string_view, bool listCode);
 static void ShowInfo();
 static void InstallCommandLineDefine(std::string_view);
 static SciTargetArch GetTargetArchitecture(std::string_view);
-
-Compiler::Compiler() {
-  hunkList = std::make_unique<CodeList>();
-  heapList = std::make_unique<FixupList>();
-}
 
 int main(int argc, char **argv) {
   // Initialize Abseil symbolizer, so errors will report correct info.

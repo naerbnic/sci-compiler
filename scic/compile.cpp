@@ -11,6 +11,7 @@
 #include "scic/alist.hpp"
 #include "scic/anode.hpp"
 #include "scic/asm.hpp"
+#include "scic/compiler.hpp"
 #include "scic/config.hpp"
 #include "scic/define.hpp"
 #include "scic/error.hpp"
@@ -22,7 +23,6 @@
 #include "scic/pnode.hpp"
 #include "scic/public.hpp"
 #include "scic/reference.hpp"
-#include "scic/sc.hpp"
 #include "scic/symtypes.hpp"
 #include "scic/text.hpp"
 
