@@ -236,8 +236,8 @@ static void CompileFile(std::string_view fileName, bool listCode) {
   if (gScript == -1)
     Error("No script number specified.  Can't write output files.");
   else {
-    auto listFile =
-        listCode ? ListingFile::Open(sourceFileName) : ListingFile::Null();
+    auto listFile = listCode ? ListingFile::Open(gScript, sourceFileName)
+                             : ListingFile::Null();
     Assemble(listFile.get());
   }
   totalErrors += gNumErrors;

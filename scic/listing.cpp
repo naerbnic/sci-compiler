@@ -17,7 +17,6 @@
 #include "scic/common.hpp"
 #include "scic/config.hpp"
 #include "scic/opcodes.hpp"
-#include "scic/sc.hpp"
 
 #define JUST_OP 0  // Only operator -- no arguments
 #define OP_ARGS 1  // Operator takes arguments
@@ -307,8 +306,8 @@ class NullListingFileImpl : public ListingFile {
 }  // namespace
 
 std::unique_ptr<ListingFile> ListingFile::Open(
-    std::string_view sourceFileName) {
-  auto listName = gConfig->outDir / absl::StrFormat("%d.sl", gScript);
+    int scriptNum, std::string_view sourceFileName) {
+  auto listName = gConfig->outDir / absl::StrFormat("%d.sl", scriptNum);
   FILE* listFile = nullptr;
   FILE* sourceFile = nullptr;
 
@@ -326,7 +325,7 @@ std::unique_ptr<ListingFile> ListingFile::Open(
   auto result = std::make_unique<ListingFileImpl>(listFile, sourceFile);
 
   result->Listing("\n\t\t\t\tListing of %s:\t[script %d]\n\n", sourceFileName,
-                  (SCIUWord)gScript);
+                  (SCIUWord)scriptNum);
   result->Listing("LINE/\tOFFSET\tCODE\t\t\t\tNAME");
   result->Listing("LABEL\t(HEX)\n");
 

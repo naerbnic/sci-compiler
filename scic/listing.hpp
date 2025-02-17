@@ -18,7 +18,8 @@ void DeleteListFile();
 
 class ListingFile {
  public:
-  static std::unique_ptr<ListingFile> Open(std::string_view sourceFileName);
+  static std::unique_ptr<ListingFile> Open(int scriptNum,
+                                           std::string_view sourceFileName);
   static std::unique_ptr<ListingFile> Null();
 
   ListingFile() = default;

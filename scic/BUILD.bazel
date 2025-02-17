@@ -90,6 +90,26 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "opcodes",
+    hdrs = ["opcodes.hpp"],
+)
+
+cc_library(
+    name = "listing",
+    srcs = ["listing.cpp"],
+    hdrs = ["listing.hpp"],
+    deps = [
+        ":common",
+        ":config",
+        ":opcodes",
+        "@abseil-cpp//absl/base:nullability",
+        "@abseil-cpp//absl/functional:function_ref",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)
+
 cc_binary(
     name = "scic",
     srcs = [
@@ -118,13 +138,10 @@ cc_binary(
         "expr.hpp",
         "global_compiler.cpp",
         "global_compiler.hpp",
-        "listing.cpp",
-        "listing.hpp",
         "loop.cpp",
         "loop.hpp",
         "object.cpp",
         "object.hpp",
-        "opcodes.hpp",
         "optimize.cpp",
         "optimize.hpp",
         "parse.cpp",
@@ -170,20 +187,20 @@ cc_binary(
         ":config",
         ":input",
         ":list",
+        ":listing",
         ":memtype",
+        ":opcodes",
         ":output",
         ":symtypes",
         ":text",
         ":varlist",
         "//util/platform",
-        "@abseil-cpp//absl/base:nullability",
         "@abseil-cpp//absl/cleanup",
         "@abseil-cpp//absl/container:btree",
         "@abseil-cpp//absl/debugging:failure_signal_handler",
         "@abseil-cpp//absl/debugging:stacktrace",
         "@abseil-cpp//absl/debugging:symbolize",
         "@abseil-cpp//absl/functional:any_invocable",
-        "@abseil-cpp//absl/functional:function_ref",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
         "@argparse",
