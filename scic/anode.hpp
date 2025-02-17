@@ -38,6 +38,10 @@ struct ANode : TNode {
   // passed, and (using size()) returns the offset of the
   // byte following the node.
 
+  // Try to shrink the node to a smaller size.  Returns true if
+  // the node was shrunk, false if it was not.
+  virtual bool tryShrink();
+
   virtual void list(ListingFile* listFile);
   // Writes a representation of the node to the listing file.
 

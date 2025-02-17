@@ -130,7 +130,6 @@ cc_library(
 cc_library(
     name = "anode",
     srcs = [
-        "alist.cpp",
         "anode.cpp",
         "anode_impls.cpp",
         "optimize.cpp",

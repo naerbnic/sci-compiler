@@ -382,20 +382,26 @@ ANCall::ANCall(std::string name)
 size_t ANCall::size() {
   int arg_size = NumArgsSize();
 
-  if (!gShrink)
-    return (op & OP_BYTE ? 2 : 3) + arg_size;
-  else if (!target || !target->offset.has_value())
-    return 3 + arg_size;
+  return (op & OP_BYTE ? 2 : 3) + arg_size;
+}
+
+bool ANCall::tryShrink() {
+  auto initial_size = size();
+
+  if (!target || !target->offset.has_value()) {
+    return false;
+  }
+
 #if defined(OPTIMIZE_TRANSFERS)
-  else if (canOptimizeTransfer(*target->offset, *offset + 5)) {
+  if (canOptimizeTransfer(*target->offset, *offset + 5)) {
     op |= OP_BYTE;
-    return 2 + arg_size;
-  }
+  } else
 #endif
-  else {
+  {
     op &= ~OP_BYTE;
-    return 3 + arg_size;
   }
+
+  return size() < initial_size;
 }
 
 void ANCall::list(ListingFile* listFile) {
@@ -426,21 +432,23 @@ void ANCall::emit(OutputFile* out) {
 
 ANBranch::ANBranch(uint32_t o) : target(nullptr) { op = o; }
 
-size_t ANBranch::size() {
-  if (!gShrink)
-    return op & OP_BYTE ? 2 : 3;
-  else if (!target || !target->offset.has_value())
-    return 3;
+size_t ANBranch::size() { return op & OP_BYTE ? 2 : 3; }
+
+bool ANBranch::tryShrink() {
+  auto initial_size = size();
+  if (!target || !target->offset.has_value()) {
+    return false;
+  }
 #if defined(OPTIMIZE_TRANSFERS)
-  else if (canOptimizeTransfer(*target->offset, *offset + 4)) {
+
+  if (canOptimizeTransfer(*target->offset, *offset + 4)) {
     op |= OP_BYTE;
-    return 2;
-  }
+  } else
 #endif
-  else {
+  {
     op &= ~OP_BYTE;
-    return 3;
   }
+  return size() < initial_size;
 }
 
 void ANBranch::list(ListingFile* listFile) {

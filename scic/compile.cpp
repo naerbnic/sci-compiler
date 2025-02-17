@@ -10,6 +10,7 @@
 
 #include "scic/alist.hpp"
 #include "scic/anode.hpp"
+#include "scic/anode_impls.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
 #include "scic/global_compiler.hpp"

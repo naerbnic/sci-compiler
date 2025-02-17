@@ -108,22 +108,17 @@ void CodeList::optimize() {
 
   // Make a first pass, resolving offsets and converting to byte offsets
   // where possible.
-  gShrink = true;
   setOffset(0);
 
   // Continue resolving and converting to byte offsets until we've shrunk
   // the code as far as it will go.
-  size_t curLen = 0, oldLen;
-  do {
-    oldLen = curLen;
-    curLen = setOffset(0);
-  } while (oldLen > curLen);
+  while (true) {
+    bool changed = false;
+    for (auto it = list_.iter(); it; ++it) {
+      changed |= it->tryShrink();
+    }
+    if (!changed) break;
 
-  // Now stabilize the code and offsets by resolving without allowing
-  // conversion to byte offsets.
-  gShrink = false;
-  do {
-    oldLen = curLen;
-    curLen = setOffset(0);
-  } while (oldLen != curLen);
+    setOffset(0);
+  }
 }

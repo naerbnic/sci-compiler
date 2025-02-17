@@ -110,6 +110,14 @@ struct ANComposite : ANode {
     return ofs;
   }
 
+  bool tryShrink() override {
+    bool changed = false;
+    for (auto it = list_.iter(); it; ++it) {
+      changed |= it->tryShrink();
+    }
+    return changed;
+  }
+
   void list(ListingFile* listFile) override {
     for (auto it = list_.iter(); it; ++it) {
       it->list(listFile);
@@ -149,7 +157,5 @@ struct ANComposite : ANode {
  private:
   AListBase<T> list_;
 };
-
-extern bool gShrink;
 
 #endif

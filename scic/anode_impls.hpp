@@ -293,6 +293,7 @@ struct ANCall : ANOpCode {
   ANCall(std::string name);
 
   size_t size() override;
+  bool tryShrink() override;
   void list(ListingFile* listFile) override;
   void emit(OutputFile*) override;
 
@@ -308,6 +309,7 @@ struct ANBranch : ANOpCode
   ANBranch(uint32_t o);
 
   size_t size() override;
+  bool tryShrink() override;
   void list(ListingFile* listFile) override;
   void emit(OutputFile*) override;
 
