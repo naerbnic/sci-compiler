@@ -10,7 +10,6 @@
 
 #include "scic/alist.hpp"
 #include "scic/anode.hpp"
-#include "scic/asm.hpp"
 #include "scic/config.hpp"
 #include "scic/define.hpp"
 #include "scic/error.hpp"
@@ -71,9 +70,9 @@ void CompileExpr(AOpList* curList, PNode* pn) {
   // Recursively compile code for a given node.
 
   if (gConfig->includeDebugInfo && pn->type != PN_PROC &&
-      pn->type != PN_METHOD && pn->lineNum > gLastLineNum) {
+      pn->type != PN_METHOD && pn->lineNum > gSc->lastLineNum) {
     curList->newNode<ANLineNum>(pn->lineNum);
-    gLastLineNum = pn->lineNum;
+    gSc->lastLineNum = pn->lineNum;
   }
 
   switch (pn->type) {
@@ -961,7 +960,7 @@ static void MakeProc(AList* curList, PNode* pn) {
   //	and file name are set here
   if (gConfig->includeDebugInfo) {
     an->code.newNode<ANLineNum>(pn->lineNum);
-    gLastLineNum = pn->lineNum;
+    gSc->lastLineNum = pn->lineNum;
   }
 
   // If there are to be any temporary variables, add a link node to
@@ -982,9 +981,9 @@ void MakeDispatch(int maxEntry) {
 
   // Now cycle through the publicly declared procedures/objects,
   // creating asmNodes for a table of their offsets.
-  gNumDispTblEntries->value = maxEntry + 1;
+  gSc->numDispTblEntries->value = maxEntry + 1;
   for (int i = 0; i <= maxEntry; ++i) {
-    ANDispatch* an = gDispTbl->entries.newNode<ANDispatch>();
+    ANDispatch* an = gSc->dispTbl->entries.newNode<ANDispatch>();
     auto* sym = FindPublic(i);
     if (sym) {
       an->name = std::string(sym->name());

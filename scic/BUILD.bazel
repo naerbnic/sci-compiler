@@ -170,8 +170,6 @@ cc_library(
 cc_binary(
     name = "scic",
     srcs = [
-        "asm.cpp",
-        "asm.hpp",
         "banner.cpp",
         "banner.hpp",
         "builtins.cpp",

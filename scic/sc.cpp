@@ -19,7 +19,6 @@
 #include "absl/debugging/symbolize.h"
 #include "absl/strings/str_format.h"
 #include "argparse/argparse.hpp"
-#include "scic/asm.hpp"
 #include "scic/banner.hpp"
 #include "scic/builtins.hpp"
 #include "scic/compile.hpp"
@@ -238,7 +237,7 @@ static void CompileFile(std::string_view fileName, bool listCode) {
   else {
     auto listFile = listCode ? ListingFile::Open(gScript, sourceFileName)
                              : ListingFile::Null();
-    Assemble(listFile.get());
+    gSc->Assemble(listFile.get());
   }
   totalErrors += gNumErrors;
 

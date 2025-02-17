@@ -7,9 +7,9 @@
 #include <optional>
 #include <string>
 
-#include "scic/asm.hpp"
 #include "scic/define.hpp"
 #include "scic/error.hpp"
+#include "scic/global_compiler.hpp"
 #include "scic/input.hpp"
 #include "scic/parse_class.hpp"
 #include "scic/parse_context.hpp"
@@ -24,7 +24,7 @@
 #include "scic/toktypes.hpp"
 
 bool Parse() {
-  InitAsm();
+  gSc->InitAsm();
 
   gSyms.clearAsmPtrs();
 
