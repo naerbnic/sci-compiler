@@ -188,8 +188,8 @@ void Global() {
 
       // Get the initial value(s) of the variable and expand the size
       // of the block if more than one value is encountered.
-      n = InitialValue(gGlobalVars, offset, 1);
-      if (n == -1 || gGlobalVars.values.size() > gConfig->maxVars) {
+      n = InitialValue(gSc->localVars, offset, 1);
+      if (n == -1 || gSc->localVars.values.size() > gConfig->maxVars) {
         Error(tooManyVars, gConfig->maxVars);
         break;
       }
@@ -197,7 +197,7 @@ void Global() {
   }
 
   // Put the information back in the variable structure.
-  gGlobalVars.type = VAR_GLOBAL;
+  gSc->localVars.type = VAR_GLOBAL;
 
   UnGetTok();
 }

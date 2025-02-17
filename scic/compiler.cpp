@@ -17,7 +17,6 @@
 #include "scic/input.hpp"
 #include "scic/listing.hpp"
 #include "scic/output.hpp"
-#include "scic/parse_context.hpp"
 #include "scic/public.hpp"
 #include "scic/sc.hpp"
 #include "scic/symbol.hpp"
@@ -80,7 +79,7 @@ void Compiler::InitAsm() {
 void Compiler::Assemble(ListingFile* listFile) {
   // Assemble the list pointed to by asmHead.
 
-  auto vars = std::make_unique<ANVars>(gScript ? localVars : gGlobalVars);
+  auto vars = std::make_unique<ANVars>(localVars);
   heapList->getList()->addFront(std::move(vars));
 
   // Set the offsets in the object list.

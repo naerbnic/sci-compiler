@@ -7,7 +7,6 @@
 #include "scic/class.hpp"
 #include "scic/object.hpp"
 #include "scic/public.hpp"
-#include "scic/varlist.hpp"
 
 #define MAXCLASSES 512  // Maximum number of classes
 
@@ -18,8 +17,6 @@ extern int gMaxClassNum;
 extern Object* gCurObj;
 extern Symbol* gNameSymbol;
 extern Object* gReceiver;
-
-extern VarList gGlobalVars;
 
 extern PublicList publicList;
 extern int publicMax;
