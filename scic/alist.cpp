@@ -30,6 +30,8 @@ void ANode::emit(OutputFile*) {}
 
 void ANode::list(ListingFile* listFile) {}
 
+bool ANode::contains(ANode* node) { return this == node; }
+
 bool ANode::optimize() { return false; }
 
 ///////////////////////////////////////////////////

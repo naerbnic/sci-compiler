@@ -4,6 +4,7 @@
 
 #include "scic/alist.hpp"
 #include "scic/anode.hpp"
+#include "scic/common.hpp"
 #include "scic/config.hpp"
 #include "scic/listing.hpp"
 #include "scic/output.hpp"
@@ -27,10 +28,60 @@ class FixupListContext : public FixupContext {
   HeapContext const* heapContext_;
 };
 
-class NullFixupContext : public FixupContext {
+class ANWordPadding : public ANode {
  public:
-  bool HeapHasNode(ANode* node) const override { return false; }
-  void AddRelFixup(ANode* node, std::size_t ofs) override {}
+  size_t setOffset(size_t ofs) override {
+    offset = ofs;
+    if (ofs & 1) {
+      ofs++;
+    }
+    return ofs;
+  }
+  void list(ListingFile* listFile) override {
+    if (*offset & 1) {
+      listFile->ListByte(*offset, 0);
+    }
+  }
+  void emit(OutputFile* out) override {
+    if (*offset & 1) {
+      out->WriteByte(0);
+    }
+  }
+  // Emits the object code for the node to the output file.
+};
+
+class ANComputedWord : public ANode {
+ public:
+  size_t size() override { return 2; }
+  void list(ListingFile* listFile) override {
+    listFile->ListWord(*offset, value());
+  }
+  void emit(OutputFile* out) override { out->WriteWord(value()); }
+
+ protected:
+  virtual SCIWord value() const = 0;
+};
+
+class ANOffsetWord : public ANComputedWord {
+ public:
+  ANOffsetWord(ANode* target, std::size_t rel_offset)
+      : target(target), rel_offset(rel_offset) {}
+
+  ANode* target;
+  std::size_t rel_offset;
+
+ protected:
+  SCIWord value() const override { return *target->offset + rel_offset; }
+};
+
+class ANCountWord : public ANComputedWord {
+ public:
+  ANCountWord(AList* target) : target(target) {}
+
+  AList* target;
+
+ protected:
+  SCIWord value() const override { return target->length(); }
 };
 
 }  // namespace
@@ -39,86 +90,43 @@ class NullFixupContext : public FixupContext {
 // Class FixupList
 ///////////////////////////////////////////////////
 
-FixupList::FixupList() {}
-
-FixupList::~FixupList() { clear(); }
-
-void FixupList::clear() {
-  list_.list_.clear();
-  fixups.clear();
-
-  // All fixup lists have a word node at the start which is the offset
-  // to the fixup table.
-  newNode<ANWord>(0);
+FixupList::FixupList() {
+  auto* fixupOffsetNode = list_.newNode<ANOffsetWord>(nullptr, 0);
+  bodyTable_ = list_.newNode<ANTable>("object file body");
+  // We need padding before the fixup table to ensure it is word-aligned.
+  list_.newNode<ANWordPadding>();
+  // We create a small node graph here, to keep all of the pieces of the
+  // fixup table together.
+  // The whole fixup table, including the initial count word.
+  auto* fixupTableBlock = list_.newNode<ANTable>("fixup table block");
+  auto* fixupCountWord = fixupTableBlock->entries.newNode<ANCountWord>(nullptr);
+  fixupTable_ = fixupTableBlock->entries.newNode<ANTable>("fixup table");
+  fixupCountWord->target = &fixupTable_->entries;
+  fixupOffsetNode->target = fixupTableBlock;
 }
 
-size_t FixupList::setOffset(size_t ofs) {
-  fixOfs = list_.setOffset(ofs);
-  return fixOfs;
-}
+FixupList::~FixupList() {}
 
-void FixupList::initFixups() {
-  // Set offset to fixup table.  If the table is on an odd boundary,
-  // adjust to an even one.
+size_t FixupList::setOffset(size_t ofs) { return list_.setOffset(ofs); }
 
-  ((ANWord*)list_.list_.frontPtr())->value = fixOfs + (fixOfs & 1);
-  fixups.clear();
-}
+void FixupList::initFixups() {}
 
-void FixupList::listFixups(ListingFile* listFile) {
-  std::size_t curOfs = fixOfs;
-
-  if ((curOfs & 1) != 0U) {
-    listFile->ListByte(curOfs, 0);
-    ++curOfs;
-  }
-
-  listFile->Listing("\n\nFixups:");
-  listFile->ListWord(curOfs, fixups.size());
-  curOfs += 2;
-
-  for (auto const& fixup : fixups) {
-    listFile->ListWord(curOfs, fixup.offset());
-    curOfs += 2;
-  }
-}
-
-void FixupList::emitFixups(OutputFile* out) {
-  if (fixOfs & 1) out->WriteByte(0);
-
-  out->WriteWord(fixups.size());
-  for (auto fixup : fixups) out->WriteWord(fixup.offset());
-}
-
-void FixupList::addFixup(size_t ofs) {
-  fixups.push_back(Offset{
-      .node_base = nullptr,
-      .rel_offset = ofs,
-  });
-}
+void FixupList::listFixups(ListingFile* listFile) { list_.list(listFile); }
 
 void FixupList::addFixup(ANode* node, std::size_t rel_ofs) {
-  fixups.push_back(Offset{
-      .node_base = node,
-      .rel_offset = rel_ofs,
-  });
+  fixupTable_->entries.newNode<ANOffsetWord>(node, rel_ofs);
 }
 
-void FixupList::list(ListingFile* listFile) {
-  for (auto& node : list_.list_) {
-    node.list(listFile);
-  }
-  listFixups(listFile);
-}
+void FixupList::list(ListingFile* listFile) { list_.list(listFile); }
 
 void FixupList::emit(HeapContext* heap_ctxt, OutputFile* out) {
   initFixups();
   {
     FixupListContext fixup_ctxt(this, heap_ctxt);
     list_.collectFixups(&fixup_ctxt);
+    fixupTable_->entries.setOffset(*fixupTable_->offset);
   }
   list_.emit(out);
-  emitFixups(out);
 }
 
 ///////////////////////////////////////////////////

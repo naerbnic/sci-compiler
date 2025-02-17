@@ -161,7 +161,9 @@ cc_library(
     deps = [
         ":anode",
         ":casts",
+        ":common",
         ":config",
+        ":debug_utils",
         ":listing",
         ":output",
     ],

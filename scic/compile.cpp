@@ -1058,7 +1058,7 @@ void MakeText() {
   // Add text strings to the assembled code.
 
   // terminate the object portion of the heap with a null word
-  gSc->heapList->newNode<ANWord>();
+  gSc->heapList->getList()->newNode<ANWord>();
   gTextTable = gSc->heapList->getList()->newNode<ANTable>("text");
   for (Text* tp : gText.items()) gTextTable->entries.newNode<ANText>(tp);
 }

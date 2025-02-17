@@ -147,6 +147,13 @@ void ANTable::collectFixups(FixupContext* fixup_ctxt) {
 }
 
 void ANTable::emit(OutputFile* out) { entries.emit(out); }
+bool ANTable::contains(ANode* node) {
+  if (ANode::contains(node)) return true;
+  for (auto& entry : entries) {
+    if (entry.contains(node)) return true;
+  }
+  return false;
+}
 
 ///////////////////////////////////////////////////
 // Class ANObjTable
@@ -197,6 +204,13 @@ void ANCodeBlk::collectFixups(FixupContext* fixup_ctxt) {
 }
 
 void ANCodeBlk::emit(OutputFile* out) { code.emit(out); }
+bool ANCodeBlk::contains(ANode* node) {
+  if (ANode::contains(node)) return true;
+  for (auto& entry : code) {
+    if (entry.contains(node)) return true;
+  }
+  return false;
+}
 
 size_t ANCodeBlk::setOffset(size_t ofs) {
   offset = ofs;

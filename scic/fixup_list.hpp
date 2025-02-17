@@ -4,10 +4,9 @@
 #include <cstddef>
 #include <memory>
 #include <utility>
-#include <vector>
 
 #include "scic/alist.hpp"
-#include "scic/casts.hpp"
+#include "scic/anode.hpp"
 #include "scic/listing.hpp"
 
 // A pure-virtual class that gives context if a node is located in the
@@ -26,8 +25,6 @@ class FixupList {
  public:
   FixupList();
   ~FixupList();
-
-  void clear();
 
   void list(ListingFile* listFile);
   void emit(HeapContext*, OutputFile*);
@@ -48,18 +45,16 @@ class FixupList {
 
   // The word at offset 'ofs' in the object file needs relocation.
   // Add the offset to the fixup table.
-  void addFixup(size_t ofs);
-
   void addFixup(ANode* node, std::size_t rel_ofs);
 
-  ANode* front() { return down_cast<ANode>(list_.list_.frontPtr()); }
-
-  void addAfter(ANode* ln, std::unique_ptr<ANode> nn) {
-    list_.list_.findIter(ln).addAfter(std::move(nn));
+  bool contains(ANode* ln) {
+    for (auto& entry : list_) {
+      if (entry.contains(ln)) return true;
+    }
+    return false;
   }
 
-  bool contains(ANode* ln) { return list_.list_.contains(ln); }
-
+ private:
   template <class T, class... Args>
   T* newNode(Args&&... args) {
     auto node = std::make_unique<T>(std::forward<Args>(args)...);
@@ -68,7 +63,8 @@ class FixupList {
     return node_ptr;
   }
 
-  AList* getList() { return &list_; }
+ public:
+  AList* getList() { return &bodyTable_->entries; }
 
  protected:
   struct Offset {
@@ -81,8 +77,8 @@ class FixupList {
     }
   };
   AList list_;
-  std::vector<Offset> fixups;  // storage for fixup values
-  size_t fixOfs;               // offset of start of fixups
+  ANTable* bodyTable_;
+  ANTable* fixupTable_;
 };
 
 struct CodeList : FixupList {

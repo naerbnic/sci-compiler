@@ -56,20 +56,22 @@ void Compiler::InitAsm() {
 
   localVars.kill();
 
-  heapList->clear();
-  hunkList->clear();
+  heapList = std::make_unique<FixupList>();
+  hunkList = std::make_unique<CodeList>();
 
   //	setup the debugging info
   lastLineNum = 0;
 
+  auto* hunkBody = hunkList->getList();
+
   // space for addr of heap component of resource
-  hunkList->newNode<ANWord>();
+  hunkBody->newNode<ANWord>();
 
   // space to indicate whether script has far text (dummy)
-  hunkList->newNode<ANWord>();
+  hunkBody->newNode<ANWord>();
 
-  numDispTblEntries = hunkList->newNode<ANWord>();
-  dispTbl = hunkList->newNode<ANTable>("dispatch table");
+  numDispTblEntries = hunkBody->newNode<ANWord>();
+  dispTbl = hunkBody->newNode<ANTable>("dispatch table");
 
   gCodeStart = 0;
 }
@@ -78,7 +80,7 @@ void Compiler::Assemble(ListingFile* listFile) {
   // Assemble the list pointed to by asmHead.
 
   auto vars = std::make_unique<ANVars>(gScript ? gLocalVars : gGlobalVars);
-  heapList->addAfter(heapList->front(), std::move(vars));
+  heapList->getList()->addFront(std::move(vars));
 
   // Set the offsets in the object list.
   heapList->setOffset(0);
@@ -123,8 +125,8 @@ void Compiler::Assemble(ListingFile* listFile) {
       "----------------------\n");
   hunkList->list(listFile);
 
-  heapList->clear();
-  hunkList->clear();
+  heapList = nullptr;
+  hunkList = nullptr;
 }
 
 void Compiler::MakeDispatch(PublicList const& publicList) {

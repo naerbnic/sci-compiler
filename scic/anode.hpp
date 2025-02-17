@@ -68,6 +68,7 @@ struct ANTable : ANode
   void collectFixups(FixupContext*) override;
   void list(ListingFile* listFile) override;
   void emit(OutputFile*) override;
+  bool contains(ANode* node) override;
 
   std::string name;  // name of table (values follow)
   AList entries;     // list of entries in the table
@@ -119,6 +120,7 @@ struct ANCodeBlk : ANode
   size_t size() override;
   void collectFixups(FixupContext*) override;
   void emit(OutputFile*) override;
+  bool contains(ANode* node) override;
   size_t setOffset(size_t ofs) override;
   void list(ListingFile* listFile) override;
   bool optimize() override;
