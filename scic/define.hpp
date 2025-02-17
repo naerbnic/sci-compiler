@@ -15,7 +15,6 @@ void Local();
 void DoPublic();
 Symbol* FindPublic(PublicList const& publicList, int);
 void Extern();
-void InitPublics();
 void Definition();
 
 #endif

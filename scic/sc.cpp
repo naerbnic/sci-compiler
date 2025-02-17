@@ -24,7 +24,6 @@
 #include "scic/compile.hpp"
 #include "scic/compiler.hpp"
 #include "scic/config.hpp"
-#include "scic/define.hpp"
 #include "scic/error.hpp"
 #include "scic/global_compiler.hpp"
 #include "scic/input.hpp"
@@ -212,7 +211,6 @@ static void CompileFile(std::string_view fileName, bool listCode) {
   // Do some initialization.
   gScript = -1;
   gNumErrors = gNumWarnings = 0;
-  InitPublics();
   gText.init();
 
   // Delete any free symbol tables.

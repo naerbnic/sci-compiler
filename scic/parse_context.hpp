@@ -6,7 +6,6 @@
 #include "absl/container/btree_map.h"
 #include "scic/class.hpp"
 #include "scic/object.hpp"
-#include "scic/public.hpp"
 
 #define MAXCLASSES 512  // Maximum number of classes
 
@@ -17,8 +16,5 @@ extern int gMaxClassNum;
 extern Object* gCurObj;
 extern Symbol* gNameSymbol;
 extern Object* gReceiver;
-
-extern PublicList publicList;
-extern int publicMax;
 
 #endif

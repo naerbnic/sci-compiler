@@ -18,7 +18,6 @@
 #include "scic/error.hpp"
 #include "scic/global_compiler.hpp"
 #include "scic/parse.hpp"
-#include "scic/parse_context.hpp"
 #include "scic/public.hpp"
 #include "scic/sc.hpp"
 #include "scic/symbol.hpp"
@@ -318,15 +317,12 @@ void Extern() {
   UnGetTok();
 }
 
-void InitPublics() {
-  publicList.clear();
-  publicMax = -1;
-}
-
 void DoPublic() {
   //	public ::= 'public' (symbol number)+
 
   Symbol* theSym;
+
+  PublicList publicList;
 
   for (auto token = GetToken(); !CloseP(token.type()); token = GetToken()) {
     // Install the symbol in both the symbol table and the
