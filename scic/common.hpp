@@ -22,4 +22,6 @@ inline constexpr std::size_t DEFINED = 1;
 using SCIWord = std::int16_t;
 using SCIUWord = std::uint16_t;
 
+inline constexpr int KERNEL = -1;  // Module # of kernel
+
 #endif

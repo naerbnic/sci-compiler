@@ -335,13 +335,14 @@ struct ANObjID : ANOpCode
 // In the interpreter this gets fixed up at load time so that the opcode
 // generates the address of the object in the heap.
 {
-  ANObjID(Symbol* sym);
+  ANObjID(int lineNum, std::string name);
 
   size_t size() override;
   void list(ListingFile* listFile) override;
   void emit(FixupContext*, OutputFile*) override;
 
-  Symbol* sym;
+  int lineNum;
+  std::string name;
   ANode* target;
 };
 

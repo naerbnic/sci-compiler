@@ -24,7 +24,6 @@
 #include "scic/optimize.hpp"
 #include "scic/output.hpp"
 #include "scic/parse_context.hpp"
-#include "scic/symbol.hpp"
 #include "scic/symtypes.hpp"
 #include "scic/text.hpp"
 #include "scic/varlist.hpp"
@@ -568,21 +567,17 @@ void ANOpOfs::emit(FixupContext* fixup_ctxt, OutputFile* out) {
 // Class ANObjID
 ///////////////////////////////////////////////////
 
-ANObjID::ANObjID(Symbol* s) : ANOpCode(op_lofsa) { sym = s; }
+ANObjID::ANObjID(int lineNum, std::string name)
+    : ANOpCode(op_lofsa), lineNum(lineNum), name(std::move(name)) {}
 
 size_t ANObjID::size() { return WORDSIZE; }
 
 void ANObjID::list(ListingFile* listFile) {
   listFile->ListOp(*offset, op);
-  listFile->ListArg("$%-4x\t(%s)", *target->offset, sym->name());
+  listFile->ListArg("$%-4x\t(%s)", *target->offset, name);
 }
 
 void ANObjID::emit(FixupContext* fixup_ctxt, OutputFile* out) {
-  if (!sym) {
-    Error("Undefined object from line %u: %s", sym->lineNum, sym->name());
-    return;
-  }
-
   out->WriteOp(op);
   fixup_ctxt->AddFixup(*offset + 1);
   out->WriteWord(*target->offset);

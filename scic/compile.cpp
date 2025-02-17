@@ -373,7 +373,12 @@ static void MakeObjID(AOpList* curList, PNode* pn) {
 
   else {
     Symbol* sym = pn->sym;
-    ANObjID* an = curList->newNode<ANObjID>(sym);
+    if (!sym) {
+      Error("Undefined object from line %u: %s", sym->lineNum, sym->name());
+      return;
+    }
+    ANObjID* an =
+        curList->newNode<ANObjID>(sym->lineNum, std::string(sym->name()));
 
     // If the object is not defined yet, add this node to the list
     // of those waiting for the definition.
