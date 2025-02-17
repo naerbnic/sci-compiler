@@ -13,7 +13,6 @@
 
 #include "scic/alist.hpp"
 #include "scic/listing.hpp"
-#include "scic/object.hpp"
 
 class OutputFile;
 
@@ -99,11 +98,11 @@ struct ANObject : ANode
 // It generates nothing in the object code file.  The object itself is built
 // up of ANTables containing properties, method dispatch vectors, etc.
 {
-  ANObject(Object* obj);
+  ANObject(std::string name);
 
   void list(ListingFile* listFile) override;
 
-  Object* obj;
+  std::string name;  // name of object
 };
 
 struct ANCodeBlk : ANode
@@ -129,12 +128,11 @@ struct ANMethCode : ANCodeBlk
 // ANMethCode is just a listing-specific subclass of ANCodeBlk, which
 // generates "Method" rather than "Procedure" in the listing.
 {
-  ANMethCode(std::string name);
+  ANMethCode(std::string name, std::string obj_name);
 
   void list(ListingFile* listFile) override;
 
-  Object* obj;  // pointer to symbol of object which this is a
-                // method for
+  std::string obj_name;  // name of object
 };
 
 struct ANProcCode : ANCodeBlk
@@ -335,13 +333,14 @@ struct ANObjID : ANOpCode
 // In the interpreter this gets fixed up at load time so that the opcode
 // generates the address of the object in the heap.
 {
-  ANObjID(Symbol* sym);
+  ANObjID(int lineNum, std::string name);
 
   size_t size() override;
   void list(ListingFile* listFile) override;
   void emit(FixupContext*, OutputFile*) override;
 
-  Symbol* sym;
+  int lineNum;
+  std::string name;
   ANode* target;
 };
 

@@ -127,13 +127,36 @@ cc_library(
     deps = ["@abseil-cpp//absl/functional:any_invocable"],
 )
 
+cc_library(
+    name = "anode",
+    srcs = [
+        "alist.cpp",
+        "anode.cpp",
+        "optimize.cpp",
+    ],
+    hdrs = [
+        "alist.hpp",
+        "anode.hpp",
+        "optimize.hpp",
+    ],
+    deps = [
+        ":casts",
+        ":common",
+        ":config",
+        ":list",
+        ":listing",
+        ":opcodes",
+        ":output",
+        ":symtypes",
+        ":text",
+        ":varlist",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)
+
 cc_binary(
     name = "scic",
     srcs = [
-        "alist.cpp",
-        "alist.hpp",
-        "anode.cpp",
-        "anode.hpp",
         "asm.cpp",
         "asm.hpp",
         "banner.cpp",
@@ -158,8 +181,6 @@ cc_binary(
         "loop.hpp",
         "object.cpp",
         "object.hpp",
-        "optimize.cpp",
-        "optimize.hpp",
         "parse.cpp",
         "parse.hpp",
         "parse_class.cpp",
@@ -196,12 +217,11 @@ cc_binary(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        ":casts",
+        ":anode",
         ":chartype",
         ":common",
         ":config",
         ":input",
-        ":list",
         ":listing",
         ":memtype",
         ":opcodes",

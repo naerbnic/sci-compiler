@@ -87,6 +87,4 @@ inline constexpr auto CLOSE_B = ((sym_t)'}');
 inline bool OpenP(sym_t c) { return c == OPEN_P; }
 inline bool CloseP(sym_t c) { return c == CLOSE_P; }
 
-#define KERNEL -1  // Module # of kernel
-
 #endif

@@ -3,13 +3,12 @@
 
 #include <cassert>
 
-#include "alist.hpp"
+#include "scic/alist.hpp"
 #include "scic/anode.hpp"
 #include "scic/compile.hpp"
 #include "scic/opcodes.hpp"
 #include "scic/pnode.hpp"
 #include "scic/reference.hpp"
-#include "scic/symbol.hpp"
 
 enum LoopType { LOOP_FOR, LOOP_WHILE, LOOP_REPEAT };
 

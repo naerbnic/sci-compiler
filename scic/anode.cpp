@@ -13,18 +13,14 @@
 #include <string_view>
 #include <utility>
 
+#include "absl/strings/str_format.h"
 #include "scic/alist.hpp"
-#include "scic/asm.hpp"
 #include "scic/common.hpp"
 #include "scic/config.hpp"
-#include "scic/error.hpp"
 #include "scic/listing.hpp"
-#include "scic/object.hpp"
 #include "scic/opcodes.hpp"
 #include "scic/optimize.hpp"
 #include "scic/output.hpp"
-#include "scic/parse_context.hpp"
-#include "scic/symbol.hpp"
 #include "scic/symtypes.hpp"
 #include "scic/text.hpp"
 #include "scic/varlist.hpp"
@@ -183,10 +179,10 @@ void ANText::emit(FixupContext* fixup_ctxt, OutputFile* out) {
 // Class ANObject
 ///////////////////////////////////////////////////
 
-ANObject::ANObject(Object* obj) : obj(obj) {}
+ANObject::ANObject(std::string name) : name(std::move(name)) {}
 
 void ANObject::list(ListingFile* listFile) {
-  listFile->Listing("\nObject: %-20s", obj->name);
+  listFile->Listing("\nObject: %-20s", name);
 }
 
 ///////////////////////////////////////////////////
@@ -227,11 +223,11 @@ void ANProcCode::list(ListingFile* listFile) {
 // Class ANMethCode
 ///////////////////////////////////////////////////
 
-ANMethCode::ANMethCode(std::string name)
-    : ANCodeBlk(std::move(name)), obj(gCurObj) {}
+ANMethCode::ANMethCode(std::string name, std::string obj_name)
+    : ANCodeBlk(std::move(name)), obj_name(std::move(obj_name)) {}
 
 void ANMethCode::list(ListingFile* listFile) {
-  listFile->Listing("\n\nMethod: (%s %s)\n", obj->name, name);
+  listFile->Listing("\n\nMethod: (%s %s)\n", obj_name, name);
   ANCodeBlk::list(listFile);
 }
 
@@ -466,7 +462,7 @@ void ANCall::list(ListingFile* listFile) {
 
 void ANCall::emit(FixupContext* fixup_ctxt, OutputFile* out) {
   if (!target || !target->offset.has_value()) {
-    Error("Undefined procedure: %s", name);
+    throw std::runtime_error(absl::StrFormat("Undefined procedure: %s", name));
     return;
   }
 
@@ -568,21 +564,17 @@ void ANOpOfs::emit(FixupContext* fixup_ctxt, OutputFile* out) {
 // Class ANObjID
 ///////////////////////////////////////////////////
 
-ANObjID::ANObjID(Symbol* s) : ANOpCode(op_lofsa) { sym = s; }
+ANObjID::ANObjID(int lineNum, std::string name)
+    : ANOpCode(op_lofsa), lineNum(lineNum), name(std::move(name)) {}
 
 size_t ANObjID::size() { return WORDSIZE; }
 
 void ANObjID::list(ListingFile* listFile) {
   listFile->ListOp(*offset, op);
-  listFile->ListArg("$%-4x\t(%s)", *target->offset, sym->name());
+  listFile->ListArg("$%-4x\t(%s)", *target->offset, name);
 }
 
 void ANObjID::emit(FixupContext* fixup_ctxt, OutputFile* out) {
-  if (!sym) {
-    Error("Undefined object from line %u: %s", sym->lineNum, sym->name());
-    return;
-  }
-
   out->WriteOp(op);
   fixup_ctxt->AddFixup(*offset + 1);
   out->WriteWord(*target->offset);
