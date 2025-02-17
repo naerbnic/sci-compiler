@@ -121,6 +121,12 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "reference",
+    hdrs = ["reference.hpp"],
+    deps = ["@abseil-cpp//absl/functional:any_invocable"],
+)
+
 cc_binary(
     name = "scic",
     srcs = [
@@ -168,7 +174,6 @@ cc_binary(
         "proc.hpp",
         "public.cpp",
         "public.hpp",
-        "reference.hpp",
         "resource.cpp",
         "resource.hpp",
         "sc.cpp",
@@ -201,6 +206,7 @@ cc_binary(
         ":memtype",
         ":opcodes",
         ":output",
+        ":reference",
         ":symtypes",
         ":text",
         ":varlist",
@@ -209,7 +215,6 @@ cc_binary(
         "@abseil-cpp//absl/container:btree",
         "@abseil-cpp//absl/debugging:failure_signal_handler",
         "@abseil-cpp//absl/debugging:symbolize",
-        "@abseil-cpp//absl/functional:any_invocable",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
         "@argparse",
