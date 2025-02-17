@@ -110,6 +110,17 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "debug_utils",
+    hdrs = ["debug_utils.hpp"],
+    deps = [
+        "@abseil-cpp//absl/debugging:stacktrace",
+        "@abseil-cpp//absl/debugging:symbolize",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)
+
 cc_binary(
     name = "scic",
     srcs = [
@@ -129,7 +140,6 @@ cc_binary(
         "compile.hpp",
         "compiler.cpp",
         "compiler.hpp",
-        "debug_utils.hpp",
         "define.cpp",
         "define.hpp",
         "error.cpp",
@@ -198,7 +208,6 @@ cc_binary(
         "@abseil-cpp//absl/cleanup",
         "@abseil-cpp//absl/container:btree",
         "@abseil-cpp//absl/debugging:failure_signal_handler",
-        "@abseil-cpp//absl/debugging:stacktrace",
         "@abseil-cpp//absl/debugging:symbolize",
         "@abseil-cpp//absl/functional:any_invocable",
         "@abseil-cpp//absl/strings",
