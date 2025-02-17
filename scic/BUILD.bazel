@@ -76,6 +76,20 @@ cc_library(
     deps = [":casts"],
 )
 
+cc_library(
+    name = "output",
+    srcs = ["output.cpp"],
+    hdrs = ["output.hpp"],
+    deps = [
+        ":common",
+        ":config",
+        ":memtype",
+        ":resource",
+        "//util/platform",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)
+
 cc_binary(
     name = "scic",
     srcs = [
@@ -113,8 +127,6 @@ cc_binary(
         "opcodes.hpp",
         "optimize.cpp",
         "optimize.hpp",
-        "output.cpp",
-        "output.hpp",
         "parse.cpp",
         "parse.hpp",
         "parse_class.cpp",
@@ -159,6 +171,7 @@ cc_binary(
         ":input",
         ":list",
         ":memtype",
+        ":output",
         ":symtypes",
         ":text",
         ":varlist",
