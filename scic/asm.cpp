@@ -64,7 +64,7 @@ void Assemble(ListingFile* listFile) {
   // offsets.
   gSc->heapList->setOffset(0);
 
-  ObjFiles obj_files = OpenObjFiles();
+  ObjFiles obj_files = OpenObjFiles(gScript);
 
   const std::size_t MAX_INFO_FILE_NAME = 1024;
 

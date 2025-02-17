@@ -34,6 +34,6 @@ struct ObjFiles {
   std::unique_ptr<OutputFile> hunk;
 };
 
-ObjFiles OpenObjFiles();
+ObjFiles OpenObjFiles(int scriptNum);
 
 #endif

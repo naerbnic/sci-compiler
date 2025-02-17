@@ -22,7 +22,6 @@
 #include "scic/error.hpp"
 #include "scic/memtype.hpp"
 #include "scic/resource.hpp"
-#include "scic/sc.hpp"
 #include "util/platform/platform.hpp"
 
 OutputFile::OutputFile(std::string fileName) : fileName(fileName) {
@@ -75,18 +74,18 @@ void OutputFile::Write(const void* mp, size_t len) {
 //////////////////////////////////////////////////////////////////////////////
 
 static std::unique_ptr<OutputFile> OpenObjFile(MemType type, std::string name);
-static std::string MakeObjFileName(MemType type);
+static std::string MakeObjFileName(MemType type, int scriptNum);
 
-ObjFiles OpenObjFiles() {
+ObjFiles OpenObjFiles(int scriptNum) {
   //	open the new files
   return ObjFiles{
-      .heap = OpenObjFile(MemResHeap, MakeObjFileName(MemResHeap)),
-      .hunk = OpenObjFile(MemResHunk, MakeObjFileName(MemResHunk)),
+      .heap = OpenObjFile(MemResHeap, MakeObjFileName(MemResHeap, scriptNum)),
+      .hunk = OpenObjFile(MemResHunk, MakeObjFileName(MemResHunk, scriptNum)),
   };
 }
 
-static std::string MakeObjFileName(MemType type) {
-  std::string resName = ResNameMake(type, gScript);
+static std::string MakeObjFileName(MemType type, int scriptNum) {
+  std::string resName = ResNameMake(type, scriptNum);
   std::string dest = (gConfig->outDir / resName).string();
   DeletePath(dest);
   return dest;
