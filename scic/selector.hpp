@@ -6,7 +6,7 @@
 #include <string_view>
 #include <variant>
 
-#include "scic/anode.hpp"
+#include "scic/anode_impls.hpp"
 
 struct ANode;
 class Symbol;

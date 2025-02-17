@@ -132,11 +132,13 @@ cc_library(
     srcs = [
         "alist.cpp",
         "anode.cpp",
+        "anode_impls.cpp",
         "optimize.cpp",
     ],
     hdrs = [
         "alist.hpp",
         "anode.hpp",
+        "anode_impls.hpp",
         "optimize.hpp",
     ],
     deps = [

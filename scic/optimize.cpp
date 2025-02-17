@@ -10,6 +10,7 @@
 
 #include "scic/alist.hpp"
 #include "scic/anode.hpp"
+#include "scic/anode_impls.hpp"
 #include "scic/casts.hpp"
 #include "scic/opcodes.hpp"
 

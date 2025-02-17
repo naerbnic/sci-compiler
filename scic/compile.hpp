@@ -6,7 +6,7 @@
 #include <cstdint>
 
 #include "scic/alist.hpp"
-#include "scic/anode.hpp"
+#include "scic/anode_impls.hpp"
 #include "scic/reference.hpp"
 
 struct ANode;

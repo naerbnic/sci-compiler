@@ -5,7 +5,7 @@
 #include <variant>
 #include <vector>
 
-#include "scic/anode.hpp"
+#include "scic/anode_impls.hpp"
 
 struct Var {
   // Variable definition.
