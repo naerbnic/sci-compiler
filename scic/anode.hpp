@@ -474,7 +474,7 @@ class ANVars : public ANode
 // module.
 {
  public:
-  ANVars(VarList&);
+  ANVars(VarList*);
 
   size_t size() override;
   void list(ListingFile* listFile) override;
@@ -482,7 +482,7 @@ class ANVars : public ANode
   void emit(OutputFile*) override;
 
  protected:
-  VarList& theVars;
+  VarList* theVars;
 };
 
 struct ANFileName : ANOpCode {

@@ -623,19 +623,19 @@ void ANSuper::emit(OutputFile* out) {
 // Class ANVars
 ///////////////////////////////////////////////////
 
-ANVars::ANVars(VarList& theVars) : theVars(theVars) {}
+ANVars::ANVars(VarList* theVars) : theVars(theVars) {}
 
-size_t ANVars::size() { return 2 * (theVars.values.size() + 1); }
+size_t ANVars::size() { return 2 * (theVars->values.size() + 1); }
 
 void ANVars::list(ListingFile* listFile) {
   // FIXME: I don't know why we're saving/restoring the variable.
   std::size_t curOfs = *offset;
 
   listFile->Listing("\n\nVariables:");
-  listFile->ListWord(curOfs, theVars.values.size());
+  listFile->ListWord(curOfs, theVars->values.size());
   curOfs += 2;
 
-  for (Var const& var : theVars.values) {
+  for (Var const& var : theVars->values) {
     int n = var.value;
     if (var.type == S_STRING) n += *gTextTable->offset;
     listFile->ListWord(curOfs, n);
@@ -646,16 +646,16 @@ void ANVars::list(ListingFile* listFile) {
 
 void ANVars::collectFixups(FixupContext* fixup_ctxt) {
   std::size_t relOfs = 2;
-  for (Var const& var : theVars.values) {
+  for (Var const& var : theVars->values) {
     if (var.type == S_STRING) fixup_ctxt->AddRelFixup(this, relOfs);
     relOfs += 2;
   }
 }
 
 void ANVars::emit(OutputFile* out) {
-  out->WriteWord(theVars.values.size());
+  out->WriteWord(theVars->values.size());
 
-  for (Var const& var : theVars.values) {
+  for (Var const& var : theVars->values) {
     int n = var.value;
     if (var.type == S_STRING) {
       n += *gTextTable->offset;

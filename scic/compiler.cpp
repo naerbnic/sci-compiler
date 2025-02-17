@@ -7,7 +7,6 @@
 #include <cstdlib>
 #include <memory>
 #include <string>
-#include <utility>
 
 #include "absl/strings/str_format.h"
 #include "scic/alist.hpp"
@@ -73,15 +72,13 @@ void Compiler::InitAsm() {
   dispTbl = hunkBody->newNode<ANTable>("dispatch table");
   numDispTblEntries->target = dispTbl->getList();
 
+  auto* heapBody = heapList->getList();
+  heapBody->newNode<ANVars>(&localVars);
+
   gCodeStart = 0;
 }
 
 void Compiler::Assemble(ListingFile* listFile) {
-  // Assemble the list pointed to by asmHead.
-
-  auto vars = std::make_unique<ANVars>(localVars);
-  heapList->getList()->addFront(std::move(vars));
-
   // Set the offsets in the object list.
   heapList->setOffset(0);
 
