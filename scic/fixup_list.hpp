@@ -10,6 +10,15 @@
 #include "scic/casts.hpp"
 #include "scic/listing.hpp"
 
+// A pure-virtual class that gives context if a node is located in the
+// heap.
+class HeapContext {
+ public:
+  virtual ~HeapContext() = default;
+
+  virtual bool IsInHeap(ANode* node) const = 0;
+};
+
 class FixupList {
   // A FixupList is an AList which has elements in it which need to be relocated
   // by the interpreter at load time.  It builds a table of offsets needing
@@ -21,7 +30,7 @@ class FixupList {
   void clear();
 
   void list(ListingFile* listFile);
-  void emit(FixupContext*, OutputFile*);
+  void emit(HeapContext*, OutputFile*);
   size_t setOffset(size_t ofs);
 
   // Increment the number of elements needing fixup.  This is

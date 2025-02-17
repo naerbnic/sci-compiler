@@ -8,6 +8,33 @@
 #include "scic/listing.hpp"
 #include "scic/output.hpp"
 
+namespace {
+class FixupListContext : public FixupContext {
+ public:
+  FixupListContext(FixupList* fixupList, HeapContext const* heapContext)
+      : fixupList_(fixupList), heapContext_(heapContext) {}
+
+  bool HeapHasNode(ANode* node) const override {
+    return heapContext_->IsInHeap(node);
+  }
+
+  void AddRelFixup(ANode* node, std::size_t ofs) override {
+    fixupList_->addFixup(node, ofs);
+  }
+
+ private:
+  FixupList* fixupList_;
+  HeapContext const* heapContext_;
+};
+
+class NullFixupContext : public FixupContext {
+ public:
+  bool HeapHasNode(ANode* node) const override { return false; }
+  void AddRelFixup(ANode* node, std::size_t ofs) override {}
+};
+
+}  // namespace
+
 ///////////////////////////////////////////////////
 // Class FixupList
 ///////////////////////////////////////////////////
@@ -84,9 +111,13 @@ void FixupList::list(ListingFile* listFile) {
   listFixups(listFile);
 }
 
-void FixupList::emit(FixupContext* fixup_ctxt, OutputFile* out) {
+void FixupList::emit(HeapContext* heap_ctxt, OutputFile* out) {
   initFixups();
-  list_.emit(fixup_ctxt, out);
+  {
+    FixupListContext fixup_ctxt(this, heap_ctxt);
+    list_.collectFixups(&fixup_ctxt);
+  }
+  list_.emit(out);
   emitFixups(out);
 }
 

@@ -46,7 +46,10 @@ struct ANode : TNode {
   virtual void list(ListingFile* listFile);
   // Writes a representation of the node to the listing file.
 
-  virtual void emit(FixupContext* fixup_ctxt, OutputFile*);
+  // Adds fixups to the fixup_ctxt, if needed for this instruction.
+  virtual void collectFixups(FixupContext* fixup_ctxt);
+
+  virtual void emit(OutputFile*);
   // Emits the object code for the node to the output file.
 
   virtual bool optimize();
@@ -67,7 +70,7 @@ struct ANOpCode : ANode
 
   size_t size() override;
   void list(ListingFile* listFile) override;
-  void emit(FixupContext*, OutputFile*) override;
+  void emit(OutputFile*) override;
 
   uint32_t op;  // type of operator
 };
@@ -89,9 +92,13 @@ class AListBase {
     for (auto it = iter(); it; ++it) it->list(listFile);
   }
 
-  void emit(FixupContext* fixup_ctxt, OutputFile* out) {
+  void collectFixups(FixupContext* fixup_ctxt) {
+    for (auto it = iter(); it; ++it) it->collectFixups(fixup_ctxt);
+  }
+
+  void emit(OutputFile* out) {
     for (auto it = iter(); it; ++it) {
-      it->emit(fixup_ctxt, out);
+      it->emit(out);
     }
   }
   // Invoke the emit() methods of each element in the list.

@@ -32,7 +32,8 @@ struct ANDispatch : ANode
 {
   size_t size() override;
   void list(ListingFile* listFile) override;
-  void emit(FixupContext*, OutputFile*) override;
+  void collectFixups(FixupContext*) override;
+  void emit(OutputFile*) override;
 
   std::optional<std::string> name;
   ANode* target;
@@ -47,7 +48,7 @@ struct ANWord : ANode
 
   size_t size() override;
   void list(ListingFile* listFile) override;
-  void emit(FixupContext*, OutputFile*) override;
+  void emit(OutputFile*) override;
 
   int value;
 };
@@ -64,8 +65,9 @@ struct ANTable : ANode
 
   size_t size() override;
   size_t setOffset(size_t ofs) override;
+  void collectFixups(FixupContext*) override;
   void list(ListingFile* listFile) override;
-  void emit(FixupContext*, OutputFile*) override;
+  void emit(OutputFile*) override;
 
   std::string name;  // name of table (values follow)
   AList entries;     // list of entries in the table
@@ -88,7 +90,7 @@ struct ANText : ANode
   size_t setOffset(size_t ofs) override;  // set offset to ofs, return new ofs
   size_t size() override;
   void list(ListingFile* listFile) override;
-  void emit(FixupContext*, OutputFile*) override;
+  void emit(OutputFile*) override;
 
   Text* text;
 };
@@ -115,7 +117,8 @@ struct ANCodeBlk : ANode
   ANCodeBlk(std::string name);
 
   size_t size() override;
-  void emit(FixupContext*, OutputFile*) override;
+  void collectFixups(FixupContext*) override;
+  void emit(OutputFile*) override;
   size_t setOffset(size_t ofs) override;
   void list(ListingFile* listFile) override;
   bool optimize() override;
@@ -156,7 +159,7 @@ struct ANProp : ANode
 
   size_t size() override;
   void list(ListingFile* listFile) override;
-  void emit(FixupContext*, OutputFile*) override;
+  void emit(OutputFile*) override;
 
   std::string name;  // pointer to selector's symbol
   int val;           // value of selector
@@ -176,7 +179,7 @@ struct ANTextProp : ANProp
 {
   ANTextProp(std::string name, int v);
 
-  void emit(FixupContext*, OutputFile*) override;
+  void collectFixups(FixupContext*) override;
   std::string_view desc() override;  // return descriptive string
   uint32_t value() override;         // return value of selector
 };
@@ -219,7 +222,7 @@ class ANLabel : public ANOpCode
 
   size_t size() override;
   void list(ListingFile* listFile) override;
-  void emit(FixupContext*, OutputFile*) override;
+  void emit(OutputFile*) override;
 
   uint32_t number;  // label number
 
@@ -237,7 +240,7 @@ struct ANOpUnsign : ANOpCode
 
   size_t size() override;
   void list(ListingFile* listFile) override;
-  void emit(FixupContext*, OutputFile*) override;
+  void emit(OutputFile*) override;
 
   uint32_t value;
   std::optional<std::string> name;
@@ -251,7 +254,7 @@ struct ANOpSign : ANOpCode
 
   size_t size() override;
   void list(ListingFile* listFile) override;
-  void emit(FixupContext*, OutputFile*) override;
+  void emit(OutputFile*) override;
 
   int value;
   std::optional<std::string> name;
@@ -264,7 +267,7 @@ struct ANOpExtern : ANOpCode
 
   size_t size() override;
   void list(ListingFile* listFile) override;
-  void emit(FixupContext*, OutputFile*) override;
+  void emit(OutputFile*) override;
 
   int32_t module;    // module # of destination
   uint32_t entry;    // entry # of destination
@@ -278,7 +281,7 @@ struct ANCall : ANOpCode {
 
   size_t size() override;
   void list(ListingFile* listFile) override;
-  void emit(FixupContext*, OutputFile*) override;
+  void emit(OutputFile*) override;
 
   uint32_t numArgs;  // number of arguments
   std::string name;  // symbol of procedure being called
@@ -293,7 +296,7 @@ struct ANBranch : ANOpCode
 
   size_t size() override;
   void list(ListingFile* listFile) override;
-  void emit(FixupContext*, OutputFile*) override;
+  void emit(OutputFile*) override;
 
   ANLabel* target;
 };
@@ -308,7 +311,7 @@ struct ANVarAccess : ANOpCode
 
   size_t size() override;
   void list(ListingFile* listFile) override;
-  void emit(FixupContext*, OutputFile*) override;
+  void emit(OutputFile*) override;
 
   uint32_t addr;                    // variable address
   std::optional<std::string> name;  //  variable name
@@ -322,7 +325,8 @@ struct ANOpOfs : ANOpCode
 
   size_t size() override;
   void list(ListingFile* listFile) override;
-  void emit(FixupContext*, OutputFile*) override;
+  void collectFixups(FixupContext*) override;
+  void emit(OutputFile*) override;
 
   size_t ofs;  // the offset
 };
@@ -337,7 +341,8 @@ struct ANObjID : ANOpCode
 
   size_t size() override;
   void list(ListingFile* listFile) override;
-  void emit(FixupContext*, OutputFile*) override;
+  void collectFixups(FixupContext*) override;
+  void emit(OutputFile*) override;
 
   int lineNum;
   std::string name;
@@ -353,7 +358,7 @@ struct ANEffctAddr : ANVarAccess
 
   size_t size() override;
   void list(ListingFile* listFile) override;
-  void emit(FixupContext*, OutputFile*) override;
+  void emit(OutputFile*) override;
 
   uint32_t eaType;  // type of access
 };
@@ -365,7 +370,7 @@ struct ANSend : ANOpCode
 
   size_t size() override;
   void list(ListingFile* listFile) override;
-  void emit(FixupContext*, OutputFile*) override;
+  void emit(OutputFile*) override;
 
   uint32_t numArgs;
 };
@@ -378,7 +383,7 @@ struct ANSuper : ANSend
 
   size_t size() override;
   void list(ListingFile* listFile) override;
-  void emit(FixupContext*, OutputFile*) override;
+  void emit(OutputFile*) override;
 
   uint32_t classNum;
   std::string name;
@@ -395,7 +400,8 @@ class ANVars : public ANode
 
   size_t size() override;
   void list(ListingFile* listFile) override;
-  void emit(FixupContext*, OutputFile*) override;
+  void collectFixups(FixupContext*) override;
+  void emit(OutputFile*) override;
 
  protected:
   VarList& theVars;
@@ -409,7 +415,7 @@ struct ANFixup : ANode {
 
   size_t size() override;
   void list(ListingFile* listFile) override;
-  void emit(FixupContext*, OutputFile*) override;
+  void emit(OutputFile*) override;
 };
 
 struct ANFileName : ANOpCode {
@@ -418,7 +424,7 @@ struct ANFileName : ANOpCode {
   ANFileName(std::string name);
 
   void list(ListingFile* listFile) override;
-  void emit(FixupContext*, OutputFile*) override;
+  void emit(OutputFile*) override;
   size_t size() override;
 
  protected:
@@ -431,7 +437,7 @@ struct ANLineNum : ANOpCode {
   ANLineNum(int num);
 
   void list(ListingFile* listFile) override;
-  void emit(FixupContext*, OutputFile*) override;
+  void emit(OutputFile*) override;
   size_t size() override;
 
  protected:

@@ -22,20 +22,33 @@
 #include "scic/sc.hpp"
 #include "scic/symbol.hpp"
 
+namespace {
+class CompilerHeapContext : public HeapContext {
+ public:
+  CompilerHeapContext(Compiler* compiler) : compiler_(compiler) {}
+
+  bool IsInHeap(ANode* node) const override {
+    return compiler_->heapList->contains(node);
+  }
+
+ private:
+  Compiler* compiler_;
+};
+
+class NullFixupContext : public FixupContext {
+ public:
+  bool HeapHasNode(ANode* node) const override { return false; }
+  void AddRelFixup(ANode* node, std::size_t ofs) override {}
+};
+
+}  // namespace
+
 Compiler::Compiler() {
   hunkList = std::make_unique<CodeList>();
   heapList = std::make_unique<FixupList>();
 }
 
 Compiler::~Compiler() = default;
-
-bool Compiler::HeapHasNode(ANode* node) const {
-  return heapList->contains(node);
-}
-
-void Compiler::AddRelFixup(ANode* node, std::size_t ofs) {
-  heapList->addFixup(node, ofs);
-}
 
 void Compiler::InitAsm() {
   // Initialize the assembly list: dispose of any old list, then add nodes
@@ -91,8 +104,11 @@ void Compiler::Assemble(ListingFile* listFile) {
   absl::FPrintF(infoFile, "%s\n", gInputState.GetTopLevelFileName());
   fclose(infoFile);
 
-  heapList->emit(this, obj_files.heap.get());
-  hunkList->emit(this, obj_files.hunk.get());
+  {
+    CompilerHeapContext heapContext(this);
+    heapList->emit(&heapContext, obj_files.heap.get());
+    hunkList->emit(&heapContext, obj_files.hunk.get());
+  }
 
   // Now generate object code.
   listFile->Listing(

@@ -1,7 +1,6 @@
 #ifndef COMPILER_HPP
 #define COMPILER_HPP
 
-#include <cstddef>
 #include <memory>
 
 #include "scic/alist.hpp"
@@ -11,12 +10,9 @@
 #include "scic/public.hpp"
 #include "scic/varlist.hpp"
 
-struct Compiler : public FixupContext {
+struct Compiler {
   Compiler();
   ~Compiler();
-
-  bool HeapHasNode(ANode* node) const override;
-  void AddRelFixup(ANode* node, std::size_t ofs) override;
 
   void InitAsm();
   void Assemble(ListingFile* listFile);
