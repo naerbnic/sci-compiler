@@ -33,7 +33,9 @@ bool Compiler::HeapHasNode(ANode* node) const {
   return heapList->contains(node);
 }
 
-void Compiler::AddFixup(std::size_t ofs) { heapList->addFixup(ofs); }
+void Compiler::AddRelFixup(ANode* node, std::size_t ofs) {
+  heapList->addFixup(node, ofs);
+}
 
 void Compiler::InitAsm() {
   // Initialize the assembly list: dispose of any old list, then add nodes

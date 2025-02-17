@@ -21,7 +21,7 @@ class FixupContext {
   virtual ~FixupContext() = default;
 
   virtual bool HeapHasNode(ANode* node) const = 0;
-  virtual void AddFixup(std::size_t ofs) = 0;
+  virtual void AddRelFixup(ANode* node, std::size_t ofs) = 0;
 };
 
 struct ANode : TNode {

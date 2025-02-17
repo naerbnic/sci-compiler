@@ -106,7 +106,7 @@ void ANDispatch::emit(FixupContext* fixup_ctxt, OutputFile* out) {
   // If the destination of this dispatch entry is in the heap (i.e.
   // an object rather than code), it must be fixed up.
 
-  if (fixup_ctxt->HeapHasNode(target)) fixup_ctxt->AddFixup(*offset);
+  if (fixup_ctxt->HeapHasNode(target)) fixup_ctxt->AddRelFixup(this, 0);
 
   out->WriteWord((uint32_t)(target && name ? *target->offset : 0));
 }
@@ -249,7 +249,7 @@ uint32_t ANIntProp::value() { return val; }
 ANTextProp::ANTextProp(std::string name, int v) : ANProp(std::move(name), v) {}
 
 void ANTextProp::emit(FixupContext* fixup_ctxt, OutputFile* out) {
-  fixup_ctxt->AddFixup(*offset);
+  fixup_ctxt->AddRelFixup(this, 0);
   ANProp::emit(fixup_ctxt, out);
 }
 
@@ -550,7 +550,7 @@ void ANOpOfs::list(ListingFile* listFile) {
 
 void ANOpOfs::emit(FixupContext* fixup_ctxt, OutputFile* out) {
   out->WriteOp(op);
-  fixup_ctxt->AddFixup(*offset + 1);
+  fixup_ctxt->AddRelFixup(this, 1);
   out->WriteWord(*gTextTable->offset + ofs);
 }
 
@@ -570,7 +570,7 @@ void ANObjID::list(ListingFile* listFile) {
 
 void ANObjID::emit(FixupContext* fixup_ctxt, OutputFile* out) {
   out->WriteOp(op);
-  fixup_ctxt->AddFixup(*offset + 1);
+  fixup_ctxt->AddRelFixup(this, 1);
   out->WriteWord(*target->offset);
 }
 
@@ -670,18 +670,18 @@ void ANVars::list(ListingFile* listFile) {
 }
 
 void ANVars::emit(FixupContext* fixup_ctxt, OutputFile* out) {
-  int curOfs = *offset;
+  std::size_t relOfs = 0;
   out->WriteWord(theVars.values.size());
-  curOfs += 2;
+  relOfs += 2;
 
   for (Var const& var : theVars.values) {
     int n = var.value;
     if (var.type == S_STRING) {
       n += *gTextTable->offset;
-      fixup_ctxt->AddFixup(curOfs);
+      fixup_ctxt->AddRelFixup(this, relOfs);
     }
     out->WriteWord(n);
-    curOfs += 2;
+    relOfs += 2;
   }
 }
 

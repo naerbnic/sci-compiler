@@ -50,8 +50,8 @@ void FixupList::listFixups(ListingFile* listFile) {
   listFile->ListWord(curOfs, fixups.size());
   curOfs += 2;
 
-  for (size_t fixup : fixups) {
-    listFile->ListWord(curOfs, fixup);
+  for (auto const& fixup : fixups) {
+    listFile->ListWord(curOfs, fixup.offset());
     curOfs += 2;
   }
 }
@@ -60,10 +60,22 @@ void FixupList::emitFixups(OutputFile* out) {
   if (fixOfs & 1) out->WriteByte(0);
 
   out->WriteWord(fixups.size());
-  for (size_t fixup : fixups) out->WriteWord(fixup);
+  for (auto fixup : fixups) out->WriteWord(fixup.offset());
 }
 
-void FixupList::addFixup(size_t ofs) { fixups.push_back(ofs); }
+void FixupList::addFixup(size_t ofs) {
+  fixups.push_back(Offset{
+      .node_base = nullptr,
+      .rel_offset = ofs,
+  });
+}
+
+void FixupList::addFixup(ANode* node, std::size_t rel_ofs) {
+  fixups.push_back(Offset{
+      .node_base = node,
+      .rel_offset = rel_ofs,
+  });
+}
 
 void FixupList::list(ListingFile* listFile) {
   for (auto& node : list_.list_) {

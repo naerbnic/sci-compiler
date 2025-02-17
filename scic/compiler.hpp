@@ -16,7 +16,7 @@ struct Compiler : public FixupContext {
   ~Compiler();
 
   bool HeapHasNode(ANode* node) const override;
-  void AddFixup(std::size_t ofs) override;
+  void AddRelFixup(ANode* node, std::size_t ofs) override;
 
   void InitAsm();
   void Assemble(ListingFile* listFile);

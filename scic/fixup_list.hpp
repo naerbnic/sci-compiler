@@ -37,9 +37,11 @@ class FixupList {
   void emitFixups(OutputFile*);
   // Emit the fixup table to the object file.
 
-  void addFixup(size_t ofs);
   // The word at offset 'ofs' in the object file needs relocation.
   // Add the offset to the fixup table.
+  void addFixup(size_t ofs);
+
+  void addFixup(ANode* node, std::size_t rel_ofs);
 
   ANode* front() { return down_cast<ANode>(list_.list_.frontPtr()); }
 
@@ -60,8 +62,17 @@ class FixupList {
   AList* getList() { return &list_; }
 
  protected:
+  struct Offset {
+    ANode* node_base;
+    std::size_t rel_offset;
+
+    std::size_t offset() const {
+      if (!node_base) return rel_offset;
+      return *node_base->offset + rel_offset;
+    }
+  };
   AList list_;
-  std::vector<size_t> fixups;  // storage for fixup values
+  std::vector<Offset> fixups;  // storage for fixup values
   size_t fixOfs;               // offset of start of fixups
 };
 
