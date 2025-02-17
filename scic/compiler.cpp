@@ -117,7 +117,7 @@ class ANStringVar : public ANComputedWord {
   ANText* text;
 };
 
-void OptimizeHunk(AList* alist) {
+void OptimizeHunk(ANodeList* alist) {
   if (!gConfig->noOptimize) {
     for (auto it = alist->iter(); it; ++it)
       while (it->optimize())

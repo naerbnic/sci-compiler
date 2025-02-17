@@ -13,7 +13,7 @@
 #include "scic/listing.hpp"
 
 template <std::derived_from<ANode> T>
-class AListBase {
+class AList {
  public:
   // AList (assembly list) is a list of ANodes (assembly nodes).
 
@@ -89,8 +89,8 @@ class AListBase {
   TList<T> list_;
 };
 
-using AList = AListBase<ANode>;
-using AOpList = AListBase<ANOpCode>;
+using ANodeList = AList<ANode>;
+using AOpList = AList<ANOpCode>;
 
 template <class T>
 struct ANComposite : ANode {
@@ -152,10 +152,10 @@ struct ANComposite : ANode {
     return changed;
   }
 
-  AListBase<T>* getList() { return &list_; }
+  AList<T>* getList() { return &list_; }
 
  private:
-  AListBase<T> list_;
+  AList<T> list_;
 };
 
 #endif

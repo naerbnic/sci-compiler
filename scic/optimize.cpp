@@ -14,7 +14,7 @@
 #include "scic/casts.hpp"
 #include "scic/opcodes.hpp"
 
-ANOpCode* FindNextOp(AListBase<ANOpCode>* list, ANOpCode* start) {
+ANOpCode* FindNextOp(AList<ANOpCode>* list, ANOpCode* start) {
   if (!start) {
     throw new std::runtime_error("start cannot be nullptr");
   }

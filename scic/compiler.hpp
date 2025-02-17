@@ -30,14 +30,14 @@ struct Compiler {
   VarList localVars;
   int lastLineNum;
   ANTable* dispTbl;
-  AList* objPropList;
-  AList* objDictList;
-  AList* codeList;
+  ANodeList* objPropList;
+  ANodeList* objDictList;
+  ANodeList* codeList;
 
  private:
   std::unique_ptr<FixupList> heapList;
   std::unique_ptr<FixupList> hunkList;
-  AList* textList;
+  ANodeList* textList;
   std::map<std::string, ANText*, std::less<>> textNodes;
 };
 

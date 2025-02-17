@@ -60,7 +60,7 @@ class FixupList {
   }
 
  public:
-  AList* getList() { return bodyTable_->getList(); }
+  ANodeList* getList() { return bodyTable_->getList(); }
 
  protected:
   struct Offset {
@@ -72,7 +72,7 @@ class FixupList {
       return *node_base->offset + rel_offset;
     }
   };
-  AList list_;
+  ANodeList list_;
   ANTable* bodyTable_;
   ANTable* fixupTable_;
 };

@@ -32,7 +32,7 @@ static void MakeClassID(AOpList* curList, PNode*);
 static void MakeObjID(AOpList* curList, PNode*);
 static void MakeSend(AOpList* curList, PNode*);
 static int MakeMessage(AOpList* curList, PNode::ChildSpan children);
-static void MakeProc(AList* curList, PNode*);
+static void MakeProc(ANodeList* curList, PNode*);
 static int MakeArgs(AOpList* curList, PNode::ChildSpan children);
 static void MakeUnary(AOpList* curList, PNode*);
 static void MakeBinary(AOpList* curList, PNode*);
@@ -48,7 +48,7 @@ static void MakeIf(AOpList* curList, PNode*);
 static void MakeCond(AOpList* curList, PNode*);
 static void MakeSwitch(AOpList* curList, PNode*);
 
-void CompileProc(AList* curList, PNode* pn) {
+void CompileProc(ANodeList* curList, PNode* pn) {
   // Recursively compile code for a given node.
 
   switch (pn->type) {
@@ -935,7 +935,7 @@ static void MakeIncDec(AOpList* curList, PNode* pn) {
   MakeAccess(curList, pn->first_child(), (uint8_t)theCode);
 }
 
-static void MakeProc(AList* curList, PNode* pn) {
+static void MakeProc(ANodeList* curList, PNode* pn) {
   // Compile code for an entire procedure.
 
   // Make a procedure node and point to the symbol for the procedure

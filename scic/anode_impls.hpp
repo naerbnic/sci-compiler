@@ -48,9 +48,9 @@ class ANOffsetWord : public ANComputedWord {
 
 class ANCountWord : public ANComputedWord {
  public:
-  ANCountWord(AList* target) : target(target) {}
+  ANCountWord(ANodeList* target) : target(target) {}
 
-  AList* target;
+  ANodeList* target;
 
  protected:
   SCIWord value() const override { return target->length(); }

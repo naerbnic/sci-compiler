@@ -3,11 +3,13 @@
 #include <csetjmp>
 #include <cstring>
 #include <memory>
+#include <optional>
 #include <string_view>
 #include <utility>
 #include <variant>
 
 #include "scic/anode.hpp"
+#include "scic/anode_impls.hpp"
 #include "scic/class.hpp"
 #include "scic/common.hpp"
 #include "scic/compile.hpp"
@@ -131,7 +133,7 @@ static void InstanceBody(Object* obj) {
   // Get a pointer to the 'name' selector for this object and zero
   // out the property.
   Selector* nameSelector = obj->findSelectorByNum(gNameSymbol->val());
-  if (nameSelector) nameSelector->val = -1;
+  if (nameSelector) nameSelector->val = std::nullopt;
 
   // Get any property or method definitions.
   gCurObj = obj;
