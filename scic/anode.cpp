@@ -22,9 +22,6 @@
 #include "scic/optimize.hpp"
 #include "scic/output.hpp"
 
-ANCodeBlk* gCodeStart;
-ANTable* gTextTable;
-
 #define OPTIMIZE_TRANSFERS
 
 static bool canOptimizeTransfer(size_t a, size_t b) {

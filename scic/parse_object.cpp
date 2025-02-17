@@ -16,7 +16,6 @@
 #include "scic/define.hpp"
 #include "scic/error.hpp"
 #include "scic/expr.hpp"
-#include "scic/fixup_list.hpp"
 #include "scic/global_compiler.hpp"
 #include "scic/input.hpp"
 #include "scic/object.hpp"
@@ -109,7 +108,7 @@ void MethodDef(Object* obj) {
       else {
         // Compile the code for this method.
         ExprList(node.get(), OPTIONAL);
-        CompileProc(gSc->hunkList->getList(), node.get());
+        CompileProc(gSc->codeList, node.get());
 
         // Save the pointer to the method code.
         sn->tag = T_LOCAL;

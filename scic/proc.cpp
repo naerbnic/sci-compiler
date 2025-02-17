@@ -4,11 +4,11 @@
 
 #include <memory>
 
+#include "scic/common.hpp"
 #include "scic/compile.hpp"
 #include "scic/compiler.hpp"
 #include "scic/error.hpp"
 #include "scic/expr.hpp"
-#include "scic/fixup_list.hpp"
 #include "scic/global_compiler.hpp"
 #include "scic/object.hpp"
 #include "scic/parse.hpp"
@@ -46,7 +46,7 @@ void Procedure() {
       auto theNode = CallDef(S_PROC);
       if (theNode) {
         ExprList(theNode.get(), OPTIONAL);
-        CompileProc(gSc->hunkList->getList(), theNode.get());
+        CompileProc(gSc->codeList, theNode.get());
       }
     }
 

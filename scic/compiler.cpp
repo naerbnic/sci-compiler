@@ -147,17 +147,17 @@ void Compiler::InitAsm() {
   auto* numDispTblEntries = hunkBody->newNode<ANCountWord>(nullptr);
   dispTbl = hunkBody->newNode<ANTable>("dispatch table");
   numDispTblEntries->target = dispTbl->getList();
+  objDictList = hunkBody->newNode<ANTable>("object dict list")->getList();
+  codeList = hunkBody->newNode<ANTable>("code list")->getList();
 
   auto* heapBody = heapList->getList();
   heapBody->newNode<ANVars>(&localVars);
 
-  objList = heapBody->newNode<ANTable>("object properties")->getList();
+  objPropList = heapBody->newNode<ANTable>("object properties")->getList();
   // The object section terminator.
   heapBody->newNode<ANWord>(0);
 
   textList = heapBody->newNode<ANTable>("text table")->getList();
-
-  gCodeStart = 0;
 }
 
 void Compiler::Assemble(ListingFile* listFile) {

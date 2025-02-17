@@ -12,7 +12,6 @@
 #include "scic/anode.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
-#include "scic/fixup_list.hpp"
 #include "scic/global_compiler.hpp"
 #include "scic/input.hpp"
 #include "scic/loop.hpp"
@@ -946,8 +945,6 @@ static void MakeProc(AList* curList, PNode* pn) {
                       : (ANCodeBlk*)curList->newNode<ANMethCode>(
                             std::string(pn->sym->name()), gCurObj->name);
 
-  if (!gCodeStart) gCodeStart = an;
-
   pn->sym->type = (sym_t)(pn->type == PN_PROC ? S_PROC : S_SELECT);
 
   // If any nodes already compiled have this procedure as a target,
@@ -983,12 +980,12 @@ void MakeObject(Object* theObj) {
   {
     // Create the object ID node.
     ANObject* obj =
-        gSc->objList->newNodeBefore<ANObject>(nullptr, theObj->name);
+        gSc->objPropList->newNodeBefore<ANObject>(nullptr, theObj->name);
     theObj->an = obj;
 
     // Create the table of properties.
     ANTable* props =
-        gSc->objList->newNodeBefore<ANTable>(nullptr, "properties");
+        gSc->objPropList->newNodeBefore<ANTable>(nullptr, "properties");
 
     {
       for (auto* sp : theObj->selectors())
@@ -1024,11 +1021,11 @@ void MakeObject(Object* theObj) {
   }
 
   // The rest of the object goes into hunk, as it never changes.
-  gSc->hunkList->getList()->newNodeBefore<ANObject>(gCodeStart, theObj->name);
+  gSc->objDictList->newNode<ANObject>(theObj->name);
 
   // If this a class, add the property dictionary.
-  ANObjTable* propDict = gSc->hunkList->getList()->newNodeBefore<ANObjTable>(
-      gCodeStart, "property dictionary");
+  ANObjTable* propDict =
+      gSc->objDictList->newNode<ANObjTable>("property dictionary");
   {
     if (theObj->num != OBJECTNUM) {
       for (auto* sp : theObj->selectors())
@@ -1038,8 +1035,8 @@ void MakeObject(Object* theObj) {
   }
   if (pDict) pDict->target = propDict;
 
-  ANObjTable* methDict = gSc->hunkList->getList()->newNodeBefore<ANObjTable>(
-      gCodeStart, "method dictionary");
+  ANObjTable* methDict =
+      gSc->objDictList->newNode<ANObjTable>("method dictionary");
   {
     ANWord* numMeth = methDict->getList()->newNode<ANWord>((short)0);
     for (auto* sp : theObj->selectors())

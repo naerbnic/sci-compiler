@@ -26,15 +26,16 @@ struct Compiler {
 
   ANText* AddTextNode(std::string_view text);
 
-  std::unique_ptr<CodeList> hunkList;
-
   VarList localVars;
   int lastLineNum;
   ANTable* dispTbl;
-  AList* objList;
+  AList* objPropList;
+  AList* objDictList;
+  AList* codeList;
 
  private:
   std::unique_ptr<FixupList> heapList;
+  std::unique_ptr<CodeList> hunkList;
   AList* textList;
   std::map<std::string, ANText*, std::less<>> textNodes;
 };
