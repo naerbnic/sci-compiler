@@ -35,7 +35,6 @@
 #include "scic/share.hpp"
 #include "scic/symtbl.hpp"
 #include "scic/symtypes.hpp"
-#include "scic/text.hpp"
 #include "scic/update.hpp"
 #include "util/platform/platform.hpp"
 
@@ -211,7 +210,6 @@ static void CompileFile(std::string_view fileName, bool listCode) {
   // Do some initialization.
   gScript = -1;
   gNumErrors = gNumWarnings = 0;
-  gText.init();
 
   // Delete any free symbol tables.
   gSyms.delFreeTbls();
@@ -229,7 +227,6 @@ static void CompileFile(std::string_view fileName, bool listCode) {
   // Parse the file (don't lock the symbol tables), then assemble it.
   gSyms.moduleSymTbl = gSyms.add(ST_MEDIUM);
   Parse();
-  MakeText();  // Add text to the assembly code
   if (gScript == -1)
     Error("No script number specified.  Can't write output files.");
   else {

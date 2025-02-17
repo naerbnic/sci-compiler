@@ -3,10 +3,11 @@
 #include <csetjmp>
 #include <cstring>
 #include <memory>
-#include <stdexcept>
 #include <string_view>
 #include <utility>
+#include <variant>
 
+#include "scic/anode.hpp"
 #include "scic/class.hpp"
 #include "scic/common.hpp"
 #include "scic/compile.hpp"
@@ -28,10 +29,10 @@
 #include "scic/symbol.hpp"
 #include "scic/symtbl.hpp"
 #include "scic/symtypes.hpp"
-#include "scic/text.hpp"
 #include "scic/token.hpp"
 #include "scic/toktypes.hpp"
 #include "scic/update.hpp"
+#include "util/types/overload.hpp"
 
 namespace {
 
@@ -81,18 +82,10 @@ void Declaration(Object* obj, int type) {
         Fatal("Invalid property type: %s, %d", "CHECK THIS VALUE", type);
         continue;
       }
-      sn->val = value->val();
-      switch (value->type()) {
-        case S_NUM:
-          sn->tag = T_PROP;
-          break;
-        case S_STRING:
-          sn->tag = T_TEXT;
-          break;
-        default:
-          throw std::runtime_error("Invalid property type");
-          break;
-      }
+      sn->val = *value;
+      std::visit(util::Overload([&](int) { sn->tag = T_PROP; },
+                                [&](ANText*) { sn->tag = T_TEXT; }),
+                 *value);
     }
   }
 
@@ -194,15 +187,15 @@ static void InstanceBody(Object* obj) {
 
   // If 'name' has not been given a value, give it the
   // name of the symbol.
-  if (!gConfig->noAutoName && nameSelector && nameSelector->val == -1) {
+  if (!gConfig->noAutoName && nameSelector && !nameSelector->val) {
     nameSelector->tag = T_TEXT;
-    nameSelector->val = gText.find(obj->name);
+    nameSelector->val = gSc->AddTextNode(obj->name);
   }
 
   // The CLASSBIT of the '-info-' property is set for a class.  If this
   // is an instance, clear this bit.
   Selector* sn = obj->findSelector("-info-");
-  if (sn && !obj->isClass()) sn->val &= ~CLASSBIT;
+  if (sn && !obj->isClass()) std::get<int>(*sn->val) &= ~CLASSBIT;
 
   // Set the number of properties for this object.
   sn = obj->findSelector("-size-");

@@ -12,9 +12,12 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <variant>
 #include <vector>
 
+#include "absl/strings/escaping.h"
 #include "absl/strings/str_format.h"
+#include "scic/anode.hpp"
 #include "scic/class.hpp"
 #include "scic/common.hpp"
 #include "scic/config.hpp"
@@ -172,14 +175,22 @@ static void WriteClassDefs() {
                   (SCIUWord)cp->super, cp->file);
 
     // Get a pointer to the class' super-class.
-    Class* sp = FindClass(cp->findSelector("-super-")->val);
+    Class* sp = FindClass(std::get<int>(*cp->findSelector("-super-")->val));
 
     // Write out any new properties or properties which differ in
     // value from the superclass.
     absl::FPrintF(fp, "\t(properties\n");
     for (auto* tp : cp->selectors()) {
-      if (IsProperty(tp) && sp->selectorDiffers(tp))
-        absl::FPrintF(fp, "\t\t%s %d\n", tp->sym->name(), tp->val);
+      if (IsProperty(tp) && sp->selectorDiffers(tp)) {
+        // FIXME: How did the original work with strings and the like?
+        if (std::holds_alternative<int>(*tp->val)) {
+          absl::FPrintF(fp, "\t\t%s %d\n", tp->sym->name(),
+                        std::get<int>(*tp->val));
+        } else {
+          absl::FPrintF(fp, "\t\t%s \"%s\"\n", tp->sym->name(),
+                        absl::CEscape(std::get<ANText*>(*tp->val)->text));
+        }
+      }
     }
     absl::FPrintF(fp, "\t)\n\n");
 

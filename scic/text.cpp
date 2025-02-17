@@ -7,8 +7,6 @@
 #include <string_view>
 #include <utility>
 
-TextList gText;
-
 void TextList::init() {
   textList.clear();
   size = 0;

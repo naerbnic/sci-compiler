@@ -32,6 +32,11 @@ cc_test(
 )
 
 cc_library(
+    name = "overload",
+    hdrs = ["overload.hpp"],
+)
+
+cc_library(
     name = "name",
     hdrs = ["name.hpp"],
     deps = [

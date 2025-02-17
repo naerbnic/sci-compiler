@@ -12,7 +12,6 @@
 
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
-#include "scic/anode.hpp"
 #include "scic/compile.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
@@ -27,7 +26,7 @@
 #include "scic/toktypes.hpp"
 #include "scic/varlist.hpp"
 
-static int InitialValue(VarList& theVars, int offset, int arraySize);
+static bool InitialValue(VarList& theVars, int offset, int arraySize);
 
 static constexpr std::string_view tooManyVars =
     "Too many variables. Max is %d.\n";
@@ -144,7 +143,6 @@ void Global() {
   // variable 	glob-def 	::=	(symbol number) |
   // open definition close
 
-  int n;
   int offset;
 
   if (gScript) {
@@ -187,16 +185,12 @@ void Global() {
 
       // Get the initial value(s) of the variable and expand the size
       // of the block if more than one value is encountered.
-      n = InitialValue(gSc->localVars, offset, 1);
-      if (n == -1 || gSc->localVars.values.size() > gConfig->maxVars) {
+      if (!InitialValue(gSc->localVars, offset, 1)) {
         Error(tooManyVars, gConfig->maxVars);
         break;
       }
     }
   }
-
-  // Put the information back in the variable structure.
-  gSc->localVars.type = VAR_GLOBAL;
 
   UnGetTok();
 }
@@ -262,9 +256,6 @@ void Local() {
       }
     }
   }
-
-  // Put the information back in the variable structure.
-  gSc->localVars.type = VAR_LOCAL;
 
   UnGetTok();
 }
@@ -358,7 +349,7 @@ Symbol* FindPublic(PublicList const& publicList, int n) {
   return nullptr;
 }
 
-static int InitialValue(VarList& theVars, int offset, int arraySize) {
+static bool InitialValue(VarList& theVars, int offset, int arraySize) {
   // 'vp' points to the variable(s) to initialize int 'theVars'.  Fill it in
   //	with any initial values, returning 1 if there are no initial values, the
   // number of initial values otherwise.  Syntax is
@@ -391,12 +382,11 @@ static int InitialValue(VarList& theVars, int offset, int arraySize) {
     auto value = GetNumberOrString("Initial value");
     for (int i = 0; i < arraySize; ++i) {
       Var* vp = &theVars.values[offset + i];
-      if (vp->type != (sym_t)VAR_NONE) {
+      if (!vp->value) {
         Error("Redefinition of index %d", offset + i);
       }
       if (value) {
-        vp->type = value->type();
-        vp->value = value->val();
+        vp->value = *value;
       }
     }
     return arraySize;
@@ -410,8 +400,7 @@ static int InitialValue(VarList& theVars, int offset, int arraySize) {
     auto value = GetNumberOrString("Initial value");
     Var* vp = &theVars.values[offset + n];
     if (value) {
-      vp->type = value->type();
-      vp++->value = value->val();
+      vp++->value = value;
     }
   }
   return n;

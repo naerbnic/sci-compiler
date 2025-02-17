@@ -21,9 +21,6 @@
 #include "scic/opcodes.hpp"
 #include "scic/optimize.hpp"
 #include "scic/output.hpp"
-#include "scic/symtypes.hpp"
-#include "scic/text.hpp"
-#include "scic/varlist.hpp"
 
 ANCodeBlk* gCodeStart;
 ANTable* gTextTable;
@@ -145,19 +142,15 @@ ANObjTable::ANObjTable(std::string nameStr) : ANTable(nameStr) {}
 // Class ANText
 ///////////////////////////////////////////////////
 
-ANText::ANText(Text* tp) : text(tp) {}
+ANText::ANText(std::string text) : text(std::move(text)) {}
 
 size_t ANText::setOffset(size_t ofs) { return ANode::setOffset(ofs); }
 
-size_t ANText::size() { return text->str.size() + 1; }
+size_t ANText::size() { return text.size() + 1; }
 
-void ANText::list(ListingFile* listFile) {
-  listFile->ListText(*offset, text->str);
-}
+void ANText::list(ListingFile* listFile) { listFile->ListText(*offset, text); }
 
-void ANText::emit(OutputFile* out) {
-  out->WriteNullTerminatedString(text->str);
-}
+void ANText::emit(OutputFile* out) { out->WriteNullTerminatedString(text); }
 
 ///////////////////////////////////////////////////
 // Class ANObject
@@ -204,7 +197,7 @@ void ANMethCode::list(ListingFile* listFile) {
 // Class ANProp
 ///////////////////////////////////////////////////
 
-ANProp::ANProp(std::string name, int v) : name(std::move(name)), val(v) {}
+ANProp::ANProp(std::string name) : name(std::move(name)) {}
 
 size_t ANProp::size() { return 2; }
 
@@ -219,22 +212,12 @@ std::string_view ANIntProp::desc() { return "prop"; }
 
 uint32_t ANIntProp::value() { return val; }
 
-ANTextProp::ANTextProp(std::string name, int v) : ANProp(std::move(name), v) {}
-
-void ANTextProp::collectFixups(FixupContext* fixup_ctxt) {
-  fixup_ctxt->AddRelFixup(this, 0);
-}
-
-std::string_view ANTextProp::desc() { return "text"; }
-
-uint32_t ANTextProp::value() { return val + *gTextTable->offset; }
-
 std::string_view ANOfsProp::desc() { return "ofs"; }
 
 uint32_t ANOfsProp::value() { return *target->offset; }
 
 ANMethod::ANMethod(std::string name, ANMethCode* mp)
-    : ANProp(std::move(name), 0), method(mp) {}
+    : ANProp(std::move(name)), method(mp) {}
 
 std::string_view ANMethod::desc() { return "local"; }
 
@@ -509,13 +492,13 @@ void ANVarAccess::emit(OutputFile* out) {
 // Class ANOpOfs
 ///////////////////////////////////////////////////
 
-ANOpOfs::ANOpOfs(uint32_t o) : ANOpCode(op_lofsa), ofs(o) {}
+ANOpOfs::ANOpOfs(ANText* text) : ANOpCode(op_lofsa), text(text) {}
 
 size_t ANOpOfs::size() { return WORDSIZE; }
 
 void ANOpOfs::list(ListingFile* listFile) {
   listFile->ListOp(*offset, op);
-  listFile->ListArg("$%-4x", *gTextTable->offset + ofs);
+  listFile->ListArg("$%-4x", *text->offset);
 }
 
 void ANOpOfs::collectFixups(FixupContext* fixup_ctxt) {
@@ -524,7 +507,7 @@ void ANOpOfs::collectFixups(FixupContext* fixup_ctxt) {
 
 void ANOpOfs::emit(OutputFile* out) {
   out->WriteOp(op);
-  out->WriteWord(*gTextTable->offset + ofs);
+  out->WriteWord(*text->offset);
 }
 
 ///////////////////////////////////////////////////
@@ -617,51 +600,6 @@ void ANSuper::emit(OutputFile* out) {
   else
     out->WriteWord(classNum);
   WriteNumArgs(out, numArgs);
-}
-
-///////////////////////////////////////////////////
-// Class ANVars
-///////////////////////////////////////////////////
-
-ANVars::ANVars(VarList* theVars) : theVars(theVars) {}
-
-size_t ANVars::size() { return 2 * (theVars->values.size() + 1); }
-
-void ANVars::list(ListingFile* listFile) {
-  // FIXME: I don't know why we're saving/restoring the variable.
-  std::size_t curOfs = *offset;
-
-  listFile->Listing("\n\nVariables:");
-  listFile->ListWord(curOfs, theVars->values.size());
-  curOfs += 2;
-
-  for (Var const& var : theVars->values) {
-    int n = var.value;
-    if (var.type == S_STRING) n += *gTextTable->offset;
-    listFile->ListWord(curOfs, n);
-    curOfs += 2;
-  }
-  listFile->Listing("\n");
-}
-
-void ANVars::collectFixups(FixupContext* fixup_ctxt) {
-  std::size_t relOfs = 2;
-  for (Var const& var : theVars->values) {
-    if (var.type == S_STRING) fixup_ctxt->AddRelFixup(this, relOfs);
-    relOfs += 2;
-  }
-}
-
-void ANVars::emit(OutputFile* out) {
-  out->WriteWord(theVars->values.size());
-
-  for (Var const& var : theVars->values) {
-    int n = var.value;
-    if (var.type == S_STRING) {
-      n += *gTextTable->offset;
-    }
-    out->WriteWord(n);
-  }
 }
 
 //////////////////////////////////////////////////////////////////////////////

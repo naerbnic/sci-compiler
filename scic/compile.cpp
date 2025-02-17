@@ -23,7 +23,6 @@
 #include "scic/public.hpp"
 #include "scic/reference.hpp"
 #include "scic/symtypes.hpp"
-#include "scic/text.hpp"
 
 static void MakeAccess(AOpList* curList, PNode*, uint8_t);
 static void MakeImmediate(AOpList* curList, int);
@@ -322,7 +321,7 @@ static void MakeImmediate(AOpList* curList, int val) {
 }
 
 static void MakeString(AOpList* curList, PNode* pn) {
-  curList->newNode<ANOpOfs>(pn->val);
+  curList->newNode<ANOpOfs>(pn->str);
 }
 
 static void MakeCall(AOpList* curList, PNode* pn) {
@@ -983,35 +982,35 @@ void MakeObject(Object* theObj) {
 
   {
     // Create the object ID node.
-    ANObject* obj = gSc->heapList->getList()->newNodeBefore<ANObject>(
-        nullptr, theObj->name);
+    ANObject* obj =
+        gSc->objList->newNodeBefore<ANObject>(nullptr, theObj->name);
     theObj->an = obj;
 
     // Create the table of properties.
     ANTable* props =
-        gSc->heapList->getList()->newNodeBefore<ANTable>(nullptr, "properties");
+        gSc->objList->newNodeBefore<ANTable>(nullptr, "properties");
 
     {
       for (auto* sp : theObj->selectors())
         if (IsProperty(sp)) {
           switch (sp->tag) {
             case T_PROP:
-              gSc->heapList->getList()->newNode<ANIntProp>(
-                  std::string(sp->sym->name()), sp->val);
+              props->getList()->newNode<ANIntProp>(std::string(sp->sym->name()),
+                                                   std::get<int>(*sp->val));
               break;
 
             case T_TEXT:
-              gSc->heapList->getList()->newNode<ANTextProp>(
-                  std::string(sp->sym->name()), sp->val);
+              props->getList()->newNode<ANOfsProp>(std::string(sp->sym->name()),
+                                                   std::get<ANText*>(*sp->val));
               break;
 
             case T_PROPDICT:
-              pDict = gSc->heapList->getList()->newNode<ANOfsProp>(
+              pDict = props->getList()->newNode<ANOfsProp>(
                   std::string(sp->sym->name()));
               break;
 
             case T_METHDICT:
-              mDict = gSc->heapList->getList()->newNode<ANOfsProp>(
+              mDict = props->getList()->newNode<ANOfsProp>(
                   std::string(sp->sym->name()));
               break;
           }
@@ -1053,15 +1052,6 @@ void MakeObject(Object* theObj) {
       }
   }
   if (mDict) mDict->target = methDict;
-}
-
-void MakeText() {
-  // Add text strings to the assembled code.
-
-  // terminate the object portion of the heap with a null word
-  gSc->heapList->getList()->newNode<ANWord>();
-  gTextTable = gSc->heapList->getList()->newNode<ANTable>("text");
-  for (Text* tp : gText.items()) gTextTable->getList()->newNode<ANText>(tp);
 }
 
 void MakeLabel(AOpList* curList, ForwardReference<ANLabel*>* dest) {

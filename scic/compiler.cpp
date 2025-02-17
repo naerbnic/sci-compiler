@@ -7,10 +7,13 @@
 #include <cstdlib>
 #include <memory>
 #include <string>
+#include <string_view>
+#include <variant>
 
 #include "absl/strings/str_format.h"
 #include "scic/alist.hpp"
 #include "scic/anode.hpp"
+#include "scic/common.hpp"
 #include "scic/define.hpp"
 #include "scic/fixup_list.hpp"
 #include "scic/input.hpp"
@@ -19,6 +22,7 @@
 #include "scic/public.hpp"
 #include "scic/sc.hpp"
 #include "scic/symbol.hpp"
+#include "scic/varlist.hpp"
 
 namespace {
 class CompilerHeapContext : public HeapContext {
@@ -26,17 +30,89 @@ class CompilerHeapContext : public HeapContext {
   CompilerHeapContext(Compiler* compiler) : compiler_(compiler) {}
 
   bool IsInHeap(ANode* node) const override {
-    return compiler_->heapList->contains(node);
+    return compiler_->IsInHeap(node);
   }
 
  private:
   Compiler* compiler_;
 };
 
-class NullFixupContext : public FixupContext {
+class ANVars : public ANode
+// The ANVars class is used to generate the block of variables for the
+// module.
+{
  public:
-  bool HeapHasNode(ANode* node) const override { return false; }
-  void AddRelFixup(ANode* node, std::size_t ofs) override {}
+  ANVars(VarList* theVars) : theVars(theVars) {}
+
+  size_t size() override { return 2 * (theVars->values.size() + 1); }
+
+  void list(ListingFile* listFile) override {
+    // FIXME: I don't know why we're saving/restoring the variable.
+    std::size_t curOfs = *offset;
+
+    listFile->Listing("\n\nVariables:");
+    listFile->ListWord(curOfs, theVars->values.size());
+    curOfs += 2;
+
+    for (Var const& var : theVars->values) {
+      if (std::holds_alternative<int>(*var.value)) {
+        listFile->ListWord(curOfs, std::get<int>(*var.value));
+      } else {
+        ANText* text = std::get<ANText*>(*var.value);
+        listFile->ListWord(curOfs, *text->offset);
+      }
+      curOfs += 2;
+    }
+    listFile->Listing("\n");
+  }
+
+  void collectFixups(FixupContext* fixup_ctxt) override {
+    std::size_t relOfs = 2;
+    for (Var const& var : theVars->values) {
+      if (std::holds_alternative<ANText*>(*var.value)) {
+        fixup_ctxt->AddRelFixup(this, relOfs);
+      }
+      relOfs += 2;
+    }
+  }
+
+  void emit(OutputFile* out) override {
+    out->WriteWord(theVars->values.size());
+
+    for (Var const& var : theVars->values) {
+      if (std::holds_alternative<int>(*var.value)) {
+        out->WriteWord(std::get<int>(*var.value));
+      } else {
+        ANText* text = std::get<ANText*>(*var.value);
+        out->WriteWord(*text->offset);
+      }
+    }
+  }
+
+ protected:
+  VarList* theVars;
+};
+
+class ANIntVar : public ANComputedWord {
+ public:
+  ANIntVar(int v) : v(v) {}
+
+ protected:
+  SCIWord value() const override { return v; }
+
+ private:
+  int v;
+};
+
+class ANStringVar : public ANComputedWord {
+ public:
+  ANStringVar(ANText* text) : text(text) {}
+
+ protected:
+  SCIWord value() const override { return *text->offset; }
+
+ private:
+  ANText* text;
 };
 
 }  // namespace
@@ -74,6 +150,12 @@ void Compiler::InitAsm() {
 
   auto* heapBody = heapList->getList();
   heapBody->newNode<ANVars>(&localVars);
+
+  objList = heapBody->newNode<ANTable>("object properties")->getList();
+  // The object section terminator.
+  heapBody->newNode<ANWord>(0);
+
+  textList = heapBody->newNode<ANTable>("text table")->getList();
 
   gCodeStart = 0;
 }
@@ -144,4 +226,15 @@ void Compiler::MakeDispatch(PublicList const& publicList) {
           [an](ANode* target) { an->target = target; });
     }
   }
+}
+
+bool Compiler::IsInHeap(ANode* node) { return heapList->contains(node); }
+
+ANText* Compiler::AddTextNode(std::string_view text) {
+  auto it = textNodes.find(text);
+  if (it != textNodes.end()) return it->second;
+  auto* textNode = textList->newNode<ANText>(std::string(text));
+
+  textNodes.emplace(std::string(text), textNode);
+  return textNode;
 }

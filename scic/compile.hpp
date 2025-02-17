@@ -20,7 +20,6 @@ void MakeBranch(AOpList* curList, uint8_t type, ANLabel* target);
 void MakeBranch(AOpList* curList, uint8_t type,
                 ForwardReference<ANLabel*>* target);
 void MakeObject(Object* theObj);
-void MakeText();
 void MakeLabel(AOpList* curList, ForwardReference<ANLabel*>* ref);
 
 #endif

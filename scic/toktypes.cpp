@@ -11,6 +11,7 @@
 #include <utility>
 
 #include "absl/strings/str_cat.h"
+#include "scic/common.hpp"
 #include "scic/error.hpp"
 #include "scic/expr.hpp"
 #include "scic/object.hpp"
@@ -130,7 +131,7 @@ bool IsUndefinedIdent(TokenSlot const& token) {
 std::optional<int> GetNumber(std::string_view errStr) {
   auto token = GetNumberOrStringToken(errStr, false);
   if (!token) return std::nullopt;
-  return token->val();
+  return std::get<int>(*token);
 }
 
 std::optional<RuntimeNumberOrString> GetNumberOrString(
@@ -158,9 +159,9 @@ static std::optional<RuntimeNumberOrString> GetNumberOrStringToken(
   // Otherwise, put the expression value into the symbol variables.
   switch (type) {
     case PN_NUM:
-      return RuntimeNumberOrString(S_NUM, pn->first_child()->val);
+      return RuntimeNumberOrString(pn->first_child()->val);
     case PN_STRING:
-      return RuntimeNumberOrString(S_STRING, pn->first_child()->val);
+      return RuntimeNumberOrString(pn->first_child()->str);
     default:
       Fatal("Unexpected literal type");
   }

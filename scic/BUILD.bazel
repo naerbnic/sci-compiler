@@ -30,7 +30,7 @@ cc_library(
     name = "varlist",
     srcs = ["varlist.cpp"],
     hdrs = ["varlist.hpp"],
-    deps = [":symtypes"],
+    deps = [":anode"],
 )
 
 cc_library(
@@ -147,9 +147,6 @@ cc_library(
         ":listing",
         ":opcodes",
         ":output",
-        ":symtypes",
-        ":text",
-        ":varlist",
         "@abseil-cpp//absl/strings:str_format",
     ],
 )
@@ -160,7 +157,6 @@ cc_library(
     hdrs = ["fixup_list.hpp"],
     deps = [
         ":anode",
-        ":common",
         ":config",
         ":listing",
         ":output",
@@ -240,9 +236,9 @@ cc_binary(
         ":output",
         ":reference",
         ":symtypes",
-        ":text",
         ":varlist",
         "//util/platform",
+        "//util/types:overload",
         "@abseil-cpp//absl/cleanup",
         "@abseil-cpp//absl/container:btree",
         "@abseil-cpp//absl/debugging:failure_signal_handler",

@@ -42,6 +42,5 @@ class TextList {
   static uint16_t hash(std::string_view);
 };
 
-extern TextList gText;
 
 #endif

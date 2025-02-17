@@ -1,31 +1,25 @@
 #ifndef VARLIST_HPP
 #define VARLIST_HPP
 
+#include <optional>
+#include <variant>
 #include <vector>
 
-#include "scic/symtypes.hpp"
-
-enum VarType {
-  VAR_NONE,
-  VAR_GLOBAL,
-  VAR_LOCAL,
-};
+#include "scic/anode.hpp"
 
 struct Var {
   // Variable definition.
-  Var() : type((sym_t)VAR_NONE), value(0) {}
+  Var() : value(0) {}
 
-  sym_t type;
-  int value;
+  std::optional<std::variant<int, ANText*>> value;
 };
 
 struct VarList {
   // Variable block definition.
-  VarList() : type(VAR_NONE) {}
+  VarList() {}
 
   void kill();
 
-  VarType type;             // what type of variables are these
   std::vector<Var> values;  // pointer to block of initial values
 };
 

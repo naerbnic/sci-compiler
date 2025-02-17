@@ -7,6 +7,7 @@
 #include <utility>
 #include <variant>
 
+#include "scic/anode.hpp"
 #include "scic/symbol.hpp"
 #include "scic/symtypes.hpp"
 #include "scic/token.hpp"
@@ -98,21 +99,7 @@ class ResolvedTokenSlot {
   }
 };
 
-class RuntimeNumberOrString {
- public:
-  RuntimeNumberOrString(sym_t type, int val) : type_(type), val_(val) {}
-
-  sym_t type() const { return type_; }
-  int val() const { return val_; }
-
- private:
-  // Must be S_NUM or S_STRING
-  sym_t type_;
-
-  // The value. If type_ is S_NUM, this is the number. If type_ is S_STRING,
-  // this is the index into the text table.
-  int val_;
-};
+using RuntimeNumberOrString = std::variant<int, ANText*>;
 
 [[nodiscard]] ResolvedTokenSlot LookupTok();
 [[nodiscard]] ResolvedTokenSlot GetSymbol();

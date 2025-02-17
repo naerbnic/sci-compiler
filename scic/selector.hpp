@@ -2,17 +2,22 @@
 #define SELECTOR_HPP
 
 #include <cstdint>
+#include <optional>
 #include <string_view>
+#include <variant>
+
+#include "scic/anode.hpp"
 
 struct ANode;
 class Symbol;
 
 // Structure of a node in a class or object template.
 struct Selector {
-  Selector(Symbol* s = 0) : sym(s), val(0), an(0), tag(0) {}
+  Selector(Symbol* s = 0) : sym(s), an(0), tag(0) {}
 
   Symbol* sym;  // Pointer to symbol for this entry
-  int val;      //	For a property, its initial value
+  //	For a property, its initial value
+  std::optional<std::variant<int, ANText*>> val;
   union {
     int ofs;    // Offset of property in template
     ANode* an;  // Pointer to code for a local method

@@ -14,6 +14,7 @@
 #include "scic/common.hpp"
 #include "scic/define.hpp"
 #include "scic/error.hpp"
+#include "scic/global_compiler.hpp"
 #include "scic/object.hpp"
 #include "scic/parse.hpp"
 #include "scic/parse_context.hpp"
@@ -22,7 +23,6 @@
 #include "scic/symbol.hpp"
 #include "scic/symtbl.hpp"
 #include "scic/symtypes.hpp"
-#include "scic/text.hpp"
 #include "scic/token.hpp"
 #include "scic/toktypes.hpp"
 
@@ -144,7 +144,7 @@ bool Expression(PNode* theNode, RequiredState required) {
         break;
 
       case S_STRING:
-        theNode->newChild(PN_STRING)->val = gText.find(slot.name());
+        theNode->newChild(PN_STRING)->str = gSc->AddTextNode(slot.name());
         isExpr = true;
         break;
 

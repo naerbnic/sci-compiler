@@ -169,14 +169,14 @@ struct Text;
 struct ANText : ANode
 // The ANText class represents a text string.
 {
-  ANText(Text* tp);
+  ANText(std::string text);
 
   size_t setOffset(size_t ofs) override;  // set offset to ofs, return new ofs
   size_t size() override;
   void list(ListingFile* listFile) override;
   void emit(OutputFile*) override;
 
-  Text* text;
+  std::string text;
 };
 
 struct ANObject : ANode
@@ -230,7 +230,7 @@ struct ANProp : ANode
 // Its method uses the virtual methods desc() and value() to deal with
 // the differences between the various property types.
 {
-  ANProp(std::string name, int v);
+  ANProp(std::string name);
 
   virtual std::string_view desc() = 0;  // return descriptive string
   virtual uint32_t value() = 0;         // return value of selector
@@ -240,32 +240,24 @@ struct ANProp : ANode
   void emit(OutputFile*) override;
 
   std::string name;  // pointer to selector's symbol
-  int val;           // value of selector
 };
 
 struct ANIntProp : ANProp
 // A subclass of ANProp which represents integer properties.
 {
-  ANIntProp(std::string name, int v) : ANProp(std::move(name), v) {}
+  ANIntProp(std::string name, int v) : ANProp(std::move(name)), val(v) {}
 
   std::string_view desc() override;  // return descriptive string
   uint32_t value() override;         // return value of selector
-};
 
-struct ANTextProp : ANProp
-// A subclass of ANProp which represents text properties.
-{
-  ANTextProp(std::string name, int v);
-
-  void collectFixups(FixupContext*) override;
-  std::string_view desc() override;  // return descriptive string
-  uint32_t value() override;         // return value of selector
+  int val;
 };
 
 struct ANOfsProp : ANProp
 // A subclass of ANProp which represents an offset to an object table.
 {
-  ANOfsProp(std::string name) : ANProp(std::move(name), 0) {}
+  ANOfsProp(std::string name, ANode* target = nullptr)
+      : ANProp(std::move(name)), target(target) {}
 
   std::string_view desc() override;
   uint32_t value() override;
@@ -399,14 +391,14 @@ struct ANOpOfs : ANOpCode
 // The ANOpOfs class gives the offset of a text string in
 // its block of the object code.
 {
-  ANOpOfs(uint32_t o);
+  ANOpOfs(ANText* text);
 
   size_t size() override;
   void list(ListingFile* listFile) override;
   void collectFixups(FixupContext*) override;
   void emit(OutputFile*) override;
 
-  size_t ofs;  // the offset
+  ANText* text;  // the offset
 };
 
 struct ANObjID : ANOpCode
@@ -465,24 +457,6 @@ struct ANSuper : ANSend
 
   uint32_t classNum;
   std::string name;
-};
-
-struct VarList;
-
-class ANVars : public ANode
-// The ANVars class is used to generate the block of variables for the
-// module.
-{
- public:
-  ANVars(VarList*);
-
-  size_t size() override;
-  void list(ListingFile* listFile) override;
-  void collectFixups(FixupContext*) override;
-  void emit(OutputFile*) override;
-
- protected:
-  VarList* theVars;
 };
 
 struct ANFileName : ANOpCode {
