@@ -8,6 +8,7 @@
 #include "scic/compiler.hpp"
 #include "scic/error.hpp"
 #include "scic/expr.hpp"
+#include "scic/fixup_list.hpp"
 #include "scic/global_compiler.hpp"
 #include "scic/object.hpp"
 #include "scic/parse.hpp"

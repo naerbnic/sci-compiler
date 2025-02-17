@@ -154,6 +154,19 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "fixup_list",
+    srcs = ["fixup_list.cpp"],
+    hdrs = ["fixup_list.hpp"],
+    deps = [
+        ":anode",
+        ":casts",
+        ":config",
+        ":listing",
+        ":output",
+    ],
+)
+
 cc_binary(
     name = "scic",
     srcs = [
@@ -221,6 +234,7 @@ cc_binary(
         ":chartype",
         ":common",
         ":config",
+        ":fixup_list",
         ":input",
         ":listing",
         ":memtype",

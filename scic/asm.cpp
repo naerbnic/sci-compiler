@@ -11,6 +11,7 @@
 #include "absl/strings/str_format.h"
 #include "scic/anode.hpp"
 #include "scic/compiler.hpp"
+#include "scic/fixup_list.hpp"
 #include "scic/global_compiler.hpp"
 #include "scic/input.hpp"
 #include "scic/listing.hpp"

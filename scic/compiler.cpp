@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "scic/alist.hpp"
+#include "scic/fixup_list.hpp"
 
 Compiler::Compiler() {
   hunkList = std::make_unique<CodeList>();

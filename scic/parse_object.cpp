@@ -8,12 +8,14 @@
 #include <utility>
 
 #include "scic/class.hpp"
+#include "scic/common.hpp"
 #include "scic/compile.hpp"
 #include "scic/compiler.hpp"
 #include "scic/config.hpp"
 #include "scic/define.hpp"
 #include "scic/error.hpp"
 #include "scic/expr.hpp"
+#include "scic/fixup_list.hpp"
 #include "scic/global_compiler.hpp"
 #include "scic/input.hpp"
 #include "scic/object.hpp"
