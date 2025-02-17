@@ -15,9 +15,9 @@
 
 #include "scic/alist.hpp"
 #include "scic/asm.hpp"
-#include "scic/compiler.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
+#include "scic/global_compiler.hpp"
 #include "scic/listing.hpp"
 #include "scic/object.hpp"
 #include "scic/opcodes.hpp"

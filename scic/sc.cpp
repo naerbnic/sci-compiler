@@ -23,6 +23,7 @@
 #include "scic/config.hpp"
 #include "scic/define.hpp"
 #include "scic/error.hpp"
+#include "scic/global_compiler.hpp"
 #include "scic/input.hpp"
 #include "scic/listing.hpp"
 #include "scic/object.hpp"

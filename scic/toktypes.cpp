@@ -17,7 +17,6 @@
 #include "scic/parse_context.hpp"
 #include "scic/pnode.hpp"
 #include "scic/proc.hpp"
-#include "scic/sc.hpp"
 #include "scic/selector.hpp"
 #include "scic/symbol.hpp"
 #include "scic/symtbl.hpp"

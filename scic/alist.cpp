@@ -11,7 +11,6 @@
 #include "scic/listing.hpp"
 #include "scic/opcodes.hpp"
 #include "scic/output.hpp"
-#include "scic/sc.hpp"
 
 bool gShrink;
 
