@@ -130,29 +130,9 @@ void ANWord::emit(OutputFile* out) { out->WriteWord(value); }
 
 ANTable::ANTable(std::string nameStr) : name(nameStr) {}
 
-size_t ANTable::size() { return entries.size(); }
-
-size_t ANTable::setOffset(size_t ofs) {
-  offset = ofs;
-  return entries.setOffset(ofs);
-}
-
 void ANTable::list(ListingFile* listFile) {
   listFile->Listing("\t\t(%s)", name);
-  for (auto& entry : entries) entry.list(listFile);
-}
-
-void ANTable::collectFixups(FixupContext* fixup_ctxt) {
-  entries.collectFixups(fixup_ctxt);
-}
-
-void ANTable::emit(OutputFile* out) { entries.emit(out); }
-bool ANTable::contains(ANode* node) {
-  if (ANode::contains(node)) return true;
-  for (auto& entry : entries) {
-    if (entry.contains(node)) return true;
-  }
-  return false;
+  ANComposite::list(listFile);
 }
 
 ///////////////////////////////////////////////////
@@ -197,29 +177,7 @@ ANCodeBlk::ANCodeBlk(std::string name) : name(std::move(name)) {
   ANLabel::reset();
 }
 
-size_t ANCodeBlk::size() { return code.size(); }
-
-void ANCodeBlk::collectFixups(FixupContext* fixup_ctxt) {
-  code.collectFixups(fixup_ctxt);
-}
-
-void ANCodeBlk::emit(OutputFile* out) { code.emit(out); }
-bool ANCodeBlk::contains(ANode* node) {
-  if (ANode::contains(node)) return true;
-  for (auto& entry : code) {
-    if (entry.contains(node)) return true;
-  }
-  return false;
-}
-
-size_t ANCodeBlk::setOffset(size_t ofs) {
-  offset = ofs;
-  return code.setOffset(ofs);
-}
-
-void ANCodeBlk::list(ListingFile* listFile) { code.list(listFile); }
-
-bool ANCodeBlk::optimize() { return OptimizeProc(&code); }
+bool ANCodeBlk::optimize() { return OptimizeProc(getList()); }
 
 ///////////////////////////////////////////////////
 // Class ANProcCode

@@ -140,7 +140,7 @@ void Compiler::MakeDispatch(PublicList const& publicList) {
   }
   numDispTblEntries->value = maxEntry + 1;
   for (int i = 0; i <= maxEntry; ++i) {
-    ANDispatch* an = dispTbl->entries.newNode<ANDispatch>();
+    ANDispatch* an = dispTbl->getList()->newNode<ANDispatch>();
     auto* sym = FindPublic(publicList, i);
     if (sym) {
       an->name = std::string(sym->name());

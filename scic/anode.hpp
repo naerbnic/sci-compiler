@@ -24,6 +24,64 @@ class OutputFile;
 struct ANode;
 class Symbol;
 
+template <class T>
+struct ANComposite : ANode {
+ public:
+  size_t size() override {
+    size_t s = 0;
+    for (auto it = list_.iter(); it; ++it) s += it->size();
+    return s;
+  }
+
+  size_t setOffset(size_t ofs) override {
+    offset = ofs;
+    for (auto& node : list_) {
+      ofs = node.setOffset(ofs);
+    }
+
+    return ofs;
+  }
+
+  void list(ListingFile* listFile) override {
+    for (auto it = list_.iter(); it; ++it) {
+      it->list(listFile);
+    }
+  }
+
+  void collectFixups(FixupContext* fixup_ctxt) override {
+    for (auto it = list_.iter(); it; ++it) {
+      it->collectFixups(fixup_ctxt);
+    }
+  }
+
+  void emit(OutputFile* out) override {
+    for (auto it = list_.iter(); it; ++it) {
+      it->emit(out);
+    }
+  }
+
+  bool contains(ANode* node) override {
+    if (ANode::contains(node)) return true;
+    for (auto& entry : list_) {
+      if (entry.contains(node)) return true;
+    }
+    return false;
+  }
+
+  bool optimize() override {
+    bool changed = false;
+    for (auto it = list_.iter(); it; ++it) {
+      changed |= it->optimize();
+    }
+    return changed;
+  }
+
+  AListBase<T>* getList() { return &list_; }
+
+ private:
+  AListBase<T> list_;
+};
+
 struct ANDispatch : ANode
 // The ANDispatch class serves as the members of the dispatch table to
 // publicly defined procedures and objects.  There is one generated for
@@ -53,7 +111,7 @@ struct ANWord : ANode
   int value;
 };
 
-struct ANTable : ANode
+struct ANTable : ANComposite<ANode>
 // An ANTable is a collection of ANodes that go together in some way.
 // It is used to build objects, dispatch tables, etc.  When created, it
 // saves a pointer to the list currently being added to in its 'oldList'
@@ -63,15 +121,9 @@ struct ANTable : ANode
 {
   ANTable(std::string nameStr);
 
-  size_t size() override;
-  size_t setOffset(size_t ofs) override;
-  void collectFixups(FixupContext*) override;
   void list(ListingFile* listFile) override;
-  void emit(OutputFile*) override;
-  bool contains(ANode* node) override;
 
   std::string name;  // name of table (values follow)
-  AList entries;     // list of entries in the table
 };
 
 struct ANObjTable : ANTable
@@ -108,7 +160,7 @@ struct ANObject : ANode
   std::string name;  // name of object
 };
 
-struct ANCodeBlk : ANode
+struct ANCodeBlk : ANComposite<ANOpCode>
 // The ANCodeBlk class represents the code of a procedure or method.
 // Like ANTable, it changes the list to which ANodes are added to its
 // own internal list.  Therefore the finish() method must be called to
@@ -117,16 +169,9 @@ struct ANCodeBlk : ANode
 {
   ANCodeBlk(std::string name);
 
-  size_t size() override;
-  void collectFixups(FixupContext*) override;
-  void emit(OutputFile*) override;
-  bool contains(ANode* node) override;
-  size_t setOffset(size_t ofs) override;
-  void list(ListingFile* listFile) override;
   bool optimize() override;
 
   std::string name;  // name of procedure or method
-  AOpList code;
 };
 
 struct ANMethCode : ANCodeBlk
@@ -407,17 +452,6 @@ class ANVars : public ANode
 
  protected:
   VarList& theVars;
-};
-
-struct ANFixup : ANode {
-  // The ANFixup class is used to generate the block of fixups for the
-  // particular load module.
-
-  ANFixup(AList* list);
-
-  size_t size() override;
-  void list(ListingFile* listFile) override;
-  void emit(OutputFile*) override;
 };
 
 struct ANFileName : ANOpCode {

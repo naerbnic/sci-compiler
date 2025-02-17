@@ -5,11 +5,28 @@
 
 #include <cstdint>
 #include <memory>
+#include <ranges>
+#include <stdexcept>
 
 #include "scic/alist.hpp"
 #include "scic/anode.hpp"
 #include "scic/casts.hpp"
 #include "scic/opcodes.hpp"
+
+ANOpCode* FindNextOp(AListBase<ANOpCode>* list, ANOpCode* start) {
+  if (!start) {
+    throw new std::runtime_error("start cannot be nullptr");
+  }
+
+  for (auto& opcode :
+       std::ranges::subrange(list->find(start).next(), list->end())) {
+    if (opcode.op != OP_LABEL) {
+      return &opcode;
+    }
+  }
+
+  return nullptr;
+}
 
 enum {
   UNKNOWN = 0x4000,
@@ -180,7 +197,7 @@ uint32_t OptimizeProc(AOpList* al) {
         while (label) {
           // 'label' points to the label to which we are branching.  Search
           // for the first op-code following this label.
-          ANBranch* tmp = (ANBranch*)al->nextOp(label);
+          ANBranch* tmp = (ANBranch*)FindNextOp(al, label);
 
           // If the first op-code following the label is not a jump or
           // a branch of the same sense, no more optimization is possible.

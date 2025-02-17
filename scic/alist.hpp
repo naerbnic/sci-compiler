@@ -77,7 +77,7 @@ struct ANOpCode : ANode
   uint32_t op;  // type of operator
 };
 
-template <class T>
+template <std::derived_from<ANode> T>
 class AListBase {
  public:
   // AList (assembly list) is a list of ANodes (assembly nodes).
@@ -154,13 +154,8 @@ class AListBase {
   TList<T> list_;
 };
 
-struct AList : public AListBase<ANode> {};
-
-struct AOpList : public AListBase<ANOpCode> {
-  ANOpCode* nextOp(ANOpCode* start);
-  // Return a pointer to the next opcode node after 'start' in
-  // the list or NULL if there are none.
-};
+using AList = AListBase<ANode>;
+using AOpList = AListBase<ANOpCode>;
 
 extern bool gShrink;
 

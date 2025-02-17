@@ -960,21 +960,21 @@ static void MakeProc(AList* curList, PNode* pn) {
   //	procedures and methods get special treatment:  the line number
   //	and file name are set here
   if (gConfig->includeDebugInfo) {
-    an->code.newNode<ANLineNum>(pn->lineNum);
+    an->getList()->newNode<ANLineNum>(pn->lineNum);
     gSc->lastLineNum = pn->lineNum;
   }
 
   // If there are to be any temporary variables, add a link node to
   // create them.
-  if (pn->val) an->code.newNode<ANOpUnsign>(op_link, pn->val);
+  if (pn->val) an->getList()->newNode<ANOpUnsign>(op_link, pn->val);
 
   // Compile code for the procedure followed by a return.
-  if (pn->child_at(0)) CompileExpr(&an->code, pn->child_at(0));
+  if (pn->child_at(0)) CompileExpr(an->getList(), pn->child_at(0));
 
   if (gConfig->includeDebugInfo) {
-    an->code.newNode<ANLineNum>(gInputState.GetTopLevelLineNum());
+    an->getList()->newNode<ANLineNum>(gInputState.GetTopLevelLineNum());
   }
-  an->code.newNode<ANOpCode>(op_ret);
+  an->getList()->newNode<ANOpCode>(op_ret);
 }
 
 void MakeObject(Object* theObj) {
@@ -1033,7 +1033,8 @@ void MakeObject(Object* theObj) {
   {
     if (theObj->num != OBJECTNUM) {
       for (auto* sp : theObj->selectors())
-        if (IsProperty(sp)) propDict->entries.newNode<ANWord>(sp->sym->val());
+        if (IsProperty(sp))
+          propDict->getList()->newNode<ANWord>(sp->sym->val());
     }
   }
   if (pDict) pDict->target = propDict;
@@ -1041,12 +1042,12 @@ void MakeObject(Object* theObj) {
   ANObjTable* methDict = gSc->hunkList->getList()->newNodeBefore<ANObjTable>(
       gCodeStart, "method dictionary");
   {
-    ANWord* numMeth = methDict->entries.newNode<ANWord>((short)0);
+    ANWord* numMeth = methDict->getList()->newNode<ANWord>((short)0);
     for (auto* sp : theObj->selectors())
       if (sp->tag == T_LOCAL) {
-        methDict->entries.newNode<ANWord>(sp->sym->val());
-        methDict->entries.newNode<ANMethod>(std::string(sp->sym->name()),
-                                            (ANMethCode*)sp->an);
+        methDict->getList()->newNode<ANWord>(sp->sym->val());
+        methDict->getList()->newNode<ANMethod>(std::string(sp->sym->name()),
+                                               (ANMethCode*)sp->an);
         sp->sym->forwardRef.Clear();
         ++numMeth->value;
       }
@@ -1060,7 +1061,7 @@ void MakeText() {
   // terminate the object portion of the heap with a null word
   gSc->heapList->getList()->newNode<ANWord>();
   gTextTable = gSc->heapList->getList()->newNode<ANTable>("text");
-  for (Text* tp : gText.items()) gTextTable->entries.newNode<ANText>(tp);
+  for (Text* tp : gText.items()) gTextTable->getList()->newNode<ANText>(tp);
 }
 
 void MakeLabel(AOpList* curList, ForwardReference<ANLabel*>* dest) {

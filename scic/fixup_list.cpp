@@ -99,9 +99,10 @@ FixupList::FixupList() {
   // fixup table together.
   // The whole fixup table, including the initial count word.
   auto* fixupTableBlock = list_.newNode<ANTable>("fixup table block");
-  auto* fixupCountWord = fixupTableBlock->entries.newNode<ANCountWord>(nullptr);
-  fixupTable_ = fixupTableBlock->entries.newNode<ANTable>("fixup table");
-  fixupCountWord->target = &fixupTable_->entries;
+  auto* fixupCountWord =
+      fixupTableBlock->getList()->newNode<ANCountWord>(nullptr);
+  fixupTable_ = fixupTableBlock->getList()->newNode<ANTable>("fixup table");
+  fixupCountWord->target = fixupTable_->getList();
   fixupOffsetNode->target = fixupTableBlock;
 }
 
@@ -114,7 +115,7 @@ void FixupList::initFixups() {}
 void FixupList::listFixups(ListingFile* listFile) { list_.list(listFile); }
 
 void FixupList::addFixup(ANode* node, std::size_t rel_ofs) {
-  fixupTable_->entries.newNode<ANOffsetWord>(node, rel_ofs);
+  fixupTable_->getList()->newNode<ANOffsetWord>(node, rel_ofs);
 }
 
 void FixupList::list(ListingFile* listFile) { list_.list(listFile); }
@@ -124,7 +125,7 @@ void FixupList::emit(HeapContext* heap_ctxt, OutputFile* out) {
   {
     FixupListContext fixup_ctxt(this, heap_ctxt);
     list_.collectFixups(&fixup_ctxt);
-    fixupTable_->entries.setOffset(*fixupTable_->offset);
+    fixupTable_->getList()->setOffset(*fixupTable_->offset);
   }
   list_.emit(out);
 }

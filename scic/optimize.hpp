@@ -5,7 +5,7 @@
 
 #include <cstdint>
 
-struct AOpList;
+#include "scic/alist.hpp"
 
 uint32_t OptimizeProc(AOpList* al);
 

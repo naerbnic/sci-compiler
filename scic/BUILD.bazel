@@ -160,10 +160,8 @@ cc_library(
     hdrs = ["fixup_list.hpp"],
     deps = [
         ":anode",
-        ":casts",
         ":common",
         ":config",
-        ":debug_utils",
         ":listing",
         ":output",
     ],

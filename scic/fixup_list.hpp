@@ -64,7 +64,7 @@ class FixupList {
   }
 
  public:
-  AList* getList() { return &bodyTable_->entries; }
+  AList* getList() { return bodyTable_->getList(); }
 
  protected:
   struct Offset {
