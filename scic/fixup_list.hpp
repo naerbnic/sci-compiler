@@ -14,7 +14,7 @@ class HeapContext {
  public:
   virtual ~HeapContext() = default;
 
-  virtual bool IsInHeap(ANode* node) const = 0;
+  virtual bool IsInHeap(ANode const* node) const = 0;
 };
 
 class FixupList {
@@ -39,9 +39,9 @@ class FixupList {
    * fixed up.
    * @param rel_ofs The relative offset where the fixup should be applied.
    */
-  void addFixup(ANode* node, std::size_t rel_ofs);
+  void addFixup(ANode const* node, std::size_t rel_ofs);
 
-  bool contains(ANode* ln) { return root_->contains(ln); }
+  bool contains(ANode const* ln) { return root_->contains(ln); }
 
   ANodeList* getBody() { return bodyList_; }
 
@@ -49,7 +49,7 @@ class FixupList {
 
  protected:
   struct Offset {
-    ANode* node_base;
+    ANode const* node_base;
     std::size_t rel_offset;
 
     std::size_t offset() const {

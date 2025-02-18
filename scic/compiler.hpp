@@ -81,7 +81,7 @@ class Compiler {
   void Assemble(ListingFile* listFile);
 
   void MakeDispatch(PublicList const& publicList);
-  bool IsInHeap(ANode* node);
+  bool IsInHeap(ANode const* node);
 
   ANText* AddTextNode(std::string_view text);
 

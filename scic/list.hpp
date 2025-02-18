@@ -61,7 +61,7 @@ class TListBase {
   TNode* removeBack();
 
   // Returns true if this node is in this list.
-  bool contains(TNode* ln);
+  bool contains(TNode const* ln);
 
  private:
   friend class TNode;
@@ -75,100 +75,73 @@ class TListBase {
 template <class T>
 class TList {
  public:
-  TList() : list_(std::make_unique<TListBase>()) {}
+  class iterator;
+  class const_iterator;
 
-  // Smart pointer to a list node.
-  class iterator {
+ private:
+  template <class Derived, class NodeType>
+  class IteratorBase {
    public:
     using value_type = T;
 
     // This should ultimately be unused, as the difference between two
     // iterators is not O(1), and won't be implemented unless necessary.
     using difference_type = std::ptrdiff_t;
-    iterator() : parent_(nullptr), curr_item_(nullptr) {}
+    IteratorBase() : parent_(nullptr), curr_item_(nullptr) {}
 
-    T* operator->() const { return curr_item_; }
-    T* get() const { return curr_item_; }
-    T& operator*() const { return *curr_item_; }
+    NodeType* operator->() const { return curr_item_; }
+    NodeType* get() const { return curr_item_; }
+    NodeType& operator*() const { return *curr_item_; }
 
     explicit operator bool() const { return curr_item_ != nullptr; }
 
-    bool operator==(const iterator& other) const {
+    bool operator==(const Derived& other) const {
       if (parent_ != other.parent_) return false;
       return curr_item_ == other.curr_item_;
     }
 
-    bool operator!=(const iterator& other) const { return !(*this == other); }
+    bool operator!=(const Derived& other) const { return !(*this == other); }
 
-    iterator& operator++() {
+    Derived& operator++() {
       advance();
-      return *this;
+      return *static_cast<Derived*>(this);
     }
 
-    iterator operator++(int) {
-      iterator tmp = *this;
+    Derived operator++(int) {
+      Derived tmp = *static_cast<Derived*>(this);
       advance();
       return tmp;
     }
 
-    iterator& operator--() {
+    Derived& operator--() {
       retreat();
-      return *this;
+      return *static_cast<Derived*>(this);
     }
 
-    iterator operator--(int) {
-      iterator tmp = *this;
+    Derived operator--(int) {
+      Derived tmp = *static_cast<Derived*>(this);
       retreat();
       return tmp;
     }
 
-    iterator next() const {
-      iterator tmp = *this;
+    Derived next() const {
+      Derived tmp = *static_cast<Derived const*>(this);
       tmp.advance();
       return tmp;
     }
 
-    iterator prev() const {
-      iterator tmp = *this;
+    Derived prev() const {
+      Derived tmp = *static_cast<Derived const*>(this);
       tmp.retreat();
       return tmp;
     }
 
-    // Add node nn before node ln in the list.
-    void addBefore(std::unique_ptr<T> nn) {
-      if (curr_item_ == nullptr) {
-        parent_->addBack(nn.release());
-      } else {
-        curr_item_->InsertBefore(nn.release());
-      }
-    }
-
-    void addAfter(std::unique_ptr<T> nn) {
-      assert(curr_item_);
-      curr_item_->InsertAfter(nn.release());
-    }
-
-    std::unique_ptr<T> remove() {
-      assert(curr_item_);
-      auto* next = curr_item_->next_;
-      curr_item_->RemoveFromList();
-      return std::unique_ptr<T>(curr_item_);
-      curr_item_ = down_cast<T>(next);
-    }
-
-    std::unique_ptr<T> replaceWith(std::unique_ptr<T> nn) {
-      assert(curr_item_);
-      auto* removed_node = curr_item_;
-      auto* new_node = nn.release();
-      removed_node->ReplaceWith(new_node);
-      curr_item_ = new_node;
-      return std::unique_ptr<T>(removed_node);
-    }
-
    private:
+    template <class T2>
     friend class TList;
+    friend iterator;
 
-    iterator(TListBase* parent, T* curr_item)
+    IteratorBase(TListBase* parent, NodeType* curr_item)
         : parent_(parent), curr_item_(curr_item) {}
 
     void advance() {
@@ -187,7 +160,64 @@ class TList {
 
     TListBase* parent_;
     // A null element is the end of the list.
-    T* curr_item_;
+    NodeType* curr_item_;
+  };
+
+ public:
+  TList() : list_(std::make_unique<TListBase>()) {}
+
+  // Smart pointer to a list node.
+  class iterator : public IteratorBase<iterator, T> {
+   public:
+    iterator() : IteratorBase<iterator, T>() {}
+
+    // Add node nn before node ln in the list.
+    void addBefore(std::unique_ptr<T> nn) {
+      if (this->curr_item_ == nullptr) {
+        this->parent_->addBack(nn.release());
+      } else {
+        this->curr_item_->InsertBefore(nn.release());
+      }
+    }
+
+    void addAfter(std::unique_ptr<T> nn) {
+      assert(this->curr_item_);
+      this->curr_item_->InsertAfter(nn.release());
+    }
+
+    std::unique_ptr<T> remove() {
+      assert(this->curr_item_);
+      auto* next = this->curr_item_->next_;
+      this->curr_item_->RemoveFromList();
+      return std::unique_ptr<T>(this->curr_item_);
+      this->curr_item_ = down_cast<T>(next);
+    }
+
+    std::unique_ptr<T> replaceWith(std::unique_ptr<T> nn) {
+      assert(this->curr_item_);
+      auto* removed_node = this->curr_item_;
+      auto* new_node = nn.release();
+      removed_node->ReplaceWith(new_node);
+      this->curr_item_ = new_node;
+      return std::unique_ptr<T>(removed_node);
+    }
+
+   private:
+    friend class TList;
+
+    iterator(TListBase* parent, T* curr_item)
+        : IteratorBase<iterator, T>(parent, curr_item) {}
+  };
+
+  class const_iterator : public IteratorBase<const_iterator, T const> {
+   public:
+    const_iterator() : IteratorBase<const_iterator, T const>() {}
+
+   private:
+    template <class T2>
+    friend class TList;
+    const_iterator(TListBase* parent, T const* curr_item)
+        : IteratorBase<const_iterator, T const>(parent, curr_item) {}
   };
 
   static_assert(std::bidirectional_iterator<iterator>);
@@ -197,9 +227,19 @@ class TList {
   }
   iterator end() { return iterator(list_.get(), nullptr); }
 
+  const_iterator begin() const {
+    return const_iterator(list_.get(), down_cast<T>(list_->front()));
+  }
+
+  const_iterator end() const { return const_iterator(list_.get(), nullptr); }
+
   iterator findIter(T* ln) {
     if (!list_->contains(ln)) return end();
     return iterator(list_.get(), ln);
+  }
+  const_iterator findIter(T const* ln) const {
+    if (!list_->contains(ln)) return end();
+    return const_iterator(list_.get(), ln);
   }
 
   T* frontPtr() { return down_cast<T>(list_->front()); }

@@ -34,7 +34,7 @@ class CompilerHeapContext : public HeapContext {
  public:
   CompilerHeapContext(Compiler* compiler) : compiler_(compiler) {}
 
-  bool IsInHeap(ANode* node) const override {
+  bool IsInHeap(ANode const* node) const override {
     return compiler_->IsInHeap(node);
   }
 
@@ -49,9 +49,9 @@ class ANVars : public ANode
  public:
   ANVars(VarList* theVars) : theVars(theVars) {}
 
-  size_t size() override { return 2 * (theVars->values.size() + 1); }
+  size_t size() const override { return 2 * (theVars->values.size() + 1); }
 
-  void list(ListingFile* listFile) override {
+  void list(ListingFile* listFile) const override {
     // FIXME: I don't know why we're saving/restoring the variable.
     std::size_t curOfs = *offset;
 
@@ -71,7 +71,7 @@ class ANVars : public ANode
     listFile->Listing("\n");
   }
 
-  void collectFixups(FixupContext* fixup_ctxt) override {
+  void collectFixups(FixupContext* fixup_ctxt) const override {
     std::size_t relOfs = 2;
     for (Var const& var : theVars->values) {
       if (std::holds_alternative<ANText*>(*var.value)) {
@@ -81,7 +81,7 @@ class ANVars : public ANode
     }
   }
 
-  void emit(OutputFile* out) override {
+  void emit(OutputFile* out) const override {
     out->WriteWord(theVars->values.size());
 
     for (Var const& var : theVars->values) {
@@ -327,7 +327,7 @@ void Compiler::MakeDispatch(PublicList const& publicList) {
   }
 }
 
-bool Compiler::IsInHeap(ANode* node) { return heapList->contains(node); }
+bool Compiler::IsInHeap(ANode const* node) { return heapList->contains(node); }
 
 ANText* Compiler::AddTextNode(std::string_view text) {
   auto it = textNodes.find(text);

@@ -16,11 +16,11 @@ class FixupListContext : public FixupContext {
   FixupListContext(FixupList* fixupList, HeapContext const* heapContext)
       : fixupList_(fixupList), heapContext_(heapContext) {}
 
-  bool HeapHasNode(ANode* node) const override {
+  bool HeapHasNode(ANode const* node) const override {
     return heapContext_->IsInHeap(node);
   }
 
-  void AddRelFixup(ANode* node, std::size_t ofs) override {
+  void AddRelFixup(ANode const* node, std::size_t ofs) override {
     fixupList_->addFixup(node, ofs);
   }
 
@@ -38,12 +38,12 @@ class ANWordPadding : public ANode {
     }
     return ofs;
   }
-  void list(ListingFile* listFile) override {
+  void list(ListingFile* listFile) const override {
     if (*offset & 1) {
       listFile->ListByte(*offset, 0);
     }
   }
-  void emit(OutputFile* out) override {
+  void emit(OutputFile* out) const override {
     if (*offset & 1) {
       out->WriteByte(0);
     }
@@ -81,7 +81,7 @@ FixupList::~FixupList() {}
 
 size_t FixupList::setOffset(size_t ofs) { return root_->setOffset(ofs); }
 
-void FixupList::addFixup(ANode* node, std::size_t rel_ofs) {
+void FixupList::addFixup(ANode const* node, std::size_t rel_ofs) {
   fixupList_->newNode<ANOffsetWord>(node, rel_ofs);
 }
 

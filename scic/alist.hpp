@@ -17,21 +17,25 @@ class AList {
  public:
   // AList (assembly list) is a list of ANodes (assembly nodes).
 
-  size_t length() {
+  size_t length() const {
     size_t s = 0;
     for (auto it = iter(); it; ++it) s++;
     return s;
   }
 
-  // Set the offsets of each element of the list based on the
-  // start of the list being at offset 'ofs'.
-
   TList<T>::iterator iter() { return list_.begin(); }
+  TList<T>::const_iterator iter() const { return list_.begin(); }
 
   TList<T>::iterator begin() { return list_.begin(); }
   TList<T>::iterator end() { return list_.end(); }
 
+  TList<T>::const_iterator begin() const { return list_.begin(); }
+  TList<T>::const_iterator end() const { return list_.end(); }
+
   TList<T>::iterator find(T* node) { return list_.findIter(node); }
+  TList<T>::const_iterator find(T const* node) const {
+    return list_.findIter(node);
+  }
 
   T* addFront(std::unique_ptr<T> node) {
     return list_.addFront(std::move(node));
@@ -56,9 +60,9 @@ using AOpList = AList<ANOpCode>;
 template <class T>
 struct ANComposite : ANode {
  public:
-  size_t size() override {
+  size_t size() const override {
     size_t s = 0;
-    for (auto& node : list_) s += node.size();
+    for (auto const& node : list_) s += node.size();
     return s;
   }
 
@@ -79,27 +83,27 @@ struct ANComposite : ANode {
     return changed;
   }
 
-  void list(ListingFile* listFile) override {
-    for (auto& node : list_) {
+  void list(ListingFile* listFile) const override {
+    for (auto const& node : list_) {
       node.list(listFile);
     }
   }
 
-  void collectFixups(FixupContext* fixup_ctxt) override {
-    for (auto& node : list_) {
+  void collectFixups(FixupContext* fixup_ctxt) const override {
+    for (auto const& node : list_) {
       node.collectFixups(fixup_ctxt);
     }
   }
 
-  void emit(OutputFile* out) override {
-    for (auto& node : list_) {
+  void emit(OutputFile* out) const override {
+    for (auto const& node : list_) {
       node.emit(out);
     }
   }
 
-  bool contains(ANode* node) override {
+  bool contains(ANode const* node) const override {
     if (ANode::contains(node)) return true;
-    for (auto& entry : list_) {
+    for (auto const& entry : list_) {
       if (entry.contains(node)) return true;
     }
     return false;

@@ -14,7 +14,7 @@
 #include "scic/casts.hpp"
 #include "scic/opcodes.hpp"
 
-ANOpCode* FindNextOp(AList<ANOpCode>* list, ANOpCode* start) {
+ANOpCode const* FindNextOp(AList<ANOpCode> const* list, ANOpCode const* start) {
   if (!start) {
     throw new std::runtime_error("start cannot be nullptr");
   }
@@ -194,7 +194,7 @@ uint32_t OptimizeProc(AOpList* al) {
       case op_bnt:
       case op_jmp: {
         // Eliminate branches to branches.
-        ANLabel* label = ((ANBranch*)it.get())->target;
+        ANLabel const* label = ((ANBranch*)it.get())->target;
         while (label) {
           // 'label' points to the label to which we are branching.  Search
           // for the first op-code following this label.

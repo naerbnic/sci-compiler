@@ -15,8 +15,8 @@ class FixupContext {
  public:
   virtual ~FixupContext() = default;
 
-  virtual bool HeapHasNode(ANode* node) const = 0;
-  virtual void AddRelFixup(ANode* node, std::size_t ofs) = 0;
+  virtual bool HeapHasNode(ANode const* node) const = 0;
+  virtual void AddRelFixup(ANode const* node, std::size_t ofs) = 0;
 };
 
 struct ANode : TNode {
@@ -27,7 +27,7 @@ struct ANode : TNode {
 
   virtual ~ANode() = default;
 
-  virtual size_t size();
+  virtual size_t size() const;
   // Returns the number of bytes of object code generated
   // by the node.  This may change for a given node - for
   // example a branch node may change from a word to a byte
@@ -42,16 +42,16 @@ struct ANode : TNode {
   // the node was shrunk, false if it was not.
   virtual bool tryShrink();
 
-  virtual void list(ListingFile* listFile);
+  virtual void list(ListingFile* listFile) const;
   // Writes a representation of the node to the listing file.
 
   // Adds fixups to the fixup_ctxt, if needed for this instruction.
-  virtual void collectFixups(FixupContext* fixup_ctxt);
+  virtual void collectFixups(FixupContext* fixup_ctxt) const;
 
-  virtual void emit(OutputFile*);
+  virtual void emit(OutputFile*) const;
   // Emits the object code for the node to the output file.
 
-  virtual bool contains(ANode* node);
+  virtual bool contains(ANode const* node) const;
 
   virtual bool optimize();
   // Applies some optimizations to the node.  This is not
@@ -69,9 +69,9 @@ struct ANOpCode : ANode
   ANOpCode() = default;
   ANOpCode(uint32_t o);
 
-  size_t size() override;
-  void list(ListingFile* listFile) override;
-  void emit(OutputFile*) override;
+  size_t size() const override;
+  void list(ListingFile* listFile) const override;
+  void emit(OutputFile*) const override;
 
   uint32_t op;  // type of operator
 };

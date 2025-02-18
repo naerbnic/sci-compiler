@@ -105,7 +105,7 @@ TNode* TListBase::removeBack() {
   return node;
 }
 
-bool TListBase::contains(TNode* ln) {
+bool TListBase::contains(TNode const* ln) {
   if (!ln) return false;
   return ln->list_ == this;
 }
