@@ -378,21 +378,7 @@ ANText* Compiler::AddTextNode(std::string_view text) {
 
 std::size_t Compiler::NumVars() const { return localVars.values.size(); }
 
-bool Compiler::SetTextVar(std::size_t varNum, ANText* text) {
-  if (localVars.values.size() <= varNum) {
-    localVars.values.resize(varNum + 1);
-  }
-
-  Var* vp = &localVars.values[varNum];
-  if (vp->value) {
-    return false;
-  }
-
-  vp->value = text;
-  return true;
-}
-
-bool Compiler::SetIntVar(std::size_t varNum, int value) {
+bool Compiler::SetVar(std::size_t varNum, LiteralValue value) {
   if (localVars.values.size() <= varNum) {
     localVars.values.resize(varNum + 1);
   }

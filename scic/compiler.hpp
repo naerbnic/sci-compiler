@@ -96,12 +96,7 @@ class Compiler {
   // Sets the variable at the given index to the given text.
   //
   // Returns false if the variable has already been set.
-  bool SetTextVar(std::size_t varNum, ANText* text);
-
-  // Sets the variable at the given index to the given int.
-  //
-  // Returns false if the variable has already been set.
-  bool SetIntVar(std::size_t varNum, int value);
+  bool SetVar(std::size_t varNum, LiteralValue value);
 
   std::unique_ptr<ObjectCodegen> CreateObject(std::string name);
   std::unique_ptr<ObjectCodegen> CreateClass(std::string name);

@@ -8,11 +8,9 @@
 #include <string>
 #include <string_view>
 #include <utility>
-#include <variant>
 
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
-#include "scic/anode_impls.hpp"
 #include "scic/compile.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
@@ -25,7 +23,6 @@
 #include "scic/symtypes.hpp"
 #include "scic/token.hpp"
 #include "scic/toktypes.hpp"
-#include "util/types/overload.hpp"
 
 static bool InitialValue(int offset, int arraySize);
 
@@ -356,7 +353,7 @@ static bool InitialValue(int offset, int arraySize) {
   if (slot.type() != S_ASSIGN) {
     UnGetTok();
     for (int i = 0; i < arraySize; ++i) {
-      gSc->SetIntVar(offset + i, 0);
+      gSc->SetVar(offset + i, 0);
     }
     return true;
   }
@@ -369,13 +366,10 @@ static bool InitialValue(int offset, int arraySize) {
     auto value = GetNumberOrString("Initial value");
     for (int i = 0; i < arraySize; ++i) {
       if (!value) {
-        gSc->SetIntVar(offset + i, 0);
+        gSc->SetVar(offset + i, 0);
         continue;
       }
-      std::visit(util::Overload(
-                     [&](int num) { gSc->SetIntVar(offset + i, num); },
-                     [&](ANText* text) { gSc->SetTextVar(offset + i, text); }),
-                 *value);
+      gSc->SetVar(offset + i, *value);
     }
     return arraySize;
   }
@@ -387,13 +381,10 @@ static bool InitialValue(int offset, int arraySize) {
     UnGetTok();
     auto value = GetNumberOrString("Initial value");
     if (!value) {
-      gSc->SetIntVar(offset + n, 0);
+      gSc->SetVar(offset + n, 0);
       continue;
     }
-    std::visit(util::Overload(
-                   [&](int num) { gSc->SetIntVar(offset + n, num); },
-                   [&](ANText* text) { gSc->SetTextVar(offset + n, text); }),
-               *value);
+    gSc->SetVar(offset + n, *value);
   }
   return n;
 }
