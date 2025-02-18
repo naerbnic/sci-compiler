@@ -130,3 +130,8 @@ cc_library(
     hdrs = ["forward_ref.hpp"],
     deps = ["@abseil-cpp//absl/functional:any_invocable"],
 )
+
+cc_library(
+    name = "casts",
+    hdrs = ["casts.hpp"],
+)

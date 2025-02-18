@@ -8,7 +8,7 @@
 #include <cstddef>
 #include <memory>
 
-#include "scic/casts.hpp"
+#include "util/types/casts.hpp"
 
 class TListBase;
 

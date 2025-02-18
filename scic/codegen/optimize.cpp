@@ -8,7 +8,7 @@
 #include <ranges>
 #include <stdexcept>
 
-#include "scic/casts.hpp"
+#include "util/types/casts.hpp"
 #include "scic/codegen/alist.hpp"
 #include "scic/codegen/anode.hpp"
 #include "scic/codegen/anode_impls.hpp"

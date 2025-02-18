@@ -16,13 +16,13 @@ cc_library(
         "optimize.hpp",
     ],
     deps = [
-        "//scic:casts",
         "//scic:common",
         "//scic:config",
         "//scic:list",
         "//scic:listing",
         "//scic:opcodes",
         "//scic:output",
+        "//util/types:casts",
         "@abseil-cpp//absl/strings:str_format",
     ],
 )
