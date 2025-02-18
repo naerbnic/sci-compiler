@@ -123,3 +123,10 @@ cc_test(
         "@googletest//:gtest_main",
     ],
 )
+
+
+cc_library(
+    name = "reference",
+    hdrs = ["reference.hpp"],
+    deps = ["@abseil-cpp//absl/functional:any_invocable"],
+)

@@ -122,12 +122,6 @@ cc_library(
 )
 
 cc_library(
-    name = "reference",
-    hdrs = ["reference.hpp"],
-    deps = ["@abseil-cpp//absl/functional:any_invocable"],
-)
-
-cc_library(
     name = "anode",
     srcs = [
         "anode.cpp",
@@ -175,9 +169,9 @@ cc_library(
         ":input",
         ":listing",
         ":output",
-        ":reference",
         ":varlist",
         "//util/types:overload",
+        "//util/types:reference",
         "@abseil-cpp//absl/memory",
         "@abseil-cpp//absl/strings:str_format",
     ],
@@ -252,10 +246,10 @@ cc_binary(
         ":memtype",
         ":opcodes",
         ":output",
-        ":reference",
         ":symtypes",
         "//util/platform",
         "//util/types:overload",
+        "//util/types:reference",
         "@abseil-cpp//absl/cleanup",
         "@abseil-cpp//absl/container:btree",
         "@abseil-cpp//absl/debugging:failure_signal_handler",

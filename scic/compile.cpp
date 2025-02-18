@@ -22,7 +22,7 @@
 #include "scic/parse_context.hpp"
 #include "scic/pnode.hpp"
 #include "scic/public.hpp"
-#include "scic/reference.hpp"
+#include "util/types/reference.hpp"
 #include "scic/symtypes.hpp"
 
 static void MakeAccess(AOpList* curList, PNode*, uint8_t);

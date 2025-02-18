@@ -15,8 +15,8 @@
 #include "scic/anode_impls.hpp"
 #include "scic/fixup_list.hpp"
 #include "scic/listing.hpp"
-#include "scic/reference.hpp"
 #include "scic/varlist.hpp"
+#include "util/types/reference.hpp"
 
 class Compiler;
 

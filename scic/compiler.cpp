@@ -23,7 +23,7 @@
 #include "scic/input.hpp"
 #include "scic/listing.hpp"
 #include "scic/output.hpp"
-#include "scic/reference.hpp"
+#include "util/types/reference.hpp"
 #include "scic/varlist.hpp"
 #include "util/types/overload.hpp"
 

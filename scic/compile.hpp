@@ -7,7 +7,7 @@
 
 #include "scic/alist.hpp"
 #include "scic/anode_impls.hpp"
-#include "scic/reference.hpp"
+#include "util/types/reference.hpp"
 
 struct ANode;
 class Symbol;

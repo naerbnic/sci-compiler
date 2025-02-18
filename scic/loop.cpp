@@ -8,7 +8,7 @@
 #include "scic/compile.hpp"
 #include "scic/opcodes.hpp"
 #include "scic/pnode.hpp"
-#include "scic/reference.hpp"
+#include "util/types/reference.hpp"
 
 enum LoopType { LOOP_FOR, LOOP_WHILE, LOOP_REPEAT };
 
