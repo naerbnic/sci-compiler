@@ -1,10 +1,10 @@
-#include "util/choice_matchers.hpp"
+#include "util/types/choice_matchers.hpp"
 
 #include <string>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "util/choice.hpp"
+#include "util/types/choice.hpp"
 
 namespace util {
 namespace {

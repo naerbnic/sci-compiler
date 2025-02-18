@@ -12,7 +12,7 @@
 #include <vector>
 
 #include "scic/sem/symbol.hpp"
-#include "util/choice.hpp"
+#include "util/types/choice.hpp"
 #include "util/strings/ref_str.hpp"
 
 namespace sem {

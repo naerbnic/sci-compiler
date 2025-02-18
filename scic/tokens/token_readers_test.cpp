@@ -6,7 +6,7 @@
 #include "scic/tokens/char_stream.hpp"
 #include "scic/tokens/token.hpp"
 #include "scic/tokens/token_test_utils.hpp"
-#include "util/choice_matchers.hpp"
+#include "util/types/choice_matchers.hpp"
 #include "util/status/status_matchers.hpp"
 
 namespace tokens {

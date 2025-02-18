@@ -17,7 +17,7 @@
 #include "scic/parsers/sci/const_value_parsers.hpp"
 #include "scic/parsers/sci/expr_parsers.hpp"
 #include "scic/parsers/sci/parser_common.hpp"
-#include "util/choice.hpp"
+#include "util/types/choice.hpp"
 #include "util/status/status_macros.hpp"
 
 namespace parsers::sci {

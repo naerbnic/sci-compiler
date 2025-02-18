@@ -6,7 +6,7 @@
 #include <string_view>
 #include <utility>
 
-#include "util/choice.hpp"
+#include "util/types/choice.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/strong_types.hpp"
 

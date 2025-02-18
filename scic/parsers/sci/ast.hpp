@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "scic/text/text_range.hpp"
-#include "util/choice.hpp"
+#include "util/types/choice.hpp"
 #include "util/io/printer.hpp"
 #include "util/strings/ref_str.hpp"
 

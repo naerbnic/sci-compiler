@@ -8,7 +8,7 @@
 #include "absl/types/span.h"
 #include "scic/text/text_range.hpp"
 #include "scic/tokens/token.hpp"
-#include "util/choice.hpp"
+#include "util/types/choice.hpp"
 
 namespace parsers::list_tree {
 

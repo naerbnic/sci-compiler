@@ -9,8 +9,8 @@ cc_library(
     srcs = ["symbol.cpp"],
     hdrs = ["symbol.hpp"],
     deps = [
-        "//util:choice",
         "//util/strings:ref_str",
+        "//util/types:choice",
         "//util/types:strong_types",
     ],
 )
@@ -21,7 +21,7 @@ cc_library(
     hdrs = ["module_env.hpp"],
     deps = [
         ":symbol",
-        "//util:choice",
         "//util/strings:ref_str",
+        "//util/types:choice",
     ],
 )

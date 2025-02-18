@@ -8,8 +8,8 @@ cc_library(
     hdrs = ["token.hpp"],
     deps = [
         "//scic/text:text_range",
-        "//util:choice",
         "//util/strings:ref_str",
+        "//util/types:choice",
         "@abseil-cpp//absl/strings:str_format",
     ],
 )
@@ -21,8 +21,8 @@ cc_library(
     deps = [
         ":token",
         "//scic/text:text_range",
-        "//util:choice_matchers",
         "//util/strings:ref_str",
+        "//util/types:choice_matchers",
         "@googletest//:gtest",
     ],
 )
@@ -53,8 +53,8 @@ cc_test(
         ":token",
         ":token_readers",
         ":token_test_utils",
-        "//util:choice_matchers",
         "//util/status:status_matchers",
+        "//util/types:choice_matchers",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],

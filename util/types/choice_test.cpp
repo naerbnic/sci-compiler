@@ -1,4 +1,4 @@
-#include "util/choice.hpp"
+#include "util/types/choice.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

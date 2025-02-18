@@ -9,7 +9,7 @@
 #include "gtest/gtest.h"
 #include "scic/text/text_range.hpp"
 #include "scic/tokens/token.hpp"
-#include "util/choice_matchers.hpp"
+#include "util/types/choice_matchers.hpp"
 #include "util/strings/ref_str.hpp"
 
 namespace tokens {

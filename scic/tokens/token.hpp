@@ -5,7 +5,7 @@
 
 #include "absl/strings/str_format.h"
 #include "scic/text/text_range.hpp"
-#include "util/choice.hpp"
+#include "util/types/choice.hpp"
 #include "util/strings/ref_str.hpp"
 
 namespace tokens {

@@ -8,7 +8,7 @@
 #include "scic/parsers/combinators/results.hpp"
 #include "scic/parsers/list_tree/parser_test_utils.hpp"
 #include "scic/parsers/sci/ast.hpp"
-#include "util/choice_matchers.hpp"
+#include "util/types/choice_matchers.hpp"
 
 namespace parsers::sci {
 namespace {

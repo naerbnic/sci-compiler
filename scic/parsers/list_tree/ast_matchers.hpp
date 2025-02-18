@@ -9,7 +9,7 @@
 #include "scic/parsers/list_tree/ast.hpp"
 #include "scic/tokens/token.hpp"
 #include "scic/tokens/token_test_utils.hpp"
-#include "util/choice_matchers.hpp"
+#include "util/types/choice_matchers.hpp"
 
 namespace parsers::list_tree {
 

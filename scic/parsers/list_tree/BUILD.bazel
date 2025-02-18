@@ -11,7 +11,7 @@ cc_library(
     deps = [
         "//scic/text:text_range",
         "//scic/tokens:token",
-        "//util:choice",
+        "//util/types:choice",
         "@abseil-cpp//absl/strings:str_format",
         "@abseil-cpp//absl/types:span",
     ],
@@ -25,7 +25,7 @@ cc_library(
         ":ast",
         "//scic/tokens:token",
         "//scic/tokens:token_test_utils",
-        "//util:choice_matchers",
+        "//util/types:choice_matchers",
         "@abseil-cpp//absl/types:span",
         "@googletest//:gtest",
     ],
