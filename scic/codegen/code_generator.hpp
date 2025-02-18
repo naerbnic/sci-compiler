@@ -6,16 +6,19 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <variant>
 
 #include "scic/codegen/alist.hpp"
 #include "scic/codegen/anode.hpp"
 #include "scic/codegen/anode_impls.hpp"
 #include "scic/codegen/fixup_list.hpp"
-#include "scic/listing.hpp"
 #include "scic/codegen/varlist.hpp"
+#include "scic/listing.hpp"
+#include "util/types/choice.hpp"
 #include "util/types/forward_ref.hpp"
 
 class CodeGenerator;
@@ -23,7 +26,25 @@ class CodeGenerator;
 // Internal types
 class ANDispTable;
 
+// The value of a literal. Either an integer, or a static string, represented
+// as a pointer to an ANText.
 using LiteralValue = std::variant<int, ANText*>;
+
+struct ProcedureName {
+  explicit ProcedureName(std::string name) : procName(std::move(name)) {}
+
+  std::string procName;
+};
+
+struct MethodName {
+  MethodName(std::string objName, std::string methName)
+      : objName(std::move(objName)), methName(std::move(methName)) {}
+
+  std::string objName;
+  std::string methName;
+};
+
+using FuncName = util::Choice<ProcedureName, MethodName>;
 
 class ObjectCodegen {
  public:
@@ -49,8 +70,8 @@ class ObjectCodegen {
  private:
   friend class CodeGenerator;
 
-  static std::unique_ptr<ObjectCodegen> Create(CodeGenerator* compiler, bool isObj,
-                                               std::string name);
+  static std::unique_ptr<ObjectCodegen> Create(CodeGenerator* compiler,
+                                               bool isObj, std::string name);
 
   ObjectCodegen(bool isObj, std::string name, ANObject* propListMarker,
                 ANTable* props, ANObject* objDictMarker, ANObjTable* propDict,
@@ -100,8 +121,8 @@ class CodeGenerator {
   std::unique_ptr<ObjectCodegen> CreateObject(std::string name);
   std::unique_ptr<ObjectCodegen> CreateClass(std::string name);
 
-  ANCodeBlk* CreateProcedure(std::string name);
-  ANCodeBlk* CreateMethod(std::string objName, std::string name);
+  ANCodeBlk* CreateFunction(FuncName name, std::optional<std::size_t> lineNum,
+                            std::size_t numTemps);
 
  private:
   friend class ObjectCodegen;

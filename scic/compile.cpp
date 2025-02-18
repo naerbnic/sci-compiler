@@ -5,8 +5,10 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <ranges>
 #include <string>
+#include <utility>
 
 #include "scic/codegen/alist.hpp"
 #include "scic/codegen/anode.hpp"
@@ -941,12 +943,22 @@ static void MakeIncDec(AOpList* curList, PNode* pn) {
 static void MakeProc(PNode* pn) {
   // Compile code for an entire procedure.
 
+  auto procName =
+      pn->type == PN_PROC
+          ? FuncName::Make<ProcedureName>(std::string(pn->sym->name()))
+          : FuncName::Make<MethodName>(gCurObj->name,
+                                       std::string(pn->sym->name()));
+
+  std::optional<std::size_t> lineNum;
+  if (gConfig->includeDebugInfo) {
+    lineNum = pn->lineNum;
+    lastLineNum = pn->lineNum;
+  }
+
   // Make a procedure node and point to the symbol for the procedure
   // (for listing purposes).
   ANCodeBlk* an =
-      pn->type == PN_PROC
-          ? gSc->CreateProcedure(std::string(pn->sym->name()))
-          : gSc->CreateMethod(gCurObj->name, std::string(pn->sym->name()));
+      gSc->CreateFunction(std::move(procName), lineNum, /*numTemps=*/pn->val);
 
   pn->sym->type = (sym_t)(pn->type == PN_PROC ? S_PROC : S_SELECT);
 
@@ -955,17 +967,6 @@ static void MakeProc(PNode* pn) {
   // entry (in the 'ref' property) (compiled by the first reference to the
   // procedure).  Let all these nodes know where this one is.
   pn->sym->setLoc(an);
-
-  //	procedures and methods get special treatment:  the line number
-  //	and file name are set here
-  if (gConfig->includeDebugInfo) {
-    an->getList()->newNode<ANLineNum>(pn->lineNum);
-    lastLineNum = pn->lineNum;
-  }
-
-  // If there are to be any temporary variables, add a link node to
-  // create them.
-  if (pn->val) an->getList()->newNode<ANOpUnsign>(op_link, pn->val);
 
   // Compile code for the procedure followed by a return.
   if (pn->child_at(0)) CompileExpr(an->getList(), pn->child_at(0));

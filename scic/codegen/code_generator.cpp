@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -23,6 +24,7 @@
 #include "scic/config.hpp"
 #include "scic/input.hpp"
 #include "scic/listing.hpp"
+#include "scic/opcodes.hpp"
 #include "scic/output.hpp"
 #include "util/types/forward_ref.hpp"
 #include "util/types/overload.hpp"
@@ -373,11 +375,13 @@ void CodeGenerator::Assemble(uint16_t scriptNum, ListingFile* listFile) {
 }
 
 void CodeGenerator::AddPublic(std::string name, std::size_t index,
-                         ForwardRef<ANode*>* target) {
+                              ForwardRef<ANode*>* target) {
   dispTable->AddPublic(std::move(name), index, target);
 }
 
-bool CodeGenerator::IsInHeap(ANode const* node) { return heapList->contains(node); }
+bool CodeGenerator::IsInHeap(ANode const* node) {
+  return heapList->contains(node);
+}
 
 ANText* CodeGenerator::AddTextNode(std::string_view text) {
   auto it = textNodes.find(text);
@@ -412,10 +416,31 @@ std::unique_ptr<ObjectCodegen> CodeGenerator::CreateClass(std::string name) {
   return ObjectCodegen::Create(this, false, name);
 }
 
-ANCodeBlk* CodeGenerator::CreateProcedure(std::string name) {
-  return codeList->newNode<ANProcCode>(std::move(name));
-}
+ANCodeBlk* CodeGenerator::CreateFunction(FuncName name,
+                                         std::optional<std::size_t> lineNum,
+                                         std::size_t numTemps) {
+  ANCodeBlk* code = std::move(name).visit(
+      [&](ProcedureName name) -> ANCodeBlk* {
+        return codeList->newNode<ANProcCode>(std::move(name.procName));
+      },
+      [&](MethodName name) -> ANCodeBlk* {
+        return codeList->newNode<ANMethCode>(std::move(name.methName),
+                                             std::move(name.objName));
+      });
 
-ANCodeBlk* CodeGenerator::CreateMethod(std::string objName, std::string name) {
-  return codeList->newNode<ANMethCode>(std::move(name), std::move(objName));
+  if (lineNum) {
+    // If supported by the configuration, add line number information.
+    // procedures and methods get special treatment:  the line number
+    // and file name are set here
+    // TODO: Make conditional based on target type.
+    code->getList()->newNode<ANLineNum>(*lineNum);
+  }
+
+  // If there are to be any temporary variables, add a link node to
+  // create them.
+  if (numTemps > 0) {
+    code->getList()->newNode<ANOpUnsign>(op_link, numTemps);
+  }
+
+  return code;
 }

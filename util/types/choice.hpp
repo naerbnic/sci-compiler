@@ -21,6 +21,7 @@ template <class Derived, class... Types>
 class ChoiceBase {
  public:
   template <class T, class... Args>
+    requires std::constructible_from<T, Args...>
   static Derived Make(Args&&... args) {
     return Derived(std::in_place_type<T>, std::forward<Args>(args)...);
   }
@@ -104,10 +105,12 @@ class ChoiceBase {
 
 // A generic class, intended to be a more ergonomic replacement for
 // std::variant.
-template <class... Args>
-class Choice : public ChoiceBase<Choice<Args...>, Args...> {
+template <class... Types>
+class Choice : public ChoiceBase<Choice<Types...>, Types...> {
+  using Base = ChoiceBase<Choice<Types...>, Types...>;
+
  public:
-  using ChoiceBase<Choice<Args...>, Args...>::ChoiceBase;
+  using ChoiceBase<Choice<Types...>, Types...>::ChoiceBase;
 };
 
 }  // namespace util
