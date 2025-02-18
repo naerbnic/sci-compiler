@@ -957,7 +957,7 @@ static void MakeProc(PNode* pn) {
 
   // Make a procedure node and point to the symbol for the procedure
   // (for listing purposes).
-  ANCodeBlk* an =
+  auto func_builder =
       gSc->CreateFunction(std::move(procName), lineNum, /*numTemps=*/pn->val);
 
   pn->sym->type = (sym_t)(pn->type == PN_PROC ? S_PROC : S_SELECT);
@@ -966,15 +966,16 @@ static void MakeProc(PNode* pn) {
   // they will be on a list hanging off the procedure's symbol table
   // entry (in the 'ref' property) (compiled by the first reference to the
   // procedure).  Let all these nodes know where this one is.
-  pn->sym->setLoc(an);
+  pn->sym->setLoc(func_builder->GetNode());
 
   // Compile code for the procedure followed by a return.
-  if (pn->child_at(0)) CompileExpr(an->getList(), pn->child_at(0));
+  if (pn->child_at(0)) CompileExpr(func_builder->GetOpList(), pn->child_at(0));
 
   if (gConfig->includeDebugInfo) {
-    an->getList()->newNode<ANLineNum>(gInputState.GetTopLevelLineNum());
+    func_builder->GetOpList()->newNode<ANLineNum>(
+        gInputState.GetTopLevelLineNum());
   }
-  an->getList()->newNode<ANOpCode>(op_ret);
+  func_builder->GetOpList()->newNode<ANOpCode>(op_ret);
 }
 
 void MakeObject(Object* theObj) {

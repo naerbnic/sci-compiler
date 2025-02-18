@@ -96,6 +96,24 @@ class ObjectCodegen {
   bool wroteMethDict_ = false;
 };
 
+class FunctionBuilder {
+ public:
+  // Returns an ANode for the function. This can be used to resolve the
+  // location of the function during assembly.
+  ANode* GetNode() const;
+
+  // Returns a Code Block node for the function. Opcodes can be added to it
+  // to implement the function.
+  //
+  // TODO: Replace this with builder functions.
+  AOpList* GetOpList() const;
+
+ private:
+  friend class CodeGenerator;
+  FunctionBuilder(ANCodeBlk* root_node);
+  ANCodeBlk* code_node_;
+};
+
 class CodeGenerator {
  public:
   static std::unique_ptr<CodeGenerator> Create();
@@ -121,8 +139,8 @@ class CodeGenerator {
   std::unique_ptr<ObjectCodegen> CreateObject(std::string name);
   std::unique_ptr<ObjectCodegen> CreateClass(std::string name);
 
-  ANCodeBlk* CreateFunction(FuncName name, std::optional<std::size_t> lineNum,
-                            std::size_t numTemps);
+  std::unique_ptr<FunctionBuilder> CreateFunction(
+      FuncName name, std::optional<std::size_t> lineNum, std::size_t numTemps);
 
  private:
   friend class ObjectCodegen;

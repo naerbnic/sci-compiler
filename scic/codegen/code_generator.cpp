@@ -277,6 +277,14 @@ void ObjectCodegen::AppendPropDict(std::uint16_t selectorNum) {
 
 // -----------------
 
+ANode* FunctionBuilder::GetNode() const { return code_node_; }
+AOpList* FunctionBuilder::GetOpList() const { return code_node_->getList(); }
+
+FunctionBuilder::FunctionBuilder(ANCodeBlk* root_node)
+    : code_node_(root_node) {}
+
+// -----------------
+
 std::unique_ptr<CodeGenerator> CodeGenerator::Create() {
   auto compiler = absl::WrapUnique(new CodeGenerator());
   compiler->InitAsm();
@@ -416,9 +424,8 @@ std::unique_ptr<ObjectCodegen> CodeGenerator::CreateClass(std::string name) {
   return ObjectCodegen::Create(this, false, name);
 }
 
-ANCodeBlk* CodeGenerator::CreateFunction(FuncName name,
-                                         std::optional<std::size_t> lineNum,
-                                         std::size_t numTemps) {
+std::unique_ptr<FunctionBuilder> CodeGenerator::CreateFunction(
+    FuncName name, std::optional<std::size_t> lineNum, std::size_t numTemps) {
   ANCodeBlk* code = std::move(name).visit(
       [&](ProcedureName name) -> ANCodeBlk* {
         return codeList->newNode<ANProcCode>(std::move(name.procName));
@@ -442,5 +449,5 @@ ANCodeBlk* CodeGenerator::CreateFunction(FuncName name,
     code->getList()->newNode<ANOpUnsign>(op_link, numTemps);
   }
 
-  return code;
+  return absl::WrapUnique(new FunctionBuilder(code));
 }
