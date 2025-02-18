@@ -18,7 +18,7 @@
 #include "scic/codegen/varlist.hpp"
 #include "util/types/forward_ref.hpp"
 
-class Compiler;
+class CodeGenerator;
 
 // Internal types
 class ANDispTable;
@@ -47,9 +47,9 @@ class ObjectCodegen {
                     ANCodeBlk* code);
 
  private:
-  friend class Compiler;
+  friend class CodeGenerator;
 
-  static std::unique_ptr<ObjectCodegen> Create(Compiler* compiler, bool isObj,
+  static std::unique_ptr<ObjectCodegen> Create(CodeGenerator* compiler, bool isObj,
                                                std::string name);
 
   ObjectCodegen(bool isObj, std::string name, ANObject* propListMarker,
@@ -75,10 +75,10 @@ class ObjectCodegen {
   bool wroteMethDict_ = false;
 };
 
-class Compiler {
+class CodeGenerator {
  public:
-  static std::unique_ptr<Compiler> Create();
-  ~Compiler();
+  static std::unique_ptr<CodeGenerator> Create();
+  ~CodeGenerator();
 
   void Assemble(uint16_t scriptNum, ListingFile* listFile);
 
@@ -106,7 +106,7 @@ class Compiler {
  private:
   friend class ObjectCodegen;
 
-  Compiler();
+  CodeGenerator();
 
   void InitAsm();
 

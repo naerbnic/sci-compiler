@@ -25,7 +25,7 @@
 #include "scic/toktypes.hpp"
 
 bool Parse() {
-  gSc = Compiler::Create();
+  gSc = CodeGenerator::Create();
   gSyms.clearAsmPtrs();
 
   std::optional<TokenSlot> token;

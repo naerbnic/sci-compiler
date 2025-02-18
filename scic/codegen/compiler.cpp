@@ -30,14 +30,14 @@
 namespace {
 class CompilerHeapContext : public HeapContext {
  public:
-  CompilerHeapContext(Compiler* compiler) : compiler_(compiler) {}
+  CompilerHeapContext(CodeGenerator* compiler) : compiler_(compiler) {}
 
   bool IsInHeap(ANode const* node) const override {
     return compiler_->IsInHeap(node);
   }
 
  private:
-  Compiler* compiler_;
+  CodeGenerator* compiler_;
 };
 
 class ANVars : public ANode
@@ -230,7 +230,7 @@ void ObjectCodegen::AppendMethod(std::string name, std::uint16_t selectorNum,
   entry->getList()->newNode<ANMethod>(std::move(name), code);
 }
 
-std::unique_ptr<ObjectCodegen> ObjectCodegen::Create(Compiler* compiler,
+std::unique_ptr<ObjectCodegen> ObjectCodegen::Create(CodeGenerator* compiler,
                                                      bool isObj,
                                                      std::string name) {
   // Allocate tables in the correct places in the heap/hunk.
@@ -275,20 +275,20 @@ void ObjectCodegen::AppendPropDict(std::uint16_t selectorNum) {
 
 // -----------------
 
-std::unique_ptr<Compiler> Compiler::Create() {
-  auto compiler = absl::WrapUnique(new Compiler());
+std::unique_ptr<CodeGenerator> CodeGenerator::Create() {
+  auto compiler = absl::WrapUnique(new CodeGenerator());
   compiler->InitAsm();
   return compiler;
 }
 
-Compiler::Compiler() : active(false) {
+CodeGenerator::CodeGenerator() : active(false) {
   hunkList = std::make_unique<FixupList>();
   heapList = std::make_unique<FixupList>();
 }
 
-Compiler::~Compiler() = default;
+CodeGenerator::~CodeGenerator() = default;
 
-void Compiler::InitAsm() {
+void CodeGenerator::InitAsm() {
   if (active) {
     throw std::runtime_error("Compiler already active");
   }
@@ -318,7 +318,7 @@ void Compiler::InitAsm() {
   active = true;
 }
 
-void Compiler::Assemble(uint16_t scriptNum, ListingFile* listFile) {
+void CodeGenerator::Assemble(uint16_t scriptNum, ListingFile* listFile) {
   if (!active) {
     throw std::runtime_error("Compiler not active");
   }
@@ -372,14 +372,14 @@ void Compiler::Assemble(uint16_t scriptNum, ListingFile* listFile) {
   active = false;
 }
 
-void Compiler::AddPublic(std::string name, std::size_t index,
+void CodeGenerator::AddPublic(std::string name, std::size_t index,
                          ForwardRef<ANode*>* target) {
   dispTable->AddPublic(std::move(name), index, target);
 }
 
-bool Compiler::IsInHeap(ANode const* node) { return heapList->contains(node); }
+bool CodeGenerator::IsInHeap(ANode const* node) { return heapList->contains(node); }
 
-ANText* Compiler::AddTextNode(std::string_view text) {
+ANText* CodeGenerator::AddTextNode(std::string_view text) {
   auto it = textNodes.find(text);
   if (it != textNodes.end()) return it->second;
   auto* textNode = textList->newNode<ANText>(std::string(text));
@@ -388,9 +388,9 @@ ANText* Compiler::AddTextNode(std::string_view text) {
   return textNode;
 }
 
-std::size_t Compiler::NumVars() const { return localVars.values.size(); }
+std::size_t CodeGenerator::NumVars() const { return localVars.values.size(); }
 
-bool Compiler::SetVar(std::size_t varNum, LiteralValue value) {
+bool CodeGenerator::SetVar(std::size_t varNum, LiteralValue value) {
   if (localVars.values.size() <= varNum) {
     localVars.values.resize(varNum + 1);
   }
@@ -404,18 +404,18 @@ bool Compiler::SetVar(std::size_t varNum, LiteralValue value) {
   return true;
 }
 
-std::unique_ptr<ObjectCodegen> Compiler::CreateObject(std::string name) {
+std::unique_ptr<ObjectCodegen> CodeGenerator::CreateObject(std::string name) {
   return ObjectCodegen::Create(this, true, name);
 }
 
-std::unique_ptr<ObjectCodegen> Compiler::CreateClass(std::string name) {
+std::unique_ptr<ObjectCodegen> CodeGenerator::CreateClass(std::string name) {
   return ObjectCodegen::Create(this, false, name);
 }
 
-ANCodeBlk* Compiler::CreateProcedure(std::string name) {
+ANCodeBlk* CodeGenerator::CreateProcedure(std::string name) {
   return codeList->newNode<ANProcCode>(std::move(name));
 }
 
-ANCodeBlk* Compiler::CreateMethod(std::string objName, std::string name) {
+ANCodeBlk* CodeGenerator::CreateMethod(std::string objName, std::string name) {
   return codeList->newNode<ANMethCode>(std::move(name), std::move(objName));
 }

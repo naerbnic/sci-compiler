@@ -4,4 +4,4 @@
 
 #include "scic/codegen/compiler.hpp"
 
-std::unique_ptr<Compiler> gSc;
+std::unique_ptr<CodeGenerator> gSc;
