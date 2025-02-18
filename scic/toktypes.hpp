@@ -7,6 +7,7 @@
 #include <utility>
 #include <variant>
 
+#include "scic/codegen/anode_impls.hpp"
 #include "scic/symbol.hpp"
 #include "scic/symtypes.hpp"
 #include "scic/token.hpp"
