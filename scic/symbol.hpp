@@ -17,7 +17,7 @@
 #include "absl/strings/str_format.h"
 #include "scic/object.hpp"
 #include "scic/public.hpp"
-#include "util/types/reference.hpp"
+#include "util/types/forward_ref.hpp"
 #include "scic/symtypes.hpp"
 
 struct ANode;

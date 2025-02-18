@@ -16,7 +16,7 @@
 #include "scic/fixup_list.hpp"
 #include "scic/listing.hpp"
 #include "scic/varlist.hpp"
-#include "util/types/reference.hpp"
+#include "util/types/forward_ref.hpp"
 
 class Compiler;
 

@@ -126,7 +126,7 @@ cc_test(
 
 
 cc_library(
-    name = "reference",
-    hdrs = ["reference.hpp"],
+    name = "forward_ref",
+    hdrs = ["forward_ref.hpp"],
     deps = ["@abseil-cpp//absl/functional:any_invocable"],
 )
