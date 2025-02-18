@@ -1,6 +1,5 @@
 #include "scic/compiler.hpp"
 
-#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
@@ -10,6 +9,7 @@
 #include <string_view>
 #include <utility>
 #include <variant>
+#include <vector>
 
 #include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"
@@ -18,14 +18,12 @@
 #include "scic/anode_impls.hpp"
 #include "scic/common.hpp"
 #include "scic/config.hpp"
-#include "scic/define.hpp"
 #include "scic/fixup_list.hpp"
 #include "scic/input.hpp"
 #include "scic/listing.hpp"
 #include "scic/output.hpp"
-#include "scic/public.hpp"
+#include "scic/reference.hpp"
 #include "scic/sc.hpp"
-#include "scic/symbol.hpp"
 #include "scic/varlist.hpp"
 #include "util/types/overload.hpp"
 
@@ -140,6 +138,64 @@ void OptimizeHunk(ANode* anode) {
 
 }  // namespace
 
+class ANDispTable : public ANode {
+ public:
+  void AddPublic(std::string name, std::size_t index,
+                 ForwardReference<ANode*>* target) {
+    while (dispatches_.size() <= index) {
+      dispatches_.push_back(std::make_unique<ANDispatch>());
+    }
+    auto* pub = dispatches_[index].get();
+    pub->name = std::move(name);
+    target->RegisterCallback([pub](ANode* target) { pub->target = target; });
+  };
+
+  std::size_t size() const override { return 2 + dispatches_.size() * 2; }
+
+  void list(ListingFile* listFile) const override {
+    listFile->Listing("\n\nDispatch Table:");
+    listFile->ListWord(*offset, dispatches_.size());
+    for (auto const& dispatch : dispatches_) {
+      dispatch->list(listFile);
+    }
+  }
+
+  void collectFixups(FixupContext* fixup_ctxt) const override {
+    for (auto const& dispatch : dispatches_) {
+      dispatch->collectFixups(fixup_ctxt);
+    }
+  }
+
+  void emit(OutputFile* out) const override {
+    out->WriteWord(dispatches_.size());
+    for (auto const& dispatch : dispatches_) {
+      dispatch->emit(out);
+    }
+  }
+
+  bool contains(ANode const* node) const override {
+    for (auto const& dispatch : dispatches_) {
+      if (dispatch->contains(node)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool optimize() override {
+    bool changed = false;
+    for (auto& dispatch : dispatches_) {
+      if (dispatch->optimize()) {
+        changed = true;
+      }
+    }
+    return changed;
+  }
+
+ private:
+  std::vector<std::unique_ptr<ANDispatch>> dispatches_;
+};
+
 ANode* ObjectCodegen::GetObjNode() const { return propListMarker_; }
 
 void ObjectCodegen::AppendProperty(std::string name, std::uint16_t selectorNum,
@@ -243,9 +299,7 @@ void Compiler::InitAsm() {
   // space to indicate whether script has far text (dummy)
   hunkBody->newNode<ANWord>();
 
-  auto* numDispTblEntries = hunkBody->newNode<ANCountWord>(nullptr);
-  dispTbl = hunkBody->newNode<ANTable>("dispatch table");
-  numDispTblEntries->target = dispTbl->getList();
+  dispTable = hunkBody->newNode<ANDispTable>();
   objDictList = hunkBody->newNode<ANTable>("object dict list")->getList();
   codeList = hunkBody->newNode<ANTable>("code list")->getList();
 
@@ -307,24 +361,9 @@ void Compiler::Assemble(ListingFile* listFile) {
   hunkList = nullptr;
 }
 
-void Compiler::MakeDispatch(PublicList const& publicList) {
-  // Compile the dispatch table which goes at the start of this script.
-
-  // Now cycle through the publicly declared procedures/objects,
-  // creating asmNodes for a table of their offsets.
-  std::uint32_t maxEntry = 0;
-  for (auto const& pub : publicList) {
-    maxEntry = std::max(pub->entry, maxEntry);
-  }
-  for (int i = 0; i <= maxEntry; ++i) {
-    ANDispatch* an = dispTbl->getList()->newNode<ANDispatch>();
-    auto* sym = FindPublic(publicList, i);
-    if (sym) {
-      an->name = std::string(sym->name());
-      sym->forwardRef.RegisterCallback(
-          [an](ANode* target) { an->target = target; });
-    }
-  }
+void Compiler::AddPublic(std::string name, std::size_t index,
+                         ForwardReference<ANode*>* target) {
+  dispTable->AddPublic(std::move(name), index, target);
 }
 
 bool Compiler::IsInHeap(ANode const* node) { return heapList->contains(node); }

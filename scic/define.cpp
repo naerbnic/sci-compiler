@@ -311,29 +311,21 @@ void DoPublic() {
 
   Symbol* theSym;
 
-  PublicList publicList;
-
   for (auto token = GetToken(); !CloseP(token.type()); token = GetToken()) {
     // Install the symbol in both the symbol table and the
     // publics list.
     if (!(theSym = gSyms.lookup(token.name())) || theSym->type == S_EXTERN)
       theSym =
           gSyms.installModule(token.name(), (sym_t)(!theSym ? S_OBJ : S_IDENT));
-    auto theEntry = std::make_unique<Public>(theSym);
-    auto* entryPtr = theEntry.get();
-    publicList.push_front(std::move(theEntry));
 
     auto entry_num = GetNumber("Entry #");
     if (!entry_num) break;
 
-    // Keep track of the maximum numbered public entry.
-    entryPtr->entry = *entry_num;
+    gSc->AddPublic(std::string(theSym->name()), *entry_num,
+                   &theSym->forwardRef);
   }
 
   UnGetTok();
-
-  // Generate the assembly nodes for the dispatch table.
-  gSc->MakeDispatch(publicList);
 }
 
 Symbol* FindPublic(PublicList const& publicList, int n) {

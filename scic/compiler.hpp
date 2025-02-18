@@ -15,10 +15,13 @@
 #include "scic/anode_impls.hpp"
 #include "scic/fixup_list.hpp"
 #include "scic/listing.hpp"
-#include "scic/public.hpp"
+#include "scic/reference.hpp"
 #include "scic/varlist.hpp"
 
 class Compiler;
+
+// Internal types
+class ANDispTable;
 
 using LiteralValue = std::variant<int, ANText*>;
 
@@ -80,7 +83,9 @@ class Compiler {
   void InitAsm();
   void Assemble(ListingFile* listFile);
 
-  void MakeDispatch(PublicList const& publicList);
+  void AddPublic(std::string name, std::size_t index,
+                 ForwardReference<ANode*>* target);
+
   bool IsInHeap(ANode const* node);
 
   ANText* AddTextNode(std::string_view text);
@@ -110,7 +115,7 @@ class Compiler {
   std::unique_ptr<FixupList> heapList;
   std::unique_ptr<FixupList> hunkList;
   VarList localVars;
-  ANTable* dispTbl;
+  ANDispTable* dispTable;
   ANodeList* objPropList;
   ANodeList* objDictList;
   ANodeList* codeList;
