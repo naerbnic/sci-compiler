@@ -141,7 +141,7 @@ void OptimizeHunk(ANode* anode) {
 class ANDispTable : public ANode {
  public:
   void AddPublic(std::string name, std::size_t index,
-                 ForwardReference<ANode*>* target) {
+                 ForwardRef<ANode*>* target) {
     while (dispatches_.size() <= index) {
       dispatches_.push_back(std::make_unique<ANDispatch>());
     }
@@ -373,7 +373,7 @@ void Compiler::Assemble(uint16_t scriptNum, ListingFile* listFile) {
 }
 
 void Compiler::AddPublic(std::string name, std::size_t index,
-                         ForwardReference<ANode*>* target) {
+                         ForwardRef<ANode*>* target) {
   dispTable->AddPublic(std::move(name), index, target);
 }
 

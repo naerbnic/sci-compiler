@@ -12,18 +12,18 @@
 // will be called when the value is resolved. If the value has already
 // been resolved, the callback will be called immediately.
 template <class ResolveType>
-class ForwardReference {
+class ForwardRef {
  public:
   using ResolveFunc = absl::AnyInvocable<void(ResolveType const&) &&>;
 
-  ForwardReference() : value_(std::vector<ResolveFunc>()) {}
-  explicit ForwardReference(ResolveType&& value) : value_(std::move(value)) {}
+  ForwardRef() : value_(std::vector<ResolveFunc>()) {}
+  explicit ForwardRef(ResolveType&& value) : value_(std::move(value)) {}
 
-  ForwardReference(ForwardReference const&) = delete;
-  ForwardReference& operator=(ForwardReference const&) = delete;
+  ForwardRef(ForwardRef const&) = delete;
+  ForwardRef& operator=(ForwardRef const&) = delete;
 
-  ForwardReference(ForwardReference&&) = default;
-  ForwardReference& operator=(ForwardReference&&) = default;
+  ForwardRef(ForwardRef&&) = default;
+  ForwardRef& operator=(ForwardRef&&) = default;
 
   void RegisterCallback(ResolveFunc func) {
     if (std::holds_alternative<ResolveType>(value_)) {

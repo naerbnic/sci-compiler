@@ -38,7 +38,7 @@ class Symbol {
   sym_t type;        // symbol type
   uint32_t lineNum;  //	where symbol was first defined
 
-  ForwardReference<ANode*> forwardRef;
+  ForwardRef<ANode*> forwardRef;
 
  private:
   RefVal ref_val_;

@@ -615,7 +615,7 @@ void MakeBranch(AOpList* curList, uint8_t theCode, ANLabel* target) {
 }
 
 void MakeBranch(AOpList* curList, uint8_t theCode,
-                ForwardReference<ANLabel*>* dest) {
+                ForwardRef<ANLabel*>* dest) {
   // Compile code for a branch.  The type of branch is in 'theCode', the
   // destination is 'bn'.  If the the destination is not yet defined,
   // 'dest' will point to a the symbol of the destination.
@@ -642,7 +642,7 @@ static void MakeComp(AOpList* curList, PNode* pn) {
     // Point to the first argument and set up an empty need list (which
     // will be used to keep track of those nodes which need the address
     // of the end of the expression for the early out).
-    ForwardReference<ANLabel*> earlyOut;
+    ForwardRef<ANLabel*> earlyOut;
 
     // Compile the first two operands and do the test.
     CompileExpr(curList, pn->child_at(0));
@@ -674,7 +674,7 @@ static void MakeComp(AOpList* curList, PNode* pn) {
 static void MakeAnd(AOpList* curList, PNode::ChildSpan args) {
   // Compile code for the '&&' operator.
 
-  ForwardReference<ANLabel*> earlyOut;
+  ForwardRef<ANLabel*> earlyOut;
 
   CompileExpr(curList, args[0].get());
 
@@ -692,7 +692,7 @@ static void MakeAnd(AOpList* curList, PNode::ChildSpan args) {
 static void MakeOr(AOpList* curList, PNode::ChildSpan args) {
   // Compile code for the '||' operator.
 
-  ForwardReference<ANLabel*> earlyOut;
+  ForwardRef<ANLabel*> earlyOut;
 
   CompileExpr(curList, args[0].get());
 
@@ -754,7 +754,7 @@ static void MakeIf(AOpList* curList, PNode* pn) {
   CompileExpr(curList, pn->child_at(0));
 
   // Branch to the else code (if there is any) if the expression is false.
-  ForwardReference<ANLabel*> elseLabel;
+  ForwardRef<ANLabel*> elseLabel;
   MakeBranch(curList, op_bnt, &elseLabel);
 
   // Compile the code to be executed if expression was true.
@@ -768,7 +768,7 @@ static void MakeIf(AOpList* curList, PNode* pn) {
     MakeLabel(curList, &elseLabel);
 
   else {
-    ForwardReference<ANLabel*> doneLabel;
+    ForwardRef<ANLabel*> doneLabel;
     MakeBranch(curList, op_jmp, &doneLabel);
     MakeLabel(curList, &elseLabel);
     CompileExpr(curList, pn->child_at(2));
@@ -779,7 +779,7 @@ static void MakeIf(AOpList* curList, PNode* pn) {
 static void MakeCond(AOpList* curList, PNode* pn) {
   // Compile code for a 'cond' expression.
 
-  ForwardReference<ANLabel*> done;
+  ForwardRef<ANLabel*> done;
   bool elseSeen = false;
 
   // Children alternate between conditions and body.
@@ -788,7 +788,7 @@ static void MakeCond(AOpList* curList, PNode* pn) {
 
   std::size_t i = 0;
   while (i < pn->children.size()) {
-    ForwardReference<ANLabel*> next;
+    ForwardRef<ANLabel*> next;
     auto* condition = pn->children[i++].get();
     PNode* body = i < pn->children.size() && pn->children[i]->type == PN_ELIST
                       ? pn->children[i++].get()
@@ -845,7 +845,7 @@ static void MakeCond(AOpList* curList, PNode* pn) {
 static void MakeSwitch(AOpList* curList, PNode* pn) {
   // Compile code for the 'switch' statement.
 
-  ForwardReference<ANLabel*> done;
+  ForwardRef<ANLabel*> done;
   bool elseSeen = false;
 
   PNode::ChildSpan children = pn->children;
@@ -859,7 +859,7 @@ static void MakeSwitch(AOpList* curList, PNode* pn) {
 
   std::size_t i = 0;
   while (i < cases.size()) {
-    ForwardReference<ANLabel*> next;
+    ForwardRef<ANLabel*> next;
     auto* caseClause = cases[i++].get();
     PNode* body = i < cases.size() && cases[i]->type == PN_ELIST
                       ? cases[i++].get()
@@ -1023,7 +1023,7 @@ void MakeObject(Object* theObj) {
   }
 }
 
-void MakeLabel(AOpList* curList, ForwardReference<ANLabel*>* dest) {
+void MakeLabel(AOpList* curList, ForwardRef<ANLabel*>* dest) {
   auto* label = curList->newNode<ANLabel>();
   dest->Resolve(label);
 }

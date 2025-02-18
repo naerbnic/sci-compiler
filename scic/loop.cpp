@@ -13,23 +13,23 @@
 enum LoopType { LOOP_FOR, LOOP_WHILE, LOOP_REPEAT };
 
 struct Loop {
-  Loop(AOpList* curList, LoopType t, ForwardReference<ANLabel*>* c,
-       ForwardReference<ANLabel*>* e);
+  Loop(AOpList* curList, LoopType t, ForwardRef<ANLabel*>* c,
+       ForwardRef<ANLabel*>* e);
   ~Loop();
 
   Loop* next;
   LoopType type;
   ANLabel* start;                    // address of start of the loop
-  ForwardReference<ANLabel*>* cont;  // symbol for continue address
-  ForwardReference<ANLabel*>* end;   // symbol for the end of the loop
+  ForwardRef<ANLabel*>* cont;  // symbol for continue address
+  ForwardRef<ANLabel*>* end;   // symbol for the end of the loop
 };
 
 // 'loopList' is a stack of the currently active loops.  We can scan it
 // to support such things as (break n) and (continue n).
 Loop* loopList;
 
-Loop::Loop(AOpList* curList, LoopType t, ForwardReference<ANLabel*>* c,
-           ForwardReference<ANLabel*>* e)
+Loop::Loop(AOpList* curList, LoopType t, ForwardRef<ANLabel*>* c,
+           ForwardRef<ANLabel*>* e)
     : next(loopList),
       type(t),
       start(curList->newNode<ANLabel>()),
@@ -47,8 +47,8 @@ Loop::~Loop() {
 void MakeWhile(AOpList* curList, PNode* theNode)
 // while ::= 'while' expression statement*
 {
-  ForwardReference<ANLabel*> cont;
-  ForwardReference<ANLabel*> end;
+  ForwardRef<ANLabel*> cont;
+  ForwardRef<ANLabel*> end;
   Loop lp(curList, LOOP_WHILE, &cont, &end);
 
   cont.Resolve(lp.start);
@@ -75,8 +75,8 @@ void MakeWhile(AOpList* curList, PNode* theNode)
 void MakeRepeat(AOpList* curList, PNode* theNode) {
   // forever ::= 'forever' statement+
 
-  ForwardReference<ANLabel*> cont;
-  ForwardReference<ANLabel*> end;
+  ForwardRef<ANLabel*> cont;
+  ForwardRef<ANLabel*> end;
   Loop lp(curList, LOOP_REPEAT, &cont, &end);
 
   cont.Resolve(lp.start);
@@ -108,8 +108,8 @@ void MakeFor(AOpList* curList, PNode* theNode) {
   if (init) CompileExpr(curList, init);
 
   // Make the label at the start of the loop
-  ForwardReference<ANLabel*> end;
-  ForwardReference<ANLabel*> cont;
+  ForwardRef<ANLabel*> end;
+  ForwardRef<ANLabel*> cont;
   Loop lp(curList, LOOP_FOR, &cont, &end);
 
   // Compile the conditional expression controlling the loop,

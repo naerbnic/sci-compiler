@@ -18,8 +18,8 @@ void CompileProc(PNode* pn);
 void CompileExpr(AOpList* curList, PNode* pn);
 void MakeBranch(AOpList* curList, uint8_t type, ANLabel* target);
 void MakeBranch(AOpList* curList, uint8_t type,
-                ForwardReference<ANLabel*>* target);
+                ForwardRef<ANLabel*>* target);
 void MakeObject(Object* theObj);
-void MakeLabel(AOpList* curList, ForwardReference<ANLabel*>* ref);
+void MakeLabel(AOpList* curList, ForwardRef<ANLabel*>* ref);
 
 #endif

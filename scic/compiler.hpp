@@ -83,7 +83,7 @@ class Compiler {
   void Assemble(uint16_t scriptNum, ListingFile* listFile);
 
   void AddPublic(std::string name, std::size_t index,
-                 ForwardReference<ANode*>* target);
+                 ForwardRef<ANode*>* target);
 
   bool IsInHeap(ANode const* node);
 
