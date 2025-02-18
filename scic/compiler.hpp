@@ -77,10 +77,9 @@ class ObjectCodegen {
 
 class Compiler {
  public:
-  Compiler();
+  static std::unique_ptr<Compiler> Create();
   ~Compiler();
 
-  void InitAsm();
   void Assemble(uint16_t scriptNum, ListingFile* listFile);
 
   void AddPublic(std::string name, std::size_t index,
@@ -107,6 +106,11 @@ class Compiler {
  private:
   friend class ObjectCodegen;
 
+  Compiler();
+
+  void InitAsm();
+
+  bool active;
   std::unique_ptr<FixupList> heapList;
   std::unique_ptr<FixupList> hunkList;
   VarList localVars;

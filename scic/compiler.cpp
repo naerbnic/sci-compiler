@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -274,7 +275,13 @@ void ObjectCodegen::AppendPropDict(std::uint16_t selectorNum) {
 
 // -----------------
 
-Compiler::Compiler() {
+std::unique_ptr<Compiler> Compiler::Create() {
+  auto compiler = absl::WrapUnique(new Compiler());
+  compiler->InitAsm();
+  return compiler;
+}
+
+Compiler::Compiler() : active(false) {
   hunkList = std::make_unique<FixupList>();
   heapList = std::make_unique<FixupList>();
 }
@@ -282,13 +289,11 @@ Compiler::Compiler() {
 Compiler::~Compiler() = default;
 
 void Compiler::InitAsm() {
+  if (active) {
+    throw std::runtime_error("Compiler already active");
+  }
   // Initialize the assembly list: dispose of any old list, then add nodes
   // for the number of local variables.
-
-  localVars.kill();
-
-  hunkList = std::make_unique<FixupList>();
-  heapList = std::make_unique<FixupList>();
 
   auto* hunkBody = hunkList->getBody();
 
@@ -310,9 +315,14 @@ void Compiler::InitAsm() {
   heapBody->newNode<ANWord>(0);
 
   textList = heapBody->newNode<ANTable>("text table")->getList();
+  active = true;
 }
 
 void Compiler::Assemble(uint16_t scriptNum, ListingFile* listFile) {
+  if (!active) {
+    throw std::runtime_error("Compiler not active");
+  }
+
   // Set the offsets in the object list.
   heapList->setOffset(0);
 
@@ -356,8 +366,10 @@ void Compiler::Assemble(uint16_t scriptNum, ListingFile* listFile) {
       "----------------------\n");
   hunkList->list(listFile);
 
-  heapList = nullptr;
   hunkList = nullptr;
+  heapList = nullptr;
+
+  active = false;
 }
 
 void Compiler::AddPublic(std::string name, std::size_t index,

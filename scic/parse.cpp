@@ -7,6 +7,7 @@
 #include <optional>
 #include <string>
 
+#include "scic/compiler.hpp"
 #include "scic/define.hpp"
 #include "scic/error.hpp"
 #include "scic/global_compiler.hpp"
@@ -24,8 +25,7 @@
 #include "scic/toktypes.hpp"
 
 bool Parse() {
-  gSc->InitAsm();
-
+  gSc = Compiler::Create();
   gSyms.clearAsmPtrs();
 
   std::optional<TokenSlot> token;

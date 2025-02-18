@@ -22,7 +22,6 @@
 #include "scic/banner.hpp"
 #include "scic/builtins.hpp"
 #include "scic/compile.hpp"
-#include "scic/compiler.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
 #include "scic/global_compiler.hpp"
@@ -156,8 +155,6 @@ int main(int argc, char **argv) {
   auto cli_include_path = program.get<std::vector<std::string>>("-I");
   auto files = program.get<std::vector<std::string>>("files");
 
-  gSc = std::make_unique<Compiler>();
-
   if (files.empty()) {
     std::cerr << "No input files specified" << std::endl;
     std::cerr << program;
@@ -178,6 +175,7 @@ int main(int argc, char **argv) {
   InstallObjects();
   Lock();
   auto unlock = absl::Cleanup([] { Unlock(); });
+
   gNumErrors = gNumWarnings = 0;
   gInputState.OpenFileAsInput(selector_file, true);
   Parse();
@@ -245,6 +243,7 @@ static void CompileFile(std::string_view fileName, bool listCode) {
 
   // Delete any free symbol tables.
   gSyms.delFreeTbls();
+  gSc = nullptr;
 }
 
 static void ShowInfo() {
