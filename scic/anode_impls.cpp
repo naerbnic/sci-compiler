@@ -217,7 +217,7 @@ std::string_view ANOfsProp::desc() { return "ofs"; }
 
 uint32_t ANOfsProp::value() { return *target->offset; }
 
-ANMethod::ANMethod(std::string name, ANMethCode* mp)
+ANMethod::ANMethod(std::string name, ANCodeBlk* mp)
     : ANProp(std::move(name)), method(mp) {}
 
 std::string_view ANMethod::desc() { return "local"; }

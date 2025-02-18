@@ -8,8 +8,10 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <variant>
 
+#include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"
 #include "scic/alist.hpp"
 #include "scic/anode.hpp"
@@ -137,6 +139,85 @@ void OptimizeHunk(ANode* anode) {
 }
 
 }  // namespace
+
+ANode* ObjectCodegen::GetObjNode() const { return propListMarker_; }
+
+void ObjectCodegen::AppendProperty(std::string name, std::uint16_t selectorNum,
+                                   LiteralValue value) {
+  std::visit(util::Overload(
+                 [&](int num) {
+                   props_->getList()->newNode<ANIntProp>(std::move(name), num);
+                 },
+                 [&](ANText* text) {
+                   props_->getList()->newNode<ANOfsProp>(std::move(name), text);
+                 }),
+             value);
+  AppendPropDict(selectorNum);
+}
+
+void ObjectCodegen::AppendPropTableProperty(std::string name,
+                                            std::uint16_t selectorNum) {
+  props_->getList()->newNode<ANOfsProp>(std::string(name), propDict_);
+  AppendPropDict(selectorNum);
+}
+
+void ObjectCodegen::AppendMethodTableProperty(std::string name,
+                                              std::uint16_t selectorNum) {
+  props_->getList()->newNode<ANOfsProp>(std::string(name), methDictStart_);
+  AppendPropDict(selectorNum);
+}
+
+void ObjectCodegen::AppendMethod(std::string name, std::uint16_t selectorNum,
+                                 ANCodeBlk* code) {
+  auto* entry = methDict_->getList()->newNode<ANComposite<ANode>>();
+  entry->getList()->newNode<ANWord>(selectorNum);
+  entry->getList()->newNode<ANMethod>(std::move(name), code);
+}
+
+std::unique_ptr<ObjectCodegen> ObjectCodegen::Create(Compiler* compiler,
+                                                     bool isObj,
+                                                     std::string name) {
+  // Allocate tables in the correct places in the heap/hunk.
+  //
+  // This does not actually allocate any space, but it does create growable
+  // tables.
+  ANObject* propListMarker = compiler->objPropList->newNode<ANObject>(name);
+  ANTable* props = compiler->objPropList->newNode<ANTable>("properties");
+
+  ANObject* objDictMarker = compiler->objDictList->newNode<ANObject>(name);
+  ANObjTable* propDict =
+      compiler->objDictList->newNode<ANObjTable>("property dictionary");
+  // The size of the method dictionary.
+  ANCountWord* methDictSize =
+      compiler->objDictList->newNode<ANCountWord>(nullptr);
+  ANObjTable* methDict =
+      compiler->objDictList->newNode<ANObjTable>("method dictionary");
+  methDictSize->target = methDict->getList();
+  return absl::WrapUnique(new ObjectCodegen(isObj, name, propListMarker, props,
+                                            objDictMarker, propDict,
+                                            methDictSize, methDict));
+}
+
+ObjectCodegen::ObjectCodegen(bool isObj, std::string name,
+                             ANObject* propListMarker, ANTable* props,
+                             ANObject* objDictMarker, ANObjTable* propDict,
+                             ANode* methDictStart, ANObjTable* methDict)
+    : isObj_(isObj),
+      name_(name),
+      propListMarker_(propListMarker),
+      props_(props),
+      objDictMarker_(objDictMarker),
+      propDict_(propDict),
+      methDictStart_(methDictStart),
+      methDict_(methDict) {}
+
+void ObjectCodegen::AppendPropDict(std::uint16_t selectorNum) {
+  if (!isObj_) {
+    propDict_->getList()->newNode<ANWord>(selectorNum);
+  }
+}
+
+// -----------------
 
 Compiler::Compiler() {
   hunkList = std::make_unique<FixupList>();
@@ -285,4 +366,12 @@ bool Compiler::SetIntVar(std::size_t varNum, int value) {
 
   vp->value = value;
   return true;
+}
+
+std::unique_ptr<ObjectCodegen> Compiler::CreateObject(std::string name) {
+  return ObjectCodegen::Create(this, true, name);
+}
+
+std::unique_ptr<ObjectCodegen> Compiler::CreateClass(std::string name) {
+  return ObjectCodegen::Create(this, false, name);
 }

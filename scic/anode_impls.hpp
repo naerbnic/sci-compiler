@@ -212,12 +212,12 @@ struct ANOfsProp : ANProp
 struct ANMethod : ANProp
 // A subclass of ANProp which represents methods.
 {
-  ANMethod(std::string name, ANMethCode* mp);
+  ANMethod(std::string name, ANCodeBlk* mp);
 
   std::string_view desc() override;  // return descriptive string
   uint32_t value() override;         // return value of selector
 
-  ANMethCode* method;
+  ANCodeBlk* method;
 };
 
 class ANLabel : public ANOpCode

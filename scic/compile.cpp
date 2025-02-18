@@ -978,41 +978,30 @@ static void MakeProc(ANodeList* curList, PNode* pn) {
 }
 
 void MakeObject(Object* theObj) {
-  ANOfsProp* pDict = nullptr;
-  ANOfsProp* mDict = nullptr;
+  auto objCodegen = theObj->num == OBJECTNUM ? gSc->CreateObject(theObj->name)
+                                             : gSc->CreateClass(theObj->name);
 
   {
-    // Create the object ID node.
-    ANObject* obj =
-        gSc->objPropList->newNodeBefore<ANObject>(nullptr, theObj->name);
-    theObj->an = obj;
-
-    // Create the table of properties.
-    ANTable* props =
-        gSc->objPropList->newNodeBefore<ANTable>(nullptr, "properties");
+    theObj->an = objCodegen->GetObjNode();
 
     {
       for (auto* sp : theObj->selectors())
         if (IsProperty(sp)) {
           switch (sp->tag) {
             case T_PROP:
-              props->getList()->newNode<ANIntProp>(std::string(sp->sym->name()),
-                                                   std::get<int>(*sp->val));
-              break;
-
             case T_TEXT:
-              props->getList()->newNode<ANOfsProp>(std::string(sp->sym->name()),
-                                                   std::get<ANText*>(*sp->val));
+              objCodegen->AppendProperty(std::string(sp->sym->name()),
+                                         sp->sym->val(), *sp->val);
               break;
 
             case T_PROPDICT:
-              pDict = props->getList()->newNode<ANOfsProp>(
-                  std::string(sp->sym->name()));
+              objCodegen->AppendPropTableProperty(std::string(sp->sym->name()),
+                                                  sp->sym->val());
               break;
 
             case T_METHDICT:
-              mDict = props->getList()->newNode<ANOfsProp>(
-                  std::string(sp->sym->name()));
+              objCodegen->AppendMethodTableProperty(
+                  std::string(sp->sym->name()), sp->sym->val());
               break;
           }
         }
@@ -1021,38 +1010,17 @@ void MakeObject(Object* theObj) {
     // If any nodes already compiled have this object as a target, they
     // will be on a list hanging off the object's symbol table entry.
     // Let all nodes know where this one is.
-    theObj->sym->setLoc(props);
+    theObj->sym->setLoc(objCodegen->GetObjNode());
   }
 
-  // The rest of the object goes into hunk, as it never changes.
-  gSc->objDictList->newNode<ANObject>(theObj->name);
-
-  // If this a class, add the property dictionary.
-  ANObjTable* propDict =
-      gSc->objDictList->newNode<ANObjTable>("property dictionary");
   {
-    if (theObj->num != OBJECTNUM) {
-      for (auto* sp : theObj->selectors())
-        if (IsProperty(sp))
-          propDict->getList()->newNode<ANWord>(sp->sym->val());
-    }
-  }
-  if (pDict) pDict->target = propDict;
-
-  ANObjTable* methDict =
-      gSc->objDictList->newNode<ANObjTable>("method dictionary");
-  {
-    ANWord* numMeth = methDict->getList()->newNode<ANWord>((short)0);
     for (auto* sp : theObj->selectors())
       if (sp->tag == T_LOCAL) {
-        methDict->getList()->newNode<ANWord>(sp->sym->val());
-        methDict->getList()->newNode<ANMethod>(std::string(sp->sym->name()),
-                                               (ANMethCode*)sp->an);
+        objCodegen->AppendMethod(std::string(sp->sym->name()), sp->sym->val(),
+                                 (ANCodeBlk*)sp->an);
         sp->sym->forwardRef.Clear();
-        ++numMeth->value;
       }
   }
-  if (mDict) mDict->target = methDict;
 }
 
 void MakeLabel(AOpList* curList, ForwardReference<ANLabel*>* dest) {
