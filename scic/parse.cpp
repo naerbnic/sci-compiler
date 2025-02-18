@@ -7,7 +7,7 @@
 #include <optional>
 #include <string>
 
-#include "scic/codegen/compiler.hpp"
+#include "scic/codegen/code_generator.hpp"
 #include "scic/define.hpp"
 #include "scic/error.hpp"
 #include "scic/global_compiler.hpp"

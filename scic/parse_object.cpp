@@ -11,7 +11,7 @@
 #include "scic/class.hpp"
 #include "scic/codegen/anode.hpp"
 #include "scic/codegen/anode_impls.hpp"
-#include "scic/codegen/compiler.hpp"
+#include "scic/codegen/code_generator.hpp"
 #include "scic/common.hpp"
 #include "scic/compile.hpp"
 #include "scic/config.hpp"

@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include "scic/codegen/compiler.hpp"
+#include "scic/codegen/code_generator.hpp"
 
 extern std::unique_ptr<CodeGenerator> gSc;
 

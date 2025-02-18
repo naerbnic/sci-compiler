@@ -39,9 +39,9 @@ cc_library(
 )
 
 cc_library(
-    name = "compiler",
-    srcs = ["compiler.cpp"],
-    hdrs = ["compiler.hpp"],
+    name = "code_generator",
+    srcs = ["code_generator.cpp"],
+    hdrs = ["code_generator.hpp"],
     deps = [
         ":anode",
         ":fixup_list",

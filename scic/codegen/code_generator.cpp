@@ -1,4 +1,4 @@
-#include "scic/codegen/compiler.hpp"
+#include "scic/codegen/code_generator.hpp"
 
 #include <cstddef>
 #include <cstdint>

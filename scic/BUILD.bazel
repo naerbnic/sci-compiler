@@ -180,7 +180,7 @@ cc_binary(
         ":output",
         ":symtypes",
         "//scic/codegen:anode",
-        "//scic/codegen:compiler",
+        "//scic/codegen:code_generator",
         "//util/platform",
         "//util/types:forward_ref",
         "//util/types:overload",

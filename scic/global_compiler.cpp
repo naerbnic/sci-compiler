@@ -2,6 +2,6 @@
 
 #include <memory>
 
-#include "scic/codegen/compiler.hpp"
+#include "scic/codegen/code_generator.hpp"
 
 std::unique_ptr<CodeGenerator> gSc;
