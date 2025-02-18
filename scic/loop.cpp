@@ -5,6 +5,7 @@
 
 #include "scic/codegen/alist.hpp"
 #include "scic/codegen/anode_impls.hpp"
+#include "scic/codegen/code_generator.hpp"
 #include "scic/compile.hpp"
 #include "scic/opcodes.hpp"
 #include "scic/pnode.hpp"
@@ -13,7 +14,7 @@
 enum LoopType { LOOP_FOR, LOOP_WHILE, LOOP_REPEAT };
 
 struct Loop {
-  Loop(AOpList* curList, LoopType t, ForwardRef<ANLabel*>* c,
+  Loop(FunctionBuilder* builder, LoopType t, ForwardRef<ANLabel*>* c,
        ForwardRef<ANLabel*>* e);
   ~Loop();
 
@@ -28,11 +29,11 @@ struct Loop {
 // to support such things as (break n) and (continue n).
 Loop* loopList;
 
-Loop::Loop(AOpList* curList, LoopType t, ForwardRef<ANLabel*>* c,
+Loop::Loop(FunctionBuilder* builder, LoopType t, ForwardRef<ANLabel*>* c,
            ForwardRef<ANLabel*>* e)
     : next(loopList),
       type(t),
-      start(curList->newNode<ANLabel>()),
+      start(builder->GetOpList()->newNode<ANLabel>()),
       cont(c),
       end(e) {
   // Add this loop to the loop list.
@@ -44,12 +45,12 @@ Loop::~Loop() {
   loopList = next;
 }
 
-void MakeWhile(AOpList* curList, PNode* theNode)
+void MakeWhile(FunctionBuilder* builder, PNode* theNode)
 // while ::= 'while' expression statement*
 {
   ForwardRef<ANLabel*> cont;
   ForwardRef<ANLabel*> end;
-  Loop lp(curList, LOOP_WHILE, &cont, &end);
+  Loop lp(builder, LOOP_WHILE, &cont, &end);
 
   cont.Resolve(lp.start);
 
@@ -59,41 +60,41 @@ void MakeWhile(AOpList* curList, PNode* theNode)
   // and its corresponding branch.
   PNode* expr = theNode->child_at(0);
   PNode* body = theNode->child_at(1);
-  CompileExpr(curList, expr);
-  MakeBranch(curList, op_bnt, &end);
+  CompileExpr(builder, expr);
+  MakeBranch(builder, op_bnt, &end);
 
   // Compile the statements in the loop
-  if (body) CompileExpr(curList, body);
+  if (body) CompileExpr(builder, body);
 
   // Make the branch back to the loop start.
-  MakeBranch(curList, op_jmp, lp.start);
+  MakeBranch(builder, op_jmp, lp.start);
 
   // Compile the label at the end of the loop
-  MakeLabel(curList, &end);
+  MakeLabel(builder, &end);
 }
 
-void MakeRepeat(AOpList* curList, PNode* theNode) {
+void MakeRepeat(FunctionBuilder* builder, PNode* theNode) {
   // forever ::= 'forever' statement+
 
   ForwardRef<ANLabel*> cont;
   ForwardRef<ANLabel*> end;
-  Loop lp(curList, LOOP_REPEAT, &cont, &end);
+  Loop lp(builder, LOOP_REPEAT, &cont, &end);
 
   cont.Resolve(lp.start);
 
   PNode* body = theNode->child_at(0);
 
   // Compile the loop's statements.
-  if (body) CompileExpr(curList, body);
+  if (body) CompileExpr(builder, body);
 
   // Make the branch back to the start of the loop.
-  MakeBranch(curList, op_jmp, lp.start);
+  MakeBranch(builder, op_jmp, lp.start);
 
   // Make the target label for breaks.
-  MakeLabel(curList, &end);
+  MakeLabel(builder, &end);
 }
 
-void MakeFor(AOpList* curList, PNode* theNode) {
+void MakeFor(FunctionBuilder* builder, PNode* theNode) {
   // for ::=	'for' '(' statement* ')'
   //			expression
   //			'(' statement* ')'
@@ -105,33 +106,33 @@ void MakeFor(AOpList* curList, PNode* theNode) {
   auto* body = theNode->child_at(3);
 
   // Make the initialization statements.
-  if (init) CompileExpr(curList, init);
+  if (init) CompileExpr(builder, init);
 
   // Make the label at the start of the loop
   ForwardRef<ANLabel*> end;
   ForwardRef<ANLabel*> cont;
-  Loop lp(curList, LOOP_FOR, &cont, &end);
+  Loop lp(builder, LOOP_FOR, &cont, &end);
 
   // Compile the conditional expression controlling the loop,
   // and its corresponding branch.
-  if (cond) CompileExpr(curList, cond);
-  MakeBranch(curList, op_bnt, &end);
+  if (cond) CompileExpr(builder, cond);
+  MakeBranch(builder, op_bnt, &end);
 
   // Compile the statements in the loop
-  if (body) CompileExpr(curList, body);
+  if (body) CompileExpr(builder, body);
 
   // Compile the re-initialization statements
-  MakeLabel(curList, &cont);
-  if (update) CompileExpr(curList, update);
+  MakeLabel(builder, &cont);
+  if (update) CompileExpr(builder, update);
 
   // Make the branch back to the loop start.
-  MakeBranch(curList, op_jmp, lp.start);
+  MakeBranch(builder, op_jmp, lp.start);
 
   // Compile the label at the end of the loop
-  MakeLabel(curList, &end);
+  MakeLabel(builder, &end);
 }
 
-void MakeBreak(AOpList* curList, PNode* theNode) {
+void MakeBreak(FunctionBuilder* builder, PNode* theNode) {
   // break ::= 'break' [number]
 
   // Get the number of levels to break from.
@@ -144,17 +145,17 @@ void MakeBreak(AOpList* curList, PNode* theNode) {
   for (lp = loopList; level > 0; --level)
     if (lp->next) lp = lp->next;
 
-  MakeBranch(curList, op_jmp, lp->end);
+  MakeBranch(builder, op_jmp, lp->end);
 }
 
-void MakeBreakIf(AOpList* curList, PNode* theNode) {
+void MakeBreakIf(FunctionBuilder* builder, PNode* theNode) {
   // breakif ::= 'break' expression [number]
 
   // Get the number of levels to break from.
   int level = theNode->val - 1;
 
   // Compile the expression which determines whether or not we break.
-  CompileExpr(curList, theNode->first_child());
+  CompileExpr(builder, theNode->first_child());
 
   // Walk through the list of loops until we get to the proper
   // level to break to.  If the requested break level is greater
@@ -163,10 +164,10 @@ void MakeBreakIf(AOpList* curList, PNode* theNode) {
   for (lp = loopList; level > 0; --level)
     if (lp->next) lp = lp->next;
 
-  MakeBranch(curList, op_bt, lp->end);
+  MakeBranch(builder, op_bt, lp->end);
 }
 
-void MakeContinue(AOpList* curList, PNode* theNode) {
+void MakeContinue(FunctionBuilder* builder, PNode* theNode) {
   // continue ::= 'continue' [number]
 
   // Get the number of levels to continue at.
@@ -180,19 +181,19 @@ void MakeContinue(AOpList* curList, PNode* theNode) {
     if (lp->next) lp = lp->next;
 
   if (lp->type == LOOP_FOR)
-    MakeBranch(curList, op_jmp, lp->cont);
+    MakeBranch(builder, op_jmp, lp->cont);
   else
-    MakeBranch(curList, op_jmp, lp->start);
+    MakeBranch(builder, op_jmp, lp->start);
 }
 
-void MakeContIf(AOpList* curList, PNode* theNode) {
+void MakeContIf(FunctionBuilder* builder, PNode* theNode) {
   // contif ::= 'contif' expression [number]
 
   // Get the number of levels to continue at.
   int level = theNode->val - 1;
 
   // Compile the expression which determines whether or not we continue.
-  CompileExpr(curList, theNode->first_child());
+  CompileExpr(builder, theNode->first_child());
 
   // Walk through the list of loops until we get to the proper
   // level to continue at.  If the requested continue level is greater
@@ -202,7 +203,7 @@ void MakeContIf(AOpList* curList, PNode* theNode) {
     if (lp->next) lp = lp->next;
 
   if (lp->type == LOOP_FOR)
-    MakeBranch(curList, op_bt, lp->cont);
+    MakeBranch(builder, op_bt, lp->cont);
   else
-    MakeBranch(curList, op_bt, lp->start);
+    MakeBranch(builder, op_bt, lp->start);
 }
