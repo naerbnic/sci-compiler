@@ -202,6 +202,7 @@ struct ANOfsProp : ANProp
   ANOfsProp(std::string name, ANode* target = nullptr)
       : ANProp(std::move(name)), target(target) {}
 
+  void collectFixups(FixupContext*) override;
   std::string_view desc() override;
   uint32_t value() override;
 

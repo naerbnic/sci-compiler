@@ -1,6 +1,8 @@
 #include "scic/fixup_list.hpp"
 
 #include <cstddef>
+#include <memory>
+#include <utility>
 
 #include "scic/alist.hpp"
 #include "scic/anode.hpp"
@@ -56,36 +58,40 @@ class ANWordPadding : public ANode {
 ///////////////////////////////////////////////////
 
 FixupList::FixupList() {
-  auto* fixupOffsetNode = list_.newNode<ANOffsetWord>(nullptr, 0);
-  bodyTable_ = list_.newNode<ANTable>("object file body");
+  auto root = std::make_unique<ANComposite<ANode>>();
+  auto* list = root->getList();
+  root_ = std::move(root);
+  auto* fixupOffsetNode = list->newNode<ANOffsetWord>(nullptr, 0);
+  bodyList_ = list->newNode<ANTable>("object file body")->getList();
   // We need padding before the fixup table to ensure it is word-aligned.
-  list_.newNode<ANWordPadding>();
+  list->newNode<ANWordPadding>();
   // We create a small node graph here, to keep all of the pieces of the
   // fixup table together.
   // The whole fixup table, including the initial count word.
-  auto* fixupTableBlock = list_.newNode<ANTable>("fixup table block");
+  auto* fixupTableBlock = list->newNode<ANTable>("fixup table block");
   auto* fixupCountWord =
       fixupTableBlock->getList()->newNode<ANCountWord>(nullptr);
-  fixupTable_ = fixupTableBlock->getList()->newNode<ANTable>("fixup table");
-  fixupCountWord->target = fixupTable_->getList();
+  fixupList_ =
+      fixupTableBlock->getList()->newNode<ANTable>("fixup table")->getList();
+  fixupCountWord->target = fixupList_;
   fixupOffsetNode->target = fixupTableBlock;
 }
 
 FixupList::~FixupList() {}
 
-size_t FixupList::setOffset(size_t ofs) { return list_.setOffset(ofs); }
+size_t FixupList::setOffset(size_t ofs) { return root_->setOffset(ofs); }
 
 void FixupList::addFixup(ANode* node, std::size_t rel_ofs) {
-  fixupTable_->getList()->newNode<ANOffsetWord>(node, rel_ofs);
+  fixupList_->newNode<ANOffsetWord>(node, rel_ofs);
 }
 
-void FixupList::list(ListingFile* listFile) { list_.list(listFile); }
+void FixupList::list(ListingFile* listFile) { root_->list(listFile); }
 
 void FixupList::emit(HeapContext* heap_ctxt, OutputFile* out) {
   {
     FixupListContext fixup_ctxt(this, heap_ctxt);
-    list_.collectFixups(&fixup_ctxt);
-    fixupTable_->getList()->setOffset(*fixupTable_->offset);
+    root_->collectFixups(&fixup_ctxt);
+    root_->setOffset(0);
   }
-  list_.emit(out);
+  root_->emit(out);
 }

@@ -117,27 +117,22 @@ class ANStringVar : public ANComputedWord {
   ANText* text;
 };
 
-void OptimizeHunk(ANodeList* alist) {
+void OptimizeHunk(ANode* anode) {
   if (!gConfig->noOptimize) {
-    for (auto it = alist->iter(); it; ++it)
-      while (it->optimize())
-        ;
+    while (anode->optimize()) {
+    }
   }
 
   // Make a first pass, resolving offsets and converting to byte offsets
   // where possible.
-  alist->setOffset(0);
+  anode->setOffset(0);
 
   // Continue resolving and converting to byte offsets until we've shrunk
   // the code as far as it will go.
   while (true) {
-    bool changed = false;
-    for (auto it = alist->iter(); it; ++it) {
-      changed |= it->tryShrink();
-    }
-    if (!changed) break;
+    if (!anode->tryShrink()) break;
 
-    alist->setOffset(0);
+    anode->setOffset(0);
   }
 }
 
@@ -162,7 +157,7 @@ void Compiler::InitAsm() {
   //	setup the debugging info
   lastLineNum = 0;
 
-  auto* hunkBody = hunkList->getList();
+  auto* hunkBody = hunkList->getBody();
 
   // space for addr of heap component of resource
   hunkBody->newNode<ANWord>();
@@ -176,7 +171,7 @@ void Compiler::InitAsm() {
   objDictList = hunkBody->newNode<ANTable>("object dict list")->getList();
   codeList = hunkBody->newNode<ANTable>("code list")->getList();
 
-  auto* heapBody = heapList->getList();
+  auto* heapBody = heapList->getBody();
   heapBody->newNode<ANVars>(&localVars);
 
   objPropList = heapBody->newNode<ANTable>("object properties")->getList();
@@ -191,7 +186,7 @@ void Compiler::Assemble(ListingFile* listFile) {
   heapList->setOffset(0);
 
   // Optimize the code, setting all the offsets.
-  OptimizeHunk(hunkList->getList());
+  OptimizeHunk(hunkList->getRoot());
 
   // Reset the offsets in the object list to get the current code
   // offsets.

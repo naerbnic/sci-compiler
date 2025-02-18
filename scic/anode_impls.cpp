@@ -210,6 +210,9 @@ std::string_view ANIntProp::desc() { return "prop"; }
 
 uint32_t ANIntProp::value() { return val; }
 
+void ANOfsProp::collectFixups(FixupContext* fixup_ctxt) {
+  if (fixup_ctxt->HeapHasNode(target)) fixup_ctxt->AddRelFixup(this, 0);
+}
 std::string_view ANOfsProp::desc() { return "ofs"; }
 
 uint32_t ANOfsProp::value() { return *target->offset; }

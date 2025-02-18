@@ -228,7 +228,6 @@ cc_binary(
         ":chartype",
         ":common",
         ":config",
-        ":debug_utils",
         ":fixup_list",
         ":input",
         ":listing",

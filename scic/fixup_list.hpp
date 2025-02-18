@@ -3,11 +3,9 @@
 
 #include <cstddef>
 #include <memory>
-#include <utility>
 
 #include "scic/alist.hpp"
 #include "scic/anode.hpp"
-#include "scic/anode_impls.hpp"
 #include "scic/listing.hpp"
 
 // A pure-virtual class that gives context if a node is located in the
@@ -43,24 +41,11 @@ class FixupList {
    */
   void addFixup(ANode* node, std::size_t rel_ofs);
 
-  bool contains(ANode* ln) {
-    for (auto& entry : list_) {
-      if (entry.contains(ln)) return true;
-    }
-    return false;
-  }
+  bool contains(ANode* ln) { return root_->contains(ln); }
 
- private:
-  template <class T, class... Args>
-  T* newNode(Args&&... args) {
-    auto node = std::make_unique<T>(std::forward<Args>(args)...);
-    auto* node_ptr = node.get();
-    list_.list_.addBack(std::move(node));
-    return node_ptr;
-  }
+  ANodeList* getBody() { return bodyList_; }
 
- public:
-  ANodeList* getList() { return bodyTable_->getList(); }
+  ANode* getRoot() { return root_.get(); }
 
  protected:
   struct Offset {
@@ -72,9 +57,9 @@ class FixupList {
       return *node_base->offset + rel_offset;
     }
   };
-  ANodeList list_;
-  ANTable* bodyTable_;
-  ANTable* fixupTable_;
+  std::unique_ptr<ANode> root_;
+  ANodeList* bodyList_;
+  ANodeList* fixupList_;
 };
 
 #endif
