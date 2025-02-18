@@ -50,5 +50,14 @@ TEST(ChoiceTest, MoveOnly) {
   EXPECT_EQ(choice.try_get<std::unique_ptr<int>>(), nullptr);
   EXPECT_EQ(**choice.try_get<std::unique_ptr<std::string>>(), "foo");
 }
+
+TEST(ChoiceTest, GenericChoiceWorks) {
+  Choice<int, std::string> foo = "hello";
+  ASSERT_TRUE(foo.has<std::string>());
+  EXPECT_EQ(foo.as<std::string>(), "hello");
+  foo = 5;
+  ASSERT_TRUE(foo.has<int>());
+  EXPECT_EQ(foo.as<int>(), 5);
+}
 }  // namespace
 }  // namespace util

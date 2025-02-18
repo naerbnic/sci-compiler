@@ -16,12 +16,13 @@ struct Visitor : Ts... {
   using Ts::operator()...;
 };
 
-template <class BaseT, class... Types>
+// A base type used to create choice types.
+template <class Derived, class... Types>
 class ChoiceBase {
  public:
   template <class T, class... Args>
-  static BaseT Make(Args&&... args) {
-    return BaseT(std::in_place_type<T>, std::forward<Args>(args)...);
+  static Derived Make(Args&&... args) {
+    return Derived(std::in_place_type<T>, std::forward<Args>(args)...);
   }
 
   ChoiceBase() = default;
@@ -84,7 +85,7 @@ class ChoiceBase {
  private:
   std::variant<Types...> value_;
 
-  friend std::ostream& operator<<(std::ostream& os, BaseT const& choice)
+  friend std::ostream& operator<<(std::ostream& os, Derived const& choice)
     requires(requires(Types const& t, std::ostream& os) {
       { os << t } -> std::same_as<std::ostream&>;
     } && ...)
@@ -94,11 +95,19 @@ class ChoiceBase {
   }
 
   template <class Sink>
-  friend void AbslStringify(Sink& sink, BaseT const& choice)
+  friend void AbslStringify(Sink& sink, Derived const& choice)
     requires(absl::HasAbslStringify<Types>() && ...)
   {
     choice.visit([&sink](auto const& value) { AbslStringify(sink, value); });
   }
+};
+
+// A generic class, intended to be a more ergonomic replacement for
+// std::variant.
+template <class... Args>
+class Choice : public ChoiceBase<Choice<Args...>, Args...> {
+ public:
+  using ChoiceBase<Choice<Args...>, Args...>::ChoiceBase;
 };
 
 }  // namespace util
