@@ -4,7 +4,7 @@
 #include <cassert>
 
 #include "scic/alist.hpp"
-#include "scic/anode.hpp"
+#include "scic/anode_impls.hpp"
 #include "scic/compile.hpp"
 #include "scic/opcodes.hpp"
 #include "scic/pnode.hpp"

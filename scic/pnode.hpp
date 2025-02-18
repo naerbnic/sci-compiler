@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "scic/anode_impls.hpp"
 #include "scic/symbol.hpp"
 
 // Parse node types.  The same as symbol types, but with some additions.
