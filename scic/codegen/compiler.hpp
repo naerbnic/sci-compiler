@@ -10,12 +10,12 @@
 #include <string_view>
 #include <variant>
 
-#include "scic/alist.hpp"
-#include "scic/anode.hpp"
-#include "scic/anode_impls.hpp"
-#include "scic/fixup_list.hpp"
+#include "scic/codegen/alist.hpp"
+#include "scic/codegen/anode.hpp"
+#include "scic/codegen/anode_impls.hpp"
+#include "scic/codegen/fixup_list.hpp"
 #include "scic/listing.hpp"
-#include "scic/varlist.hpp"
+#include "scic/codegen/varlist.hpp"
 #include "util/types/forward_ref.hpp"
 
 class Compiler;

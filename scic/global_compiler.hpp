@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include "scic/compiler.hpp"
+#include "scic/codegen/compiler.hpp"
 
 extern std::unique_ptr<Compiler> gSc;
 

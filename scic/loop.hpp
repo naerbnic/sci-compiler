@@ -1,7 +1,7 @@
 #ifndef LOOP_HPP
 #define LOOP_HPP
 
-#include "scic/alist.hpp"
+#include "scic/codegen/alist.hpp"
 
 struct PNode;
 

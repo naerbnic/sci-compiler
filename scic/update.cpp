@@ -17,8 +17,9 @@
 
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_format.h"
-#include "scic/anode.hpp"
 #include "scic/class.hpp"
+#include "scic/codegen/anode.hpp"
+#include "scic/codegen/anode_impls.hpp"
 #include "scic/common.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"

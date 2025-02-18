@@ -4,8 +4,8 @@
 #include <cstddef>
 #include <memory>
 
-#include "scic/alist.hpp"
-#include "scic/anode.hpp"
+#include "scic/codegen/alist.hpp"
+#include "scic/codegen/anode.hpp"
 #include "scic/listing.hpp"
 
 // A pure-virtual class that gives context if a node is located in the

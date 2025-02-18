@@ -8,7 +8,7 @@
 #include <memory>
 #include <utility>
 
-#include "scic/anode.hpp"
+#include "scic/codegen/anode.hpp"
 #include "scic/list.hpp"
 #include "scic/listing.hpp"
 

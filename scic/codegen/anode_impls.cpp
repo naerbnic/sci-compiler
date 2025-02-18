@@ -1,7 +1,7 @@
 //	anode.cpp
 // 	assemble an object code list
 
-#include "scic/anode_impls.hpp"
+#include "scic/codegen/anode_impls.hpp"
 
 #include <algorithm>
 #include <cstdint>
@@ -14,13 +14,13 @@
 #include <utility>
 
 #include "absl/strings/str_format.h"
-#include "scic/alist.hpp"
-#include "scic/anode.hpp"
+#include "scic/codegen/alist.hpp"
+#include "scic/codegen/anode.hpp"
+#include "scic/codegen/optimize.hpp"
 #include "scic/common.hpp"
 #include "scic/config.hpp"
 #include "scic/listing.hpp"
 #include "scic/opcodes.hpp"
-#include "scic/optimize.hpp"
 #include "scic/output.hpp"
 
 #define OPTIMIZE_TRANSFERS

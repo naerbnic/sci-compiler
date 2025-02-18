@@ -3,8 +3,8 @@
 
 #include <cassert>
 
-#include "scic/alist.hpp"
-#include "scic/anode_impls.hpp"
+#include "scic/codegen/alist.hpp"
+#include "scic/codegen/anode_impls.hpp"
 #include "scic/compile.hpp"
 #include "scic/opcodes.hpp"
 #include "scic/pnode.hpp"
@@ -19,7 +19,7 @@ struct Loop {
 
   Loop* next;
   LoopType type;
-  ANLabel* start;                    // address of start of the loop
+  ANLabel* start;              // address of start of the loop
   ForwardRef<ANLabel*>* cont;  // symbol for continue address
   ForwardRef<ANLabel*>* end;   // symbol for the end of the loop
 };

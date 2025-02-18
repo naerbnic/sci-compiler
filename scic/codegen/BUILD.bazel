@@ -1,0 +1,68 @@
+# Libraries for generating SCI compiled code.
+
+package(default_visibility = ["//scic:scic_internal"])
+
+cc_library(
+    name = "anode",
+    srcs = [
+        "anode.cpp",
+        "anode_impls.cpp",
+        "optimize.cpp",
+    ],
+    hdrs = [
+        "alist.hpp",
+        "anode.hpp",
+        "anode_impls.hpp",
+        "optimize.hpp",
+    ],
+    deps = [
+        "//scic:casts",
+        "//scic:common",
+        "//scic:config",
+        "//scic:list",
+        "//scic:listing",
+        "//scic:opcodes",
+        "//scic:output",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)
+
+cc_library(
+    name = "fixup_list",
+    srcs = ["fixup_list.cpp"],
+    hdrs = ["fixup_list.hpp"],
+    deps = [
+        ":anode",
+        "//scic:listing",
+        "//scic:output",
+    ],
+)
+
+cc_library(
+    name = "compiler",
+    srcs = ["compiler.cpp"],
+    hdrs = ["compiler.hpp"],
+    deps = [
+        ":anode",
+        ":fixup_list",
+        ":varlist",
+        "//scic:common",
+        "//scic:config",
+        "//scic:input",
+        "//scic:listing",
+        "//scic:output",
+        "//util/types:forward_ref",
+        "//util/types:overload",
+        "@abseil-cpp//absl/memory",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)
+
+cc_library(
+    name = "varlist",
+    srcs = ["varlist.cpp"],
+    hdrs = ["varlist.hpp"],
+    deps = [
+        ":anode",
+    ],
+)

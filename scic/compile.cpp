@@ -8,10 +8,10 @@
 #include <ranges>
 #include <string>
 
-#include "scic/alist.hpp"
-#include "scic/anode.hpp"
-#include "scic/anode_impls.hpp"
-#include "scic/compiler.hpp"
+#include "scic/codegen/alist.hpp"
+#include "scic/codegen/anode.hpp"
+#include "scic/codegen/anode_impls.hpp"
+#include "scic/codegen/compiler.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
 #include "scic/global_compiler.hpp"
@@ -22,8 +22,8 @@
 #include "scic/parse_context.hpp"
 #include "scic/pnode.hpp"
 #include "scic/public.hpp"
-#include "util/types/forward_ref.hpp"
 #include "scic/symtypes.hpp"
+#include "util/types/forward_ref.hpp"
 
 static void MakeAccess(AOpList* curList, PNode*, uint8_t);
 static void MakeImmediate(AOpList* curList, int);
@@ -614,8 +614,7 @@ void MakeBranch(AOpList* curList, uint8_t theCode, ANLabel* target) {
   an->target = target;
 }
 
-void MakeBranch(AOpList* curList, uint8_t theCode,
-                ForwardRef<ANLabel*>* dest) {
+void MakeBranch(AOpList* curList, uint8_t theCode, ForwardRef<ANLabel*>* dest) {
   // Compile code for a branch.  The type of branch is in 'theCode', the
   // destination is 'bn'.  If the the destination is not yet defined,
   // 'dest' will point to a the symbol of the destination.

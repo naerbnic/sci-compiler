@@ -1,12 +1,12 @@
-#include "scic/fixup_list.hpp"
+#include "scic/codegen/fixup_list.hpp"
 
 #include <cstddef>
 #include <memory>
 #include <utility>
 
-#include "scic/alist.hpp"
-#include "scic/anode.hpp"
-#include "scic/anode_impls.hpp"
+#include "scic/codegen/alist.hpp"
+#include "scic/codegen/anode.hpp"
+#include "scic/codegen/anode_impls.hpp"
 #include "scic/listing.hpp"
 #include "scic/output.hpp"
 

@@ -5,7 +5,7 @@
 
 #include <cstdint>
 
-#include "scic/alist.hpp"
+#include "scic/codegen/alist.hpp"
 
 uint32_t OptimizeProc(AOpList* al);
 

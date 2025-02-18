@@ -1,17 +1,17 @@
 //	optimize.cpp	sc
 // 	optimize generated assembly code
 
-#include "scic/optimize.hpp"
+#include "scic/codegen/optimize.hpp"
 
 #include <cstdint>
 #include <memory>
 #include <ranges>
 #include <stdexcept>
 
-#include "scic/alist.hpp"
-#include "scic/anode.hpp"
-#include "scic/anode_impls.hpp"
 #include "scic/casts.hpp"
+#include "scic/codegen/alist.hpp"
+#include "scic/codegen/anode.hpp"
+#include "scic/codegen/anode_impls.hpp"
 #include "scic/opcodes.hpp"
 
 ANOpCode const* FindNextOp(AList<ANOpCode> const* list, ANOpCode const* start) {

@@ -27,13 +27,6 @@ cc_library(
 )
 
 cc_library(
-    name = "varlist",
-    srcs = ["varlist.cpp"],
-    hdrs = ["varlist.hpp"],
-    deps = [":anode"],
-)
-
-cc_library(
     name = "input",
     srcs = ["input.cpp"],
     hdrs = ["input.hpp"],
@@ -121,62 +114,6 @@ cc_library(
     ],
 )
 
-cc_library(
-    name = "anode",
-    srcs = [
-        "anode.cpp",
-        "anode_impls.cpp",
-        "optimize.cpp",
-    ],
-    hdrs = [
-        "alist.hpp",
-        "anode.hpp",
-        "anode_impls.hpp",
-        "optimize.hpp",
-    ],
-    deps = [
-        ":casts",
-        ":common",
-        ":config",
-        ":list",
-        ":listing",
-        ":opcodes",
-        ":output",
-        "@abseil-cpp//absl/strings:str_format",
-    ],
-)
-
-cc_library(
-    name = "fixup_list",
-    srcs = ["fixup_list.cpp"],
-    hdrs = ["fixup_list.hpp"],
-    deps = [
-        ":anode",
-        ":listing",
-        ":output",
-    ],
-)
-
-cc_library(
-    name = "compiler",
-    srcs = ["compiler.cpp"],
-    hdrs = ["compiler.hpp"],
-    deps = [
-        ":anode",
-        ":common",
-        ":config",
-        ":fixup_list",
-        ":input",
-        ":listing",
-        ":output",
-        ":varlist",
-        "//util/types:overload",
-        "//util/types:forward_ref",
-        "@abseil-cpp//absl/memory",
-        "@abseil-cpp//absl/strings:str_format",
-    ],
-)
-
 cc_binary(
     name = "scic",
     srcs = [
@@ -236,10 +173,8 @@ cc_binary(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        ":anode",
         ":chartype",
         ":common",
-        ":compiler",
         ":config",
         ":input",
         ":listing",
@@ -247,9 +182,11 @@ cc_binary(
         ":opcodes",
         ":output",
         ":symtypes",
+        "//scic/codegen:anode",
+        "//scic/codegen:compiler",
         "//util/platform",
-        "//util/types:overload",
         "//util/types:forward_ref",
+        "//util/types:overload",
         "@abseil-cpp//absl/cleanup",
         "@abseil-cpp//absl/container:btree",
         "@abseil-cpp//absl/debugging:failure_signal_handler",

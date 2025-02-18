@@ -10,7 +10,7 @@
 #include <string_view>
 #include <vector>
 
-#include "selector.hpp"
+#include "scic/selector.hpp"
 
 struct ANode;
 class Symbol;

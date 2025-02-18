@@ -2,6 +2,6 @@
 
 #include <memory>
 
-#include "scic/compiler.hpp"
+#include "scic/codegen/compiler.hpp"
 
 std::unique_ptr<Compiler> gSc;

@@ -8,12 +8,12 @@
 #include <utility>
 #include <variant>
 
-#include "scic/anode.hpp"
-#include "scic/anode_impls.hpp"
 #include "scic/class.hpp"
+#include "scic/codegen/anode.hpp"
+#include "scic/codegen/anode_impls.hpp"
+#include "scic/codegen/compiler.hpp"
 #include "scic/common.hpp"
 #include "scic/compile.hpp"
-#include "scic/compiler.hpp"
 #include "scic/config.hpp"
 #include "scic/define.hpp"
 #include "scic/error.hpp"

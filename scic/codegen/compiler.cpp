@@ -1,4 +1,4 @@
-#include "scic/compiler.hpp"
+#include "scic/codegen/compiler.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -14,17 +14,17 @@
 
 #include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"
-#include "scic/alist.hpp"
-#include "scic/anode.hpp"
-#include "scic/anode_impls.hpp"
+#include "scic/codegen/alist.hpp"
+#include "scic/codegen/anode.hpp"
+#include "scic/codegen/anode_impls.hpp"
+#include "scic/codegen/fixup_list.hpp"
+#include "scic/codegen/varlist.hpp"
 #include "scic/common.hpp"
 #include "scic/config.hpp"
-#include "scic/fixup_list.hpp"
 #include "scic/input.hpp"
 #include "scic/listing.hpp"
 #include "scic/output.hpp"
 #include "util/types/forward_ref.hpp"
-#include "scic/varlist.hpp"
 #include "util/types/overload.hpp"
 
 namespace {

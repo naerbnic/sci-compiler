@@ -1,3 +1,3 @@
-#include "scic/varlist.hpp"
+#include "scic/codegen/varlist.hpp"
 
 void VarList::kill() { values.clear(); }

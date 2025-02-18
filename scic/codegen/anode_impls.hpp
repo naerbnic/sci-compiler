@@ -11,8 +11,8 @@
 #include <string_view>
 #include <utility>
 
-#include "scic/alist.hpp"
-#include "scic/anode.hpp"
+#include "scic/codegen/alist.hpp"
+#include "scic/codegen/anode.hpp"
 #include "scic/common.hpp"
 #include "scic/listing.hpp"
 #include "scic/output.hpp"
