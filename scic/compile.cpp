@@ -48,6 +48,9 @@ static void MakeIf(AOpList* curList, PNode*);
 static void MakeCond(AOpList* curList, PNode*);
 static void MakeSwitch(AOpList* curList, PNode*);
 
+// This global is only used in this module
+static int lastLineNum;
+
 void CompileProc(ANodeList* curList, PNode* pn) {
   // Recursively compile code for a given node.
 
@@ -68,9 +71,9 @@ void CompileExpr(AOpList* curList, PNode* pn) {
   // Recursively compile code for a given node.
 
   if (gConfig->includeDebugInfo && pn->type != PN_PROC &&
-      pn->type != PN_METHOD && pn->lineNum > gSc->lastLineNum) {
+      pn->type != PN_METHOD && pn->lineNum > lastLineNum) {
     curList->newNode<ANLineNum>(pn->lineNum);
-    gSc->lastLineNum = pn->lineNum;
+    lastLineNum = pn->lineNum;
   }
 
   switch (pn->type) {
@@ -958,7 +961,7 @@ static void MakeProc(ANodeList* curList, PNode* pn) {
   //	and file name are set here
   if (gConfig->includeDebugInfo) {
     an->getList()->newNode<ANLineNum>(pn->lineNum);
-    gSc->lastLineNum = pn->lineNum;
+    lastLineNum = pn->lineNum;
   }
 
   // If there are to be any temporary variables, add a link node to

@@ -41,7 +41,6 @@ struct Compiler {
   // Returns false if the variable has already been set.
   bool SetIntVar(std::size_t varNum, int value);
 
-  int lastLineNum;
   ANodeList* objPropList;
   ANodeList* objDictList;
   ANodeList* codeList;

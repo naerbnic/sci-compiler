@@ -154,9 +154,6 @@ void Compiler::InitAsm() {
   hunkList = std::make_unique<FixupList>();
   heapList = std::make_unique<FixupList>();
 
-  //	setup the debugging info
-  lastLineNum = 0;
-
   auto* hunkBody = hunkList->getBody();
 
   // space for addr of heap component of resource
