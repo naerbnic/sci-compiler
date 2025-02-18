@@ -25,6 +25,7 @@
 #include "scic/sc.hpp"
 #include "scic/symbol.hpp"
 #include "scic/varlist.hpp"
+#include "util/types/overload.hpp"
 
 namespace {
 class CompilerHeapContext : public HeapContext {
@@ -82,12 +83,11 @@ class ANVars : public ANode
     out->WriteWord(theVars->values.size());
 
     for (Var const& var : theVars->values) {
-      if (std::holds_alternative<int>(*var.value)) {
-        out->WriteWord(std::get<int>(*var.value));
-      } else {
-        ANText* text = std::get<ANText*>(*var.value);
-        out->WriteWord(*text->offset);
-      }
+      auto value = var.value.value_or(0);
+      std::visit(
+          util::Overload([&](int num) { out->WriteWord(num); },
+                         [&](ANText* text) { out->WriteWord(*text->offset); }),
+          value);
     }
   }
 
@@ -258,4 +258,34 @@ ANText* Compiler::AddTextNode(std::string_view text) {
 
   textNodes.emplace(std::string(text), textNode);
   return textNode;
+}
+
+std::size_t Compiler::NumVars() const { return localVars.values.size(); }
+
+bool Compiler::SetTextVar(std::size_t varNum, ANText* text) {
+  if (localVars.values.size() <= varNum) {
+    localVars.values.resize(varNum + 1);
+  }
+
+  Var* vp = &localVars.values[varNum];
+  if (vp->value) {
+    return false;
+  }
+
+  vp->value = text;
+  return true;
+}
+
+bool Compiler::SetIntVar(std::size_t varNum, int value) {
+  if (localVars.values.size() <= varNum) {
+    localVars.values.resize(varNum + 1);
+  }
+
+  Var* vp = &localVars.values[varNum];
+  if (vp->value) {
+    return false;
+  }
+
+  vp->value = value;
+  return true;
 }

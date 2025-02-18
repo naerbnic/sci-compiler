@@ -2,16 +2,17 @@
 
 #include "scic/define.hpp"
 
-#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <string_view>
 #include <utility>
+#include <variant>
 
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
+#include "scic/anode_impls.hpp"
 #include "scic/compile.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
@@ -24,9 +25,9 @@
 #include "scic/symtypes.hpp"
 #include "scic/token.hpp"
 #include "scic/toktypes.hpp"
-#include "scic/varlist.hpp"
+#include "util/types/overload.hpp"
 
-static bool InitialValue(VarList& theVars, int offset, int arraySize);
+static bool InitialValue(int offset, int arraySize);
 
 static constexpr std::string_view tooManyVars =
     "Too many variables. Max is %d.\n";
@@ -185,7 +186,7 @@ void Global() {
 
       // Get the initial value(s) of the variable and expand the size
       // of the block if more than one value is encountered.
-      if (!InitialValue(gSc->localVars, offset, 1)) {
+      if (!InitialValue(offset, 1)) {
         Error(tooManyVars, gConfig->maxVars);
         break;
       }
@@ -205,7 +206,6 @@ void Local() {
 
   Symbol* theSym;
   int size;
-  int n;
   int arraySize;
 
   if (!gScript) {
@@ -213,7 +213,7 @@ void Local() {
     return;
   }
 
-  if (!gSc->localVars.values.empty()) {
+  if (gSc->NumVars() > 0) {
     Error("Only one local statement allowed");
     return;
   }
@@ -234,9 +234,8 @@ void Local() {
           Severe("no closing ']' in array declaration");
           break;
         }
-        n = InitialValue(gSc->localVars, size, arraySize);
-        size += std::max(n, arraySize);
-        if (n == -1 || (std::size_t)(size) > gConfig->maxVars) {
+        size += arraySize;
+        if (!InitialValue(size, arraySize)) {
           Error(tooManyVars, gConfig->maxVars);
           break;
         }
@@ -248,9 +247,8 @@ void Local() {
     else if (IsUndefinedIdent(token)) {
       theSym = gSyms.installLocal(token.name(), S_LOCAL);
       theSym->setVal(size);
-      n = InitialValue(gSc->localVars, size, 1);
-      size += n;
-      if (n == -1 || (std::size_t)(size) > gConfig->maxVars) {
+      size += 1;
+      if (!InitialValue(size, 1)) {
         Error(tooManyVars, gConfig->maxVars);
         break;
       }
@@ -349,7 +347,7 @@ Symbol* FindPublic(PublicList const& publicList, int n) {
   return nullptr;
 }
 
-static bool InitialValue(VarList& theVars, int offset, int arraySize) {
+static bool InitialValue(int offset, int arraySize) {
   // 'vp' points to the variable(s) to initialize int 'theVars'.  Fill it in
   //	with any initial values, returning 1 if there are no initial values, the
   // number of initial values otherwise.  Syntax is
@@ -358,20 +356,17 @@ static bool InitialValue(VarList& theVars, int offset, int arraySize) {
   // value is not a set of values ('num' rather than  '[num ...]'), the array
   // is filled with the single value passed.
 
-  if ((std::size_t)(offset + arraySize) > gConfig->maxVars) return -1;
-
-  // Whether or not we have initial values, we need to make sure we account
-  // for the full size of the array.
-  if (theVars.values.size() < (std::size_t)(offset + arraySize)) {
-    theVars.values.resize(offset + arraySize);
-  }
+  if ((std::size_t)(offset + arraySize) > gConfig->maxVars) return false;
 
   // See if there are initial values.  Return 1 if not (by default, there
   // is one initial value of 0 for all variable declarations).
   auto slot = LookupTok();
   if (slot.type() != S_ASSIGN) {
     UnGetTok();
-    return 1;
+    for (int i = 0; i < arraySize; ++i) {
+      gSc->SetIntVar(offset + i, 0);
+    }
+    return true;
   }
 
   // See if the initialization is for an array.  If not, just get one
@@ -381,13 +376,14 @@ static bool InitialValue(VarList& theVars, int offset, int arraySize) {
     UnGetTok();
     auto value = GetNumberOrString("Initial value");
     for (int i = 0; i < arraySize; ++i) {
-      Var* vp = &theVars.values[offset + i];
-      if (!vp->value) {
-        Error("Redefinition of index %d", offset + i);
+      if (!value) {
+        gSc->SetIntVar(offset + i, 0);
+        continue;
       }
-      if (value) {
-        vp->value = *value;
-      }
+      std::visit(util::Overload(
+                     [&](int num) { gSc->SetIntVar(offset + i, num); },
+                     [&](ANText* text) { gSc->SetTextVar(offset + i, text); }),
+                 *value);
     }
     return arraySize;
   }
@@ -398,10 +394,14 @@ static bool InitialValue(VarList& theVars, int offset, int arraySize) {
        ++n, token = GetToken()) {
     UnGetTok();
     auto value = GetNumberOrString("Initial value");
-    Var* vp = &theVars.values[offset + n];
-    if (value) {
-      vp++->value = value;
+    if (!value) {
+      gSc->SetIntVar(offset + n, 0);
+      continue;
     }
+    std::visit(util::Overload(
+                   [&](int num) { gSc->SetIntVar(offset + n, num); },
+                   [&](ANText* text) { gSc->SetTextVar(offset + n, text); }),
+               *value);
   }
   return n;
 }

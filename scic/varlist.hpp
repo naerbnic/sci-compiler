@@ -9,7 +9,7 @@
 
 struct Var {
   // Variable definition.
-  Var() : value(0) {}
+  Var() {}
 
   std::optional<std::variant<int, ANText*>> value;
 };

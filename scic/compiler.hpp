@@ -1,6 +1,7 @@
 #ifndef COMPILER_HPP
 #define COMPILER_HPP
 
+#include <cstddef>
 #include <functional>
 #include <map>
 #include <memory>
@@ -27,9 +28,20 @@ struct Compiler {
 
   ANText* AddTextNode(std::string_view text);
 
-  VarList localVars;
+  // Returns the current number of variables.
+  std::size_t NumVars() const;
+
+  // Sets the variable at the given index to the given text.
+  //
+  // Returns false if the variable has already been set.
+  bool SetTextVar(std::size_t varNum, ANText* text);
+
+  // Sets the variable at the given index to the given int.
+  //
+  // Returns false if the variable has already been set.
+  bool SetIntVar(std::size_t varNum, int value);
+
   int lastLineNum;
-  ANTable* dispTbl;
   ANodeList* objPropList;
   ANodeList* objDictList;
   ANodeList* codeList;
@@ -37,6 +49,8 @@ struct Compiler {
  private:
   std::unique_ptr<FixupList> heapList;
   std::unique_ptr<FixupList> hunkList;
+  VarList localVars;
+  ANTable* dispTbl;
   ANodeList* textList;
   std::map<std::string, ANText*, std::less<>> textNodes;
 };
