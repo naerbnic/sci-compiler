@@ -110,7 +110,7 @@ void MethodDef(Object* obj) {
       else {
         // Compile the code for this method.
         ExprList(node.get(), OPTIONAL);
-        CompileProc(gSc->codeList, node.get());
+        CompileProc(node.get());
 
         // Save the pointer to the method code.
         sn->tag = T_LOCAL;

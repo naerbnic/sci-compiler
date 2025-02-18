@@ -11,6 +11,7 @@
 #include "scic/alist.hpp"
 #include "scic/anode.hpp"
 #include "scic/anode_impls.hpp"
+#include "scic/compiler.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
 #include "scic/global_compiler.hpp"
@@ -32,7 +33,7 @@ static void MakeClassID(AOpList* curList, PNode*);
 static void MakeObjID(AOpList* curList, PNode*);
 static void MakeSend(AOpList* curList, PNode*);
 static int MakeMessage(AOpList* curList, PNode::ChildSpan children);
-static void MakeProc(ANodeList* curList, PNode*);
+static void MakeProc(PNode*);
 static int MakeArgs(AOpList* curList, PNode::ChildSpan children);
 static void MakeUnary(AOpList* curList, PNode*);
 static void MakeBinary(AOpList* curList, PNode*);
@@ -51,13 +52,13 @@ static void MakeSwitch(AOpList* curList, PNode*);
 // This global is only used in this module
 static int lastLineNum;
 
-void CompileProc(ANodeList* curList, PNode* pn) {
+void CompileProc(PNode* pn) {
   // Recursively compile code for a given node.
 
   switch (pn->type) {
     case PN_PROC:
     case PN_METHOD:
-      MakeProc(curList, pn);
+      MakeProc(pn);
       break;
 
     // Do nothing for unhandled node types.
@@ -938,16 +939,15 @@ static void MakeIncDec(AOpList* curList, PNode* pn) {
   MakeAccess(curList, pn->first_child(), (uint8_t)theCode);
 }
 
-static void MakeProc(ANodeList* curList, PNode* pn) {
+static void MakeProc(PNode* pn) {
   // Compile code for an entire procedure.
 
   // Make a procedure node and point to the symbol for the procedure
   // (for listing purposes).
-  ANCodeBlk* an = pn->type == PN_PROC
-                      ? (ANCodeBlk*)curList->newNode<ANProcCode>(
-                            std::string(pn->sym->name()))
-                      : (ANCodeBlk*)curList->newNode<ANMethCode>(
-                            std::string(pn->sym->name()), gCurObj->name);
+  ANCodeBlk* an =
+      pn->type == PN_PROC
+          ? gSc->CreateProcedure(std::string(pn->sym->name()))
+          : gSc->CreateMethod(gCurObj->name, std::string(pn->sym->name()));
 
   pn->sym->type = (sym_t)(pn->type == PN_PROC ? S_PROC : S_SELECT);
 

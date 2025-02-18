@@ -101,7 +101,8 @@ class Compiler {
   std::unique_ptr<ObjectCodegen> CreateObject(std::string name);
   std::unique_ptr<ObjectCodegen> CreateClass(std::string name);
 
-  ANodeList* codeList;
+  ANCodeBlk* CreateProcedure(std::string name);
+  ANCodeBlk* CreateMethod(std::string objName, std::string name);
 
  private:
   friend class ObjectCodegen;
@@ -112,6 +113,7 @@ class Compiler {
   ANTable* dispTbl;
   ANodeList* objPropList;
   ANodeList* objDictList;
+  ANodeList* codeList;
   ANodeList* textList;
   std::map<std::string, ANText*, std::less<>> textNodes;
 };

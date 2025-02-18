@@ -14,7 +14,7 @@ class Symbol;
 struct Object;
 struct PNode;
 
-void CompileProc(ANodeList* curList, PNode* pn);
+void CompileProc(PNode* pn);
 void CompileExpr(AOpList* curList, PNode* pn);
 void MakeBranch(AOpList* curList, uint8_t type, ANLabel* target);
 void MakeBranch(AOpList* curList, uint8_t type,

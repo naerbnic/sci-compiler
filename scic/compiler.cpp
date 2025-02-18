@@ -375,3 +375,11 @@ std::unique_ptr<ObjectCodegen> Compiler::CreateObject(std::string name) {
 std::unique_ptr<ObjectCodegen> Compiler::CreateClass(std::string name) {
   return ObjectCodegen::Create(this, false, name);
 }
+
+ANCodeBlk* Compiler::CreateProcedure(std::string name) {
+  return codeList->newNode<ANProcCode>(std::move(name));
+}
+
+ANCodeBlk* Compiler::CreateMethod(std::string objName, std::string name) {
+  return codeList->newNode<ANMethCode>(std::move(name), std::move(objName));
+}
