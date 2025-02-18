@@ -163,6 +163,26 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "compiler",
+    srcs = ["compiler.cpp"],
+    hdrs = ["compiler.hpp"],
+    deps = [
+        ":anode",
+        ":common",
+        ":config",
+        ":fixup_list",
+        ":input",
+        ":listing",
+        ":output",
+        ":reference",
+        ":varlist",
+        "//util/types:overload",
+        "@abseil-cpp//absl/memory",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)
+
 cc_binary(
     name = "scic",
     srcs = [
@@ -174,8 +194,6 @@ cc_binary(
         "class.hpp",
         "compile.cpp",
         "compile.hpp",
-        "compiler.cpp",
-        "compiler.hpp",
         "define.cpp",
         "define.hpp",
         "error.cpp",
@@ -227,8 +245,8 @@ cc_binary(
         ":anode",
         ":chartype",
         ":common",
+        ":compiler",
         ":config",
-        ":fixup_list",
         ":input",
         ":listing",
         ":memtype",
@@ -236,14 +254,12 @@ cc_binary(
         ":output",
         ":reference",
         ":symtypes",
-        ":varlist",
         "//util/platform",
         "//util/types:overload",
         "@abseil-cpp//absl/cleanup",
         "@abseil-cpp//absl/container:btree",
         "@abseil-cpp//absl/debugging:failure_signal_handler",
         "@abseil-cpp//absl/debugging:symbolize",
-        "@abseil-cpp//absl/memory",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
         "@argparse",

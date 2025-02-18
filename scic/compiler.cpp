@@ -23,7 +23,6 @@
 #include "scic/listing.hpp"
 #include "scic/output.hpp"
 #include "scic/reference.hpp"
-#include "scic/sc.hpp"
 #include "scic/varlist.hpp"
 #include "util/types/overload.hpp"
 
@@ -313,7 +312,7 @@ void Compiler::InitAsm() {
   textList = heapBody->newNode<ANTable>("text table")->getList();
 }
 
-void Compiler::Assemble(ListingFile* listFile) {
+void Compiler::Assemble(uint16_t scriptNum, ListingFile* listFile) {
   // Set the offsets in the object list.
   heapList->setOffset(0);
 
@@ -324,12 +323,12 @@ void Compiler::Assemble(ListingFile* listFile) {
   // offsets.
   heapList->setOffset(0);
 
-  ObjFiles obj_files = OpenObjFiles(gScript);
+  ObjFiles obj_files = OpenObjFiles(scriptNum);
 
   const std::size_t MAX_INFO_FILE_NAME = 1024;
 
   char infoFileName[MAX_INFO_FILE_NAME];
-  if (snprintf(infoFileName, 1024, "%d.inf", (unsigned short)gScript) >=
+  if (snprintf(infoFileName, 1024, "%d.inf", (unsigned short)scriptNum) >=
       (int)MAX_INFO_FILE_NAME) {
     fprintf(stderr, "Error: info file name too long\n");
     exit(1);

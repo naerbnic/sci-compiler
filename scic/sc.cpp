@@ -232,7 +232,7 @@ static void CompileFile(std::string_view fileName, bool listCode) {
   else {
     auto listFile = listCode ? ListingFile::Open(gScript, sourceFileName)
                              : ListingFile::Null();
-    gSc->Assemble(listFile.get());
+    gSc->Assemble(gScript, listFile.get());
   }
   totalErrors += gNumErrors;
 

@@ -81,7 +81,7 @@ class Compiler {
   ~Compiler();
 
   void InitAsm();
-  void Assemble(ListingFile* listFile);
+  void Assemble(uint16_t scriptNum, ListingFile* listFile);
 
   void AddPublic(std::string name, std::size_t index,
                  ForwardReference<ANode*>* target);
