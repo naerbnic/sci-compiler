@@ -10,7 +10,6 @@
 #include <string>
 #include <string_view>
 #include <utility>
-#include <variant>
 #include <vector>
 
 #include "absl/memory/memory.h"
@@ -27,7 +26,6 @@
 #include "scic/opcodes.hpp"
 #include "scic/output.hpp"
 #include "util/types/forward_ref.hpp"
-#include "util/types/overload.hpp"
 
 namespace {
 class CompilerHeapContext : public HeapContext {
@@ -60,12 +58,9 @@ class ANVars : public ANode
     curOfs += 2;
 
     for (Var const& var : theVars->values) {
-      if (std::holds_alternative<int>(*var.value)) {
-        listFile->ListWord(curOfs, std::get<int>(*var.value));
-      } else {
-        ANText* text = std::get<ANText*>(*var.value);
-        listFile->ListWord(curOfs, *text->offset);
-      }
+      var.value->visit(
+          [&](int num) { listFile->ListWord(curOfs, num); },
+          [&](ANText* text) { listFile->ListWord(curOfs, *text->offset); });
       curOfs += 2;
     }
     listFile->Listing("\n");
@@ -74,7 +69,7 @@ class ANVars : public ANode
   void collectFixups(FixupContext* fixup_ctxt) const override {
     std::size_t relOfs = 2;
     for (Var const& var : theVars->values) {
-      if (std::holds_alternative<ANText*>(*var.value)) {
+      if (var.value->has<ANText*>()) {
         fixup_ctxt->AddRelFixup(this, relOfs);
       }
       relOfs += 2;
@@ -86,10 +81,8 @@ class ANVars : public ANode
 
     for (Var const& var : theVars->values) {
       auto value = var.value.value_or(0);
-      std::visit(
-          util::Overload([&](int num) { out->WriteWord(num); },
-                         [&](ANText* text) { out->WriteWord(*text->offset); }),
-          value);
+      value.visit([&](int num) { out->WriteWord(num); },
+                  [&](ANText* text) { out->WriteWord(*text->offset); });
     }
   }
 
@@ -135,6 +128,51 @@ void OptimizeHunk(ANode* anode) {
     if (!anode->tryShrink()) break;
 
     anode->setOffset(0);
+  }
+}
+
+uint8_t GetBinOpValue(FunctionBuilder::BinOp op) {
+  switch (op) {
+    case FunctionBuilder::ADD:
+      return op_add;
+    case FunctionBuilder::SUB:
+      return op_sub;
+    case FunctionBuilder::MUL:
+      return op_mul;
+    case FunctionBuilder::DIV:
+      return op_div;
+    case FunctionBuilder::SHL:
+      return op_shl;
+    case FunctionBuilder::SHR:
+      return op_shr;
+    case FunctionBuilder::MOD:
+      return op_mod;
+    case FunctionBuilder::AND:
+      return op_and;
+    case FunctionBuilder::OR:
+      return op_or;
+    case FunctionBuilder::XOR:
+      return op_xor;
+    case FunctionBuilder::GT:
+      return op_gt;
+    case FunctionBuilder::GE:
+      return op_ge;
+    case FunctionBuilder::LT:
+      return op_lt;
+    case FunctionBuilder::LE:
+      return op_le;
+    case FunctionBuilder::EQ:
+      return op_eq;
+    case FunctionBuilder::NE:
+      return op_ne;
+    case FunctionBuilder::UGT:
+      return op_ugt;
+    case FunctionBuilder::UGE:
+      return op_uge;
+    case FunctionBuilder::ULT:
+      return op_ult;
+    case FunctionBuilder::ULE:
+      return op_ule;
   }
 }
 
@@ -202,14 +240,13 @@ ANode* ObjectCodegen::GetObjNode() const { return propListMarker_; }
 
 void ObjectCodegen::AppendProperty(std::string name, std::uint16_t selectorNum,
                                    LiteralValue value) {
-  std::visit(util::Overload(
-                 [&](int num) {
-                   props_->getList()->newNode<ANIntProp>(std::move(name), num);
-                 },
-                 [&](ANText* text) {
-                   props_->getList()->newNode<ANOfsProp>(std::move(name), text);
-                 }),
-             value);
+  value.visit(
+      [&](int num) {
+        props_->getList()->newNode<ANIntProp>(std::move(name), num);
+      },
+      [&](ANText* text) {
+        props_->getList()->newNode<ANOfsProp>(std::move(name), text);
+      });
   AppendPropDict(selectorNum);
 }
 
@@ -237,8 +274,8 @@ std::unique_ptr<ObjectCodegen> ObjectCodegen::Create(CodeGenerator* compiler,
                                                      std::string name) {
   // Allocate tables in the correct places in the heap/hunk.
   //
-  // This does not actually allocate any space, but it does create growable
-  // tables.
+  // This does not actually allocate any space, but it does create
+  // growable tables.
   ANObject* propListMarker = compiler->objPropList->newNode<ANObject>(name);
   ANTable* props = compiler->objPropList->newNode<ANTable>("properties");
 
@@ -280,6 +317,67 @@ void ObjectCodegen::AppendPropDict(std::uint16_t selectorNum) {
 ANode* FunctionBuilder::GetNode() const { return code_node_; }
 AOpList* FunctionBuilder::GetOpList() const { return code_node_->getList(); }
 
+LabelRef FunctionBuilder::CreateLabelRef() { return LabelRef(); }
+
+void FunctionBuilder::AddLineAnnotation(std::size_t lineNum) {
+  code_node_->getList()->newNode<ANLineNum>(lineNum);
+}
+
+void FunctionBuilder::AddPushOp() {
+  code_node_->getList()->newNode<ANOpCode>(op_push);
+}
+
+void FunctionBuilder::AddPushPrevOp() {
+  code_node_->getList()->newNode<ANOpCode>(op_pprev);
+}
+
+void FunctionBuilder::AddTossOp() {
+  code_node_->getList()->newNode<ANOpCode>(op_toss);
+}
+
+void FunctionBuilder::AddDupOp() {
+  code_node_->getList()->newNode<ANOpCode>(op_dup);
+}
+
+void FunctionBuilder::AddLoadImmediate(LiteralValue value) {
+  value.visit(
+      [this](int num) {
+        code_node_->getList()->newNode<ANOpSign>(op_loadi, num);
+      },
+      [this](ANText* text) { code_node_->getList()->newNode<ANOpOfs>(text); });
+}
+
+void FunctionBuilder::AddBinOp(BinOp op) {
+  code_node_->getList()->newNode<ANOpCode>(GetBinOpValue(op));
+}
+
+void FunctionBuilder::AddBranchOp(BranchOp op, LabelRef* target) {
+  uint8_t opcode;
+  switch (op) {
+    case BNT:
+      opcode = op_bnt;
+      break;
+    case BT:
+      opcode = op_bt;
+      break;
+    case JMP:
+      opcode = op_jmp;
+      break;
+  }
+  auto* branch = code_node_->getList()->newNode<ANBranch>(opcode);
+  target->ref.RegisterCallback(
+      [branch](ANLabel* target) { branch->target = target; });
+}
+
+void FunctionBuilder::AddLabel(LabelRef* label) {
+  auto* an_label = code_node_->getList()->newNode<ANLabel>();
+  label->ref.Resolve(an_label);
+}
+
+void FunctionBuilder::AddReturnOp() {
+  code_node_->getList()->newNode<ANOpCode>(op_ret);
+}
+
 FunctionBuilder::FunctionBuilder(ANCodeBlk* root_node)
     : code_node_(root_node) {}
 
@@ -302,8 +400,8 @@ void CodeGenerator::InitAsm() {
   if (active) {
     throw std::runtime_error("Compiler already active");
   }
-  // Initialize the assembly list: dispose of any old list, then add nodes
-  // for the number of local variables.
+  // Initialize the assembly list: dispose of any old list, then add
+  // nodes for the number of local variables.
 
   auto* hunkBody = hunkList->getBody();
 

@@ -2,16 +2,16 @@
 #define VARLIST_HPP
 
 #include <optional>
-#include <variant>
 #include <vector>
 
 #include "scic/codegen/anode_impls.hpp"
+#include "util/types/choice.hpp"
 
 struct Var {
   // Variable definition.
   Var() {}
 
-  std::optional<std::variant<int, ANText*>> value;
+  std::optional<util::Choice<int, ANText*>> value;
 };
 
 struct VarList {

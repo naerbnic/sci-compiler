@@ -10,7 +10,6 @@
 #include <string>
 #include <string_view>
 #include <utility>
-#include <variant>
 
 #include "scic/codegen/alist.hpp"
 #include "scic/codegen/anode.hpp"
@@ -22,13 +21,14 @@
 #include "util/types/forward_ref.hpp"
 
 class CodeGenerator;
+class FunctionBuilder;
 
 // Internal types
 class ANDispTable;
 
 // The value of a literal. Either an integer, or a static string, represented
 // as a pointer to an ANText.
-using LiteralValue = std::variant<int, ANText*>;
+using LiteralValue = util::Choice<int, ANText*>;
 
 struct ProcedureName {
   explicit ProcedureName(std::string name) : procName(std::move(name)) {}
@@ -96,8 +96,48 @@ class ObjectCodegen {
   bool wroteMethDict_ = false;
 };
 
+class LabelRef {
+ public:
+ private:
+  friend class FunctionBuilder;
+  LabelRef() = default;
+  ForwardRef<ANLabel*> ref;
+};
+
 class FunctionBuilder {
  public:
+  enum BinOp {
+    // Math
+    ADD,
+    SUB,
+    MUL,
+    DIV,
+    SHL,
+    SHR,
+    MOD,
+    AND,
+    OR,
+    XOR,
+
+    // comparisons
+    GT,
+    GE,
+    LT,
+    LE,
+    EQ,
+    NE,
+    UGT,
+    UGE,
+    ULT,
+    ULE,
+  };
+
+  enum BranchOp {
+    BNT,
+    BT,
+    JMP,
+  };
+
   // Returns an ANode for the function. This can be used to resolve the
   // location of the function during assembly.
   ANode* GetNode() const;
@@ -107,6 +147,52 @@ class FunctionBuilder {
   //
   // TODO: Replace this with builder functions.
   AOpList* GetOpList() const;
+
+  // Creates a label reference that can be used to branch to and
+  // resolve a label.
+  LabelRef CreateLabelRef();
+
+  // Add an annotation indicating that the code is at the given line
+  // number.
+  void AddLineAnnotation(std::size_t lineNum);
+
+  // Pushes the accumulator value onto the stack.
+  void AddPushOp();
+
+  // Pushes the previous accumulator to the stack, from the last comparison
+  // binary operator.
+  void AddPushPrevOp();
+
+  // Removes the top value from the stack. This does not change
+  // the accumulator
+  void AddTossOp();
+
+  // Pushes the top value of the stack onto the stack.
+  void AddDupOp();
+
+  // Loads the given value into the accumulator.
+  void AddLoadImmediate(LiteralValue value);
+
+  // Add a binary operation, combining the top of the stack with
+  // the current accumulator value.
+  void AddBinOp(BinOp op);
+
+  // Add a branch op. Whether the branch is taken depends on the
+  // accumulator.
+  //
+  // Takes an argument for the target of the branch. The label
+  // for the target does not need to be resolved at this point,
+  // but it must be resolved before the code is assembled.
+  void AddBranchOp(BranchOp op, LabelRef* target);
+
+  // Add a label for the target of a branch.
+  //
+  // All refs used in AddBranchOp() must have AddLabel() be called
+  // on them to be resolved before the code is assembled.
+  void AddLabel(LabelRef* label);
+
+  // Add a Return.
+  void AddReturnOp();
 
  private:
   friend class CodeGenerator;

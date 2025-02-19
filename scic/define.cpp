@@ -11,7 +11,6 @@
 
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
-#include "scic/compile.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
 #include "scic/global_compiler.hpp"

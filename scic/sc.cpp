@@ -21,7 +21,6 @@
 #include "argparse/argparse.hpp"
 #include "scic/banner.hpp"
 #include "scic/builtins.hpp"
-#include "scic/compile.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
 #include "scic/global_compiler.hpp"

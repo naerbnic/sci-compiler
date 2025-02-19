@@ -28,8 +28,6 @@
 #include "util/types/forward_ref.hpp"
 
 static void MakeAccess(FunctionBuilder* builder, PNode*, uint8_t);
-static void MakeImmediate(FunctionBuilder* builder, int);
-static void MakeString(FunctionBuilder* builder, PNode*);
 static void MakeCall(FunctionBuilder* builder, PNode* pn);
 static void MakeClassID(FunctionBuilder* builder, PNode*);
 static void MakeObjID(FunctionBuilder* builder, PNode*);
@@ -75,7 +73,7 @@ void CompileExpr(FunctionBuilder* builder, PNode* pn) {
 
   if (gConfig->includeDebugInfo && pn->type != PN_PROC &&
       pn->type != PN_METHOD && pn->lineNum > lastLineNum) {
-    builder->GetOpList()->newNode<ANLineNum>(pn->lineNum);
+    builder->AddLineAnnotation(pn->lineNum);
     lastLineNum = pn->lineNum;
   }
 
@@ -96,15 +94,15 @@ void CompileExpr(FunctionBuilder* builder, PNode* pn) {
       break;
 
     case PN_SELECT:
-      MakeImmediate(builder, pn->val);
+      builder->AddLoadImmediate(pn->val);
       break;
 
     case PN_NUM:
-      MakeImmediate(builder, pn->val);
+      builder->AddLoadImmediate(pn->val);
       break;
 
     case PN_STRING:
-      MakeString(builder, pn);
+      builder->AddLoadImmediate(pn->str);
       break;
 
     case PN_GLOBAL:
@@ -224,8 +222,7 @@ static void MakeAccess(FunctionBuilder* builder, PNode* pn, uint8_t theCode) {
   if (indexed) {
     PNode* child = pn->children[0].get();
     if (theCode == (OP_LDST | OP_STORE))
-      builder->GetOpList()->newNode<ANOpCode>(
-          op_push);  // push the value to store on the stack
+      builder->AddPushOp();  // push the value to store on the stack
     CompileExpr(builder, pn->children[1].get());  // compile index value
     if (theCode != op_lea) theCode |= OP_INDEX;   // set the indexing bit
     theAddr = child->val;
@@ -320,14 +317,6 @@ static void MakeAccess(FunctionBuilder* builder, PNode* pn, uint8_t theCode) {
       }
       break;
   }
-}
-
-static void MakeImmediate(FunctionBuilder* builder, int val) {
-  builder->GetOpList()->newNode<ANOpSign>(op_loadi, val);
-}
-
-static void MakeString(FunctionBuilder* builder, PNode* pn) {
-  builder->GetOpList()->newNode<ANOpOfs>(pn->str);
 }
 
 static void MakeCall(FunctionBuilder* builder, PNode* pn) {
@@ -431,7 +420,7 @@ static int MakeMessage(FunctionBuilder* builder, PNode::ChildSpan theMsg) {
 
   // Compile the selector.
   CompileExpr(builder, theMsg.front().get());
-  builder->GetOpList()->newNode<ANOpCode>(op_push);
+  builder->AddPushOp();
 
   // Push the number of arguments on the stack (we don't know the
   // number yet).
@@ -456,7 +445,7 @@ static int MakeArgs(FunctionBuilder* builder, PNode::ChildSpan args) {
       builder->GetOpList()->newNode<ANOpUnsign>(op_rest | OP_BYTE, arg->val);
     else {
       CompileExpr(builder, arg.get());
-      builder->GetOpList()->newNode<ANOpCode>(op_push);
+      builder->AddPushOp();
       ++numArgs;
     }
   }
@@ -491,29 +480,29 @@ static void MakeBinary(FunctionBuilder* builder, PNode* pn) {
 
   // Compile the arguments, putting the first on the stack.
   CompileExpr(builder, pn->child_at(0));
-  builder->GetOpList()->newNode<ANOpCode>(op_push);
+  builder->AddPushOp();
   CompileExpr(builder, pn->child_at(1));
 
   // Put out the opcode.
-  uint16_t theCode;
+  FunctionBuilder::BinOp theCode;
   switch (pn->val) {
     case B_MINUS:
-      theCode = op_sub;
+      theCode = FunctionBuilder::SUB;
       break;
     case B_DIV:
-      theCode = op_div;
+      theCode = FunctionBuilder::DIV;
       break;
     case B_SLEFT:
-      theCode = op_shl;
+      theCode = FunctionBuilder::SHL;
       break;
     case B_SRIGHT:
-      theCode = op_shr;
+      theCode = FunctionBuilder::SHR;
       break;
     case B_MOD:
-      theCode = op_mod;
+      theCode = FunctionBuilder::MOD;
       break;
   }
-  builder->GetOpList()->newNode<ANOpCode>(theCode);
+  builder->AddBinOp(theCode);
 }
 
 static void MakeNary(FunctionBuilder* builder, PNode* pn) {
@@ -522,33 +511,33 @@ static void MakeNary(FunctionBuilder* builder, PNode* pn) {
   // Compile the first argument and push its value on the stack.
   CompileExpr(builder, pn->child_at(0));
 
+  // Put out the appropriate opcode.
+  FunctionBuilder::BinOp theCode;
+  switch (pn->val) {
+    case N_PLUS:
+      theCode = FunctionBuilder::ADD;
+      break;
+    case N_MUL:
+      theCode = FunctionBuilder::MUL;
+      break;
+    case N_BITOR:
+      theCode = FunctionBuilder::OR;
+      break;
+    case N_BITAND:
+      theCode = FunctionBuilder::AND;
+      break;
+    case N_BITXOR:
+      theCode = FunctionBuilder::XOR;
+      break;
+  }
+
   for (auto const& arg : pn->rest()) {
     // Push the previous argument on the stack for combining with the
     // next argument.
-    builder->GetOpList()->newNode<ANOpCode>(op_push);
+    builder->AddPushOp();
     // Compile the next argument.
     CompileExpr(builder, arg.get());
-
-    // Put out the appropriate opcode.
-    uint16_t theCode;
-    switch (pn->val) {
-      case N_PLUS:
-        theCode = op_add;
-        break;
-      case N_MUL:
-        theCode = op_mul;
-        break;
-      case N_BITOR:
-        theCode = op_or;
-        break;
-      case N_BITAND:
-        theCode = op_and;
-        break;
-      case N_BITXOR:
-        theCode = op_xor;
-        break;
-    }
-    builder->GetOpList()->newNode<ANOpCode>(theCode);
+    builder->AddBinOp(theCode);
   }
 }
 
@@ -557,45 +546,45 @@ static void MakeAssign(FunctionBuilder* builder, PNode* pn) {
   // target variable on the stack for the operation.
   if (pn->val != A_EQ) {
     MakeAccess(builder, pn->child_at(0), OP_LDST | OP_LOAD);
-    builder->GetOpList()->newNode<ANOpCode>(op_push);
+    builder->AddPushOp();
   }
 
   // Compile the value to be assigned.
   CompileExpr(builder, pn->child_at(1));
 
   // If this is an arithmetic-op assignment, do the arithmetic operation.
-  uint16_t theCode;
+  FunctionBuilder::BinOp theCode;
   if (pn->val != A_EQ) {
     switch (pn->val) {
       case A_PLUS:
-        theCode = op_add;
+        theCode = FunctionBuilder::ADD;
         break;
       case A_MUL:
-        theCode = op_mul;
+        theCode = FunctionBuilder::MUL;
         break;
       case A_MINUS:
-        theCode = op_sub;
+        theCode = FunctionBuilder::SUB;
         break;
       case A_DIV:
-        theCode = op_div;
+        theCode = FunctionBuilder::DIV;
         break;
       case A_SLEFT:
-        theCode = op_shl;
+        theCode = FunctionBuilder::SHL;
         break;
       case A_SRIGHT:
-        theCode = op_shr;
+        theCode = FunctionBuilder::SHR;
         break;
       case A_XOR:
-        theCode = op_xor;
+        theCode = FunctionBuilder::XOR;
         break;
       case A_AND:
-        theCode = op_and;
+        theCode = FunctionBuilder::AND;
         break;
       case A_OR:
-        theCode = op_or;
+        theCode = FunctionBuilder::OR;
         break;
     }
-    builder->GetOpList()->newNode<ANOpCode>(theCode);
+    builder->AddBinOp(theCode);
   }
 
   MakeAccess(builder, pn->child_at(0), OP_LDST | OP_STORE);
@@ -608,26 +597,7 @@ static void MakeReturn(FunctionBuilder* builder, PNode* pn) {
   if (pn->first_child()) CompileExpr(builder, pn->first_child());
 
   // Put out the return opcode.
-  builder->GetOpList()->newNode<ANOpCode>(op_ret);
-}
-
-void MakeBranch(FunctionBuilder* builder, uint8_t theCode, ANLabel* target) {
-  // Compile code for a branch.  The type of branch is in 'theCode', the
-  // destination is 'bn'.  If the the destination is not yet defined,
-  // 'dest' will point to a the symbol of the destination.
-
-  ANBranch* an = builder->GetOpList()->newNode<ANBranch>(theCode);
-  an->target = target;
-}
-
-void MakeBranch(FunctionBuilder* builder, uint8_t theCode,
-                ForwardRef<ANLabel*>* dest) {
-  // Compile code for a branch.  The type of branch is in 'theCode', the
-  // destination is 'bn'.  If the the destination is not yet defined,
-  // 'dest' will point to a the symbol of the destination.
-
-  ANBranch* an = builder->GetOpList()->newNode<ANBranch>(theCode);
-  dest->RegisterCallback([an](ANLabel* target) { an->target = target; });
+  builder->AddReturnOp();
 }
 
 static void MakeComp(FunctionBuilder* builder, PNode* pn) {
@@ -648,11 +618,11 @@ static void MakeComp(FunctionBuilder* builder, PNode* pn) {
     // Point to the first argument and set up an empty need list (which
     // will be used to keep track of those nodes which need the address
     // of the end of the expression for the early out).
-    ForwardRef<ANLabel*> earlyOut;
+    auto earlyOut = builder->CreateLabelRef();
 
     // Compile the first two operands and do the test.
     CompileExpr(builder, pn->child_at(0));
-    builder->GetOpList()->newNode<ANOpCode>(op_push);
+    builder->AddPushOp();
     CompileExpr(builder, pn->child_at(1));
     MakeCompOp(builder, op);
 
@@ -661,11 +631,11 @@ static void MakeComp(FunctionBuilder* builder, PNode* pn) {
     // is true so far.
     for (auto const& node : pn->rest_at(2)) {
       // Early out if false.
-      MakeBranch(builder, op_bnt, &earlyOut);
+      builder->AddBranchOp(FunctionBuilder::BNT, &earlyOut);
 
       // Push the previous accumulator value on the stack in
       // order to continue the comparison.
-      builder->GetOpList()->newNode<ANOpCode>(op_pprev);
+      builder->AddPushPrevOp();
 
       // Compile the next argument and test it.
       CompileExpr(builder, node.get());
@@ -673,84 +643,83 @@ static void MakeComp(FunctionBuilder* builder, PNode* pn) {
     }
 
     // Set the target for any branches to the end of the expression
-    MakeLabel(builder, &earlyOut);
+    builder->AddLabel(&earlyOut);
   }
 }
 
 static void MakeAnd(FunctionBuilder* builder, PNode::ChildSpan args) {
   // Compile code for the '&&' operator.
 
-  ForwardRef<ANLabel*> earlyOut;
+  auto earlyOut = builder->CreateLabelRef();
 
   CompileExpr(builder, args[0].get());
 
   for (auto const& arg : args.subspan(1)) {
     // Make a branch for an early out if the expression is false.
-    MakeBranch(builder, op_bnt, &earlyOut);
+    builder->AddBranchOp(FunctionBuilder::BNT, &earlyOut);
     // Compile an argument.
     CompileExpr(builder, arg.get());
   }
 
   // Set the target for any early-out branches.
-  MakeLabel(builder, &earlyOut);
+  builder->AddLabel(&earlyOut);
 }
 
 static void MakeOr(FunctionBuilder* builder, PNode::ChildSpan args) {
   // Compile code for the '||' operator.
 
-  ForwardRef<ANLabel*> earlyOut;
+  auto earlyOut = builder->CreateLabelRef();
 
   CompileExpr(builder, args[0].get());
 
   for (auto const& arg : args.subspan(1)) {
     // Make a branch for an early out if the expression is true.
-    MakeBranch(builder, op_bt, &earlyOut);
+    builder->AddBranchOp(FunctionBuilder::BT, &earlyOut);
     // Compile code for an argument.
     CompileExpr(builder, arg.get());
   }
-
   // Make a target for the early-out branches.
-  MakeLabel(builder, &earlyOut);
+  builder->AddLabel(&earlyOut);
 }
 
 static void MakeCompOp(FunctionBuilder* builder, int op) {
   // Compile the opcode corresponding to the comparison operator 'op'.
 
-  uint16_t theCode;
+  FunctionBuilder::BinOp theCode;
   switch (op) {
     case C_GT:
-      theCode = op_gt;
+      theCode = FunctionBuilder::GT;
       break;
     case C_GE:
-      theCode = op_ge;
+      theCode = FunctionBuilder::GE;
       break;
     case C_LT:
-      theCode = op_lt;
+      theCode = FunctionBuilder::LT;
       break;
     case C_LE:
-      theCode = op_le;
+      theCode = FunctionBuilder::LE;
       break;
     case C_EQ:
-      theCode = op_eq;
+      theCode = FunctionBuilder::EQ;
       break;
     case C_NE:
-      theCode = op_ne;
+      theCode = FunctionBuilder::NE;
       break;
     case C_UGT:
-      theCode = op_ugt;
+      theCode = FunctionBuilder::UGT;
       break;
     case C_UGE:
-      theCode = op_uge;
+      theCode = FunctionBuilder::UGE;
       break;
     case C_ULT:
-      theCode = op_ult;
+      theCode = FunctionBuilder::ULT;
       break;
     case C_ULE:
-      theCode = op_ule;
+      theCode = FunctionBuilder::ULE;
       break;
   }
 
-  builder->GetOpList()->newNode<ANOpCode>(theCode);
+  builder->AddBinOp(theCode);
 }
 
 static void MakeIf(FunctionBuilder* builder, PNode* pn) {
@@ -760,8 +729,8 @@ static void MakeIf(FunctionBuilder* builder, PNode* pn) {
   CompileExpr(builder, pn->child_at(0));
 
   // Branch to the else code (if there is any) if the expression is false.
-  ForwardRef<ANLabel*> elseLabel;
-  MakeBranch(builder, op_bnt, &elseLabel);
+  auto elseLabel = builder->CreateLabelRef();
+  builder->AddBranchOp(FunctionBuilder::BNT, &elseLabel);
 
   // Compile the code to be executed if expression was true.
   if (pn->child_at(1)) CompileExpr(builder, pn->child_at(1));
@@ -770,22 +739,21 @@ static void MakeIf(FunctionBuilder* builder, PNode* pn) {
   // Otherwise, jump around the else code, backpatch the jump to the
   // else code, compile the else code, and backpatch the jump around
   // the else code.
-  if (!pn->child_at(2))
-    MakeLabel(builder, &elseLabel);
-
-  else {
-    ForwardRef<ANLabel*> doneLabel;
-    MakeBranch(builder, op_jmp, &doneLabel);
-    MakeLabel(builder, &elseLabel);
+  if (!pn->child_at(2)) {
+    builder->AddLabel(&elseLabel);
+  } else {
+    auto doneLabel = builder->CreateLabelRef();
+    builder->AddBranchOp(FunctionBuilder::JMP, &doneLabel);
+    builder->AddLabel(&elseLabel);
     CompileExpr(builder, pn->child_at(2));
-    MakeLabel(builder, &doneLabel);
+    builder->AddLabel(&doneLabel);
   }
 }
 
 static void MakeCond(FunctionBuilder* builder, PNode* pn) {
   // Compile code for a 'cond' expression.
 
-  ForwardRef<ANLabel*> done;
+  auto done = builder->CreateLabelRef();
   bool elseSeen = false;
 
   // Children alternate between conditions and body.
@@ -794,7 +762,7 @@ static void MakeCond(FunctionBuilder* builder, PNode* pn) {
 
   std::size_t i = 0;
   while (i < pn->children.size()) {
-    ForwardRef<ANLabel*> next;
+    auto next = builder->CreateLabelRef();
     auto* condition = pn->children[i++].get();
     PNode* body = i < pn->children.size() && pn->children[i]->type == PN_ELIST
                       ? pn->children[i++].get()
@@ -816,10 +784,10 @@ static void MakeCond(FunctionBuilder* builder, PNode* pn) {
 
       //	if we're on the last test and it fails, exit
       if (body && atEnd) {
-        MakeBranch(builder, op_bnt, &done);
+        builder->AddBranchOp(FunctionBuilder::BNT, &done);
         //	if we're on an interior test and it fails, go to next test
       } else {
-        MakeBranch(builder, op_bnt, &next);
+        builder->AddBranchOp(FunctionBuilder::BNT, &next);
       }
 
     } else if (elseSeen) {
@@ -839,19 +807,19 @@ static void MakeCond(FunctionBuilder* builder, PNode* pn) {
     // destination for the jump which branched around the code
     // just compiled.
     if (!atEnd) {
-      MakeBranch(builder, op_jmp, &done);
-      MakeLabel(builder, &next);
+      builder->AddBranchOp(FunctionBuilder::JMP, &done);
+      builder->AddLabel(&next);
     }
   }
 
   // Make a destination for jumps to the end of the cond clause.
-  MakeLabel(builder, &done);
+  builder->AddLabel(&done);
 }
 
 static void MakeSwitch(FunctionBuilder* builder, PNode* pn) {
   // Compile code for the 'switch' statement.
 
-  ForwardRef<ANLabel*> done;
+  auto done = builder->CreateLabelRef();
   bool elseSeen = false;
 
   PNode::ChildSpan children = pn->children;
@@ -861,11 +829,11 @@ static void MakeSwitch(FunctionBuilder* builder, PNode* pn) {
   // Compile the expression to be switched on and put the value on
   // the stack.
   CompileExpr(builder, value);
-  builder->GetOpList()->newNode<ANOpCode>(op_push);
+  builder->AddPushOp();
 
   std::size_t i = 0;
   while (i < cases.size()) {
-    ForwardRef<ANLabel*> next;
+    auto next = builder->CreateLabelRef();
     auto* caseClause = cases[i++].get();
     PNode* body = i < cases.size() && cases[i]->type == PN_ELIST
                       ? cases[i++].get()
@@ -880,13 +848,13 @@ static void MakeSwitch(FunctionBuilder* builder, PNode* pn) {
       }
 
       // Duplicate the switch value.
-      builder->GetOpList()->newNode<ANOpCode>(op_dup);
+      builder->AddDupOp();
 
       // Compile the test value.
       CompileExpr(builder, caseClause);
 
       // Test for equality.
-      builder->GetOpList()->newNode<ANOpCode>(op_eq);
+      builder->AddBinOp(FunctionBuilder::EQ);
 
       //	if we're at the end, just fall through
       if (atEnd && !body) {
@@ -895,11 +863,10 @@ static void MakeSwitch(FunctionBuilder* builder, PNode* pn) {
 
       //	if we're on the last test and it fails, exit
       if (atEnd && body) {
-        MakeBranch(builder, op_bnt, &done);
-
+        builder->AddBranchOp(FunctionBuilder::BNT, &done);
       } else {
         //	if we're on an interior test and it fails, go to next test
-        MakeBranch(builder, op_bnt, &next);
+        builder->AddBranchOp(FunctionBuilder::BNT, &next);
       }
 
     } else if (elseSeen) {
@@ -917,16 +884,16 @@ static void MakeSwitch(FunctionBuilder* builder, PNode* pn) {
     // Otherwise, make a jump to the end of the expression, then
     // make a target for the branch around the previous code.
     if (!atEnd) {
-      MakeBranch(builder, op_jmp, &done);
-      MakeLabel(builder, &next);
+      builder->AddBranchOp(FunctionBuilder::JMP, &done);
+      builder->AddLabel(&next);
     }
   }
 
   // Compile a target for jumps to the end of the switch expression.
-  MakeLabel(builder, &done);
+  builder->AddLabel(&done);
 
   // Take the switch value off the stack.
-  builder->GetOpList()->newNode<ANOpCode>(op_toss);
+  builder->AddTossOp();
 }
 
 static void MakeIncDec(FunctionBuilder* builder, PNode* pn) {
@@ -977,10 +944,10 @@ static void MakeProc(PNode* pn) {
   if (pn->child_at(0)) CompileExpr(func_builder.get(), pn->child_at(0));
 
   if (gConfig->includeDebugInfo) {
-    func_builder->GetOpList()->newNode<ANLineNum>(
-        gInputState.GetTopLevelLineNum());
+    func_builder->AddLineAnnotation(gInputState.GetTopLevelLineNum());
   }
-  func_builder->GetOpList()->newNode<ANOpCode>(op_ret);
+
+  func_builder->AddReturnOp();
 }
 
 void MakeObject(Object* theObj) {
@@ -1027,9 +994,4 @@ void MakeObject(Object* theObj) {
         sp->sym->forwardRef.Clear();
       }
   }
-}
-
-void MakeLabel(FunctionBuilder* builder, ForwardRef<ANLabel*>* dest) {
-  auto* label = builder->GetOpList()->newNode<ANLabel>();
-  dest->Resolve(label);
 }

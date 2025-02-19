@@ -3,39 +3,28 @@
 
 #include <cassert>
 
-#include "scic/codegen/alist.hpp"
-#include "scic/codegen/anode_impls.hpp"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/compile.hpp"
-#include "scic/opcodes.hpp"
 #include "scic/pnode.hpp"
-#include "util/types/forward_ref.hpp"
 
 enum LoopType { LOOP_FOR, LOOP_WHILE, LOOP_REPEAT };
 
 struct Loop {
-  Loop(FunctionBuilder* builder, LoopType t, ForwardRef<ANLabel*>* c,
-       ForwardRef<ANLabel*>* e);
+  Loop(LoopType t, LabelRef* cont, LabelRef* end);
   ~Loop();
 
   Loop* next;
   LoopType type;
-  ANLabel* start;              // address of start of the loop
-  ForwardRef<ANLabel*>* cont;  // symbol for continue address
-  ForwardRef<ANLabel*>* end;   // symbol for the end of the loop
+  LabelRef* cont;  // symbol for continue address
+  LabelRef* end;   // symbol for the end of the loop
 };
 
 // 'loopList' is a stack of the currently active loops.  We can scan it
 // to support such things as (break n) and (continue n).
 Loop* loopList;
 
-Loop::Loop(FunctionBuilder* builder, LoopType t, ForwardRef<ANLabel*>* c,
-           ForwardRef<ANLabel*>* e)
-    : next(loopList),
-      type(t),
-      start(builder->GetOpList()->newNode<ANLabel>()),
-      cont(c),
-      end(e) {
+Loop::Loop(LoopType t, LabelRef* cont, LabelRef* end)
+    : next(loopList), type(t), cont(cont), end(end) {
   // Add this loop to the loop list.
   loopList = this;
 }
@@ -48,11 +37,11 @@ Loop::~Loop() {
 void MakeWhile(FunctionBuilder* builder, PNode* theNode)
 // while ::= 'while' expression statement*
 {
-  ForwardRef<ANLabel*> cont;
-  ForwardRef<ANLabel*> end;
-  Loop lp(builder, LOOP_WHILE, &cont, &end);
+  auto cont = builder->CreateLabelRef();
+  auto end = builder->CreateLabelRef();
+  Loop lp(LOOP_WHILE, &cont, &end);
 
-  cont.Resolve(lp.start);
+  builder->AddLabel(&cont);
 
   assert(theNode->children.size() == 2);
 
@@ -61,26 +50,26 @@ void MakeWhile(FunctionBuilder* builder, PNode* theNode)
   PNode* expr = theNode->child_at(0);
   PNode* body = theNode->child_at(1);
   CompileExpr(builder, expr);
-  MakeBranch(builder, op_bnt, &end);
+  builder->AddBranchOp(FunctionBuilder::BNT, &end);
 
   // Compile the statements in the loop
   if (body) CompileExpr(builder, body);
 
   // Make the branch back to the loop start.
-  MakeBranch(builder, op_jmp, lp.start);
+  builder->AddBranchOp(FunctionBuilder::JMP, &cont);
 
   // Compile the label at the end of the loop
-  MakeLabel(builder, &end);
+  builder->AddLabel(&end);
 }
 
 void MakeRepeat(FunctionBuilder* builder, PNode* theNode) {
   // forever ::= 'forever' statement+
 
-  ForwardRef<ANLabel*> cont;
-  ForwardRef<ANLabel*> end;
-  Loop lp(builder, LOOP_REPEAT, &cont, &end);
+  auto cont = builder->CreateLabelRef();
+  auto end = builder->CreateLabelRef();
+  Loop lp(LOOP_REPEAT, &cont, &end);
 
-  cont.Resolve(lp.start);
+  builder->AddLabel(&cont);
 
   PNode* body = theNode->child_at(0);
 
@@ -88,10 +77,10 @@ void MakeRepeat(FunctionBuilder* builder, PNode* theNode) {
   if (body) CompileExpr(builder, body);
 
   // Make the branch back to the start of the loop.
-  MakeBranch(builder, op_jmp, lp.start);
+  builder->AddBranchOp(FunctionBuilder::JMP, &cont);
 
   // Make the target label for breaks.
-  MakeLabel(builder, &end);
+  builder->AddLabel(&end);
 }
 
 void MakeFor(FunctionBuilder* builder, PNode* theNode) {
@@ -109,27 +98,30 @@ void MakeFor(FunctionBuilder* builder, PNode* theNode) {
   if (init) CompileExpr(builder, init);
 
   // Make the label at the start of the loop
-  ForwardRef<ANLabel*> end;
-  ForwardRef<ANLabel*> cont;
-  Loop lp(builder, LOOP_FOR, &cont, &end);
+  auto end = builder->CreateLabelRef();
+  auto cont = builder->CreateLabelRef();
+  auto start = builder->CreateLabelRef();
+  builder->AddLabel(&start);
+
+  Loop lp(LOOP_FOR, &cont, &end);
 
   // Compile the conditional expression controlling the loop,
   // and its corresponding branch.
   if (cond) CompileExpr(builder, cond);
-  MakeBranch(builder, op_bnt, &end);
+  builder->AddBranchOp(FunctionBuilder::BNT, &end);
 
   // Compile the statements in the loop
   if (body) CompileExpr(builder, body);
 
   // Compile the re-initialization statements
-  MakeLabel(builder, &cont);
+  builder->AddLabel(&cont);
   if (update) CompileExpr(builder, update);
 
   // Make the branch back to the loop start.
-  MakeBranch(builder, op_jmp, lp.start);
+  builder->AddBranchOp(FunctionBuilder::JMP, &start);
 
   // Compile the label at the end of the loop
-  MakeLabel(builder, &end);
+  builder->AddLabel(&end);
 }
 
 void MakeBreak(FunctionBuilder* builder, PNode* theNode) {
@@ -145,7 +137,7 @@ void MakeBreak(FunctionBuilder* builder, PNode* theNode) {
   for (lp = loopList; level > 0; --level)
     if (lp->next) lp = lp->next;
 
-  MakeBranch(builder, op_jmp, lp->end);
+  builder->AddBranchOp(FunctionBuilder::JMP, lp->end);
 }
 
 void MakeBreakIf(FunctionBuilder* builder, PNode* theNode) {
@@ -164,7 +156,7 @@ void MakeBreakIf(FunctionBuilder* builder, PNode* theNode) {
   for (lp = loopList; level > 0; --level)
     if (lp->next) lp = lp->next;
 
-  MakeBranch(builder, op_bt, lp->end);
+  builder->AddBranchOp(FunctionBuilder::BNT, lp->end);
 }
 
 void MakeContinue(FunctionBuilder* builder, PNode* theNode) {
@@ -180,10 +172,7 @@ void MakeContinue(FunctionBuilder* builder, PNode* theNode) {
   for (lp = loopList; level > 0; --level)
     if (lp->next) lp = lp->next;
 
-  if (lp->type == LOOP_FOR)
-    MakeBranch(builder, op_jmp, lp->cont);
-  else
-    MakeBranch(builder, op_jmp, lp->start);
+  builder->AddBranchOp(FunctionBuilder::JMP, lp->cont);
 }
 
 void MakeContIf(FunctionBuilder* builder, PNode* theNode) {
@@ -202,8 +191,5 @@ void MakeContIf(FunctionBuilder* builder, PNode* theNode) {
   for (lp = loopList; level > 0; --level)
     if (lp->next) lp = lp->next;
 
-  if (lp->type == LOOP_FOR)
-    MakeBranch(builder, op_bt, lp->cont);
-  else
-    MakeBranch(builder, op_bt, lp->start);
+  builder->AddBranchOp(FunctionBuilder::BT, lp->cont);
 }
