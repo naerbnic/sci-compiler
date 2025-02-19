@@ -364,6 +364,36 @@ void FunctionBuilder::AddLoadOffsetTo(PtrRef* ptr,
   ptr->ref_.RegisterCallback([ofs](ANode* target) { ofs->target = target; });
 }
 
+void FunctionBuilder::AddLoadVarAddr(VarType var_type, std::size_t offset,
+                                     bool addAccumIndex,
+                                     std::optional<std::string> name) {
+  uint32_t accType;
+  switch (var_type) {
+    case GLOBAL:
+      accType = OP_GLOBAL;
+      break;
+    case LOCAL:
+      accType = OP_LOCAL;
+      break;
+    case TEMP:
+      accType = OP_TMP;
+      break;
+    case PARAM:
+      accType = OP_PARM;
+      break;
+  }
+
+  if (addAccumIndex) {
+    accType |= OP_INDEX;
+  }
+
+  auto* node =
+      code_node_->getList()->newNode<ANEffctAddr>(op_lea, offset, accType);
+  if (name) {
+    node->name = std::move(name).value();
+  }
+}
+
 void FunctionBuilder::AddBinOp(BinOp op) {
   code_node_->getList()->newNode<ANOpCode>(GetBinOpValue(op));
 }

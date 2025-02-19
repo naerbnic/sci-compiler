@@ -168,6 +168,13 @@ class FunctionBuilder {
     JMP,
   };
 
+  enum VarType {
+    GLOBAL,
+    LOCAL,
+    PARAM,
+    TEMP,
+  };
+
   // Returns an ANode for the function. This can be used to resolve the
   // location of the function during assembly.
   ANode* GetNode() const;
@@ -208,6 +215,16 @@ class FunctionBuilder {
   //
   void AddLoadOffsetTo(PtrRef* ptr,
                        std::optional<std::string> name = std::nullopt);
+
+  // Load the effective address of the given variable.
+  //
+  // Loads the address with the offset of the variable with the given type
+  // into the accumulator.
+  //
+  // If add_accum_index is true, it will also add the accumulator index to the
+  // offset before loading the address.
+  void AddLoadVarAddr(VarType var_type, std::size_t offset,
+                      bool add_accum_index, std::optional<std::string> name);
 
   // Add a binary operation, combining the top of the stack with
   // the current accumulator value.

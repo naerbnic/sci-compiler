@@ -26,6 +26,7 @@
 #include "scic/public.hpp"
 #include "scic/symtypes.hpp"
 
+static void MakeLoadEffectiveAddr(FunctionBuilder* builder, PNode*);
 static void MakeAccess(FunctionBuilder* builder, PNode*, uint8_t);
 static void MakeCall(FunctionBuilder* builder, PNode* pn);
 static void MakeClassID(FunctionBuilder* builder, PNode*);
@@ -116,7 +117,7 @@ void CompileExpr(FunctionBuilder* builder, PNode* pn) {
       break;
 
     case PN_ADDROF:
-      MakeAccess(builder, pn->first_child(), op_lea);
+      MakeLoadEffectiveAddr(builder, pn->first_child());
       break;
 
     case PN_CLASS:
@@ -209,6 +210,69 @@ void CompileExpr(FunctionBuilder* builder, PNode* pn) {
   }
 }
 
+static void MakeLoadEffectiveAddr(FunctionBuilder* builder, PNode* pn) {
+  // Compile code to access the variable indicated by pn.  Access
+  // is OP_STORE or OP_LOAD
+
+  uint16_t theAddr;
+  pn_t varType;
+
+  std::optional<std::string> name;
+
+  // Put a pointer to the referenced symbol in the assembly node,
+  // so we can print its name in the listing.
+  switch (pn->type) {
+    case PN_NUM:
+      break;
+    case PN_INDEX: {
+      auto* index = pn->child_at(0)->sym;
+      if (index) {
+        name = std::string(index->name());
+      }
+      break;
+    }
+    default:
+      if (pn->sym) {
+        name = std::string(pn->sym->name());
+      }
+      break;
+  }
+
+  // Check for indexing and compile the index if necessary.
+  bool indexed = pn->type == PN_INDEX;
+  if (indexed) {
+    PNode* child = pn->children[0].get();
+    CompileExpr(builder, pn->children[1].get());  // compile index value
+    theAddr = child->val;
+    varType = child->type;
+
+  } else {
+    theAddr = pn->val;
+    varType = pn->type;
+  }
+
+  FunctionBuilder::VarType accType;
+  switch (varType) {
+    case PN_GLOBAL:
+      accType = FunctionBuilder::GLOBAL;
+      break;
+    case PN_LOCAL:
+      accType = FunctionBuilder::LOCAL;
+      break;
+    case PN_TMP:
+      accType = FunctionBuilder::TEMP;
+      break;
+    case PN_PARM:
+      accType = FunctionBuilder::PARAM;
+      break;
+    default:
+      Fatal("Internal error: bad variable type in MakeAccess()");
+      break;
+  }
+
+  builder->AddLoadVarAddr(accType, theAddr, indexed, std::move(name));
+}
+
 static void MakeAccess(FunctionBuilder* builder, PNode* pn, uint8_t theCode) {
   // Compile code to access the variable indicated by pn.  Access
   // is OP_STORE or OP_LOAD
@@ -224,7 +288,7 @@ static void MakeAccess(FunctionBuilder* builder, PNode* pn, uint8_t theCode) {
     if (theCode == (OP_LDST | OP_STORE))
       builder->AddPushOp();  // push the value to store on the stack
     CompileExpr(builder, pn->children[1].get());  // compile index value
-    if (theCode != op_lea) theCode |= OP_INDEX;   // set the indexing bit
+    theCode |= OP_INDEX;                          // set the indexing bit
     theAddr = child->val;
     varType = child->type;
 
@@ -235,69 +299,44 @@ static void MakeAccess(FunctionBuilder* builder, PNode* pn, uint8_t theCode) {
 
   // Set the bits indicating the type of variable to be accessed, then
   // put out the opcode to access it.
-  if (theCode == op_lea) {
-    uint32_t accType;
+  if (varType == PN_PROP) {
+    switch (theCode & OP_TYPE) {
+      case OP_LOAD:
+        theCode = op_pToa;
+        break;
+      case OP_STORE:
+        theCode = op_aTop;
+        break;
+      case OP_INC:
+        theCode = op_ipToa;
+        break;
+      case OP_DEC:
+        theCode = op_dpToa;
+        break;
+    }
+
+  } else {
     switch (varType) {
       case PN_GLOBAL:
-        accType = OP_GLOBAL;
+        theCode |= OP_GLOBAL;
         break;
       case PN_LOCAL:
-        accType = OP_LOCAL;
+        theCode |= OP_LOCAL;
         break;
       case PN_TMP:
-        accType = OP_TMP;
+        theCode |= OP_TMP;
         break;
       case PN_PARM:
-        accType = OP_PARM;
+        theCode |= OP_PARM;
         break;
       default:
         Fatal("Internal error: bad variable type in MakeAccess()");
         break;
     }
-
-    if (indexed) accType |= OP_INDEX;
-    an = builder->GetOpList()->newNode<ANEffctAddr>(theCode, theAddr, accType);
-
-  } else {
-    if (varType == PN_PROP) {
-      switch (theCode & OP_TYPE) {
-        case OP_LOAD:
-          theCode = op_pToa;
-          break;
-        case OP_STORE:
-          theCode = op_aTop;
-          break;
-        case OP_INC:
-          theCode = op_ipToa;
-          break;
-        case OP_DEC:
-          theCode = op_dpToa;
-          break;
-      }
-
-    } else {
-      switch (varType) {
-        case PN_GLOBAL:
-          theCode |= OP_GLOBAL;
-          break;
-        case PN_LOCAL:
-          theCode |= OP_LOCAL;
-          break;
-        case PN_TMP:
-          theCode |= OP_TMP;
-          break;
-        case PN_PARM:
-          theCode |= OP_PARM;
-          break;
-        default:
-          Fatal("Internal error: bad variable type in MakeAccess()");
-          break;
-      }
-    }
-
-    if (theAddr < 256) theCode |= OP_BYTE;
-    an = builder->GetOpList()->newNode<ANVarAccess>(theCode, theAddr);
   }
+
+  if (theAddr < 256) theCode |= OP_BYTE;
+  an = builder->GetOpList()->newNode<ANVarAccess>(theCode, theAddr);
 
   // Put a pointer to the referenced symbol in the assembly node,
   // so we can print its name in the listing.
