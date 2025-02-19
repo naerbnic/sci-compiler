@@ -36,6 +36,11 @@ enum class SciTarget {
   SCI_2,
 };
 
+enum class Optimization {
+  OPTIMIZE,
+  NO_OPTIMIZE,
+};
+
 class TextRef {
  public:
   std::string_view text() const { return ref_->text; }
@@ -327,8 +332,8 @@ class FunctionBuilder {
 
 class CodeGenerator {
  public:
-  static std::unique_ptr<CodeGenerator> Create(
-      SciTarget target = SciTarget::SCI_1_1);
+  static std::unique_ptr<CodeGenerator> Create(SciTarget target,
+                                               Optimization opt);
   ~CodeGenerator();
 
   void Assemble(uint16_t scriptNum, ListingFile* listFile);
@@ -364,6 +369,7 @@ class CodeGenerator {
   void InitAsm();
 
   SciTargetStrategy const* sci_target;
+  Optimization opt;
   bool active;
   std::unique_ptr<FixupList> heapList;
   std::unique_ptr<FixupList> hunkList;

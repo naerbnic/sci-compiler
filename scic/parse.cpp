@@ -5,9 +5,11 @@
 
 #include <csetjmp>
 #include <optional>
+#include <stdexcept>
 #include <string>
 
 #include "scic/codegen/code_generator.hpp"
+#include "scic/config.hpp"
 #include "scic/define.hpp"
 #include "scic/error.hpp"
 #include "scic/global_compiler.hpp"
@@ -25,7 +27,21 @@
 #include "scic/toktypes.hpp"
 
 bool Parse() {
-  gSc = CodeGenerator::Create();
+  SciTarget target;
+  switch (gConfig->targetArch) {
+    case SciTargetArch::SCI_1_1:
+      target = SciTarget::SCI_1_1;
+      break;
+    case SciTargetArch::SCI_2:
+      target = SciTarget::SCI_2;
+      break;
+    default:
+      throw std::runtime_error("Invalid target architecture");
+  }
+
+  Optimization opt =
+      gConfig->noOptimize ? Optimization::NO_OPTIMIZE : Optimization::OPTIMIZE;
+  gSc = CodeGenerator::Create(target, opt);
   gSyms.clearAsmPtrs();
 
   std::optional<TokenSlot> token;

@@ -61,7 +61,6 @@ cc_library(
         ":fixup_list",
         ":target",
         "//scic:common",
-        "//scic:config",
         "//scic:input",
         "//scic:listing",
         "//scic:opcodes",

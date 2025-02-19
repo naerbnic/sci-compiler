@@ -20,7 +20,6 @@
 #include "scic/codegen/fixup_list.hpp"
 #include "scic/codegen/target.hpp"
 #include "scic/common.hpp"
-#include "scic/config.hpp"
 #include "scic/input.hpp"
 #include "scic/listing.hpp"
 #include "scic/opcodes.hpp"
@@ -118,8 +117,8 @@ class ANStringVar : public ANComputedWord {
   ANText* text;
 };
 
-void OptimizeHunk(ANode* anode) {
-  if (!gConfig->noOptimize) {
+void OptimizeHunk(Optimization opt, ANode* anode) {
+  if (opt == Optimization::OPTIMIZE) {
     while (anode->optimize()) {
     }
   }
@@ -598,7 +597,8 @@ FunctionBuilder::FunctionBuilder(SciTargetStrategy const* target,
 
 // -----------------
 
-std::unique_ptr<CodeGenerator> CodeGenerator::Create(SciTarget target) {
+std::unique_ptr<CodeGenerator> CodeGenerator::Create(SciTarget target,
+                                                     Optimization opt) {
   SciTargetStrategy const* target_strategy;
   switch (target) {
     case SciTarget::SCI_1_1:
@@ -612,6 +612,7 @@ std::unique_ptr<CodeGenerator> CodeGenerator::Create(SciTarget target) {
   }
   auto compiler = absl::WrapUnique(new CodeGenerator());
   compiler->sci_target = target_strategy;
+  compiler->opt = opt;
   compiler->InitAsm();
   return compiler;
 }
@@ -662,7 +663,7 @@ void CodeGenerator::Assemble(uint16_t scriptNum, ListingFile* listFile) {
   heapList->setOffset(0);
 
   // Optimize the code, setting all the offsets.
-  OptimizeHunk(hunkList->getRoot());
+  OptimizeHunk(opt, hunkList->getRoot());
 
   // Reset the offsets in the object list to get the current code
   // offsets.
