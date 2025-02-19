@@ -3,11 +3,12 @@
 
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <span>
 #include <utility>
 #include <vector>
 
-#include "scic/codegen/anode_impls.hpp"
+#include "scic/codegen/code_generator.hpp"
 #include "scic/symbol.hpp"
 
 // Parse node types.  The same as symbol types, but with some additions.
@@ -98,7 +99,8 @@ struct PNode {
   // Children
   ChildVector children;
   Symbol* sym;  // symbol associated with node
-  ANText* str;  // string associated with node; Only if type is PN_STRING.
+  // string associated with node; Only if type is PN_STRING.
+  std::optional<TextRef> str;
   // FIXME: This is sometimes redudnant with the sym ptr. Check to see what is
   // needed
   int val;      // node value

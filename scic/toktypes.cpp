@@ -161,7 +161,7 @@ static std::optional<RuntimeNumberOrString> GetNumberOrStringToken(
     case PN_NUM:
       return RuntimeNumberOrString(pn->first_child()->val);
     case PN_STRING:
-      return RuntimeNumberOrString(pn->first_child()->str);
+      return RuntimeNumberOrString(*pn->first_child()->str);
     default:
       Fatal("Unexpected literal type");
   }

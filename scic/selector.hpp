@@ -6,7 +6,7 @@
 #include <string_view>
 #include <variant>
 
-#include "scic/codegen/anode_impls.hpp"
+#include "scic/codegen/code_generator.hpp"
 
 struct ANode;
 class Symbol;
@@ -17,7 +17,7 @@ struct Selector {
 
   Symbol* sym;  // Pointer to symbol for this entry
   //	For a property, its initial value
-  std::optional<std::variant<int, ANText*>> val;
+  std::optional<std::variant<int, TextRef>> val;
   union {
     int ofs;    // Offset of property in template
     ANode* an;  // Pointer to code for a local method

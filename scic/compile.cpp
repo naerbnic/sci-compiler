@@ -102,7 +102,7 @@ void CompileExpr(FunctionBuilder* builder, PNode* pn) {
       break;
 
     case PN_STRING:
-      builder->AddLoadImmediate(pn->str);
+      builder->AddLoadImmediate(*pn->str);
       break;
 
     case PN_GLOBAL:

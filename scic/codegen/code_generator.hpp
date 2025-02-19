@@ -10,25 +10,43 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 #include "scic/codegen/alist.hpp"
 #include "scic/codegen/anode.hpp"
 #include "scic/codegen/anode_impls.hpp"
 #include "scic/codegen/fixup_list.hpp"
-#include "scic/codegen/varlist.hpp"
 #include "scic/listing.hpp"
 #include "util/types/choice.hpp"
 #include "util/types/forward_ref.hpp"
 
+// Forward declarations
 class CodeGenerator;
 class FunctionBuilder;
+class ObjectCodegen;
+class ANVars;
 
 // Internal types
 class ANDispTable;
+class Var;
+
+class TextRef {
+ public:
+  std::string_view text() const { return ref_->text; }
+  bool operator==(TextRef const& other) const = default;
+
+ private:
+  friend class CodeGenerator;
+  friend class FunctionBuilder;
+  friend class ObjectCodegen;
+  friend class ANVars;
+  explicit TextRef(ANText* ref) : ref_(ref) {}
+  ANText* ref_;
+};
 
 // The value of a literal. Either an integer, or a static string, represented
 // as a pointer to an ANText.
-using LiteralValue = util::Choice<int, ANText*>;
+using LiteralValue = util::Choice<int, TextRef>;
 
 struct ProcedureName {
   explicit ProcedureName(std::string name) : procName(std::move(name)) {}
@@ -101,7 +119,7 @@ class LabelRef {
  private:
   friend class FunctionBuilder;
   LabelRef() = default;
-  ForwardRef<ANLabel*> ref;
+  ForwardRef<ANLabel*> ref_;
 };
 
 class FunctionBuilder {
@@ -212,7 +230,7 @@ class CodeGenerator {
 
   bool IsInHeap(ANode const* node);
 
-  ANText* AddTextNode(std::string_view text);
+  TextRef AddTextNode(std::string_view text);
 
   // Returns the current number of variables.
   std::size_t NumVars() const;
@@ -238,7 +256,7 @@ class CodeGenerator {
   bool active;
   std::unique_ptr<FixupList> heapList;
   std::unique_ptr<FixupList> hunkList;
-  VarList localVars;
+  std::vector<Var> localVars;
   ANDispTable* dispTable;
   ANodeList* objPropList;
   ANodeList* objDictList;

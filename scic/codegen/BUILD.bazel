@@ -41,11 +41,12 @@ cc_library(
 cc_library(
     name = "code_generator",
     srcs = ["code_generator.cpp"],
-    hdrs = ["code_generator.hpp"],
+    hdrs = [
+        "code_generator.hpp",
+    ],
     deps = [
         ":anode",
         ":fixup_list",
-        ":varlist",
         "//scic:common",
         "//scic:config",
         "//scic:input",
@@ -56,15 +57,5 @@ cc_library(
         "//util/types:forward_ref",
         "@abseil-cpp//absl/memory",
         "@abseil-cpp//absl/strings:str_format",
-    ],
-)
-
-cc_library(
-    name = "varlist",
-    srcs = ["varlist.cpp"],
-    hdrs = ["varlist.hpp"],
-    deps = [
-        ":anode",
-        "//util/types:choice",
     ],
 )

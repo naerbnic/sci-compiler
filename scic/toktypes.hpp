@@ -7,7 +7,7 @@
 #include <utility>
 #include <variant>
 
-#include "scic/codegen/anode_impls.hpp"
+#include "scic/codegen/code_generator.hpp"
 #include "scic/symbol.hpp"
 #include "scic/symtypes.hpp"
 #include "scic/token.hpp"
@@ -99,7 +99,7 @@ class ResolvedTokenSlot {
   }
 };
 
-using RuntimeNumberOrString = std::variant<int, ANText*>;
+using RuntimeNumberOrString = std::variant<int, TextRef>;
 
 [[nodiscard]] ResolvedTokenSlot LookupTok();
 [[nodiscard]] ResolvedTokenSlot GetSymbol();

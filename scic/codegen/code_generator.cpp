@@ -18,16 +18,20 @@
 #include "scic/codegen/anode.hpp"
 #include "scic/codegen/anode_impls.hpp"
 #include "scic/codegen/fixup_list.hpp"
-#include "scic/codegen/varlist.hpp"
 #include "scic/common.hpp"
 #include "scic/config.hpp"
 #include "scic/input.hpp"
 #include "scic/listing.hpp"
 #include "scic/opcodes.hpp"
 #include "scic/output.hpp"
+#include "util/types/choice.hpp"
 #include "util/types/forward_ref.hpp"
 
-namespace {
+class Var {
+ public:
+  std::optional<util::Choice<int, TextRef>> value;
+};
+
 class CompilerHeapContext : public HeapContext {
  public:
   CompilerHeapContext(CodeGenerator* compiler) : compiler_(compiler) {}
@@ -45,22 +49,23 @@ class ANVars : public ANode
 // module.
 {
  public:
-  ANVars(VarList* theVars) : theVars(theVars) {}
+  ANVars(std::vector<Var> const* theVars) : theVars(theVars) {}
 
-  size_t size() const override { return 2 * (theVars->values.size() + 1); }
+  size_t size() const override { return 2 * (theVars->size() + 1); }
 
   void list(ListingFile* listFile) const override {
     // FIXME: I don't know why we're saving/restoring the variable.
     std::size_t curOfs = *offset;
 
     listFile->Listing("\n\nVariables:");
-    listFile->ListWord(curOfs, theVars->values.size());
+    listFile->ListWord(curOfs, theVars->size());
     curOfs += 2;
 
-    for (Var const& var : theVars->values) {
-      var.value->visit(
-          [&](int num) { listFile->ListWord(curOfs, num); },
-          [&](ANText* text) { listFile->ListWord(curOfs, *text->offset); });
+    for (Var const& var : *theVars) {
+      var.value->visit([&](int num) { listFile->ListWord(curOfs, num); },
+                       [&](TextRef text) {
+                         listFile->ListWord(curOfs, *text.ref_->offset);
+                       });
       curOfs += 2;
     }
     listFile->Listing("\n");
@@ -68,8 +73,8 @@ class ANVars : public ANode
 
   void collectFixups(FixupContext* fixup_ctxt) const override {
     std::size_t relOfs = 2;
-    for (Var const& var : theVars->values) {
-      if (var.value->has<ANText*>()) {
+    for (Var const& var : *theVars) {
+      if (var.value->has<TextRef>()) {
         fixup_ctxt->AddRelFixup(this, relOfs);
       }
       relOfs += 2;
@@ -77,17 +82,17 @@ class ANVars : public ANode
   }
 
   void emit(OutputFile* out) const override {
-    out->WriteWord(theVars->values.size());
+    out->WriteWord(theVars->size());
 
-    for (Var const& var : theVars->values) {
+    for (Var const& var : *theVars) {
       auto value = var.value.value_or(0);
       value.visit([&](int num) { out->WriteWord(num); },
-                  [&](ANText* text) { out->WriteWord(*text->offset); });
+                  [&](TextRef text) { out->WriteWord(*text.ref_->offset); });
     }
   }
 
  protected:
-  VarList* theVars;
+  std::vector<Var> const* theVars;
 };
 
 class ANIntVar : public ANComputedWord {
@@ -176,8 +181,6 @@ uint8_t GetBinOpValue(FunctionBuilder::BinOp op) {
   }
 }
 
-}  // namespace
-
 class ANDispTable : public ANode {
  public:
   void AddPublic(std::string name, std::size_t index,
@@ -244,8 +247,8 @@ void ObjectCodegen::AppendProperty(std::string name, std::uint16_t selectorNum,
       [&](int num) {
         props_->getList()->newNode<ANIntProp>(std::move(name), num);
       },
-      [&](ANText* text) {
-        props_->getList()->newNode<ANOfsProp>(std::move(name), text);
+      [&](TextRef text) {
+        props_->getList()->newNode<ANOfsProp>(std::move(name), text.ref_);
       });
   AppendPropDict(selectorNum);
 }
@@ -344,7 +347,9 @@ void FunctionBuilder::AddLoadImmediate(LiteralValue value) {
       [this](int num) {
         code_node_->getList()->newNode<ANOpSign>(op_loadi, num);
       },
-      [this](ANText* text) { code_node_->getList()->newNode<ANOpOfs>(text); });
+      [this](TextRef text) {
+        code_node_->getList()->newNode<ANOpOfs>(text.ref_);
+      });
 }
 
 void FunctionBuilder::AddBinOp(BinOp op) {
@@ -365,13 +370,13 @@ void FunctionBuilder::AddBranchOp(BranchOp op, LabelRef* target) {
       break;
   }
   auto* branch = code_node_->getList()->newNode<ANBranch>(opcode);
-  target->ref.RegisterCallback(
+  target->ref_.RegisterCallback(
       [branch](ANLabel* target) { branch->target = target; });
 }
 
 void FunctionBuilder::AddLabel(LabelRef* label) {
   auto* an_label = code_node_->getList()->newNode<ANLabel>();
-  label->ref.Resolve(an_label);
+  label->ref_.Resolve(an_label);
 }
 
 void FunctionBuilder::AddReturnOp() {
@@ -489,28 +494,28 @@ bool CodeGenerator::IsInHeap(ANode const* node) {
   return heapList->contains(node);
 }
 
-ANText* CodeGenerator::AddTextNode(std::string_view text) {
+TextRef CodeGenerator::AddTextNode(std::string_view text) {
   auto it = textNodes.find(text);
-  if (it != textNodes.end()) return it->second;
+  if (it != textNodes.end()) return TextRef(it->second);
   auto* textNode = textList->newNode<ANText>(std::string(text));
 
   textNodes.emplace(std::string(text), textNode);
-  return textNode;
+  return TextRef(textNode);
 }
 
-std::size_t CodeGenerator::NumVars() const { return localVars.values.size(); }
+std::size_t CodeGenerator::NumVars() const { return localVars.size(); }
 
 bool CodeGenerator::SetVar(std::size_t varNum, LiteralValue value) {
-  if (localVars.values.size() <= varNum) {
-    localVars.values.resize(varNum + 1);
+  if (localVars.size() <= varNum) {
+    localVars.resize(varNum + 1);
   }
 
-  Var* vp = &localVars.values[varNum];
-  if (vp->value) {
+  auto& vp = localVars[varNum];
+  if (vp.value) {
     return false;
   }
 
-  vp->value = value;
+  vp.value = value;
   return true;
 }
 

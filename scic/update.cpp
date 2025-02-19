@@ -18,8 +18,7 @@
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_format.h"
 #include "scic/class.hpp"
-#include "scic/codegen/anode.hpp"
-#include "scic/codegen/anode_impls.hpp"
+#include "scic/codegen/code_generator.hpp"
 #include "scic/common.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
@@ -189,7 +188,7 @@ static void WriteClassDefs() {
                         std::get<int>(*tp->val));
         } else {
           absl::FPrintF(fp, "\t\t%s \"%s\"\n", tp->sym->name(),
-                        absl::CEscape(std::get<ANText*>(*tp->val)->text));
+                        absl::CEscape(std::get<TextRef>(*tp->val).text()));
         }
       }
     }

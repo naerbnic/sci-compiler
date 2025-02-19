@@ -1,6 +1,7 @@
 #ifndef UTIL_OVERLOADED_HPP
 #define UTIL_OVERLOADED_HPP
 
+#include <concepts>
 #include <ostream>
 #include <utility>
 #include <variant>
@@ -33,6 +34,7 @@ class ChoiceBase {
   ChoiceBase& operator=(ChoiceBase&&) = default;
 
   template <class T>
+    requires std::constructible_from<std::variant<Types...>, T>
   ChoiceBase(T&& value) : value_(std::forward<T>(value)) {}
 
   template <class T>

@@ -9,8 +9,6 @@
 #include <variant>
 
 #include "scic/class.hpp"
-#include "scic/codegen/anode.hpp"
-#include "scic/codegen/anode_impls.hpp"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/common.hpp"
 #include "scic/compile.hpp"
@@ -85,7 +83,7 @@ void Declaration(Object* obj, int type) {
       }
       sn->val = *value;
       std::visit(util::Overload([&](int) { sn->tag = T_PROP; },
-                                [&](ANText*) { sn->tag = T_TEXT; }),
+                                [&](TextRef) { sn->tag = T_TEXT; }),
                  *value);
     }
   }
