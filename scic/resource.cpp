@@ -6,7 +6,7 @@
 #include <string>
 
 #include "absl/strings/str_format.h"
-#include "scic/common.hpp"
+#include "scic/codegen/common.hpp"
 #include "scic/memtype.hpp"
 
 std::string ResNameMake(MemType type, int num) {

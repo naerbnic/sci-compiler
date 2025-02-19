@@ -18,7 +18,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "scic/chartype.hpp"
-#include "scic/common.hpp"
+#include "scic/codegen/common.hpp"
 #include "scic/error.hpp"
 #include "scic/input.hpp"
 #include "scic/symbol.hpp"

@@ -13,8 +13,8 @@
 
 #include "scic/codegen/alist.hpp"
 #include "scic/codegen/anode.hpp"
+#include "scic/codegen/common.hpp"
 #include "scic/codegen/target.hpp"
-#include "scic/common.hpp"
 #include "scic/listing.hpp"
 #include "scic/output.hpp"
 

@@ -19,7 +19,7 @@
 #include <utility>
 
 #include "absl/strings/str_format.h"
-#include "scic/common.hpp"
+#include "scic/codegen/common.hpp"
 #include "scic/config.hpp"
 #include "scic/memtype.hpp"
 #include "scic/resource.hpp"

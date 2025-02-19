@@ -8,7 +8,7 @@
 #include <utility>
 
 #include "scic/class.hpp"
-#include "scic/common.hpp"
+#include "scic/codegen/common.hpp"
 #include "scic/error.hpp"
 #include "scic/object.hpp"
 #include "scic/parse.hpp"

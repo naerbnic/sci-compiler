@@ -14,7 +14,7 @@
 #include "absl/functional/function_ref.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
-#include "scic/common.hpp"
+#include "scic/codegen/common.hpp"
 #include "scic/config.hpp"
 #include "scic/opcodes.hpp"
 

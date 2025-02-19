@@ -46,8 +46,8 @@ cc_library(
     srcs = ["resource.cpp"],
     hdrs = ["resource.hpp"],
     deps = [
-        ":common",
         ":memtype",
+        "//scic/codegen:common",
         "@abseil-cpp//absl/strings:str_format",
     ],
 )
@@ -71,10 +71,10 @@ cc_library(
     srcs = ["output.cpp"],
     hdrs = ["output.hpp"],
     deps = [
-        ":common",
         ":config",
         ":memtype",
         ":resource",
+        "//scic/codegen:common",
         "//util/platform",
         "@abseil-cpp//absl/strings:str_format",
     ],
@@ -90,9 +90,9 @@ cc_library(
     srcs = ["listing.cpp"],
     hdrs = ["listing.hpp"],
     deps = [
-        ":common",
         ":config",
         ":opcodes",
+        "//scic/codegen:common",
         "@abseil-cpp//absl/base:nullability",
         "@abseil-cpp//absl/functional:function_ref",
         "@abseil-cpp//absl/strings",
@@ -179,6 +179,7 @@ cc_binary(
         ":output",
         ":symtypes",
         "//scic/codegen:code_generator",
+        "//scic/codegen:common",
         "//util/platform",
         "//util/types:overload",
         "@abseil-cpp//absl/cleanup",
