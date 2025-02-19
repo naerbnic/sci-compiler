@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <optional>
 #include <ranges>
+#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -273,25 +274,39 @@ static void MakeLoadEffectiveAddr(FunctionBuilder* builder, PNode* pn) {
   builder->AddLoadVarAddr(accType, theAddr, indexed, std::move(name));
 }
 
-static void MakeAccess(FunctionBuilder* builder, PNode* pn, uint8_t theCode) {
-  // Compile code to access the variable indicated by pn.  Access
-  // is OP_STORE or OP_LOAD
-
-  ANVarAccess* an;
-  uint16_t theAddr;
-  pn_t varType;
-
-  bool indexed = pn->type == PN_INDEX;
-  if (indexed) {
-    PNode* child = pn->children[0].get();
-    theAddr = child->val;
-    varType = child->type;
-  } else {
-    theAddr = pn->val;
-    varType = pn->type;
+void MakePropAccess(FunctionBuilder* builder, PNode* target, uint8_t theCode,
+                    PNode* index) {
+  if (index != nullptr) {
+    throw std::runtime_error("Property accesses can't use dynamic indexing.");
   }
 
-  if (theCode == (OP_LDST | OP_STORE) && varType != PN_PROP) {
+  // Set the bits indicating the type of variable to be accessed, then
+  // put out the opcode to access it.
+  switch (theCode & OP_TYPE) {
+    case OP_LOAD:
+      theCode = op_pToa;
+      break;
+    case OP_STORE:
+      theCode = op_aTop;
+      break;
+    case OP_INC:
+      theCode = op_ipToa;
+      break;
+    case OP_DEC:
+      theCode = op_dpToa;
+      break;
+  }
+
+  if (target->val < 256) theCode |= OP_BYTE;
+  auto* an = builder->GetOpList()->newNode<ANVarAccess>(theCode, target->val);
+  if (target->sym) {
+    an->name = std::string(target->sym->name());
+  }
+}
+
+static void MakeVarAccess(FunctionBuilder* builder, PNode* target,
+                          uint8_t theCode, PNode* index) {
+  if (theCode == (OP_LDST | OP_STORE)) {
     // push the value to store on the stack
     builder->AddPushOp();
 
@@ -304,70 +319,56 @@ static void MakeAccess(FunctionBuilder* builder, PNode* pn, uint8_t theCode) {
   }
 
   // Check for indexing and compile the index if necessary.
-  if (indexed) {
-    CompileExpr(builder, pn->children[1].get());  // compile index value
-    theCode |= OP_INDEX;                          // set the indexing bit
+  if (index) {
+    CompileExpr(builder, index);  // compile index value
+    theCode |= OP_INDEX;          // set the indexing bit
   }
 
   // Set the bits indicating the type of variable to be accessed, then
   // put out the opcode to access it.
-  if (varType == PN_PROP) {
-    switch (theCode & OP_TYPE) {
-      case OP_LOAD:
-        theCode = op_pToa;
-        break;
-      case OP_STORE:
-        theCode = op_aTop;
-        break;
-      case OP_INC:
-        theCode = op_ipToa;
-        break;
-      case OP_DEC:
-        theCode = op_dpToa;
-        break;
-    }
-
-  } else {
-    switch (varType) {
-      case PN_GLOBAL:
-        theCode |= OP_GLOBAL;
-        break;
-      case PN_LOCAL:
-        theCode |= OP_LOCAL;
-        break;
-      case PN_TMP:
-        theCode |= OP_TMP;
-        break;
-      case PN_PARM:
-        theCode |= OP_PARM;
-        break;
-      default:
-        Fatal("Internal error: bad variable type in MakeAccess()");
-        break;
-    }
-  }
-
-  if (theAddr < 256) theCode |= OP_BYTE;
-  an = builder->GetOpList()->newNode<ANVarAccess>(theCode, theAddr);
-
-  // Put a pointer to the referenced symbol in the assembly node,
-  // so we can print its name in the listing.
-  switch (pn->type) {
-    case PN_NUM:
+  switch (target->type) {
+    case PN_GLOBAL:
+      theCode |= OP_GLOBAL;
       break;
-    case PN_INDEX: {
-      auto* index = pn->child_at(0)->sym;
-      if (index) {
-        an->name = std::string(index->name());
-      }
+    case PN_LOCAL:
+      theCode |= OP_LOCAL;
       break;
-    }
+    case PN_TMP:
+      theCode |= OP_TMP;
+      break;
+    case PN_PARM:
+      theCode |= OP_PARM;
+      break;
     default:
-      if (pn->sym) {
-        an->name = std::string(pn->sym->name());
-      }
+      throw std::runtime_error(
+          "Internal error: bad variable type in MakeAccess()");
       break;
   }
+
+  if (target->val < 256) theCode |= OP_BYTE;
+  auto* an = builder->GetOpList()->newNode<ANVarAccess>(theCode, target->val);
+  if (target->sym) {
+    an->name = std::string(target->sym->name());
+  }
+}
+
+static void MakeAccess(FunctionBuilder* builder, PNode* pn, uint8_t theCode) {
+  // Compile code to access the variable indicated by pn.  Access
+  // is OP_STORE or OP_LOAD
+
+  PNode* target;
+  PNode* index;
+
+  if (pn->type == PN_INDEX) {
+    target = pn->children[0].get();
+    index = pn->children[1].get();
+  } else {
+    target = pn;
+    index = nullptr;
+  }
+
+  target->type == PN_PROP ? MakePropAccess(builder, target, theCode, index)
+                          : MakeVarAccess(builder, target, theCode, index);
 }
 
 static void MakeCall(FunctionBuilder* builder, PNode* pn) {
