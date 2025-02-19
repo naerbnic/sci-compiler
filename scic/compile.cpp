@@ -285,8 +285,17 @@ static void MakeAccess(FunctionBuilder* builder, PNode* pn, uint8_t theCode) {
   bool indexed = pn->type == PN_INDEX;
   if (indexed) {
     PNode* child = pn->children[0].get();
-    if (theCode == (OP_LDST | OP_STORE))
-      builder->AddPushOp();  // push the value to store on the stack
+    if (theCode == (OP_LDST | OP_STORE)) {
+      // push the value to store on the stack
+      builder->AddPushOp();
+
+      // Since the stored value is on the stack, we need to change the
+      // instruction to read the stored value from the stack.
+      //
+      // This was missing from the original code. I have no idea how the
+      // generated code worked without this.
+      theCode |= OP_STACK;
+    }
     CompileExpr(builder, pn->children[1].get());  // compile index value
     theCode |= OP_INDEX;                          // set the indexing bit
     theAddr = child->val;
