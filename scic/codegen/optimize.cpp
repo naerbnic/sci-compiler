@@ -547,7 +547,7 @@ uint32_t OptimizeProc(AOpList* al) {
         auto nextOp = it.next();
         if (nextOp->op == op_push) {
           nextOp.remove();
-          an->op = byteOp ? op_pTos | OP_BYTE : op_pTos;
+          op = an->op = byteOp ? op_pTos | OP_BYTE : op_pTos;
           ++nOptimizations;
           stackType = accType;
           stackVal = accVal;
@@ -620,22 +620,46 @@ uint32_t OptimizeProc(AOpList* al) {
       default: {
         if (!(op & OP_LDST)) break;
 
-        auto* an = down_cast<ANOpSign>(it.get());
+        auto* an = down_cast<ANVarAccess>(it.get());
 
         // We can only optimize loads -- others just set the value of the
         // accumulator.
-        if ((op & OP_TYPE) != OP_LOAD) {
+        if ((op & OP_TYPE) == OP_STORE) {
+          // The main kind of optimization we can do here is to alter this
+          // instruction depending on the previous one.
+          auto prevOp = it.prev();
+
+          if (prevOp->op == op_push && toStack(op) && !indexed(op)) {
+            // We pushing a value from the accumulator, then storing it
+            // from the stack, without using the accumulator. Remove the
+            // push, and change this to a store from the stack.
+            prevOp.remove();
+            op = an->op = an->op & ~OP_STACK;
+            // We no longer know the state of the stack from before.
+            stackType = stackVal = UNKNOWN;
+            ++nOptimizations;
+          }
+
+          if (toStack(op)) {
+            // We're popping the top of the stack in the store, so we
+            // don't have any information anymore.
+            stackType = stackVal = UNKNOWN;
+          }
+          accType = stackType = UNKNOWN;
+          break;
+        } else if ((op & OP_TYPE) != OP_LOAD) {
+          // This is inc/dec, which have implicit loads as well.
           if (indexed(op))
             accType = stackType = UNKNOWN;
           else {
             accType = op & OP_VAR;
-            accVal = an->value;
+            accVal = an->addr;
           }
           break;
         }
 
         if (!toStack(op) && !indexed(op) && (op & OP_VAR) == accType &&
-            an->value == accVal) {
+            an->addr == accVal) {
           // Then this just loads the acc with its present value.
           // Remove the node.
           it.remove();
@@ -667,9 +691,8 @@ uint32_t OptimizeProc(AOpList* al) {
         if (!toStack(op)) {
           // Not a stack operation -- update accumulator's value.
           accType = op & OP_VAR;
-          accVal = an->value;
-
-        } else if ((op & OP_VAR) == accType && an->value == accVal) {
+          accVal = an->addr;
+        } else if ((op & OP_VAR) == accType && an->addr == accVal) {
           // Replace a load to the stack with the acc's current
           // value by a push.
           it.replaceWith(std::make_unique<ANOpCode>(op_push));
@@ -677,7 +700,7 @@ uint32_t OptimizeProc(AOpList* al) {
           stackVal = accVal;
           ++nOptimizations;
 
-        } else if ((op & OP_VAR) == stackType && an->value == stackVal) {
+        } else if ((op & OP_VAR) == stackType && an->addr == stackVal) {
           // Replace a load to the stack of its current value
           // with a dup.
           it.replaceWith(std::make_unique<ANOpCode>(op_dup));
@@ -689,7 +712,7 @@ uint32_t OptimizeProc(AOpList* al) {
         } else {
           // Update the stack's value.
           stackType = op & OP_VAR;
-          stackVal = an->value;
+          stackVal = an->addr;
         }
         break;
       }

@@ -182,7 +182,6 @@ cc_binary(
         "//scic/codegen:anode",
         "//scic/codegen:code_generator",
         "//util/platform",
-        "//util/types:forward_ref",
         "//util/types:overload",
         "@abseil-cpp//absl/cleanup",
         "@abseil-cpp//absl/container:btree",
