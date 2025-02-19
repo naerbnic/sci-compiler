@@ -567,6 +567,23 @@ void FunctionBuilder::AddKernelCall(std::string name, std::size_t numArgs,
   ext_call->numArgs = 2 * numArgs;
 }
 
+void FunctionBuilder::AddSend(std::size_t numArgs) {
+  ANSend* send = code_node_->getList()->newNode<ANSend>(op_send);
+  send->numArgs = 2 * numArgs;
+}
+
+void FunctionBuilder::AddSelfSend(std::size_t numArgs) {
+  ANSend* send = code_node_->getList()->newNode<ANSend>(op_self);
+  send->numArgs = 2 * numArgs;
+}
+
+void FunctionBuilder::AddSuperSend(std::string name, std::size_t numArgs,
+                                   std::size_t species) {
+  auto* send =
+      code_node_->getList()->newNode<ANSuper>(std::move(name), species);
+  send->numArgs = 2 * numArgs;
+}
+
 void FunctionBuilder::AddReturnOp() {
   code_node_->getList()->newNode<ANOpCode>(op_ret);
 }

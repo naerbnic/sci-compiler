@@ -304,6 +304,11 @@ class FunctionBuilder {
 
   void AddKernelCall(std::string name, std::size_t numArgs, std::size_t entry);
 
+  // Send methods.
+  void AddSend(std::size_t numArgs);
+  void AddSelfSend(std::size_t numArgs);
+  void AddSuperSend(std::string name, std::size_t numArgs, std::size_t species);
+
   // Add a Return.
   void AddReturnOp();
 

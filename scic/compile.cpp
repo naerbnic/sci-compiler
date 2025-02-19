@@ -11,8 +11,6 @@
 #include <string>
 #include <utility>
 
-#include "scic/codegen/alist.hpp"
-#include "scic/codegen/anode_impls.hpp"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
@@ -20,7 +18,6 @@
 #include "scic/input.hpp"
 #include "scic/loop.hpp"
 #include "scic/object.hpp"
-#include "scic/opcodes.hpp"
 #include "scic/parse_context.hpp"
 #include "scic/pnode.hpp"
 #include "scic/public.hpp"
@@ -413,18 +410,14 @@ static void MakeSend(FunctionBuilder* builder, PNode* pn) {
   }
 
   // Add the appropriate send.
-  ANSend* an;
   if (on->type == PN_OBJ && on->val == (int)OBJ_SELF)
-    an = builder->GetOpList()->newNode<ANSend>(op_self);
+    builder->AddSelfSend(numArgs);
   else if (on->type == PN_SUPER)
-    an = builder->GetOpList()->newNode<ANSuper>(std::string(on->sym->name()),
-                                                on->val);
+    builder->AddSuperSend(std::string(on->sym->name()), numArgs, on->val);
   else {
     CompileExpr(builder, on);  // compile the object/class id
-    an = builder->GetOpList()->newNode<ANSend>(op_send);
+    builder->AddSend(numArgs);
   }
-
-  an->numArgs = 2 * numArgs;
 }
 
 static int MakeMessage(FunctionBuilder* builder, PNode::ChildSpan theMsg) {
