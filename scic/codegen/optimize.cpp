@@ -8,11 +8,12 @@
 #include <ranges>
 #include <stdexcept>
 
-#include "util/types/casts.hpp"
 #include "scic/codegen/alist.hpp"
 #include "scic/codegen/anode.hpp"
 #include "scic/codegen/anode_impls.hpp"
+#include "scic/list.hpp"
 #include "scic/opcodes.hpp"
+#include "util/types/casts.hpp"
 
 ANOpCode const* FindNextOp(AList<ANOpCode> const* list, ANOpCode const* start) {
   if (!start) {
@@ -29,6 +30,323 @@ ANOpCode const* FindNextOp(AList<ANOpCode> const* list, ANOpCode const* start) {
   return nullptr;
 }
 
+#define isVarAccess(op) bool((op) & OP_LDST)
+#define isStore(op) (((op) & OP_TYPE) == OP_STORE)
+#define indexed(op) ((op) & OP_INDEX)
+#define toStack(op) ((op) & OP_STACK)
+
+// Returns true iff the given opcode reads from the accumulator.
+bool OpReadsAccum(ANOpCode const* node) {
+  // We don't care about the byte flag here.
+  uint8_t op = node->op & ~OP_BYTE;
+
+  // Operations are listed in opcode order, to make it easier to make sure
+  // none are missed.
+  switch (op) {
+    // All math/logic ops use the accumulator.
+    case op_bnot:
+    case op_add:
+    case op_sub:
+    case op_mul:
+    case op_div:
+    case op_mod:
+    case op_shr:
+    case op_shl:
+    case op_xor:
+    case op_and:
+    case op_or:
+    case op_neg:
+    case op_not:
+      return true;
+
+    // All comparison ops use the accumulator
+    case op_eq:
+    case op_ne:
+    case op_gt:
+    case op_ge:
+    case op_lt:
+    case op_le:
+    case op_ugt:
+    case op_uge:
+    case op_ult:
+    case op_ule:
+      return true;
+
+    // We can't tell about branch instructions, but depending on when/how they
+    // branch, and what comes after. To be safe, assume that all branches use
+    // the accumulator.
+    case op_bt:
+    case op_bnt:
+    case op_jmp:
+      return true;
+
+    case op_loadi:
+      return false;
+
+    case op_push:
+      return true;
+
+    case op_pushi:
+    case op_toss:
+    case op_dup:
+    case op_link:
+      return false;
+
+    case op_call:
+      return true;
+
+    // The non-local calls all use op parameters to choose which procedure to
+    // call.
+    case op_callk:
+    case op_callb:
+    case op_calle:
+      return false;
+
+    case op_ret:
+    case op_send:
+      return true;
+
+    case op_class:
+      return false;
+
+    // self and super are like send, but take the object from the environment.
+    // They do not read the accumulator.
+    case op_self:
+    case op_super:
+      return false;
+
+    case op_rest:
+      return false;
+
+    case op_lea: {
+      // LEA is a bit trickier, as we have to look at the parameters to the
+      // instruction to see if it's indexed, and thus reads the accumulator.
+      auto* lea_node = down_cast<ANEffctAddr const>(node);
+      return (lea_node->eaType & OP_INDEX) != 0;
+    }
+
+    case op_selfID:
+    case op_pprev:
+      return false;
+
+    // Only the store accum to property instruction uses the accumulator.
+    case op_pToa:
+      return false;
+
+    case op_aTop:
+      return true;
+
+    case op_pTos:
+    case op_sTop:
+    case op_ipToa:
+    case op_dpToa:
+    case op_ipTos:
+    case op_dpTos:
+      return false;
+
+    case op_lofsa:
+    case op_lofss:
+    case op_push0:
+    case op_push1:
+    case op_push2:
+    case op_pushSelf:
+      return true;
+
+    // Labels are pseudo-ops, and don't use the accumulator.
+    case OP_LABEL:
+      return false;
+
+    default: {
+      // This should be a variable access. Everything else should be an invalid
+      // opcode.
+      if (!isVarAccess(op)) {
+        throw new std::runtime_error("Invalid opcode");
+      }
+
+      // There are two ways for this opcode to use the accumulator: Either it's
+      // storing the accumulator to the variable, or it's indexing the variable
+      // offset with the accumulator.
+      return (isStore(op) && !toStack(op)) || indexed(op);
+    }
+  }
+}
+
+// Returns true iff the given opcode can modify the accumulator.
+bool OpCanModifyAccum(ANOpCode const* node) {
+  // We don't care about the byte flag here.
+  uint8_t op = node->op & ~OP_BYTE;
+
+  // Operations are listed in opcode order, to make it easier to make sure
+  // none are missed.
+  switch (op) {
+    // All math/logic ops modify the accumulator.
+    case op_bnot:
+    case op_add:
+    case op_sub:
+    case op_mul:
+    case op_div:
+    case op_mod:
+    case op_shr:
+    case op_shl:
+    case op_xor:
+    case op_and:
+    case op_or:
+    case op_neg:
+    case op_not:
+      return true;
+
+    // All comparison ops modify the accumulator
+    case op_eq:
+    case op_ne:
+    case op_gt:
+    case op_ge:
+    case op_lt:
+    case op_le:
+    case op_ugt:
+    case op_uge:
+    case op_ult:
+    case op_ule:
+      return true;
+
+    // Branch instructions don't modify the accumulator
+    case op_bt:
+    case op_bnt:
+    case op_jmp:
+      return false;
+
+    case op_loadi:
+      return true;
+
+    case op_push:
+      return false;
+
+    case op_pushi:
+    case op_toss:
+    case op_dup:
+    case op_link:
+      return false;
+
+    // All calls modify the accumulator
+    case op_call:
+    case op_callk:
+    case op_callb:
+    case op_calle:
+      return true;
+
+    case op_ret:
+      return false;
+
+    case op_send:
+    case op_class:
+    case op_self:
+    case op_super:
+      return true;
+
+    case op_rest:
+      return false;
+
+    case op_lea:
+    case op_selfID:
+      return true;
+
+    case op_pprev:
+      return false;
+
+    // Only the store accum to property instruction uses the accumulator.
+    case op_pToa:
+      return true;
+
+    case op_aTop:
+    case op_pTos:
+    case op_sTop:
+      return false;
+
+    case op_ipToa:
+    case op_dpToa:
+      return true;
+
+    case op_ipTos:
+    case op_dpTos:
+      return false;
+
+    case op_lofsa:
+      return true;
+    case op_lofss:
+    case op_push0:
+    case op_push1:
+    case op_push2:
+    case op_pushSelf:
+      return false;
+
+    // Labels are pseudo-ops, and don't modify the accumulator.
+    case OP_LABEL:
+      return false;
+
+    default: {
+      // This should be a variable access. Everything else should be an invalid
+      // opcode.
+      if (!isVarAccess(op)) {
+        throw new std::runtime_error("Invalid opcode");
+      }
+
+      // For this to modify the accumulator, it must be loading the variable
+      // to the accumulator (which is all types aside from store).
+      return !isStore(op) && !toStack(op);
+    }
+  }
+}
+
+// Returns true iff the given opcode can cause end execution of a sequence
+// of opcodes.
+bool OpChangesControlFlow(ANOpCode const* node) {
+  // We don't care about the byte flag here.
+  uint8_t op = node->op & ~OP_BYTE;
+
+  // This is simpler than the other functions. Only the branch instructions
+  // and return change control flow.
+  switch (op) {
+    case op_bt:
+    case op_bnt:
+    case op_jmp:
+    case op_ret:
+      return true;
+
+    default:
+      return false;
+  }
+}
+
+// Returns if the instruction modifies the accumulator without reading it.
+//
+// This is useful to see if the accumulator value is important to later
+// operations.
+bool OpClobbersAccum(ANOpCode const* node) {
+  return !OpReadsAccum(node) && OpCanModifyAccum(node);
+}
+
+// Returns true if the current value of the accumulator does not matter.
+bool ExecutionClobbersAccum(TList<ANOpCode>::const_iterator it) {
+  // This does a linear search through the opcode list, so could potentially
+  // cause O(n^2) behavior. This should be fine for most cases, but we should
+  // be aware for future optimizations.
+  while (it) {
+    if (OpReadsAccum(it.get())) {
+      // The accumulator is used.
+      return false;
+    }
+    if (OpCanModifyAccum(it.get())) {
+      // The accumulator is overwritten.
+      return true;
+    }
+    // The accumulator hasn't been changed by the instruction. Check the next
+    // one.
+    ++it;
+  }
+
+  throw std::runtime_error(
+      "Got to end of opcode list without finding a branch or return.");
+}
+
 enum {
   UNKNOWN = 0x4000,
   IMMEDIATE,
@@ -36,9 +354,6 @@ enum {
   OFS,
   SELF,
 };
-
-#define indexed(op) ((op) & OP_INDEX)
-#define toStack(op) ((op) & OP_STACK)
 
 uint32_t OptimizeProc(AOpList* al) {
   uint32_t accType = UNKNOWN;
@@ -328,17 +643,25 @@ uint32_t OptimizeProc(AOpList* al) {
           break;
         }
 
-        auto nextOp = it.next();
+        {
+          // Try to optimize out a load followed by a push to a simple stack
+          // load.
+          //
+          // We have to be careful, because if later code depends on the
+          // accumulator, this could be unsound. (Ask me how I know...)
+          auto nextOp = it.next();
 
-        if (!toStack(op) && nextOp->op == op_push) {
-          nextOp.remove();
-          // Replace a load followed by a push with a load directly
-          // to the stack.
-          stackType = accType;
-          stackVal = accVal;
-          accType = UNKNOWN;
-          op = an->op |= OP_STACK;
-          ++nOptimizations;
+          if (!toStack(op) && nextOp->op == op_push &&
+              ExecutionClobbersAccum(nextOp.next())) {
+            nextOp.remove();
+            // Replace a load followed by a push with a load directly
+            // to the stack.
+            stackType = accType;
+            stackVal = accVal;
+            accType = UNKNOWN;
+            op = an->op |= OP_STACK;
+            ++nOptimizations;
+          }
         }
 
         if (!toStack(op)) {

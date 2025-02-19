@@ -204,6 +204,7 @@ class TList {
 
    private:
     friend class TList;
+    friend class const_iterator;
 
     iterator(TListBase* parent, T* curr_item)
         : IteratorBase<iterator, T>(parent, curr_item) {}
@@ -212,6 +213,8 @@ class TList {
   class const_iterator : public IteratorBase<const_iterator, T const> {
    public:
     const_iterator() : IteratorBase<const_iterator, T const>() {}
+    const_iterator(iterator const& it)
+        : IteratorBase<const_iterator, T const>(it.parent_, it.curr_item_) {}
 
    private:
     template <class T2>
