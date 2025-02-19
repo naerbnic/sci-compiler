@@ -336,7 +336,7 @@ class CodeGenerator {
                                                Optimization opt);
   ~CodeGenerator();
 
-  void Assemble(uint16_t scriptNum, ListingFile* listFile);
+  void Assemble(std::string_view source_file_name, uint16_t scriptNum, ListingFile* listFile);
 
   PtrRef CreatePtrRef();
 

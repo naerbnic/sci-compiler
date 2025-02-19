@@ -44,6 +44,7 @@ cc_library(
     name = "target",
     srcs = ["target.cpp"],
     hdrs = ["target.hpp"],
+    visibility = ["//visibility:private"],
     deps = [
         "//scic:listing",
         "//scic:output",
@@ -61,7 +62,6 @@ cc_library(
         ":fixup_list",
         ":target",
         "//scic:common",
-        "//scic:input",
         "//scic:listing",
         "//scic:opcodes",
         "//scic:output",

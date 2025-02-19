@@ -20,7 +20,6 @@
 #include "scic/codegen/fixup_list.hpp"
 #include "scic/codegen/target.hpp"
 #include "scic/common.hpp"
-#include "scic/input.hpp"
 #include "scic/listing.hpp"
 #include "scic/opcodes.hpp"
 #include "scic/output.hpp"
@@ -654,7 +653,8 @@ void CodeGenerator::InitAsm() {
   active = true;
 }
 
-void CodeGenerator::Assemble(uint16_t scriptNum, ListingFile* listFile) {
+void CodeGenerator::Assemble(std::string_view source_file_name,
+                             uint16_t scriptNum, ListingFile* listFile) {
   if (!active) {
     throw std::runtime_error("Compiler not active");
   }
@@ -680,7 +680,7 @@ void CodeGenerator::Assemble(uint16_t scriptNum, ListingFile* listFile) {
     exit(1);
   }
   FILE* infoFile = fopen(infoFileName, "wb");
-  absl::FPrintF(infoFile, "%s\n", gInputState.GetTopLevelFileName());
+  absl::FPrintF(infoFile, "%s\n", source_file_name);
   fclose(infoFile);
 
   {
