@@ -972,8 +972,6 @@ void MakeObject(Object* theObj) {
           : gSc->CreateClass(theObj->name, &theObj->sym->forwardRef);
 
   {
-    theObj->an = objCodegen->GetObjNode();
-
     {
       for (auto* sp : theObj->selectors())
         if (IsProperty(sp)) {

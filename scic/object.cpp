@@ -13,9 +13,9 @@
 #include "scic/symbol.hpp"
 #include "scic/symtbl.hpp"
 
-Object::Object() : sym(0), num(0), super(0), numProps(0), an(0) {}
+Object::Object() : sym(0), num(0), super(0), numProps(0) {}
 
-Object::Object(Class* theSuper) : sym(0), num(0), super(0), numProps(0), an(0) {
+Object::Object(Class* theSuper) : sym(0), num(0), super(0), numProps(0) {
   super = theSuper->num;
   dupSelectors(theSuper);
 }

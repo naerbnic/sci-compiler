@@ -44,7 +44,6 @@ struct Object {
   // If nullopt, this represents the kernel.
   std::optional<int> script;
   int numProps;      // number of properties in object
-  codegen::ANode* an;         // pointer to object definition
   std::string file;  // filename in which object was defined
 
  protected:

@@ -324,9 +324,6 @@ void ObjectCodegen::AppendPropDict(std::uint16_t selectorNum) {
 
 // -----------------
 
-ANode* FunctionBuilder::GetNode() const { return code_node_; }
-AOpList* FunctionBuilder::GetOpList() const { return code_node_->getList(); }
-
 LabelRef FunctionBuilder::CreateLabelRef() { return LabelRef(); }
 
 void FunctionBuilder::AddLineAnnotation(std::size_t lineNum) {

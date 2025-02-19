@@ -206,16 +206,6 @@ class FunctionBuilder {
     DEC,
   };
 
-  // Returns an ANode for the function. This can be used to resolve the
-  // location of the function during assembly.
-  ANode* GetNode() const;
-
-  // Returns a Code Block node for the function. Opcodes can be added to it
-  // to implement the function.
-  //
-  // TODO: Replace this with builder functions.
-  AOpList* GetOpList() const;
-
   // Creates a label reference that can be used to branch to and
   // resolve a label.
   LabelRef CreateLabelRef();
