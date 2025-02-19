@@ -336,6 +336,10 @@ void FunctionBuilder::AddPushOp() {
   code_node_->getList()->newNode<ANOpCode>(op_push);
 }
 
+void FunctionBuilder::AddPushImmediate(int value) {
+  code_node_->getList()->newNode<ANOpUnsign>(op_pushi, value);
+}
+
 void FunctionBuilder::AddPushPrevOp() {
   code_node_->getList()->newNode<ANOpCode>(op_pprev);
 }
@@ -346,6 +350,14 @@ void FunctionBuilder::AddTossOp() {
 
 void FunctionBuilder::AddDupOp() {
   code_node_->getList()->newNode<ANOpCode>(op_dup);
+}
+
+void FunctionBuilder::AddRestOp(std::size_t value) {
+  uint8_t op = op_rest;
+  if (value < 256) {
+    op |= OP_BYTE;
+  }
+  code_node_->getList()->newNode<ANOpUnsign>(op, value);
 }
 
 void FunctionBuilder::AddLoadImmediate(LiteralValue value) {
@@ -515,6 +527,20 @@ void FunctionBuilder::AddProcCall(std::string name, std::size_t numArgs,
   call->numArgs = 2 * numArgs;
   target->ref_.RegisterCallback(
       [call](ANode* target) { call->target = target; });
+}
+
+void FunctionBuilder::AddExternCall(std::string name, std::size_t numArgs,
+                                    std::size_t script_num, std::size_t entry) {
+  ANOpExtern* ext_call = code_node_->getList()->newNode<ANOpExtern>(
+      std::move(name), script_num, entry);
+  ext_call->numArgs = 2 * numArgs;
+}
+
+void FunctionBuilder::AddKernelCall(std::string name, std::size_t numArgs,
+                                    std::size_t entry) {
+  ANOpExtern* ext_call =
+      code_node_->getList()->newNode<ANOpExtern>(std::move(name), -1, entry);
+  ext_call->numArgs = 2 * numArgs;
 }
 
 void FunctionBuilder::AddReturnOp() {

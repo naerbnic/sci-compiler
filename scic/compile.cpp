@@ -358,9 +358,8 @@ static void MakeCall(FunctionBuilder* builder, PNode* pn) {
   // Count the number of arguments we push.
   uint32_t numArgs = CountArgs(pn->children);
 
-  // Push the number of arguments on the stack (we don't know the
-  // number yet).
-  builder->GetOpList()->newNode<ANOpUnsign>(op_pushi, numArgs);
+  // Push the number of arguments on the stack.
+  builder->AddPushImmediate(numArgs);
 
   // Compile the arguments.
   MakeArgs(builder, pn->children);
@@ -371,9 +370,12 @@ static void MakeCall(FunctionBuilder* builder, PNode* pn) {
     builder->AddProcCall(std::string(sym->name()), numArgs, &sym->forwardRef);
   } else {
     Public* pub = sym->ext();
-    ANOpExtern* extCall = builder->GetOpList()->newNode<ANOpExtern>(
-        std::string(sym->name()), pub->script, pub->entry);
-    extCall->numArgs = 2 * numArgs;
+    if (pub->script < 0) {
+      builder->AddKernelCall(std::string(sym->name()), numArgs, pub->entry);
+    } else {
+      builder->AddExternCall(std::string(sym->name()), numArgs, pub->script,
+                             pub->entry);
+    }
   }
 }
 
@@ -441,7 +443,7 @@ static int MakeMessage(FunctionBuilder* builder, PNode::ChildSpan theMsg) {
 
   // Push the number of arguments on the stack (we don't know the
   // number yet).
-  builder->GetOpList()->newNode<ANOpUnsign>(op_pushi, numArgs);
+  builder->AddPushImmediate(numArgs);
 
   // Compile the arguments to the message and fix up the number
   // of arguments to the message.
@@ -467,9 +469,9 @@ static void MakeArgs(FunctionBuilder* builder, PNode::ChildSpan args) {
   // Return the number of arguments.
 
   for (auto const& arg : args) {
-    if (arg->type == PN_REST)
-      builder->GetOpList()->newNode<ANOpUnsign>(op_rest | OP_BYTE, arg->val);
-    else {
+    if (arg->type == PN_REST) {
+      builder->AddRestOp(arg->val);
+    } else {
       CompileExpr(builder, arg.get());
       builder->AddPushOp();
     }

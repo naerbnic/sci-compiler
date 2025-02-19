@@ -208,6 +208,9 @@ class FunctionBuilder {
   // Pushes the accumulator value onto the stack.
   void AddPushOp();
 
+  // Pushes an immediate value onto the stack.
+  void AddPushImmediate(int value);
+
   // Pushes the previous accumulator to the stack, from the last comparison
   // binary operator.
   void AddPushPrevOp();
@@ -218,6 +221,10 @@ class FunctionBuilder {
 
   // Pushes the top value of the stack onto the stack.
   void AddDupOp();
+
+  // Pushes the rest of the arguments onto the stack, starting from the
+  // given parameter index.
+  void AddRestOp(std::size_t arg_index);
 
   // Loads the given value into the accumulator.
   void AddLoadImmediate(LiteralValue value);
@@ -276,6 +283,11 @@ class FunctionBuilder {
 
   // Adds a call to the given procedure.
   void AddProcCall(std::string name, std::size_t numArgs, PtrRef* target);
+
+  void AddExternCall(std::string name, std::size_t numArgs,
+                     std::size_t script_num, std::size_t entry);
+
+  void AddKernelCall(std::string name, std::size_t numArgs, std::size_t entry);
 
   // Add a Return.
   void AddReturnOp();
