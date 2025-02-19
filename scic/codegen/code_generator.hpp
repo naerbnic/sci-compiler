@@ -21,6 +21,8 @@
 #include "util/types/choice.hpp"
 #include "util/types/forward_ref.hpp"
 
+namespace codegen {
+
 // Forward declarations
 class CodeGenerator;
 class FunctionBuilder;
@@ -336,7 +338,8 @@ class CodeGenerator {
                                                Optimization opt);
   ~CodeGenerator();
 
-  void Assemble(std::string_view source_file_name, uint16_t scriptNum, ListingFile* listFile);
+  void Assemble(std::string_view source_file_name, uint16_t scriptNum,
+                ListingFile* listFile);
 
   PtrRef CreatePtrRef();
 
@@ -381,5 +384,7 @@ class CodeGenerator {
   ANodeList* textList;
   std::map<std::string, ANText*, std::less<>> textNodes;
 };
+
+}  // namespace codegen
 
 #endif

@@ -26,6 +26,8 @@
 #include "util/types/choice.hpp"
 #include "util/types/forward_ref.hpp"
 
+namespace codegen {
+
 class Var {
  public:
   std::optional<util::Choice<int, TextRef>> value;
@@ -783,3 +785,5 @@ std::unique_ptr<FunctionBuilder> CodeGenerator::CreateFunction(
 
   return absl::WrapUnique(new FunctionBuilder(sci_target, code));
 }
+
+}  // namespace codegen

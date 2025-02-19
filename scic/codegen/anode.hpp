@@ -7,9 +7,11 @@
 
 #include "scic/list.hpp"
 #include "scic/listing.hpp"
+#include "scic/output.hpp"
+
+namespace codegen {
 
 struct ANode;
-class OutputFile;
 
 class FixupContext {
  public:
@@ -75,5 +77,7 @@ struct ANOpCode : ANode
 
   uint32_t op;  // type of operator
 };
+
+}  // namespace codegen
 
 #endif

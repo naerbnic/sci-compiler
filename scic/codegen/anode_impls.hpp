@@ -23,6 +23,8 @@
 #define BYTESIZE 2
 #define WORDSIZE 3
 
+namespace codegen {
+
 class ANComputedWord : public ANode {
  public:
   size_t size() const override { return 2; }
@@ -434,5 +436,7 @@ struct ANLineNum : ANOpCode {
  protected:
   int num;
 };
+
+}  // namespace codegen
 
 #endif

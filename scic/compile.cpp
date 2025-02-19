@@ -23,6 +23,12 @@
 #include "scic/public.hpp"
 #include "scic/symtypes.hpp"
 
+using ::codegen::FuncName;
+using ::codegen::FunctionBuilder;
+using ::codegen::MethodName;
+using ::codegen::ProcedureName;
+using ::codegen::PtrRef;
+
 static void MakeLoadEffectiveAddr(FunctionBuilder* builder, PNode*);
 static void MakeAccess(FunctionBuilder* builder, PNode*,
                        FunctionBuilder::ValueOp);

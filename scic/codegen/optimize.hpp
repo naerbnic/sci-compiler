@@ -7,6 +7,10 @@
 
 #include "scic/codegen/alist.hpp"
 
+namespace codegen {
+
 uint32_t OptimizeProc(AOpList* al);
+
+}  // namespace codegen
 
 #endif

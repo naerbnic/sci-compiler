@@ -25,6 +25,8 @@
 #include "scic/resource.hpp"
 #include "util/platform/platform.hpp"
 
+using ::codegen::SCIWord;
+
 OutputFile::OutputFile(std::string fileName) : fileName(fileName) {
   fp = CreateOutputFile(fileName);
   if (!fp)

@@ -5,6 +5,6 @@
 
 #include "scic/codegen/code_generator.hpp"
 
-extern std::unique_ptr<CodeGenerator> gSc;
+extern std::unique_ptr<codegen::CodeGenerator> gSc;
 
 #endif

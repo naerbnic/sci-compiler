@@ -23,6 +23,8 @@
 #include "scic/opcodes.hpp"
 #include "scic/output.hpp"
 
+namespace codegen {
+
 #define OPTIMIZE_TRANSFERS
 
 static bool canOptimizeTransfer(size_t a, size_t b) {
@@ -186,20 +188,6 @@ ANMethod::ANMethod(std::string name, ANCodeBlk* mp)
 std::string_view ANMethod::desc() const { return "local"; }
 
 uint32_t ANMethod::value() const { return *method->offset; }
-
-///////////////////////////////////////////////////
-// Class ANOpCode
-///////////////////////////////////////////////////
-
-ANOpCode::ANOpCode(uint32_t o) : op(o) {}
-
-size_t ANOpCode::size() const { return 1; }
-
-void ANOpCode::list(ListingFile* listFile) const {
-  listFile->ListOp(*offset, op);
-}
-
-void ANOpCode::emit(OutputFile* out) const { out->WriteOp(op); }
 
 ///////////////////////////////////////////////////
 // Class ANLabel
@@ -626,3 +614,5 @@ void ANLineNum::emit(OutputFile* out) const {
 }
 
 size_t ANLineNum::size() const { return 1 + sizeof(SCIWord); }
+
+}  // namespace codegen

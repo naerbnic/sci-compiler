@@ -5,7 +5,11 @@
 //	are 16 bits
 #include <cstdint>
 
+namespace codegen {
+
 using SCIWord = std::int16_t;
 using SCIUWord = std::uint16_t;
+
+}  // namespace codegen
 
 #endif

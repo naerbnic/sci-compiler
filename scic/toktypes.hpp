@@ -99,7 +99,7 @@ class ResolvedTokenSlot {
   }
 };
 
-using RuntimeNumberOrString = std::variant<int, TextRef>;
+using RuntimeNumberOrString = std::variant<int, codegen::TextRef>;
 
 [[nodiscard]] ResolvedTokenSlot LookupTok();
 [[nodiscard]] ResolvedTokenSlot GetSymbol();

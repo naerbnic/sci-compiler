@@ -8,6 +8,8 @@
 #include "scic/codegen/anode.hpp"
 #include "scic/listing.hpp"
 
+namespace codegen {
+
 // A pure-virtual class that gives context if a node is located in the
 // heap.
 class HeapContext {
@@ -61,5 +63,7 @@ class FixupList {
   ANodeList* bodyList_;
   ANodeList* fixupList_;
 };
+
+}  // namespace codegen
 
 #endif

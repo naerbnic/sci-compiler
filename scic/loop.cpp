@@ -7,6 +7,9 @@
 #include "scic/compile.hpp"
 #include "scic/pnode.hpp"
 
+using ::codegen::FunctionBuilder;
+using ::codegen::LabelRef;
+
 enum LoopType { LOOP_FOR, LOOP_WHILE, LOOP_REPEAT };
 
 struct Loop {

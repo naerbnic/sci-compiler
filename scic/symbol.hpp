@@ -37,7 +37,7 @@ class Symbol {
   sym_t type;        // symbol type
   uint32_t lineNum;  //	where symbol was first defined
 
-  PtrRef forwardRef;
+  codegen::PtrRef forwardRef;
 
  private:
   RefVal ref_val_;

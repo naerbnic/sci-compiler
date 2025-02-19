@@ -35,6 +35,8 @@
 
 namespace {
 
+using ::codegen::TextRef;
+
 void Declaration(Object* obj, int type) {
   char msg[80];
 

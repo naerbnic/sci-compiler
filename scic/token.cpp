@@ -26,6 +26,8 @@
 #include "scic/symtypes.hpp"
 #include "scic/toktypes.hpp"
 
+using ::codegen::SCIWord;
+
 #define ALT_QUOTE '{'
 
 static constexpr std::string_view binDigits = "01";

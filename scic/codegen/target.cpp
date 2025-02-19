@@ -5,6 +5,7 @@
 #include "scic/listing.hpp"
 #include "scic/output.hpp"
 
+namespace codegen {
 namespace {
 class Sci11Strategy : public SciTargetStrategy {
  public:
@@ -44,3 +45,5 @@ SciTargetStrategy const* SciTargetStrategy::GetSci2() {
   static Sci2Strategy const* strategy = new Sci2Strategy();
   return strategy;
 }
+
+}  // namespace codegen

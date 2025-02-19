@@ -10,6 +10,7 @@
 #include "scic/listing.hpp"
 #include "scic/output.hpp"
 
+namespace codegen {
 namespace {
 class FixupListContext : public FixupContext {
  public:
@@ -95,3 +96,5 @@ void FixupList::emit(HeapContext* heap_ctxt, OutputFile* out) {
   }
   root_->emit(out);
 }
+
+}  // namespace codegen

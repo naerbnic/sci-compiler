@@ -11,6 +11,9 @@
 #include "scic/codegen/anode.hpp"
 #include "scic/list.hpp"
 #include "scic/listing.hpp"
+#include "scic/output.hpp"
+
+namespace codegen {
 
 template <std::derived_from<ANode> T>
 class AList {
@@ -122,5 +125,7 @@ struct ANComposite : ANode {
  private:
   AList<T> list_;
 };
+
+}  // namespace codegen
 
 #endif

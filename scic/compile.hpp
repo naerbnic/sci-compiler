@@ -8,8 +8,8 @@
 struct Object;
 struct PNode;
 
-void CompileProc(PNode* pn, PtrRef* ptr_ref);
-void CompileExpr(FunctionBuilder* curList, PNode* pn);
+void CompileProc(PNode* pn, codegen::PtrRef* ptr_ref);
+void CompileExpr(codegen::FunctionBuilder* curList, PNode* pn);
 void MakeObject(Object* theObj);
 
 #endif

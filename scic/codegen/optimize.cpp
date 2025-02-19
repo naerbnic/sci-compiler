@@ -15,6 +15,8 @@
 #include "scic/opcodes.hpp"
 #include "util/types/casts.hpp"
 
+namespace codegen {
+
 ANOpCode const* FindNextOp(AList<ANOpCode> const* list, ANOpCode const* start) {
   if (!start) {
     throw new std::runtime_error("start cannot be nullptr");
@@ -723,3 +725,5 @@ uint32_t OptimizeProc(AOpList* al) {
 
   return nOptimizations;
 }
+
+}  // namespace codegen

@@ -36,6 +36,10 @@
 #include "scic/toktypes.hpp"
 #include "scic/vocab.hpp"
 
+using ::codegen::SCIUWord;
+using ::codegen::SCIWord;
+using ::codegen::TextRef;
+
 bool gClassAdded;
 bool gSelectorAdded;
 

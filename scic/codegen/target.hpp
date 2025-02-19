@@ -6,6 +6,8 @@
 #include "scic/listing.hpp"
 #include "scic/output.hpp"
 
+namespace codegen {
+
 // A strategy to handle differences between target architectures.
 //
 // The strategy is stateless, and all methods should be const.
@@ -23,5 +25,7 @@ class SciTargetStrategy {
 
   virtual bool SupportsDebugInstructions() const = 0;
 };
+
+}  // namespace codegen
 
 #endif

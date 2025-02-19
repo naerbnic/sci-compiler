@@ -14,7 +14,6 @@
 #include "absl/functional/function_ref.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
-#include "scic/codegen/common.hpp"
 #include "scic/config.hpp"
 #include "scic/opcodes.hpp"
 
@@ -193,7 +192,7 @@ class ListingFileImpl : public ListingFile {
   }
 
   void ListWord(std::size_t offset, uint16_t w) override {
-    ListAsCode(offset, "word\t$%x", (SCIUWord)w);
+    ListAsCode(offset, "word\t$%x", w);
   }
 
   void ListByte(std::size_t offset, uint8_t b) override {
@@ -325,7 +324,7 @@ std::unique_ptr<ListingFile> ListingFile::Open(
   auto result = std::make_unique<ListingFileImpl>(listFile, sourceFile);
 
   result->Listing("\n\t\t\t\tListing of %s:\t[script %d]\n\n", sourceFileName,
-                  (SCIUWord)scriptNum);
+                  scriptNum);
   result->Listing("LINE/\tOFFSET\tCODE\t\t\t\tNAME");
   result->Listing("LABEL\t(HEX)\n");
 

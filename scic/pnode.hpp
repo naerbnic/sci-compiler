@@ -100,7 +100,7 @@ struct PNode {
   ChildVector children;
   Symbol* sym;  // symbol associated with node
   // string associated with node; Only if type is PN_STRING.
-  std::optional<TextRef> str;
+  std::optional<codegen::TextRef> str;
   // FIXME: This is sometimes redudnant with the sym ptr. Check to see what is
   // needed
   int val;      // node value

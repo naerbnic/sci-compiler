@@ -17,7 +17,7 @@ struct Selector {
 
   Symbol* sym;  // Pointer to symbol for this entry
   //	For a property, its initial value
-  std::optional<std::variant<int, TextRef>> val;
+  std::optional<std::variant<int, codegen::TextRef>> val;
   int ofs;  // Offset of property in template
   uint32_t tag;
 };

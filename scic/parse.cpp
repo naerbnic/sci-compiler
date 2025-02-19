@@ -26,6 +26,10 @@
 #include "scic/token.hpp"
 #include "scic/toktypes.hpp"
 
+using ::codegen::CodeGenerator;
+using ::codegen::Optimization;
+using ::codegen::SciTarget;
+
 bool Parse() {
   SciTarget target;
   switch (gConfig->targetArch) {
