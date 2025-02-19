@@ -13,6 +13,7 @@
 
 #include "scic/codegen/alist.hpp"
 #include "scic/codegen/anode.hpp"
+#include "scic/codegen/target.hpp"
 #include "scic/common.hpp"
 #include "scic/listing.hpp"
 #include "scic/output.hpp"
@@ -277,12 +278,14 @@ struct ANOpSign : ANOpCode
 struct ANOpExtern : ANOpCode
 // The ANOpExtern class describes a call to an external proceedure.
 {
-  ANOpExtern(std::string name, int32_t m, uint32_t e);
+  ANOpExtern(std::string name, SciTargetStrategy const* sci_target, int32_t m,
+             uint32_t e);
 
   size_t size() const override;
   void list(ListingFile* listFile) const override;
   void emit(OutputFile*) const override;
 
+  SciTargetStrategy const* sci_target;
   int32_t module;    // module # of destination
   uint32_t entry;    // entry # of destination
   uint32_t numArgs;  // number of arguments
@@ -291,13 +294,14 @@ struct ANOpExtern : ANOpCode
 
 // The ANCall class describes a call to a procedure in the current module.
 struct ANCall : ANOpCode {
-  ANCall(std::string name);
+  ANCall(std::string name, SciTargetStrategy const* sci_target);
 
   size_t size() const override;
   bool tryShrink() override;
   void list(ListingFile* listFile) const override;
   void emit(OutputFile*) const override;
 
+  SciTargetStrategy const* sci_target;
   uint32_t numArgs;     // number of arguments
   std::string name;     // symbol of procedure being called
   ANode const* target;  // target of call
@@ -381,12 +385,13 @@ struct ANEffctAddr : ANVarAccess
 struct ANSend : ANOpCode
 // The ANSend class represents a send to an object.
 {
-  ANSend(uint32_t o);
+  ANSend(SciTargetStrategy const* sci_target, uint32_t o);
 
   size_t size() const override;
   void list(ListingFile* listFile) const override;
   void emit(OutputFile*) const override;
 
+  SciTargetStrategy const* sci_target;
   uint32_t numArgs;
 };
 
@@ -394,7 +399,7 @@ struct ANSuper : ANSend
 // The ANSuper class represents a send to the superclass whose number is
 // 'classNum'.
 {
-  ANSuper(std::string name, uint32_t c);
+  ANSuper(SciTargetStrategy const* sci_target, std::string name, uint32_t c);
 
   size_t size() const override;
   void list(ListingFile* listFile) const override;

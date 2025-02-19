@@ -16,6 +16,7 @@
 #include "scic/codegen/anode.hpp"
 #include "scic/codegen/anode_impls.hpp"
 #include "scic/codegen/fixup_list.hpp"
+#include "scic/codegen/target.hpp"
 #include "scic/listing.hpp"
 #include "util/types/choice.hpp"
 #include "util/types/forward_ref.hpp"
@@ -29,6 +30,11 @@ class ANVars;
 // Internal types
 class ANDispTable;
 class Var;
+
+enum class SciTarget {
+  SCI_1_1,
+  SCI_2,
+};
 
 class TextRef {
  public:
@@ -314,13 +320,15 @@ class FunctionBuilder {
 
  private:
   friend class CodeGenerator;
-  FunctionBuilder(ANCodeBlk* root_node);
+  FunctionBuilder(SciTargetStrategy const* target, ANCodeBlk* root_node);
+  SciTargetStrategy const* target_;
   ANCodeBlk* code_node_;
 };
 
 class CodeGenerator {
  public:
-  static std::unique_ptr<CodeGenerator> Create();
+  static std::unique_ptr<CodeGenerator> Create(
+      SciTarget target = SciTarget::SCI_1_1);
   ~CodeGenerator();
 
   void Assemble(uint16_t scriptNum, ListingFile* listFile);
@@ -355,6 +363,7 @@ class CodeGenerator {
 
   void InitAsm();
 
+  SciTargetStrategy const* sci_target;
   bool active;
   std::unique_ptr<FixupList> heapList;
   std::unique_ptr<FixupList> hunkList;

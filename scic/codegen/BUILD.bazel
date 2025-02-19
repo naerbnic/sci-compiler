@@ -15,7 +15,9 @@ cc_library(
         "anode_impls.hpp",
         "optimize.hpp",
     ],
+    visibility = ["//visibility:private"],
     deps = [
+        ":target",
         "//scic:common",
         "//scic:config",
         "//scic:list",
@@ -31,8 +33,19 @@ cc_library(
     name = "fixup_list",
     srcs = ["fixup_list.cpp"],
     hdrs = ["fixup_list.hpp"],
+    visibility = ["//visibility:private"],
     deps = [
         ":anode",
+        "//scic:listing",
+        "//scic:output",
+    ],
+)
+
+cc_library(
+    name = "target",
+    srcs = ["target.cpp"],
+    hdrs = ["target.hpp"],
+    deps = [
         "//scic:listing",
         "//scic:output",
     ],
@@ -47,6 +60,7 @@ cc_library(
     deps = [
         ":anode",
         ":fixup_list",
+        ":target",
         "//scic:common",
         "//scic:config",
         "//scic:input",

@@ -602,12 +602,14 @@ uint32_t OptimizeProc(AOpList* al) {
           ++nOptimizations;
 
         } else {
-          auto nextOp = it.next();
-          if (nextOp->op == op_send) {
-            it.replaceWith(std::make_unique<ANSend>(op_self));
-            auto* an = (ANOpSign*)it.get();
-            ((ANSend*)an)->numArgs = ((ANSend*)nextOp.get())->numArgs;
-            nextOp.remove();
+          auto nextOpIt = it.next();
+          if (nextOpIt->op == op_send) {
+            ANSend* nextOp = static_cast<ANSend*>(nextOpIt.get());
+            it.replaceWith(
+                std::make_unique<ANSend>(nextOp->sci_target, op_self));
+            ANSend* an = static_cast<ANSend*>(it.get());
+            an->numArgs = nextOp->numArgs;
+            nextOpIt.remove();
             ++nOptimizations;
             stackType = accType = UNKNOWN;
 

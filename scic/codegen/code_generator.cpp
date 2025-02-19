@@ -18,6 +18,7 @@
 #include "scic/codegen/anode.hpp"
 #include "scic/codegen/anode_impls.hpp"
 #include "scic/codegen/fixup_list.hpp"
+#include "scic/codegen/target.hpp"
 #include "scic/common.hpp"
 #include "scic/config.hpp"
 #include "scic/input.hpp"
@@ -547,7 +548,8 @@ void FunctionBuilder::AddLabel(LabelRef* label) {
 
 void FunctionBuilder::AddProcCall(std::string name, std::size_t numArgs,
                                   PtrRef* target) {
-  ANCall* call = code_node_->getList()->newNode<ANCall>(std::move(name));
+  ANCall* call =
+      code_node_->getList()->newNode<ANCall>(std::move(name), target_);
   call->numArgs = 2 * numArgs;
   target->ref_.RegisterCallback(
       [call](ANode* target) { call->target = target; });
@@ -556,31 +558,31 @@ void FunctionBuilder::AddProcCall(std::string name, std::size_t numArgs,
 void FunctionBuilder::AddExternCall(std::string name, std::size_t numArgs,
                                     std::size_t script_num, std::size_t entry) {
   ANOpExtern* ext_call = code_node_->getList()->newNode<ANOpExtern>(
-      std::move(name), script_num, entry);
+      std::move(name), target_, script_num, entry);
   ext_call->numArgs = 2 * numArgs;
 }
 
 void FunctionBuilder::AddKernelCall(std::string name, std::size_t numArgs,
                                     std::size_t entry) {
-  ANOpExtern* ext_call =
-      code_node_->getList()->newNode<ANOpExtern>(std::move(name), -1, entry);
+  ANOpExtern* ext_call = code_node_->getList()->newNode<ANOpExtern>(
+      std::move(name), target_, -1, entry);
   ext_call->numArgs = 2 * numArgs;
 }
 
 void FunctionBuilder::AddSend(std::size_t numArgs) {
-  ANSend* send = code_node_->getList()->newNode<ANSend>(op_send);
+  ANSend* send = code_node_->getList()->newNode<ANSend>(target_, op_send);
   send->numArgs = 2 * numArgs;
 }
 
 void FunctionBuilder::AddSelfSend(std::size_t numArgs) {
-  ANSend* send = code_node_->getList()->newNode<ANSend>(op_self);
+  ANSend* send = code_node_->getList()->newNode<ANSend>(target_, op_self);
   send->numArgs = 2 * numArgs;
 }
 
 void FunctionBuilder::AddSuperSend(std::string name, std::size_t numArgs,
                                    std::size_t species) {
-  auto* send =
-      code_node_->getList()->newNode<ANSuper>(std::move(name), species);
+  auto* send = code_node_->getList()->newNode<ANSuper>(target_, std::move(name),
+                                                       species);
   send->numArgs = 2 * numArgs;
 }
 
@@ -588,13 +590,26 @@ void FunctionBuilder::AddReturnOp() {
   code_node_->getList()->newNode<ANOpCode>(op_ret);
 }
 
-FunctionBuilder::FunctionBuilder(ANCodeBlk* root_node)
-    : code_node_(root_node) {}
+FunctionBuilder::FunctionBuilder(SciTargetStrategy const* target,
+                                 ANCodeBlk* root_node)
+    : target_(target), code_node_(root_node) {}
 
 // -----------------
 
-std::unique_ptr<CodeGenerator> CodeGenerator::Create() {
+std::unique_ptr<CodeGenerator> CodeGenerator::Create(SciTarget target) {
+  SciTargetStrategy const* target_strategy;
+  switch (target) {
+    case SciTarget::SCI_1_1:
+      target_strategy = SciTargetStrategy::GetSci11();
+      break;
+    case SciTarget::SCI_2:
+      target_strategy = SciTargetStrategy::GetSci2();
+      break;
+    default:
+      throw std::runtime_error("Invalid target architecture");
+  }
   auto compiler = absl::WrapUnique(new CodeGenerator());
+  compiler->sci_target = target_strategy;
   compiler->InitAsm();
   return compiler;
 }
@@ -764,5 +779,5 @@ std::unique_ptr<FunctionBuilder> CodeGenerator::CreateFunction(
     code->getList()->newNode<ANOpUnsign>(op_link, numTemps);
   }
 
-  return absl::WrapUnique(new FunctionBuilder(code));
+  return absl::WrapUnique(new FunctionBuilder(sci_target, code));
 }

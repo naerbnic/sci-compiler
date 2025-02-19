@@ -17,6 +17,7 @@
 #include "scic/codegen/alist.hpp"
 #include "scic/codegen/anode.hpp"
 #include "scic/codegen/optimize.hpp"
+#include "scic/codegen/target.hpp"
 #include "scic/common.hpp"
 #include "scic/config.hpp"
 #include "scic/listing.hpp"
@@ -35,49 +36,6 @@ static bool canOptimizeTransfer(size_t a, size_t b) {
 // In SCI 1.1 and earlier, Calls and Sends wrote the number of args as
 // one byte.  In SCI 2, it's two bytes.  These functions abstract those
 // architecture differences out.
-
-static int NumArgsSize() {
-  switch (gConfig->targetArch) {
-    case SciTargetArch::SCI_1_1:
-      return 1;
-
-    case SciTargetArch::SCI_2:
-      return 2;
-
-    default:
-      throw std::runtime_error("Invalid target architecture");
-  }
-}
-
-static void ListNumArgs(ListingFile* listFile, std::size_t offset, int n) {
-  switch (gConfig->targetArch) {
-    case SciTargetArch::SCI_1_1:
-      listFile->ListByte(offset, n);
-      break;
-
-    case SciTargetArch::SCI_2:
-      listFile->ListWord(offset, n);
-      break;
-
-    default:
-      throw std::runtime_error("Invalid target architecture");
-  }
-}
-
-static void WriteNumArgs(OutputFile* out, int n) {
-  switch (gConfig->targetArch) {
-    case SciTargetArch::SCI_1_1:
-      out->WriteByte(n);
-      break;
-
-    case SciTargetArch::SCI_2:
-      out->WriteWord(n);
-      break;
-
-    default:
-      throw std::runtime_error("Invalid target architecture");
-  }
-}
 
 ///////////////////////////////////////////////////
 // Class ANDispatch
@@ -326,8 +284,9 @@ void ANOpSign::emit(OutputFile* out) const {
 // Class ANOpExtern
 ///////////////////////////////////////////////////
 
-ANOpExtern::ANOpExtern(std::string name, int32_t m, uint32_t e)
-    : module(m), entry(e), name(std::move(name)) {
+ANOpExtern::ANOpExtern(std::string name, SciTargetStrategy const* sci_target,
+                       int32_t m, uint32_t e)
+    : sci_target(sci_target), module(m), entry(e), name(std::move(name)) {
   switch (module) {
     case KERNEL:
       op = op_callk | (entry < 256 ? OP_BYTE : 0);
@@ -342,7 +301,7 @@ ANOpExtern::ANOpExtern(std::string name, int32_t m, uint32_t e)
 }
 
 size_t ANOpExtern::size() const {
-  int arg_size = NumArgsSize();
+  int arg_size = sci_target->NumArgsSize();
 
   switch (op & ~OP_BYTE) {
     case op_callk:
@@ -366,7 +325,7 @@ void ANOpExtern::list(ListingFile* listFile) const {
       listFile->ListArg("$%x/%x\t(%s)", (SCIUWord)module, (SCIUWord)entry,
                         name);
   }
-  ListNumArgs(listFile, *offset + 1, numArgs);
+  sci_target->ListNumArgs(listFile, *offset + 1, numArgs);
 }
 
 void ANOpExtern::emit(OutputFile* out) const {
@@ -382,18 +341,21 @@ void ANOpExtern::emit(OutputFile* out) const {
     out->WriteByte(entry);
   else
     out->WriteWord(entry);
-  WriteNumArgs(out, numArgs);
+  sci_target->WriteNumArgs(out, numArgs);
 }
 
 ///////////////////////////////////////////////////
 // Class ANCall
 ///////////////////////////////////////////////////
 
-ANCall::ANCall(std::string name)
-    : ANOpCode(op_call), name(std::move(name)), target(nullptr) {}
+ANCall::ANCall(std::string name, SciTargetStrategy const* sci_target)
+    : ANOpCode(op_call),
+      sci_target(sci_target),
+      name(std::move(name)),
+      target(nullptr) {}
 
 size_t ANCall::size() const {
-  int arg_size = NumArgsSize();
+  int arg_size = sci_target->NumArgsSize();
 
   return (op & OP_BYTE ? 2 : 3) + arg_size;
 }
@@ -421,7 +383,7 @@ void ANCall::list(ListingFile* listFile) const {
   listFile->ListOp(*offset, op_call);
   listFile->ListArg("$%-4x\t(%s)",
                     SCIUWord(*target->offset - (*offset + size())), name);
-  ListNumArgs(listFile, *offset + 1, numArgs);
+  sci_target->ListNumArgs(listFile, *offset + 1, numArgs);
 }
 
 void ANCall::emit(OutputFile* out) const {
@@ -436,7 +398,7 @@ void ANCall::emit(OutputFile* out) const {
     out->WriteByte(n);
   else
     out->WriteWord(n);
-  WriteNumArgs(out, numArgs);
+  sci_target->WriteNumArgs(out, numArgs);
 }
 
 ///////////////////////////////////////////////////
@@ -585,35 +547,39 @@ void ANEffctAddr::emit(OutputFile* out) const {
 // Class ANSend
 ///////////////////////////////////////////////////
 
-ANSend::ANSend(uint32_t o) : ANOpCode(o) {}
+ANSend::ANSend(SciTargetStrategy const* sci_target, uint32_t o)
+    : ANOpCode(o), sci_target(sci_target) {}
 
-size_t ANSend::size() const { return 1 + NumArgsSize(); }
+size_t ANSend::size() const { return 1 + sci_target->NumArgsSize(); }
 
 void ANSend::list(ListingFile* listFile) const {
   listFile->ListOp(*offset, op);
-  ListNumArgs(listFile, *offset + 1, numArgs);
+  sci_target->ListNumArgs(listFile, *offset + 1, numArgs);
 }
 
 void ANSend::emit(OutputFile* out) const {
   out->WriteOp(op);
-  WriteNumArgs(out, numArgs);
+  sci_target->WriteNumArgs(out, numArgs);
 }
 
 ///////////////////////////////////////////////////
 // Class ANSuper
 ///////////////////////////////////////////////////
 
-ANSuper::ANSuper(std::string name, uint32_t c)
-    : ANSend(op_super), classNum(c), name(std::move(name)) {
+ANSuper::ANSuper(SciTargetStrategy const* sci_target, std::string name,
+                 uint32_t c)
+    : ANSend(sci_target, op_super), classNum(c), name(std::move(name)) {
   if (classNum < 256) op |= OP_BYTE;
 }
 
-size_t ANSuper::size() const { return (op & OP_BYTE ? 2 : 3) + NumArgsSize(); }
+size_t ANSuper::size() const {
+  return (op & OP_BYTE ? 2 : 3) + sci_target->NumArgsSize();
+}
 
 void ANSuper::list(ListingFile* listFile) const {
   listFile->ListOp(*offset, op);
   listFile->ListArg("$%-4x\t(%s)", classNum, name);
-  ListNumArgs(listFile, *offset + 1, numArgs);
+  sci_target->ListNumArgs(listFile, *offset + 1, numArgs);
 }
 
 void ANSuper::emit(OutputFile* out) const {
@@ -622,7 +588,7 @@ void ANSuper::emit(OutputFile* out) const {
     out->WriteByte(classNum);
   else
     out->WriteWord(classNum);
-  WriteNumArgs(out, numArgs);
+  sci_target->WriteNumArgs(out, numArgs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
