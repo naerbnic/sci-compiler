@@ -12,7 +12,6 @@
 #include <utility>
 
 #include "scic/codegen/alist.hpp"
-#include "scic/codegen/anode.hpp"
 #include "scic/codegen/anode_impls.hpp"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/config.hpp"
@@ -381,18 +380,14 @@ static void MakeCall(FunctionBuilder* builder, PNode* pn) {
 
 static void MakeClassID(FunctionBuilder* builder, PNode* pn) {
   // Compile a class ID.
-
-  ANOpUnsign* an =
-      builder->GetOpList()->newNode<ANOpUnsign>(op_class, pn->sym->obj()->num);
-  an->name = std::string(pn->sym->name());
+  builder->AddLoadClassOp(std::string(pn->sym->name()), pn->sym->obj()->num);
 }
 
 static void MakeObjID(FunctionBuilder* builder, PNode* pn) {
   // Compile an object ID.
 
   if (pn->sym->hasVal(OBJ_SELF))
-    builder->GetOpList()->newNode<ANOpCode>(op_selfID);
-
+    builder->AddLoadSelfOp();
   else {
     Symbol* sym = pn->sym;
     if (!sym) {
@@ -485,19 +480,19 @@ static void MakeUnary(FunctionBuilder* builder, PNode* pn) {
   CompileExpr(builder, pn->first_child());
 
   // Put out the appropriate opcode.
-  uint16_t theCode;
+  FunctionBuilder::UnOp op;
   switch (pn->val) {
     case U_NEG:
-      theCode = op_neg;
+      op = FunctionBuilder::NEG;
       break;
     case U_NOT:
-      theCode = op_not;
+      op = FunctionBuilder::NOT;
       break;
     case U_BNOT:
-      theCode = op_bnot;
+      op = FunctionBuilder::BNOT;
       break;
   }
-  builder->GetOpList()->newNode<ANOpCode>(theCode);
+  builder->AddUnOp(op);
 }
 
 static void MakeBinary(FunctionBuilder* builder, PNode* pn) {

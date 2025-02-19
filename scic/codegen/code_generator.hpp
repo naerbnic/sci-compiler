@@ -136,6 +136,12 @@ class LabelRef {
 
 class FunctionBuilder {
  public:
+  enum UnOp {
+    NEG,
+    NOT,
+    BNOT,
+  };
+
   enum BinOp {
     // Math
     ADD,
@@ -262,6 +268,15 @@ class FunctionBuilder {
   // It is not possible to index a property with the accumulator.
   void AddPropAccess(ValueOp value_op, std::size_t offset,
                      std::optional<std::string> name);
+
+  // Loads a pointer to the class with the given species into the accumulator.
+  void AddLoadClassOp(std::string name, std::size_t species);
+
+  // Loads a pointer to the current object into the accumulator.
+  void AddLoadSelfOp();
+
+  // Add a unary operation, operating on the current accumulator.
+  void AddUnOp(UnOp op);
 
   // Add a binary operation, combining the top of the stack with
   // the current accumulator value.

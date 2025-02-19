@@ -494,6 +494,30 @@ void FunctionBuilder::AddPropAccess(ValueOp value_op, std::size_t offset,
   }
 }
 
+void FunctionBuilder::AddLoadClassOp(std::string name, std::size_t class_num) {
+  auto* node = code_node_->getList()->newNode<ANOpUnsign>(op_class, class_num);
+  node->name = std::move(name);
+}
+void FunctionBuilder::AddLoadSelfOp() {
+  code_node_->getList()->newNode<ANOpCode>(op_selfID);
+}
+
+void FunctionBuilder::AddUnOp(UnOp op) {
+  uint8_t opcode;
+  switch (op) {
+    case NEG:
+      opcode = op_neg;
+      break;
+    case NOT:
+      opcode = op_not;
+      break;
+    case BNOT:
+      opcode = op_bnot;
+      break;
+  }
+  code_node_->getList()->newNode<ANOpCode>(opcode);
+}
+
 void FunctionBuilder::AddBinOp(BinOp op) {
   code_node_->getList()->newNode<ANOpCode>(GetBinOpValue(op));
 }
