@@ -330,7 +330,9 @@ AOpList* FunctionBuilder::GetOpList() const { return code_node_->getList(); }
 LabelRef FunctionBuilder::CreateLabelRef() { return LabelRef(); }
 
 void FunctionBuilder::AddLineAnnotation(std::size_t lineNum) {
-  code_node_->getList()->newNode<ANLineNum>(lineNum);
+  if (target_->SupportsDebugInstructions()) {
+    code_node_->getList()->newNode<ANLineNum>(lineNum);
+  }
 }
 
 void FunctionBuilder::AddPushOp() {
@@ -765,11 +767,10 @@ std::unique_ptr<FunctionBuilder> CodeGenerator::CreateFunction(
 
   ptr_ref->ref_.Resolve(code);
 
-  if (lineNum) {
+  if (sci_target->SupportsDebugInstructions() && lineNum) {
     // If supported by the configuration, add line number information.
     // procedures and methods get special treatment:  the line number
     // and file name are set here
-    // TODO: Make conditional based on target type.
     code->getList()->newNode<ANLineNum>(*lineNum);
   }
 

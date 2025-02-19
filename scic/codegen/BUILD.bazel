@@ -19,7 +19,6 @@ cc_library(
     deps = [
         ":target",
         "//scic:common",
-        "//scic:config",
         "//scic:list",
         "//scic:listing",
         "//scic:opcodes",

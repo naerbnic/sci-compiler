@@ -19,7 +19,6 @@
 #include "scic/codegen/optimize.hpp"
 #include "scic/codegen/target.hpp"
 #include "scic/common.hpp"
-#include "scic/config.hpp"
 #include "scic/listing.hpp"
 #include "scic/opcodes.hpp"
 #include "scic/output.hpp"
@@ -596,83 +595,28 @@ void ANSuper::emit(OutputFile* out) const {
 ANFileName::ANFileName(std::string name) : ANOpCode(op_fileName), name(name) {}
 
 void ANFileName::list(ListingFile* listFile) const {
-  switch (gConfig->targetArch) {
-    case SciTargetArch::SCI_1_1:
-      break;
-    case SciTargetArch::SCI_2:
-      listFile->ListOffset(*offset);
-      listFile->Listing("file");
-      break;
-
-    default:
-      throw std::runtime_error("Invalid target architecture");
-  }
+  listFile->ListOffset(*offset);
+  listFile->Listing("file");
 }
 
 void ANFileName::emit(OutputFile* out) const {
-  switch (gConfig->targetArch) {
-    case SciTargetArch::SCI_1_1:
-      break;
-    case SciTargetArch::SCI_2:
-      out->WriteOp(op);
-      out->WriteNullTerminatedString(name);
-      break;
-
-    default:
-      throw std::runtime_error("Invalid target architecture");
-  }
+  out->WriteOp(op);
+  out->WriteNullTerminatedString(name);
 }
 
-size_t ANFileName::size() const {
-  switch (gConfig->targetArch) {
-    case SciTargetArch::SCI_1_1:
-      return 0;
-    case SciTargetArch::SCI_2:
-      return 1 + name.length() + 1;
-    default:
-      throw std::runtime_error("Invalid target architecture");
-  }
-}
+size_t ANFileName::size() const { return 1 + name.length() + 1; }
 
 ////////////////////////////////////////////////////////////////////////////
 
 ANLineNum::ANLineNum(int num) : ANOpCode(op_lineNum), num(num) {}
 
 void ANLineNum::list(ListingFile* listFile) const {
-  switch (gConfig->targetArch) {
-    case SciTargetArch::SCI_1_1:
-      break;
-    case SciTargetArch::SCI_2:
-      listFile->ListSourceLine(num);
-      break;
-
-    default:
-      throw std::runtime_error("Invalid target architecture");
-  }
+  listFile->ListSourceLine(num);
 }
 
 void ANLineNum::emit(OutputFile* out) const {
-  switch (gConfig->targetArch) {
-    case SciTargetArch::SCI_1_1:
-      break;
-    case SciTargetArch::SCI_2:
-      out->WriteOp(op);
-      out->WriteWord(num);
-      break;
-
-    default:
-      throw std::runtime_error("Invalid target architecture");
-  }
+  out->WriteOp(op);
+  out->WriteWord(num);
 }
 
-size_t ANLineNum::size() const {
-  switch (gConfig->targetArch) {
-    case SciTargetArch::SCI_1_1:
-      return 0;
-    case SciTargetArch::SCI_2:
-      return 1 + sizeof(SCIWord);
-
-    default:
-      throw std::runtime_error("Invalid target architecture");
-  }
-}
+size_t ANLineNum::size() const { return 1 + sizeof(SCIWord); }
