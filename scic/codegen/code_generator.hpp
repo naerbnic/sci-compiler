@@ -175,6 +175,18 @@ class FunctionBuilder {
     TEMP,
   };
 
+  // What kind of operation to use on a slot (property or variable)
+  enum ValueOp {
+    // Load the value to the accumulator.
+    LOAD,
+    // Store the top of the stack to the slot.
+    STORE,
+    // Increment the slot, and load the value to the accumulator.
+    INC,
+    // Decrement the slot, and load the value to the accumulator.
+    DEC,
+  };
+
   // Returns an ANode for the function. This can be used to resolve the
   // location of the function during assembly.
   ANode* GetNode() const;
@@ -225,6 +237,24 @@ class FunctionBuilder {
   // offset before loading the address.
   void AddLoadVarAddr(VarType var_type, std::size_t offset,
                       bool add_accum_index, std::optional<std::string> name);
+
+  // Add a variable access operation.
+  //
+  // All of these use the parameters. Loads put the result in the accumulator.
+  // Store will always pop the stored value off the top of the stack.
+  //
+  // If add_accum_index is true, it will also add the accumulator index to the
+  // offset before performing the access.
+  void AddVarAccess(VarType var_type, ValueOp value_op, std::size_t offset,
+                    bool add_accum_index, std::optional<std::string> name);
+
+  // Add a property access operation.
+  //
+  // The value ops have the same semantics as AddVarAccess.
+  //
+  // It is not possible to index a property with the accumulator.
+  void AddPropAccess(ValueOp value_op, std::size_t offset,
+                     std::optional<std::string> name);
 
   // Add a binary operation, combining the top of the stack with
   // the current accumulator value.

@@ -28,7 +28,8 @@
 #include "scic/symtypes.hpp"
 
 static void MakeLoadEffectiveAddr(FunctionBuilder* builder, PNode*);
-static void MakeAccess(FunctionBuilder* builder, PNode*, uint8_t);
+static void MakeAccess(FunctionBuilder* builder, PNode*,
+                       FunctionBuilder::ValueOp);
 static void MakeCall(FunctionBuilder* builder, PNode* pn);
 static void MakeClassID(FunctionBuilder* builder, PNode*);
 static void MakeObjID(FunctionBuilder* builder, PNode*);
@@ -114,7 +115,7 @@ void CompileExpr(FunctionBuilder* builder, PNode* pn) {
     case PN_INDEX:
     case PN_PROP:
       // Compile code to load the accumulator from a variable.
-      MakeAccess(builder, pn, OP_LDST | OP_LOAD);
+      MakeAccess(builder, pn, FunctionBuilder::LOAD);
       break;
 
     case PN_ADDROF:
@@ -274,70 +275,47 @@ static void MakeLoadEffectiveAddr(FunctionBuilder* builder, PNode* pn) {
   builder->AddLoadVarAddr(accType, theAddr, indexed, std::move(name));
 }
 
-void MakePropAccess(FunctionBuilder* builder, PNode* target, uint8_t theCode,
-                    PNode* index) {
+void MakePropAccess(FunctionBuilder* builder, PNode* target,
+                    FunctionBuilder::ValueOp op, PNode* index) {
   if (index != nullptr) {
     throw std::runtime_error("Property accesses can't use dynamic indexing.");
   }
 
-  // Set the bits indicating the type of variable to be accessed, then
-  // put out the opcode to access it.
-  switch (theCode & OP_TYPE) {
-    case OP_LOAD:
-      theCode = op_pToa;
-      break;
-    case OP_STORE:
-      theCode = op_aTop;
-      break;
-    case OP_INC:
-      theCode = op_ipToa;
-      break;
-    case OP_DEC:
-      theCode = op_dpToa;
-      break;
+  std::optional<std::string> name;
+  if (target->sym) {
+    name = std::string(target->sym->name());
   }
 
-  if (target->val < 256) theCode |= OP_BYTE;
-  auto* an = builder->GetOpList()->newNode<ANVarAccess>(theCode, target->val);
-  if (target->sym) {
-    an->name = std::string(target->sym->name());
-  }
+  builder->AddPropAccess(op, target->val, std::move(name));
 }
 
 static void MakeVarAccess(FunctionBuilder* builder, PNode* target,
-                          uint8_t theCode, PNode* index) {
-  if (theCode == (OP_LDST | OP_STORE)) {
+                          FunctionBuilder::ValueOp op, PNode* index) {
+  if (op == FunctionBuilder::STORE) {
     // push the value to store on the stack
     builder->AddPushOp();
-
-    // Since the stored value is on the stack, we need to change the
-    // instruction to read the stored value from the stack.
-    //
-    // This was missing from the original code. I have no idea how the
-    // generated code worked without this.
-    theCode |= OP_STACK;
   }
 
   // Check for indexing and compile the index if necessary.
   if (index) {
     CompileExpr(builder, index);  // compile index value
-    theCode |= OP_INDEX;          // set the indexing bit
   }
 
   // Set the bits indicating the type of variable to be accessed, then
   // put out the opcode to access it.
+  FunctionBuilder::VarType varType;
   switch (target->type) {
     case PN_GLOBAL:
-      theCode |= OP_GLOBAL;
+      varType = FunctionBuilder::GLOBAL;
       break;
     case PN_LOCAL:
-      theCode |= OP_LOCAL;
+      varType = FunctionBuilder::LOCAL;
       break;
     case PN_TMP:
-      theCode |= OP_TMP;
+      varType = FunctionBuilder::TEMP;
       break;
     case PN_PARM:
-      theCode |= OP_PARM;
+      varType = FunctionBuilder::PARAM;
       break;
     default:
       throw std::runtime_error(
@@ -345,14 +323,17 @@ static void MakeVarAccess(FunctionBuilder* builder, PNode* target,
       break;
   }
 
-  if (target->val < 256) theCode |= OP_BYTE;
-  auto* an = builder->GetOpList()->newNode<ANVarAccess>(theCode, target->val);
+  std::optional<std::string> name;
   if (target->sym) {
-    an->name = std::string(target->sym->name());
+    name = std::string(target->sym->name());
   }
+
+  builder->AddVarAccess(varType, op, target->val, index != nullptr,
+                        std::move(name));
 }
 
-static void MakeAccess(FunctionBuilder* builder, PNode* pn, uint8_t theCode) {
+static void MakeAccess(FunctionBuilder* builder, PNode* pn,
+                       FunctionBuilder::ValueOp theCode) {
   // Compile code to access the variable indicated by pn.  Access
   // is OP_STORE or OP_LOAD
 
@@ -587,7 +568,7 @@ static void MakeAssign(FunctionBuilder* builder, PNode* pn) {
   // If this is an arithmetic-op assignment, put the value of the
   // target variable on the stack for the operation.
   if (pn->val != A_EQ) {
-    MakeAccess(builder, pn->child_at(0), OP_LDST | OP_LOAD);
+    MakeAccess(builder, pn->child_at(0), FunctionBuilder::LOAD);
     builder->AddPushOp();
   }
 
@@ -629,7 +610,7 @@ static void MakeAssign(FunctionBuilder* builder, PNode* pn) {
     builder->AddBinOp(theCode);
   }
 
-  MakeAccess(builder, pn->child_at(0), OP_LDST | OP_STORE);
+  MakeAccess(builder, pn->child_at(0), FunctionBuilder::STORE);
 }
 
 static void MakeReturn(FunctionBuilder* builder, PNode* pn) {
@@ -941,17 +922,19 @@ static void MakeSwitch(FunctionBuilder* builder, PNode* pn) {
 static void MakeIncDec(FunctionBuilder* builder, PNode* pn) {
   // Compile code for increment or decrement operators.
 
-  uint16_t theCode;
-
+  FunctionBuilder::ValueOp op;
   switch (pn->val) {
     case K_INC:
-      theCode = OP_LDST | OP_INC;
+      op = FunctionBuilder::INC;
       break;
     case K_DEC:
-      theCode = OP_LDST | OP_DEC;
+      op = FunctionBuilder::DEC;
       break;
+    default:
+      throw std::runtime_error(
+          "Internal error: bad increment/decrement operator");
   }
-  MakeAccess(builder, pn->first_child(), (uint8_t)theCode);
+  MakeAccess(builder, pn->first_child(), op);
 }
 
 static void MakeProc(PNode* pn, PtrRef* ptr_ref) {

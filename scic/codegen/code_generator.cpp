@@ -394,6 +394,94 @@ void FunctionBuilder::AddLoadVarAddr(VarType var_type, std::size_t offset,
   }
 }
 
+void FunctionBuilder::AddVarAccess(VarType var_type, ValueOp value_op,
+                                   std::size_t offset, bool add_accum_index,
+                                   std::optional<std::string> name) {
+  uint8_t op = OP_LDST;
+  if (value_op == STORE) {
+    // Since the stored value is on the stack, we need to change the
+    // instruction to read the stored value from the stack.
+    //
+    // This was missing from the original code. I have no idea how the
+    // generated code worked without this.
+    op |= OP_STACK;
+  }
+
+  // Check for indexing and compile the index if necessary.
+  if (add_accum_index) {
+    op |= OP_INDEX;  // set the indexing bit
+  }
+
+  // Set the bits indicating the type of variable to be accessed, then
+  // put out the opcode to access it.
+  switch (var_type) {
+    case GLOBAL:
+      op |= OP_GLOBAL;
+      break;
+    case LOCAL:
+      op |= OP_LOCAL;
+      break;
+    case TEMP:
+      op |= OP_TMP;
+      break;
+    case PARAM:
+      op |= OP_PARM;
+      break;
+    default:
+      throw std::runtime_error(
+          "Internal error: bad variable type in MakeAccess()");
+      break;
+  }
+
+  switch (value_op) {
+    case LOAD:
+      op |= OP_LOAD;
+      break;
+    case STORE:
+      op |= OP_STORE;
+      break;
+    case INC:
+      op |= OP_INC;
+      break;
+    case DEC:
+      op |= OP_DEC;
+      break;
+  }
+
+  if (offset < 256) op |= OP_BYTE;
+  auto* an = code_node_->getList()->newNode<ANVarAccess>(op, offset);
+  if (name) {
+    an->name = std::move(name).value();
+  }
+}
+
+void FunctionBuilder::AddPropAccess(ValueOp value_op, std::size_t offset,
+                                    std::optional<std::string> name) {
+  // Set the bits indicating the type of variable to be accessed, then
+  // put out the opcode to access it.
+  uint8_t op;
+  switch (value_op) {
+    case LOAD:
+      op = op_pToa;
+      break;
+    case STORE:
+      op = op_aTop;
+      break;
+    case INC:
+      op = op_ipToa;
+      break;
+    case DEC:
+      op = op_dpToa;
+      break;
+  }
+
+  if (offset < 256) op |= OP_BYTE;
+  auto* an = code_node_->getList()->newNode<ANVarAccess>(op, offset);
+  if (name) {
+    an->name = std::move(name).value();
+  }
+}
+
 void FunctionBuilder::AddBinOp(BinOp op) {
   code_node_->getList()->newNode<ANOpCode>(GetBinOpValue(op));
 }
