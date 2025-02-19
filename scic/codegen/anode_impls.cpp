@@ -24,7 +24,6 @@
 #include "scic/output.hpp"
 
 #define OPTIMIZE_TRANSFERS
-inline constexpr int KERNEL = -1;  // Module # of kernel
 
 static bool canOptimizeTransfer(size_t a, size_t b) {
   size_t larger = std::max(a, b);
@@ -284,20 +283,26 @@ void ANOpSign::emit(OutputFile* out) const {
 // Class ANOpExtern
 ///////////////////////////////////////////////////
 
+uint8_t GetExternOp(int32_t module, uint32_t entry) {
+  if (module == -1) {
+    return op_callk | (entry < 256 ? OP_BYTE : 0);
+  }
+
+  if (module == 0) {
+    return op_callb | (entry < 256 ? OP_BYTE : 0);
+  }
+
+  if (module < 0) {
+    throw std::runtime_error("Invalid module number");
+  }
+
+  return op_calle | (module < 256 && entry < 256 ? OP_BYTE : 0);
+}
+
 ANOpExtern::ANOpExtern(std::string name, SciTargetStrategy const* sci_target,
                        int32_t m, uint32_t e)
     : sci_target(sci_target), module(m), entry(e), name(std::move(name)) {
-  switch (module) {
-    case KERNEL:
-      op = op_callk | (entry < 256 ? OP_BYTE : 0);
-      break;
-    case 0:
-      op = op_callb | (entry < 256 ? OP_BYTE : 0);
-      break;
-    default:
-      op = op_calle | (module < 256 && entry < 256 ? OP_BYTE : 0);
-      break;
-  }
+  op = GetExternOp(module, entry);
 }
 
 size_t ANOpExtern::size() const {
