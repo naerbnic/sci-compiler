@@ -84,9 +84,9 @@ void WriteClassTbl() {
   // number of each class in its proper place in the table.
   int index;
   for (auto* sym : gSyms.classSymTbl->symbols()) {
-    if (sym->obj()->num != -1) {
+    if (sym->obj()->script) {
       classTbl[sym->obj()->num].objID = 0;
-      classTbl[sym->obj()->num].scriptNum = SCIUWord(sym->obj()->script);
+      classTbl[sym->obj()->num].scriptNum = SCIUWord(*sym->obj()->script);
     }
   }
 
@@ -171,7 +171,7 @@ static void WriteClassDefs() {
                   "	class# %d\n"
                   "	super# %d\n"
                   "	file# \"%s\"\n\n",
-                  cp->name, (SCIUWord)cp->script, (SCIUWord)cp->num,
+                  cp->name, SCIUWord(*cp->script), (SCIUWord)cp->num,
                   (SCIUWord)cp->super, cp->file);
 
     // Get a pointer to the class' super-class.

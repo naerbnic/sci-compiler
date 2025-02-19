@@ -24,6 +24,7 @@
 #include "scic/output.hpp"
 
 #define OPTIMIZE_TRANSFERS
+inline constexpr int KERNEL = -1;  // Module # of kernel
 
 static bool canOptimizeTransfer(size_t a, size_t b) {
   size_t larger = std::max(a, b);

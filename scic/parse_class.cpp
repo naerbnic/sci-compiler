@@ -4,11 +4,11 @@
 #include <sys/stat.h>
 
 #include <memory>
+#include <optional>
 #include <string_view>
 #include <utility>
 
 #include "scic/class.hpp"
-#include "scic/codegen/common.hpp"
 #include "scic/error.hpp"
 #include "scic/object.hpp"
 #include "scic/parse.hpp"
@@ -30,7 +30,7 @@ void InstallObjects() {
   sym->setObj(std::move(rootClassOwned));
   rootClass->sym = sym;
   rootClass->name = "RootObj";
-  rootClass->script = KERNEL;
+  rootClass->script = std::nullopt;
   rootClass->num = -1;
 
   // Install the root class' selectors in the symbol table and add them

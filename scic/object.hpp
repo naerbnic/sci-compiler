@@ -5,6 +5,7 @@
 #define OBJECT_HPP
 
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <string>
 #include <string_view>
@@ -35,10 +36,13 @@ struct Object {
   }
 
   Symbol* sym;       // the symbol for this object/class
-  std::string name; // name of object/class
+  std::string name;  // name of object/class
   int num;           // class number (== OBJECTNUM for objects)
   int super;         // number of this object's super-class
-  int script;        // module # in which this object is defined
+  // module # in which this object is defined
+  //
+  // If nullopt, this represents the kernel.
+  std::optional<int> script;
   int numProps;      // number of properties in object
   ANode* an;         // pointer to object definition
   std::string file;  // filename in which object was defined
