@@ -103,17 +103,15 @@ void MethodDef(Object* obj) {
       Selector* sn = obj->findSelectorByNum(sym->val());
       if (sym->type != S_SELECT || IsProperty(sn))
         Error("Not a method: %s", sym->name());
-      else if (sn->an)
+      else if (sn->sym->forwardRef.is_resolved())
         Error("Method already defined: %s", sym->name());
       else {
         // Compile the code for this method.
         ExprList(node.get(), OPTIONAL);
-        CompileProc(node.get());
+        CompileProc(node.get(), &sym->forwardRef);
 
         // Save the pointer to the method code.
         sn->tag = T_LOCAL;
-        sym->forwardRef.RegisterCallback(
-            [sn](ANode* target) { sn->an = target; });
       }
     }
   }

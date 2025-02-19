@@ -44,7 +44,7 @@ void Procedure() {
       auto theNode = CallDef(S_PROC);
       if (theNode) {
         ExprList(theNode.get(), OPTIONAL);
-        CompileProc(theNode.get());
+        CompileProc(theNode.get(), &theNode->sym->forwardRef);
       }
     }
 

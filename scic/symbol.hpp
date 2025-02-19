@@ -15,12 +15,11 @@
 
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_format.h"
+#include "scic/codegen/code_generator.hpp"
+#include "scic/global_compiler.hpp"
 #include "scic/object.hpp"
 #include "scic/public.hpp"
-#include "util/types/forward_ref.hpp"
 #include "scic/symtypes.hpp"
-
-struct ANode;
 
 class Symbol {
   // The Symbol class is where information about identifiers resides.  Symbols
@@ -38,7 +37,7 @@ class Symbol {
   sym_t type;        // symbol type
   uint32_t lineNum;  //	where symbol was first defined
 
-  ForwardRef<ANode*> forwardRef;
+  PtrRef forwardRef;
 
  private:
   RefVal ref_val_;
@@ -49,8 +48,7 @@ class Symbol {
   }
   void clearName() { name_ = std::nullopt; }
 
-  void clearAn() { forwardRef.Clear(); }
-  void setLoc(ANode* loc) { forwardRef.Resolve(loc); }
+  void clearAn() { forwardRef = gSc->CreatePtrRef(); }
 
   RefVal& refVal() { return ref_val_; }
   RefVal const& refVal() const { return ref_val_; }

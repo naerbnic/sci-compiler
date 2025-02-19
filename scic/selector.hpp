@@ -13,15 +13,12 @@ class Symbol;
 
 // Structure of a node in a class or object template.
 struct Selector {
-  Selector(Symbol* s = 0) : sym(s), an(0), tag(0) {}
+  Selector(Symbol* s = 0) : sym(s), ofs(0), tag(0) {}
 
   Symbol* sym;  // Pointer to symbol for this entry
   //	For a property, its initial value
   std::optional<std::variant<int, TextRef>> val;
-  union {
-    int ofs;    // Offset of property in template
-    ANode* an;  // Pointer to code for a local method
-  };
+  int ofs;  // Offset of property in template
   uint32_t tag;
 };
 

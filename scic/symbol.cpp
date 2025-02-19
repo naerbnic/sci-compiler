@@ -13,6 +13,7 @@
 
 #include "scic/input.hpp"
 #include "scic/object.hpp"
+#include "scic/public.hpp"
 #include "scic/symtypes.hpp"
 
 Symbol::Symbol(std::string_view name, sym_t type)

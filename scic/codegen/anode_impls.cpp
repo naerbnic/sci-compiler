@@ -533,14 +533,18 @@ void ANOpOfs::emit(OutputFile* out) const {
 // Class ANObjID
 ///////////////////////////////////////////////////
 
-ANObjID::ANObjID(int lineNum, std::string name)
-    : ANOpCode(op_lofsa), lineNum(lineNum), name(std::move(name)) {}
+ANObjID::ANObjID(std::optional<std::string> name)
+    : ANOpCode(op_lofsa), name(std::move(name)) {}
 
 size_t ANObjID::size() const { return WORDSIZE; }
 
 void ANObjID::list(ListingFile* listFile) const {
   listFile->ListOp(*offset, op);
-  listFile->ListArg("$%-4x\t(%s)", *target->offset, name);
+  if (name) {
+    listFile->ListArg("$%-4x\t(%s)", *target->offset, *name);
+  } else {
+    listFile->ListArg("$%-4x", *target->offset);
+  }
 }
 
 void ANObjID::collectFixups(FixupContext* fixup_ctxt) const {

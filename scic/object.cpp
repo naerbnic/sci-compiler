@@ -29,7 +29,6 @@ void Object::dupSelectors(Class* super) {
     *tn = *sn;
     if (tn->tag == T_LOCAL) {
       tn->tag = T_METHOD;  // No longer a local method.
-      tn->an = nullptr;    // No code defined for this class.
     }
     selectors_.push_back(std::move(tn));
   }

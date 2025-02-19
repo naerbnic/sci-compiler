@@ -25,7 +25,6 @@
 #include "scic/pnode.hpp"
 #include "scic/public.hpp"
 #include "scic/symtypes.hpp"
-#include "util/types/forward_ref.hpp"
 
 static void MakeAccess(FunctionBuilder* builder, PNode*, uint8_t);
 static void MakeCall(FunctionBuilder* builder, PNode* pn);
@@ -33,8 +32,9 @@ static void MakeClassID(FunctionBuilder* builder, PNode*);
 static void MakeObjID(FunctionBuilder* builder, PNode*);
 static void MakeSend(FunctionBuilder* builder, PNode*);
 static int MakeMessage(FunctionBuilder* builder, PNode::ChildSpan children);
-static void MakeProc(PNode*);
-static int MakeArgs(FunctionBuilder* builder, PNode::ChildSpan children);
+static void MakeProc(PNode*, PtrRef*);
+static uint32_t CountArgs(PNode::ChildSpan children);
+static void MakeArgs(FunctionBuilder* builder, PNode::ChildSpan children);
 static void MakeUnary(FunctionBuilder* builder, PNode*);
 static void MakeBinary(FunctionBuilder* builder, PNode*);
 static void MakeNary(FunctionBuilder* builder, PNode*);
@@ -52,13 +52,13 @@ static void MakeSwitch(FunctionBuilder* builder, PNode*);
 // This global is only used in this module
 static int lastLineNum;
 
-void CompileProc(PNode* pn) {
+void CompileProc(PNode* pn, PtrRef* ptr_ref) {
   // Recursively compile code for a given node.
 
   switch (pn->type) {
     case PN_PROC:
     case PN_METHOD:
-      MakeProc(pn);
+      MakeProc(pn, ptr_ref);
       break;
 
     // Do nothing for unhandled node types.
@@ -322,28 +322,20 @@ static void MakeAccess(FunctionBuilder* builder, PNode* pn, uint8_t theCode) {
 static void MakeCall(FunctionBuilder* builder, PNode* pn) {
   // Compile a call to a procedure, the kernel, etc.
 
+  // Count the number of arguments we push.
+  uint32_t numArgs = CountArgs(pn->children);
+
   // Push the number of arguments on the stack (we don't know the
   // number yet).
-  ANOpUnsign* an = builder->GetOpList()->newNode<ANOpUnsign>(op_pushi, 0);
+  builder->GetOpList()->newNode<ANOpUnsign>(op_pushi, numArgs);
 
   // Compile the arguments.
-  uint32_t numArgs = MakeArgs(builder, pn->children);
-
-  // Put the number of arguments in its asmNode.
-  an->value = numArgs;
+  MakeArgs(builder, pn->children);
 
   // Compile the call.
   Symbol* sym = pn->sym;
   if (pn->type == PN_CALL) {
-    ANCall* call =
-        builder->GetOpList()->newNode<ANCall>(std::string(sym->name()));
-
-    // If the destination procedure has not yet been defined, add
-    // this node to the list of those waiting for its definition.
-    sym->forwardRef.RegisterCallback(
-        [call](ANode* target) { call->target = target; });
-    call->numArgs = 2 * numArgs;
-
+    builder->AddProcCall(std::string(sym->name()), numArgs, &sym->forwardRef);
   } else {
     Public* pub = sym->ext();
     ANOpExtern* extCall = builder->GetOpList()->newNode<ANOpExtern>(
@@ -372,17 +364,7 @@ static void MakeObjID(FunctionBuilder* builder, PNode* pn) {
       Error("Undefined object from line %u: %s", sym->lineNum, sym->name());
       return;
     }
-    ANObjID* an = builder->GetOpList()->newNode<ANObjID>(
-        sym->lineNum, std::string(sym->name()));
-
-    // If the object is not defined yet, add this node to the list
-    // of those waiting for the definition.
-    if (!sym->obj() || sym->obj() == gCurObj) {
-      sym->forwardRef.RegisterCallback(
-          [an](ANode* target) { an->target = target; });
-    } else {
-      an->target = sym->obj()->an;
-    }
+    builder->AddLoadOffsetTo(&sym->forwardRef, std::string(sym->name()));
   }
 }
 
@@ -422,23 +404,34 @@ static int MakeMessage(FunctionBuilder* builder, PNode::ChildSpan theMsg) {
   CompileExpr(builder, theMsg.front().get());
   builder->AddPushOp();
 
+  auto numArgs = CountArgs(theMsg.subspan(1));
+
   // Push the number of arguments on the stack (we don't know the
   // number yet).
-  ANOpUnsign* an =
-      builder->GetOpList()->newNode<ANOpUnsign>(op_pushi, (uint32_t)-1);
+  builder->GetOpList()->newNode<ANOpUnsign>(op_pushi, numArgs);
 
   // Compile the arguments to the message and fix up the number
   // of arguments to the message.
-  an->value = MakeArgs(builder, theMsg.subspan(1));
+  MakeArgs(builder, theMsg.subspan(1));
 
-  return an->value + 2;
+  return numArgs + 2;
 }
 
-static int MakeArgs(FunctionBuilder* builder, PNode::ChildSpan args) {
+static uint32_t CountArgs(PNode::ChildSpan args) {
+  int numArgs = 0;
+
+  for (auto const& arg : args) {
+    if (arg->type != PN_REST) {
+      ++numArgs;
+    }
+  }
+
+  return numArgs;
+}
+
+static void MakeArgs(FunctionBuilder* builder, PNode::ChildSpan args) {
   // Compile code to push the arguments to a call on the stack.
   // Return the number of arguments.
-
-  int numArgs = 0;
 
   for (auto const& arg : args) {
     if (arg->type == PN_REST)
@@ -446,11 +439,8 @@ static int MakeArgs(FunctionBuilder* builder, PNode::ChildSpan args) {
     else {
       CompileExpr(builder, arg.get());
       builder->AddPushOp();
-      ++numArgs;
     }
   }
-
-  return numArgs;
 }
 
 static void MakeUnary(FunctionBuilder* builder, PNode* pn) {
@@ -912,7 +902,7 @@ static void MakeIncDec(FunctionBuilder* builder, PNode* pn) {
   MakeAccess(builder, pn->first_child(), (uint8_t)theCode);
 }
 
-static void MakeProc(PNode* pn) {
+static void MakeProc(PNode* pn, PtrRef* ptr_ref) {
   // Compile code for an entire procedure.
 
   auto procName =
@@ -929,16 +919,10 @@ static void MakeProc(PNode* pn) {
 
   // Make a procedure node and point to the symbol for the procedure
   // (for listing purposes).
-  auto func_builder =
-      gSc->CreateFunction(std::move(procName), lineNum, /*numTemps=*/pn->val);
+  auto func_builder = gSc->CreateFunction(std::move(procName), lineNum,
+                                          /*numTemps=*/pn->val, ptr_ref);
 
   pn->sym->type = (sym_t)(pn->type == PN_PROC ? S_PROC : S_SELECT);
-
-  // If any nodes already compiled have this procedure as a target,
-  // they will be on a list hanging off the procedure's symbol table
-  // entry (in the 'ref' property) (compiled by the first reference to the
-  // procedure).  Let all these nodes know where this one is.
-  pn->sym->setLoc(func_builder->GetNode());
 
   // Compile code for the procedure followed by a return.
   if (pn->child_at(0)) CompileExpr(func_builder.get(), pn->child_at(0));
@@ -951,8 +935,10 @@ static void MakeProc(PNode* pn) {
 }
 
 void MakeObject(Object* theObj) {
-  auto objCodegen = theObj->num == OBJECTNUM ? gSc->CreateObject(theObj->name)
-                                             : gSc->CreateClass(theObj->name);
+  auto objCodegen =
+      theObj->num == OBJECTNUM
+          ? gSc->CreateObject(theObj->name, &theObj->sym->forwardRef)
+          : gSc->CreateClass(theObj->name, &theObj->sym->forwardRef);
 
   {
     theObj->an = objCodegen->GetObjNode();
@@ -979,19 +965,14 @@ void MakeObject(Object* theObj) {
           }
         }
     }
-
-    // If any nodes already compiled have this object as a target, they
-    // will be on a list hanging off the object's symbol table entry.
-    // Let all nodes know where this one is.
-    theObj->sym->setLoc(objCodegen->GetObjNode());
   }
 
   {
     for (auto* sp : theObj->selectors())
       if (sp->tag == T_LOCAL) {
         objCodegen->AppendMethod(std::string(sp->sym->name()), sp->sym->val(),
-                                 (ANCodeBlk*)sp->an);
-        sp->sym->forwardRef.Clear();
+                                 &sp->sym->forwardRef);
+        sp->sym->forwardRef = gSc->CreatePtrRef();
       }
   }
 }

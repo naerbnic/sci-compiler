@@ -25,6 +25,10 @@ class ForwardRef {
   ForwardRef(ForwardRef&&) = default;
   ForwardRef& operator=(ForwardRef&&) = default;
 
+  bool IsResolved() const {
+    return std::holds_alternative<ResolveType>(value_);
+  }
+
   void RegisterCallback(ResolveFunc func) {
     if (std::holds_alternative<ResolveType>(value_)) {
       std::move(func)(std::get<ResolveType>(value_));

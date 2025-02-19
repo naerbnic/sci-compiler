@@ -44,6 +44,18 @@ class TextRef {
   ANText* ref_;
 };
 
+class PtrRef {
+ public:
+  bool is_resolved() const { return ref_.IsResolved(); }
+
+ private:
+  friend class CodeGenerator;
+  friend class FunctionBuilder;
+  friend class ObjectCodegen;
+
+  ForwardRef<ANode*> ref_;
+};
+
 // The value of a literal. Either an integer, or a static string, represented
 // as a pointer to an ANText.
 using LiteralValue = util::Choice<int, TextRef>;
@@ -82,14 +94,14 @@ class ObjectCodegen {
   //
   // The order of these calls is significant.  The methods are appended
   // in the order they are added.
-  void AppendMethod(std::string name, std::uint16_t selectorNum,
-                    ANCodeBlk* code);
+  void AppendMethod(std::string name, std::uint16_t selectorNum, PtrRef* code);
 
  private:
   friend class CodeGenerator;
 
   static std::unique_ptr<ObjectCodegen> Create(CodeGenerator* compiler,
-                                               bool isObj, std::string name);
+                                               bool isObj, std::string name,
+                                               ForwardRef<ANode*>* ref);
 
   ObjectCodegen(bool isObj, std::string name, ANObject* propListMarker,
                 ANTable* props, ANObject* objDictMarker, ANObjTable* propDict,
@@ -191,6 +203,12 @@ class FunctionBuilder {
   // Loads the given value into the accumulator.
   void AddLoadImmediate(LiteralValue value);
 
+  // Loads an offset to the given entity into the accumulator.
+  //
+  //
+  void AddLoadOffsetTo(PtrRef* ptr,
+                       std::optional<std::string> name = std::nullopt);
+
   // Add a binary operation, combining the top of the stack with
   // the current accumulator value.
   void AddBinOp(BinOp op);
@@ -209,6 +227,9 @@ class FunctionBuilder {
   // on them to be resolved before the code is assembled.
   void AddLabel(LabelRef* label);
 
+  // Adds a call to the given procedure.
+  void AddProcCall(std::string name, std::size_t numArgs, PtrRef* target);
+
   // Add a Return.
   void AddReturnOp();
 
@@ -225,8 +246,9 @@ class CodeGenerator {
 
   void Assemble(uint16_t scriptNum, ListingFile* listFile);
 
-  void AddPublic(std::string name, std::size_t index,
-                 ForwardRef<ANode*>* target);
+  PtrRef CreatePtrRef();
+
+  void AddPublic(std::string name, std::size_t index, PtrRef* target);
 
   bool IsInHeap(ANode const* node);
 
@@ -240,11 +262,12 @@ class CodeGenerator {
   // Returns false if the variable has already been set.
   bool SetVar(std::size_t varNum, LiteralValue value);
 
-  std::unique_ptr<ObjectCodegen> CreateObject(std::string name);
-  std::unique_ptr<ObjectCodegen> CreateClass(std::string name);
+  std::unique_ptr<ObjectCodegen> CreateObject(std::string name, PtrRef* ref);
+  std::unique_ptr<ObjectCodegen> CreateClass(std::string name, PtrRef* ref);
 
   std::unique_ptr<FunctionBuilder> CreateFunction(
-      FuncName name, std::optional<std::size_t> lineNum, std::size_t numTemps);
+      FuncName name, std::optional<std::size_t> lineNum, std::size_t numTemps,
+      PtrRef* ptr_ref);
 
  private:
   friend class ObjectCodegen;

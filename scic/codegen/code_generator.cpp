@@ -266,21 +266,27 @@ void ObjectCodegen::AppendMethodTableProperty(std::string name,
 }
 
 void ObjectCodegen::AppendMethod(std::string name, std::uint16_t selectorNum,
-                                 ANCodeBlk* code) {
+                                 PtrRef* ptr_ref) {
   auto* entry = methDict_->getList()->newNode<ANComposite<ANode>>();
   entry->getList()->newNode<ANWord>(selectorNum);
-  entry->getList()->newNode<ANMethod>(std::move(name), code);
+  auto* method = entry->getList()->newNode<ANMethod>(std::move(name), nullptr);
+  ptr_ref->ref_.RegisterCallback([method](ANode* target) {
+    method->method = static_cast<ANCodeBlk*>(target);
+  });
 }
 
 std::unique_ptr<ObjectCodegen> ObjectCodegen::Create(CodeGenerator* compiler,
                                                      bool isObj,
-                                                     std::string name) {
+                                                     std::string name,
+                                                     ForwardRef<ANode*>* ref) {
   // Allocate tables in the correct places in the heap/hunk.
   //
   // This does not actually allocate any space, but it does create
   // growable tables.
   ANObject* propListMarker = compiler->objPropList->newNode<ANObject>(name);
   ANTable* props = compiler->objPropList->newNode<ANTable>("properties");
+
+  ref->Resolve(propListMarker);
 
   ANObject* objDictMarker = compiler->objDictList->newNode<ANObject>(name);
   ANObjTable* propDict =
@@ -352,6 +358,12 @@ void FunctionBuilder::AddLoadImmediate(LiteralValue value) {
       });
 }
 
+void FunctionBuilder::AddLoadOffsetTo(PtrRef* ptr,
+                                      std::optional<std::string> name) {
+  auto* ofs = code_node_->getList()->newNode<ANObjID>(std::move(name));
+  ptr->ref_.RegisterCallback([ofs](ANode* target) { ofs->target = target; });
+}
+
 void FunctionBuilder::AddBinOp(BinOp op) {
   code_node_->getList()->newNode<ANOpCode>(GetBinOpValue(op));
 }
@@ -377,6 +389,14 @@ void FunctionBuilder::AddBranchOp(BranchOp op, LabelRef* target) {
 void FunctionBuilder::AddLabel(LabelRef* label) {
   auto* an_label = code_node_->getList()->newNode<ANLabel>();
   label->ref_.Resolve(an_label);
+}
+
+void FunctionBuilder::AddProcCall(std::string name, std::size_t numArgs,
+                                  PtrRef* target) {
+  ANCall* call = code_node_->getList()->newNode<ANCall>(std::move(name));
+  call->numArgs = 2 * numArgs;
+  target->ref_.RegisterCallback(
+      [call](ANode* target) { call->target = target; });
 }
 
 void FunctionBuilder::AddReturnOp() {
@@ -485,9 +505,11 @@ void CodeGenerator::Assemble(uint16_t scriptNum, ListingFile* listFile) {
   active = false;
 }
 
+PtrRef CodeGenerator::CreatePtrRef() { return PtrRef(); }
+
 void CodeGenerator::AddPublic(std::string name, std::size_t index,
-                              ForwardRef<ANode*>* target) {
-  dispTable->AddPublic(std::move(name), index, target);
+                              PtrRef* target) {
+  dispTable->AddPublic(std::move(name), index, &target->ref_);
 }
 
 bool CodeGenerator::IsInHeap(ANode const* node) {
@@ -519,16 +541,19 @@ bool CodeGenerator::SetVar(std::size_t varNum, LiteralValue value) {
   return true;
 }
 
-std::unique_ptr<ObjectCodegen> CodeGenerator::CreateObject(std::string name) {
-  return ObjectCodegen::Create(this, true, name);
+std::unique_ptr<ObjectCodegen> CodeGenerator::CreateObject(std::string name,
+                                                           PtrRef* ref) {
+  return ObjectCodegen::Create(this, true, name, &ref->ref_);
 }
 
-std::unique_ptr<ObjectCodegen> CodeGenerator::CreateClass(std::string name) {
-  return ObjectCodegen::Create(this, false, name);
+std::unique_ptr<ObjectCodegen> CodeGenerator::CreateClass(std::string name,
+                                                          PtrRef* ref) {
+  return ObjectCodegen::Create(this, false, name, &ref->ref_);
 }
 
 std::unique_ptr<FunctionBuilder> CodeGenerator::CreateFunction(
-    FuncName name, std::optional<std::size_t> lineNum, std::size_t numTemps) {
+    FuncName name, std::optional<std::size_t> lineNum, std::size_t numTemps,
+    PtrRef* ptr_ref) {
   ANCodeBlk* code = std::move(name).visit(
       [&](ProcedureName name) -> ANCodeBlk* {
         return codeList->newNode<ANProcCode>(std::move(name.procName));
@@ -537,6 +562,8 @@ std::unique_ptr<FunctionBuilder> CodeGenerator::CreateFunction(
         return codeList->newNode<ANMethCode>(std::move(name.methName),
                                              std::move(name.objName));
       });
+
+  ptr_ref->ref_.Resolve(code);
 
   if (lineNum) {
     // If supported by the configuration, add line number information.
