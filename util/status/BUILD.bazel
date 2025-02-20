@@ -16,3 +16,9 @@ cc_library(
         "@googletest//:gtest",
     ],
 )
+
+cc_library(
+    name = "result",
+    hdrs = ["result.hpp"],
+    deps = ["//util/types:tmpl"],
+)
