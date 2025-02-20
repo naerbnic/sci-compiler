@@ -18,6 +18,7 @@ cc_library(
     deps = [
         ":status",
         "//scic/diagnostics",
+        "//util/status:result",
         "//util/types:tmpl",
         "@abseil-cpp//absl/strings",
     ],
