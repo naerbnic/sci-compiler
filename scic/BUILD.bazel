@@ -92,7 +92,6 @@ cc_library(
     deps = [
         ":config",
         ":opcodes",
-        "//scic/codegen:common",
         "@abseil-cpp//absl/base:nullability",
         "@abseil-cpp//absl/functional:function_ref",
         "@abseil-cpp//absl/strings",
