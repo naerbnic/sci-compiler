@@ -19,8 +19,6 @@ cc_library(
         ":status",
         "//scic/diagnostics",
         "//util/status:result",
-        "//util/types:tmpl",
-        "@abseil-cpp//absl/strings",
     ],
 )
 

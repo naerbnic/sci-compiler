@@ -20,5 +20,9 @@ cc_library(
 cc_library(
     name = "result",
     hdrs = ["result.hpp"],
-    deps = ["//util/types:tmpl"],
+    deps = [
+        "//util/types:tmpl",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
 )
