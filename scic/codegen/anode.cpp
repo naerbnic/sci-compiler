@@ -1,6 +1,7 @@
 #include "anode.hpp"
 
 #include <cstddef>
+#include <cstdint>
 
 #include "scic/listing.hpp"
 #include "scic/output.hpp"
