@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/types/span.h"
 #include "scic/text/text_range.hpp"
 #include "util/io/printer.hpp"
 #include "util/strings/ref_str.hpp"
@@ -853,6 +854,9 @@ class ClassDecl {
   std::optional<TokenNode<int>> const& parent_num() const {
     return parent_num_;
   }
+
+  absl::Span<PropertyDef const> properties() const { return properties_; }
+  MethodNamesDecl const& method_names() const { return method_names_; }
 
  private:
   TokenNode<util::RefStr> name_;

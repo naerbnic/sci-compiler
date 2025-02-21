@@ -15,3 +15,21 @@ cc_library(
         "@abseil-cpp//absl/types:span",
     ],
 )
+
+cc_library(
+    name = "build_code",
+    srcs = ["build_code.cpp"],
+    hdrs = ["build_code.hpp"],
+    deps = [
+        "//scic/codegen:code_generator",
+        "//scic/parsers/sci:ast",
+        "//util/status:status_macros",
+        "//util/strings:ref_str",
+        "//util/types:choice",
+        "//util/types:overload",
+        "//util/types:tmpl",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/types:span",
+    ],
+)
