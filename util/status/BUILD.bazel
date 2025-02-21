@@ -26,3 +26,13 @@ cc_library(
         "@abseil-cpp//absl/strings:str_format",
     ],
 )
+
+cc_test(
+    name = "result_test",
+    srcs = ["result_test.cpp"],
+    deps = [
+        ":result",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
