@@ -8,9 +8,9 @@
 #include <vector>
 
 #include "scic/text/text_range.hpp"
-#include "util/types/choice.hpp"
 #include "util/io/printer.hpp"
 #include "util/strings/ref_str.hpp"
+#include "util/types/choice.hpp"
 
 namespace parsers::sci {
 
@@ -59,7 +59,19 @@ class TokenNode {
   TokenNode(T value, text::TextRange text_range)
       : value_(std::move(value)), text_range_(std::move(text_range)) {}
 
-  T const& value() const { return value_; }
+  TokenNode(TokenNode const&) = default;
+  TokenNode(TokenNode&&) = default;
+  TokenNode& operator=(TokenNode const&) = default;
+  TokenNode& operator=(TokenNode&&) = default;
+
+  template <class U>
+    requires(std::convertible_to<U, T> && !std::same_as<U, T>)
+  TokenNode(TokenNode<U> other)
+      : value_(std::move(other).value()),
+        text_range_(std::move(other).text_range()) {}
+
+  T const& value() const& { return value_; }
+  T&& value() && { return std::move(value_); }
   text::TextRange const& text_range() const { return text_range_; }
 
   // Act as a smart pointer to the value. If the internal type is a pointer,
