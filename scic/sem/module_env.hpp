@@ -7,13 +7,12 @@
 #include <optional>
 #include <stdexcept>
 #include <string_view>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
 #include "scic/sem/symbol.hpp"
-#include "util/types/choice.hpp"
 #include "util/strings/ref_str.hpp"
+#include "util/types/choice.hpp"
 
 namespace sem {
 
@@ -107,18 +106,6 @@ class ObjectTable {
                     std::optional<ClassSpecies> super = std::nullopt);
 
  private:
-};
-
-class ModuleEnv {
- public:
- private:
-  int script_num_;
-  TextTable text_table_;
-  ProcTable proc_table_;
-  VarsTable vars_table_;
-  ObjectTable object_table_;
-  std::unordered_set<SelectorId> used_selectors;
-  SymbolTable module_symbols_;
 };
 
 }  // namespace sem
