@@ -9,6 +9,7 @@ cc_library(
     hdrs = ["common.hpp"],
     deps = [
         "//scic/parsers/sci:ast",
+        "//util/types:tmpl",
         "@abseil-cpp//absl/types:span",
     ],
 )
@@ -44,9 +45,11 @@ cc_library(
     srcs = ["selector_table.cpp"],
     hdrs = ["selector_table.hpp"],
     deps = [
+        ":common",
         ":late_bound",
         "//scic/parsers/sci:ast",
         "//util/strings:ref_str",
         "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
     ],
 )

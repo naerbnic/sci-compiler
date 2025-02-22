@@ -275,11 +275,6 @@ class ClassTableBuilder {
 // Gets the script ID from the module with the given items.
 absl::StatusOr<std::size_t> GetScriptId(Items items);
 
-// Collecs all the selector definitions from a module.
-//
-// This does not include any selectors that are used in new definitions.
-absl::StatusOr<SelectorTable> BuildSelectorTable(Items items);
-
 // Collects all the selectors that are defined in a module, but have not
 // previously been declared.
 absl::StatusOr<std::vector<ast::TokenNode<util::RefStr>>> GatherNewSelectors(

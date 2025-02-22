@@ -4,6 +4,7 @@
 #include <bit>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <type_traits>
 #include <utility>
@@ -14,52 +15,16 @@
 #include "absl/types/span.h"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/parsers/sci/ast.hpp"
+#include "scic/sem/common.hpp"
 #include "scic/sem/selector_table.hpp"
 #include "util/status/status_macros.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/choice.hpp"
 #include "util/types/overload.hpp"
-#include "util/types/tmpl.hpp"
 
 namespace sem::passes {
 
 using ::codegen::CodeGenerator;
-
-template <class... Fs>
-void VisitItems(Items items, Fs&&... fs) {
-  for (auto const& item : items) {
-    item.visit(std::forward<Fs>(fs)...);
-  }
-}
-
-template <class... Ts>
-auto GetElemsOfTypes(auto const& range) {
-  if constexpr (sizeof...(Ts) == 1) {
-    // There's no need to use a choice type if there's only one type.
-    using Result = util::TypePack<Ts...>::template TypeAt<0> const*;
-    std::vector<Result> result;
-    for (auto const& item : range) {
-      item.visit([&](Ts const& elem) { result.push_back(&elem); }...,
-                 [&](auto&&) {
-                   // Not desired, so remove.
-                 });
-    }
-    return result;
-
-  } else if (sizeof...(Ts) > 1) {
-    using Result = util::Choice<Ts const*...>;
-    std::vector<Result> result;
-    for (auto const& item : range) {
-      item.visit([&](Ts const& elem) { result.push_back(Result(&elem)); }...,
-                 [&](auto&&) {
-                   // Not desired, so remove.
-                 });
-    }
-    return result;
-  } else {
-    static_assert(sizeof...(Ts) > 0, "At least one type must be specified");
-  }
-}
 
 template <class... Fs>
 absl::Status StatusVisitItems(Items items, Fs&&... fs) {
@@ -104,21 +69,6 @@ absl::StatusOr<std::size_t> GetScriptId(Items items) {
   return result[0]->script_num().value();
 }
 
-absl::StatusOr<SelectorTable> BuildSelectorTable(
-    absl::Span<ast::Item const> items) {
-  SelectorTable sel_table;
-  auto classes = GetElemsOfTypes<ast::SelectorsDecl>(items);
-  for (auto const* class_decl : classes) {
-    auto const& selectors = class_decl->selectors();
-    for (auto const& selector : selectors) {
-      RETURN_IF_ERROR(
-          sel_table.InstallSelector(selector.name, selector.id.value()));
-    }
-  }
-
-  return sel_table;
-}
-
 // Reliably sets the value to a machine word, signed or unsigned.
 absl::StatusOr<std::uint16_t> ConvertToMachineWord(int value) {
   auto narrowed = static_cast<std::int16_t>(value);
@@ -127,6 +77,37 @@ absl::StatusOr<std::uint16_t> ConvertToMachineWord(int value) {
     return absl::InvalidArgumentError("Value is too large for a machine word");
   }
   return std::bit_cast<std::uint16_t>(narrowed);
+}
+
+absl::StatusOr<std::unique_ptr<SelectorTable>> BuildFromItems(
+    absl::Span<ast::Item const> items) {
+  auto builder = SelectorTable::CreateBuilder();
+  {
+    // First, gather declared selectors.
+    auto classes = GetElemsOfTypes<ast::SelectorsDecl>(items);
+    for (auto const* class_decl : classes) {
+      auto const& selectors = class_decl->selectors();
+      for (auto const& selector : selectors) {
+        RETURN_IF_ERROR(
+            builder->DeclareSelector(selector.name, selector.id.value()));
+      }
+    }
+  }
+
+  {
+    auto classes = GetElemsOfTypes<ast::ClassDef>(items);
+    std::vector<ast::TokenNode<util::RefStr>> result;
+    for (auto const* class_def : classes) {
+      for (auto const& prop : class_def->properties()) {
+        RETURN_IF_ERROR(builder->AddNewSelector(prop.name));
+      }
+      for (auto const& method : class_def->methods()) {
+        RETURN_IF_ERROR(builder->AddNewSelector(method.name()));
+      }
+    }
+  }
+
+  return builder->Build();
 }
 
 absl::StatusOr<ClassDeclTable> BuildClassDeclGraph(

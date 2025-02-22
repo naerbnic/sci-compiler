@@ -30,7 +30,6 @@ cc_library(
         "//util/strings:ref_str",
         "//util/types:choice",
         "//util/types:overload",
-        "//util/types:tmpl",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/types:span",
