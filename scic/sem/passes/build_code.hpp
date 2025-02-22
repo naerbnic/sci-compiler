@@ -16,17 +16,13 @@
 #include "absl/types/span.h"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/parsers/sci/ast.hpp"
+#include "scic/sem/common.hpp"
 #include "scic/sem/late_bound.hpp"
 #include "scic/sem/selector_table.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/choice.hpp"
 
 namespace sem::passes {
-
-// Using the main sci classes as our AST.
-namespace ast = parsers::sci;
-
-using Items = absl::Span<ast::Item const>;
 
 class ClassDecl {
  public:

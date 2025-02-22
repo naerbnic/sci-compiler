@@ -23,6 +23,7 @@ cc_library(
     deps = [
         "//scic/codegen:code_generator",
         "//scic/parsers/sci:ast",
+        "//scic/sem:common",
         "//scic/sem:late_bound",
         "//scic/sem:selector_table",
         "//util/status:status_macros",
