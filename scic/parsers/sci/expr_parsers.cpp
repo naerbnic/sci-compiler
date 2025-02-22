@@ -23,6 +23,8 @@ namespace parsers::sci {
 
 namespace {
 
+using namespace util::ref_str_literals;
+
 using ExprParseFunc =
     ParseFunc<Expr(TokenNode<std::string_view> keyword, TreeExprSpan&)>;
 
@@ -291,31 +293,31 @@ ParseResult<AssignExpr> ParseAssignExpr(TokenNode<std::string_view> keyword,
 
 BuiltinsMap const& GetBuiltinParsers() {
   static const BuiltinsMap instance = {
-      {"return", ParseReturnExpr},
-      {"break", ParseBreakExpr},
-      {"breakif", ParseBreakIfExpr},
-      {"continue", ParseContinueExpr},
-      {"contif", ParseContIfExpr},
-      {"while", ParseWhileExpr},
-      {"repeat", ParseRepeatExpr},
-      {"for", ParseForExpr},
-      {"if", ParseIfExpr},
-      {"cond", ParseCondExpr},
-      {"switch", ParseSwitchExpr},
-      {"switchto", ParseSwitchToExpr},
-      {"self", ParseSelfSendExpr},
-      {"super", ParseSuperSendExpr},
-      {"=", ParseAssignExpr<AssignExpr::Kind::DIRECT>},
-      {"+=", ParseAssignExpr<AssignExpr::Kind::ADD>},
-      {"-=", ParseAssignExpr<AssignExpr::Kind::SUB>},
-      {"*=", ParseAssignExpr<AssignExpr::Kind::MUL>},
-      {"/=", ParseAssignExpr<AssignExpr::Kind::DIV>},
-      {"mod=", ParseAssignExpr<AssignExpr::Kind::MOD>},
-      {"&=", ParseAssignExpr<AssignExpr::Kind::AND>},
-      {"|=", ParseAssignExpr<AssignExpr::Kind::OR>},
-      {"^=", ParseAssignExpr<AssignExpr::Kind::XOR>},
-      {">>=", ParseAssignExpr<AssignExpr::Kind::SHR>},
-      {"<<=", ParseAssignExpr<AssignExpr::Kind::SHL>},
+      {"return"_rs, ParseReturnExpr},
+      {"break"_rs, ParseBreakExpr},
+      {"breakif"_rs, ParseBreakIfExpr},
+      {"continue"_rs, ParseContinueExpr},
+      {"contif"_rs, ParseContIfExpr},
+      {"while"_rs, ParseWhileExpr},
+      {"repeat"_rs, ParseRepeatExpr},
+      {"for"_rs, ParseForExpr},
+      {"if"_rs, ParseIfExpr},
+      {"cond"_rs, ParseCondExpr},
+      {"switch"_rs, ParseSwitchExpr},
+      {"switchto"_rs, ParseSwitchToExpr},
+      {"self"_rs, ParseSelfSendExpr},
+      {"super"_rs, ParseSuperSendExpr},
+      {"="_rs, ParseAssignExpr<AssignExpr::Kind::DIRECT>},
+      {"+="_rs, ParseAssignExpr<AssignExpr::Kind::ADD>},
+      {"-="_rs, ParseAssignExpr<AssignExpr::Kind::SUB>},
+      {"*="_rs, ParseAssignExpr<AssignExpr::Kind::MUL>},
+      {"/="_rs, ParseAssignExpr<AssignExpr::Kind::DIV>},
+      {"mod="_rs, ParseAssignExpr<AssignExpr::Kind::MOD>},
+      {"&="_rs, ParseAssignExpr<AssignExpr::Kind::AND>},
+      {"|="_rs, ParseAssignExpr<AssignExpr::Kind::OR>},
+      {"^="_rs, ParseAssignExpr<AssignExpr::Kind::XOR>},
+      {">>="_rs, ParseAssignExpr<AssignExpr::Kind::SHR>},
+      {"<<="_rs, ParseAssignExpr<AssignExpr::Kind::SHL>},
   };
   return instance;
 }

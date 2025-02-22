@@ -5,8 +5,20 @@
 #include <memory>
 #include <new>
 #include <string_view>
+#include <utility>
+#include <variant>
+
+#include "util/types/overload.hpp"
 
 namespace util {
+
+namespace ref_str_literals {
+RefStr operator""_rs(char const* str, std::size_t len) {
+  return RefStr(std::in_place_type<std::string_view>,
+                std::string_view(str, len));
+}
+
+}  // namespace ref_str_literals
 
 class RefStr::Impl {
  public:
@@ -35,13 +47,15 @@ std::shared_ptr<RefStr::Impl> RefStr::MakeImpl(std::string_view str) {
   return std::shared_ptr<Impl>(impl_ptr);
 }
 
-RefStr::RefStr() : value_(nullptr) {}
+RefStr::RefStr() : value_("") {}
 
 RefStr::RefStr(std::string_view str) : value_(MakeImpl(str)) {}
 
 std::string_view RefStr::view() const {
-  if (!value_) return "";
-  return value_->view();
+  return std::visit(
+      util::Overload([](std::string_view str) { return str; },
+                     [](std::shared_ptr<Impl> impl) { return impl->view(); }),
+      value_);
 }
 
 RefStr::operator std::string_view() const { return view(); }

@@ -6,6 +6,7 @@ cc_library(
     name = "ref_str",
     srcs = ["ref_str.cpp"],
     hdrs = ["ref_str.hpp"],
+    deps = ["//util/types:overload"],
 )
 
 cc_test(

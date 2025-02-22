@@ -15,6 +15,8 @@ namespace text {
 
 namespace {
 
+using namespace util::ref_str_literals;
+
 std::optional<std::pair<std::size_t, std::size_t>> FindNextNewline(
     std::string_view contents, std::size_t start) {
   auto newline_start = contents.find_first_of("\n\r", start);
@@ -33,7 +35,7 @@ std::optional<std::pair<std::size_t, std::size_t>> FindNextNewline(
 }  // namespace
 
 TextContents::TextContents(std::string contents)
-    : TextContents("<string>", std::move(contents)) {}
+    : TextContents("<string>"_rs, std::move(contents)) {}
 
 TextContents::TextContents(util::RefStr filename, std::string contents)
     : filename_(std::move(filename)), contents_(std::move(contents)) {
@@ -94,7 +96,7 @@ CharOffset TextContents::GetOffset(std::size_t byte_offset) const {
 TextRange TextRange::OfString(std::string contents) {
   auto length = contents.size();
   return TextRange(
-      std::make_shared<TextContents>("<string>", std::move(contents)), 0,
+      std::make_shared<TextContents>("<string>"_rs, std::move(contents)), 0,
       length);
 }
 

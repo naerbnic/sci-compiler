@@ -7,22 +7,14 @@
 #include <ostream>
 #include <string_view>
 #include <type_traits>
+#include <utility>
+#include <variant>
 
 namespace util {
-
-namespace internal {
-
-template <std::size_t N>
-using ConstCharArray = const char[N];
-template <std::size_t N>
-struct LitStr {
-  constexpr LitStr(ConstCharArray<N> const& str) : str_(str) {}
-  const char* str_;
-};
-
-template <std::size_t N>
-LitStr(ConstCharArray<N> const&) -> LitStr<N>;
-}  // namespace internal
+class RefStr;
+namespace ref_str_literals {
+RefStr operator""_rs(char const* str, std::size_t len);
+}  // namespace ref_str_literals
 
 // A reference to a constant shared string.
 //
@@ -31,10 +23,6 @@ class RefStr {
  public:
   // Default. Constructs an empty string.
   RefStr();
-
-  // Implicitly construct from a string literal.
-  template <std::size_t N>
-  RefStr(const char (&str)[N]) : RefStr(std::string_view(&str[0], N - 1)) {}
 
   // Construct from any type that can be converted to a string_view.
   //
@@ -77,7 +65,14 @@ class RefStr {
   }
 
  private:
+  friend RefStr util::ref_str_literals::operator""_rs(char const* str,
+                                                      std::size_t len);
   class Impl;
+
+  // An internal constructor for a string literal.
+  explicit constexpr RefStr(std::in_place_type_t<std::string_view>,
+                            std::string_view str)
+      : value_(str) {}
 
   static std::shared_ptr<Impl> MakeImpl(std::string_view str);
 
@@ -85,7 +80,7 @@ class RefStr {
 
   // The string_view is only used if this value was initialized with a string
   // literal.
-  std::shared_ptr<Impl> value_;
+  std::variant<std::string_view, std::shared_ptr<Impl>> value_;
 
   // For Absl hash collection types.
   template <typename H>

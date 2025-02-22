@@ -10,19 +10,21 @@
 namespace util {
 namespace {
 
+using namespace util::ref_str_literals;
+
 TEST(RefStrTest, EmptyString) {
   RefStr str;
   EXPECT_EQ(std::string_view(str), "");
 }
 
 TEST(RefStrTest, SimpleTest) {
-  RefStr foo = "hello";
+  RefStr foo = "hello"_rs;
   EXPECT_EQ(foo, "hello");
   EXPECT_EQ("hello", foo);
 }
 
 TEST(RefStrTest, BasicStringOperationsWork) {
-  RefStr foo = "hello";
+  RefStr foo = "hello"_rs;
   auto result = absl::StrFormat("%s world", foo);
   EXPECT_EQ(result, "hello world");
 
@@ -37,8 +39,8 @@ TEST(RefStrTest, InStdMapWorks) {
   map.emplace("foo", 1);
   map.emplace("bar", 2);
 
-  EXPECT_EQ(map["foo"], 1);
-  EXPECT_EQ(map["bar"], 2);
+  EXPECT_EQ(map["foo"_rs], 1);
+  EXPECT_EQ(map["bar"_rs], 2);
 }
 
 }  // namespace
