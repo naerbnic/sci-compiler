@@ -15,6 +15,7 @@
 #include "scic/codegen/code_generator.hpp"
 #include "scic/parsers/sci/ast.hpp"
 #include "util/status/status_macros.hpp"
+#include "util/strings/ref_str.hpp"
 #include "util/types/choice.hpp"
 #include "util/types/overload.hpp"
 #include "util/types/tmpl.hpp"
@@ -187,6 +188,84 @@ absl::StatusOr<ClassDeclTable> BuildClassDeclGraph(
   }
 
   return class_decls;
+}
+
+absl::StatusOr<std::vector<ast::TokenNode<util::RefStr>>> GatherNewSelectors(
+    SelectorTable const* sel_table, absl::Span<ast::Item const> items) {
+  auto classes = GetElemsOfTypes<ast::ClassDef>(items);
+  std::vector<ast::TokenNode<util::RefStr>> result;
+  for (auto const* class_def : classes) {
+    for (auto const& prop : class_def->properties()) {
+      result.push_back(prop.name);
+    }
+    for (auto const& method : class_def->methods()) {
+      result.push_back(method.name());
+    }
+  }
+
+  for (auto it = result.begin(); it != result.end();) {
+    if (sel_table->LookupByName(it->value())) {
+      it = result.erase(it);
+    } else {
+      ++it;
+    }
+  }
+
+  return result;
+}
+
+static codegen::LiteralValue AstConstValueToLiteralValue(
+    CodeGenerator* codegen, ast::ConstValue const& value) {
+  return value.visit(
+      [&](ast::NumConstValue const& num) -> codegen::LiteralValue {
+        return num.value().value();
+      },
+      [&](ast::StringConstValue const& str) -> codegen::LiteralValue {
+        return codegen->AddTextNode(str.value().value());
+      });
+}
+
+absl::StatusOr<ClassDefTable> BuildClassDefTable(
+    CodeGenerator* codegen, SelectorTable const* selectors,
+    ClassDeclTable const* class_decls, absl::Span<ast::Item const> items) {
+  auto classes = GetElemsOfTypes<ast::ClassDef>(items);
+
+  ClassDefTable class_defs;
+  for (auto const* classdef : classes) {
+    auto const& name = classdef->name();
+    std::vector<ClassDef::Property> properties;
+    for (auto const& prop : classdef->properties()) {
+      auto const& prop_name = prop.name;
+      auto literal_value = AstConstValueToLiteralValue(codegen, prop.value);
+      auto const* selector = selectors->LookupByName(prop_name.value());
+      if (!selector) {
+        return absl::InvalidArgumentError("Selector not found");
+      }
+      properties.push_back(ClassDef::Property{
+          .name = prop_name,
+          .selector = selector,
+          .value = literal_value,
+      });
+    }
+
+    std::vector<ClassDef::Method> methods;
+    for (auto const& ast_method : classdef->methods()) {
+      auto const& method_name = ast_method.name();
+      auto const* selector = selectors->LookupByName(method_name.value());
+      if (!selector) {
+        return absl::InvalidArgumentError("Selector not found");
+      }
+      methods.push_back(ClassDef::Method{
+          .name = method_name,
+          .selector = selector,
+      });
+    }
+
+    auto const* class_decl = class_decls->LookupByName(name.value());
+    RETURN_IF_ERROR(class_defs.AddClassDef(
+        name, class_decl, std::move(properties), std::move(methods)));
+  }
+  return absl::UnimplementedError("Not yet implemented.");
 }
 
 }  // namespace sem::passes
