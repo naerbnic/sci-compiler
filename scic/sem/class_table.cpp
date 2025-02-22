@@ -67,7 +67,14 @@ class ClassImpl : public Class {
         species_(species),
         prev_decl_(prev_decl),
         properties_(std::move(properties)),
-        methods_(std::move(methods)) {}
+        methods_(std::move(methods)) {
+    for (auto& prop : properties_) {
+      returned_properties_.push_back(&prop);
+    }
+    for (auto& method : methods_) {
+      returned_methods_.push_back(&method);
+    }
+  }
 
   NameToken const& token_name() const override { return name_; }
   util::RefStr const& name() const override { return name_.value(); }
@@ -396,4 +403,10 @@ class ClassTableBuilderImpl : public ClassTableBuilder {
   std::vector<ClassDecl> decls_;
 };
 }  // namespace
+
+std::unique_ptr<ClassTableBuilder> ClassTableBuilder::Create(
+    SelectorTable const* sel_table) {
+  return std::make_unique<ClassTableBuilderImpl>(sel_table);
+}
+
 }  // namespace sem

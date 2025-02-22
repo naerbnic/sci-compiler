@@ -9,7 +9,11 @@ cc_library(
     hdrs = ["common.hpp"],
     deps = [
         "//scic/parsers/sci:ast",
+        "//util/strings:ref_str",
+        "//util/types:strong_types",
         "//util/types:tmpl",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/types:span",
     ],
 )
@@ -58,4 +62,31 @@ cc_library(
     name = "class_table",
     srcs = ["class_table.cpp"],
     hdrs = ["class_table.hpp"],
+    deps = [
+        ":common",
+        ":late_bound",
+        ":selector_table",
+        "//scic/codegen:code_generator",
+        "//scic/parsers/sci:ast",
+        "//util/status:status_macros",
+        "//util/strings:ref_str",
+        "@abseil-cpp//absl/base:nullability",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+    ],
+)
+
+cc_library(
+    name = "object_table",
+    srcs = ["object_table.cpp"],
+    hdrs = ["object_table.hpp"],
+    deps = [
+        ":class_table",
+        ":common",
+        ":selector_table",
+        "//scic/codegen:code_generator",
+        "//util/strings:ref_str",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+    ],
 )

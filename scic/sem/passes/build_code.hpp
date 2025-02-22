@@ -2,6 +2,7 @@
 #define SEM_PASSES_BUILD_CODE_HPP
 
 #include <memory>
+#include <vector>
 
 #include "absl/status/statusor.h"
 #include "absl/types/span.h"
@@ -11,6 +12,17 @@
 #include "scic/sem/selector_table.hpp"
 
 namespace sem::passes {
+
+struct CompilationSet {
+  Items global_items;
+
+  struct Modules {
+    ScriptNum script_num;
+    Items module_items;
+  };
+
+  std::vector<Modules> modules;
+};
 
 // Gets the script ID from the module with the given items.
 absl::StatusOr<ScriptNum> GetScriptId(Items items);
