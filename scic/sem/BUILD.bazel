@@ -5,6 +5,20 @@ package(
 )
 
 cc_library(
+    name = "common",
+    hdrs = ["common.hpp"],
+    deps = [
+        "//scic/parsers/sci:ast",
+        "@abseil-cpp//absl/types:span",
+    ],
+)
+
+cc_library(
+    name = "late_bound",
+    hdrs = ["late_bound.hpp"],
+)
+
+cc_library(
     name = "symbol",
     srcs = ["symbol.cpp"],
     hdrs = ["symbol.hpp"],
@@ -22,5 +36,17 @@ cc_library(
         ":symbol",
         "//util/strings:ref_str",
         "//util/types:choice",
+    ],
+)
+
+cc_library(
+    name = "selector_table",
+    srcs = ["selector_table.cpp"],
+    hdrs = ["selector_table.hpp"],
+    deps = [
+        ":late_bound",
+        "//scic/parsers/sci:ast",
+        "//util/strings:ref_str",
+        "@abseil-cpp//absl/status",
     ],
 )

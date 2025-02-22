@@ -4,11 +4,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
-#include <limits>
 #include <map>
 #include <memory>
 #include <optional>
-#include <stdexcept>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -18,6 +16,8 @@
 #include "absl/types/span.h"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/parsers/sci/ast.hpp"
+#include "scic/sem/late_bound.hpp"
+#include "scic/sem/selector_table.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/choice.hpp"
 
@@ -27,157 +27,6 @@ namespace sem::passes {
 namespace ast = parsers::sci;
 
 using Items = absl::Span<ast::Item const>;
-
-// Similar to an Optional, but is intended to only be updated once.
-//
-// This should be used as a field, as the mutators do not allow for arbitrary
-// assignment, which would make it less useful for a parameter.
-template <class T>
-class LateBound {
- public:
-  LateBound() = default;
-
-  void set(T value) {
-    if (value_.has_value()) {
-      throw std::logic_error("LateBound value already set");
-    }
-    value_ = std::move(value);
-  }
-
-  // Pointer semantics
-  T* operator->() { return &value_.value(); }
-  T const* operator->() const { return &value_.value(); }
-  T& operator*() { return value_.value(); }
-  T const& operator*() const { return value_.value(); }
-
- private:
-  std::optional<T> value_;
-};
-
-// A table of declared selectors.
-class SelectorTable {
- public:
-  class Entry {
-   public:
-    Entry(ast::TokenNode<util::RefStr> name) : name_(std::move(name)) {}
-
-    ast::TokenNode<util::RefStr> const& name_token() const { return name_; }
-    util::RefStr const& name() const { return name_.value(); }
-    std::size_t selector_num() const { return *selector_num_; }
-
-   private:
-    friend class SelectorTable;
-
-    ast::TokenNode<util::RefStr> name_;
-    LateBound<std::size_t> selector_num_;
-  };
-
-  absl::Status InstallSelector(ast::TokenNode<util::RefStr> name,
-                               std::size_t selector_num) {
-    if (table_.contains(selector_num)) {
-      return absl::InvalidArgumentError("Selector number already exists");
-    }
-
-    if (name_map_.contains(name.value())) {
-      return absl::InvalidArgumentError("Selector name already exists");
-    }
-
-    auto entry = std::make_unique<SelectorTable::Entry>(std::move(name));
-    entry->selector_num_.set(selector_num);
-    auto const* entry_ptr = entry.get();
-    table_.emplace(selector_num, std::move(entry));
-    name_map_.emplace(entry_ptr->name(), entry_ptr);
-    return absl::OkStatus();
-  }
-
-  absl::Status AddNewSelector(ast::TokenNode<util::RefStr> name) {
-    if (name_map_.contains(name.value())) {
-      // This is fine, as we can reuse the entry.
-      return absl::OkStatus();
-    }
-    auto entry = std::make_unique<SelectorTable::Entry>(std::move(name));
-    name_map_.emplace(entry->name(), entry.get());
-    new_selectors_.emplace_back(std::move(entry));
-    return absl::OkStatus();
-  }
-
-  absl::Status ResolveNewSelectors() {
-    // Starting from selector 0, see if there is a gap in the table. If so,
-    // assign the next selector number to the new selector.
-    // This is not the most efficient method, but it is simple.
-    std::size_t next_selector = 0;
-    for (auto& entry : new_selectors_) {
-      while (table_.contains(next_selector)) {
-        ++next_selector;
-        if (next_selector > std::numeric_limits<std::uint16_t>::max()) {
-          return absl::InvalidArgumentError("Too many selectors");
-        }
-      }
-      entry->selector_num_.set(next_selector++);
-      table_.emplace(entry->selector_num(), std::move(entry));
-    }
-    return absl::OkStatus();
-  }
-
-  Entry const* LookupByNumber(std::size_t selector_num) const {
-    auto it = table_.find(selector_num);
-    if (it == table_.end()) {
-      return nullptr;
-    }
-    return it->second.get();
-  }
-
-  Entry const* LookupByName(std::string_view name) const {
-    auto it = name_map_.find(name);
-    if (it == name_map_.end()) {
-      return nullptr;
-    }
-    return it->second;
-  }
-
- private:
-  // Map from selector numbers to selector entries. Owns the entries.
-  std::map<std::size_t, std::unique_ptr<Entry>> table_;
-  std::vector<std::unique_ptr<Entry>> new_selectors_;
-  std::map<std::string_view, Entry const*, std::less<>> name_map_;
-};
-
-class NewSelectorsTable {
- public:
-  class Entry {
-   public:
-    Entry(ast::TokenNode<util::RefStr> name) : name_(std::move(name)) {}
-
-    ast::TokenNode<util::RefStr> const& name_token() const { return name_; }
-    util::RefStr const& name() const { return name_.value(); }
-    std::size_t selector_num() const { return *selector_num_; }
-
-   private:
-    friend class NewSelectorsTable;
-    ast::TokenNode<util::RefStr> name_;
-    LateBound<std::size_t> selector_num_;
-  };
-
-  absl::Status AddSelector(ast::TokenNode<util::RefStr> name) {
-    if (table_.contains(name.value())) {
-      return absl::InvalidArgumentError("Selector name already exists");
-    }
-    table_.emplace(name.value(), std::move(name));
-    return absl::OkStatus();
-  }
-
-  ast::TokenNode<util::RefStr> const* LookupByName(
-      std::string_view name) const {
-    auto it = table_.find(name);
-    if (it == table_.end()) {
-      return nullptr;
-    }
-    return &it->second;
-  }
-
- private:
-  std::map<std::string_view, ast::TokenNode<util::RefStr>, std::less<>> table_;
-};
 
 class ClassDecl {
  public:
@@ -347,6 +196,84 @@ class ClassDefTable {
   std::vector<std::unique_ptr<ClassDef>> pending_classes_;
   std::map<std::size_t, std::unique_ptr<ClassDef>> classes_;
   std::map<std::string_view, ClassDef const*, std::less<>> name_table_;
+};
+
+class ClassTableBuilder {
+ public:
+  struct Property {
+    ast::TokenNode<util::RefStr> name;
+    SelectorTable::Entry const* selector;
+    // The value of a selector.
+    //
+    // In a class decl, this must be a number.
+    // In a class def, this can be any literal value.
+    codegen::LiteralValue value;
+  };
+
+  struct Method {
+    ast::TokenNode<util::RefStr> name;
+    SelectorTable::Entry const* selector;
+  };
+
+  absl::Status AddClassDecl(ast::TokenNode<util::RefStr> name,
+                            std::size_t species, std::size_t script_num,
+                            std::optional<std::size_t> super_num,
+                            std::vector<Property> properties,
+                            std::vector<Method> methods) {
+    for (auto const& prop : properties) {
+      if (!prop.value.has<int>()) {
+        return absl::InvalidArgumentError(
+            "Property value must be a number in a "
+            "class declaration.");
+      }
+    }
+    decls_.emplace_back(std::make_unique<ClassDecl>(ClassDecl{
+        .name = std::move(name),
+        .species = species,
+        .script_num = script_num,
+        .super_num = super_num,
+        .properties = std::move(properties),
+        .methods = std::move(methods),
+    }));
+    return absl::OkStatus();
+  }
+
+  absl::Status AddClassDef(ast::TokenNode<util::RefStr> name,
+                           std::size_t script_num,
+                           std::optional<util::RefStr> super,
+                           std::vector<Property> properties,
+                           std::vector<Method> methods) {
+    defs_.emplace_back(std::make_unique<ClassDef>(ClassDef{
+        .name = std::move(name),
+        .script_num = script_num,
+        .super = super,
+        .properties = std::move(properties),
+        .methods = std::move(methods),
+    }));
+    return absl::OkStatus();
+  }
+
+ private:
+  struct ClassDecl {
+    ast::TokenNode<util::RefStr> name;
+    std::size_t species;
+    std::size_t script_num;
+    std::optional<std::size_t> super_num;
+
+    std::vector<Property> properties;
+    std::vector<Method> methods;
+  };
+
+  struct ClassDef {
+    ast::TokenNode<util::RefStr> name;
+    std::size_t script_num;
+    std::optional<util::RefStr> super;
+    std::vector<Property> properties;
+    std::vector<Method> methods;
+  };
+
+  std::vector<std::unique_ptr<ClassDef>> defs_;
+  std::vector<std::unique_ptr<ClassDecl>> decls_;
 };
 
 // Gets the script ID from the module with the given items.
