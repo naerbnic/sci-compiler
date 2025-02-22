@@ -6,9 +6,11 @@
 
 #include "absl/status/statusor.h"
 #include "absl/types/span.h"
+#include "scic/codegen/code_generator.hpp"
 #include "scic/parsers/sci/ast.hpp"
 #include "scic/sem/class_table.hpp"
 #include "scic/sem/common.hpp"
+#include "scic/sem/object_table.hpp"
 #include "scic/sem/selector_table.hpp"
 
 namespace sem::passes {
@@ -37,6 +39,11 @@ absl::StatusOr<std::unique_ptr<SelectorTable>> BuildSelectorTableFromItems(
 // Collects all the class definitions from a module.
 absl::StatusOr<std::unique_ptr<ClassTable>> BuildClassTable(
     SelectorTable const* sel_table, ScriptNum script_num,
+    absl::Span<ast::Item const> items);
+
+absl::StatusOr<std::unique_ptr<ObjectTable>> BuildObjectTable(
+    codegen::CodeGenerator* codegen, SelectorTable const* selector,
+    ClassTable const* class_table, ScriptNum script_num,
     absl::Span<ast::Item const> items);
 
 };  // namespace sem::passes

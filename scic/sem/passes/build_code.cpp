@@ -12,6 +12,7 @@
 #include "scic/parsers/sci/ast.hpp"
 #include "scic/sem/class_table.hpp"
 #include "scic/sem/common.hpp"
+#include "scic/sem/object_table.hpp"
 #include "scic/sem/selector_table.hpp"
 #include "util/status/status_macros.hpp"
 #include "util/strings/ref_str.hpp"
@@ -102,6 +103,9 @@ absl::StatusOr<std::unique_ptr<ClassTable>> BuildClassTableFromItems(
   }
 
   for (auto const* classdef : GetElemsOfTypes<ast::ClassDef>(items)) {
+    if (classdef->kind() != ast::ClassDef::CLASS) {
+      continue;
+    }
     auto const& name = classdef->name();
     std::optional<NameToken> super_name;
     if (classdef->parent()) {
@@ -124,6 +128,40 @@ absl::StatusOr<std::unique_ptr<ClassTable>> BuildClassTableFromItems(
     RETURN_IF_ERROR(builder->AddClassDef(name, script_num, super_name,
                                          std::move(properties),
                                          std::move(methods)));
+  }
+
+  return builder->Build();
+}
+
+absl::StatusOr<std::unique_ptr<ObjectTable>> BuildObjectTable(
+    codegen::CodeGenerator* codegen, SelectorTable const* selector,
+    ClassTable const* class_table, ScriptNum script_num,
+    absl::Span<ast::Item const> items) {
+  auto builder = ObjectTableBuilder::Create(codegen, selector, class_table);
+
+  for (auto const* object : GetElemsOfTypes<ast::ClassDef>(items)) {
+    if (object->kind() != ast::ClassDef::OBJECT) {
+      continue;
+    }
+
+    if (!object->parent()) {
+      return absl::InvalidArgumentError("Object has no parent class");
+    }
+
+    std::vector<ObjectTableBuilder::Property> properties;
+    for (auto const& prop : object->properties()) {
+      properties.push_back(ObjectTableBuilder::Property{
+          .name = prop.name,
+          .value = AstConstValueToLiteralValue(codegen, prop.value),
+      });
+    }
+    std::vector<NameToken> methods;
+    for (auto const& method_name : object->methods()) {
+      methods.push_back(method_name.name());
+    }
+    RETURN_IF_ERROR(builder->AddObject(object->name(), script_num,
+                                       *object->parent(), std::move(properties),
+                                       std::move(methods)));
   }
 
   return builder->Build();
