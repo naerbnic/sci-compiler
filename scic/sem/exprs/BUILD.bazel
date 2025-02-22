@@ -1,0 +1,34 @@
+package(
+    default_visibility = ["//scic:scic_internal"],
+)
+
+cc_library(
+    name = "expr_context",
+    hdrs = ["expr_context.hpp"],
+    deps = [
+        "//scic/codegen:code_generator",
+        "//scic/parsers/sci:ast",
+        "//scic/sem:class_table",
+        "//scic/sem:selector_table",
+        "//util/types:choice",
+        "@abseil-cpp//absl/status",
+    ],
+)
+
+cc_library(
+    name = "expr_builder",
+    srcs = ["expr_builder.cpp"],
+    hdrs = ["expr_builder.hpp"],
+    deps = [
+        ":expr_context",
+        "//scic/codegen:code_generator",
+        "//scic/parsers/sci:ast",
+        "//scic/sem:class_table",
+        "//scic/sem:selector_table",
+        "//util/status:status_macros",
+        "//util/strings:ref_str",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)

@@ -43,10 +43,12 @@ class MethodImpl : public Object::Method {
   NameToken const& token_name() const override { return name_; }
   util::RefStr const& name() const override { return name_.value(); }
   SelectorTable::Entry const* selector() const override { return selector_; }
+  codegen::PtrRef* ptr_ref() const override { return &ptr_ref_; }
 
  private:
   NameToken name_;
   SelectorTable::Entry const* selector_;
+  mutable codegen::PtrRef ptr_ref_;
 };
 
 class ObjectImpl : public Object {

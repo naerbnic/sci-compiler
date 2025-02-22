@@ -34,6 +34,7 @@ class Object {
     virtual NameToken const& token_name() const = 0;
     virtual util::RefStr const& name() const = 0;
     virtual SelectorTable::Entry const* selector() const = 0;
+    virtual codegen::PtrRef* ptr_ref() const = 0;
   };
 
   virtual ~Object() = default;
