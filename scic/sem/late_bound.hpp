@@ -14,12 +14,20 @@ class LateBound {
  public:
   LateBound() = default;
 
+  LateBound(LateBound const&) = delete;
+  LateBound& operator=(LateBound const&) = delete;
+
+  LateBound(LateBound&&) = default;
+  LateBound& operator=(LateBound&&) = default;
+
   void set(T value) {
     if (value_.has_value()) {
       throw std::logic_error("LateBound value already set");
     }
     value_ = std::move(value);
   }
+
+  bool has_value() const { return value_.has_value(); }
 
   // Pointer semantics
   T* operator->() { return &value_.value(); }

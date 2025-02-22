@@ -13,6 +13,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "scic/parsers/sci/ast.hpp"
+#include "scic/sem/common.hpp"
 #include "scic/sem/late_bound.hpp"
 #include "util/strings/ref_str.hpp"
 
@@ -30,25 +31,25 @@ class EntryImpl : public SelectorTable::Entry {
     return name_;
   }
   util::RefStr const& name() const override { return name_.value(); }
-  std::size_t selector_num() const override { return *selector_num_; }
+  SelectorNum selector_num() const override { return *selector_num_; }
 
  private:
   friend class SelectorTableImpl;
   friend class BuilderImpl;
 
   ast::TokenNode<util::RefStr> name_;
-  LateBound<std::size_t> selector_num_;
+  LateBound<SelectorNum> selector_num_;
 };
 
 // A table of declared selectors.
 class SelectorTableImpl : public SelectorTable {
  public:
   SelectorTableImpl(
-      std::map<std::size_t, std::unique_ptr<EntryImpl>> table,
+      std::map<SelectorNum, std::unique_ptr<EntryImpl>> table,
       std::map<std::string_view, EntryImpl const*, std::less<>> name_map)
       : table_(std::move(table)), name_map_(std::move(name_map)) {}
 
-  Entry const* LookupByNumber(std::size_t selector_num) const override {
+  Entry const* LookupByNumber(SelectorNum selector_num) const override {
     auto it = table_.find(selector_num);
     if (it == table_.end()) {
       return nullptr;
@@ -66,14 +67,14 @@ class SelectorTableImpl : public SelectorTable {
 
  private:
   // Map from selector numbers to selector entries. Owns the entries.
-  std::map<std::size_t, std::unique_ptr<EntryImpl>> table_;
+  std::map<SelectorNum, std::unique_ptr<EntryImpl>> table_;
   std::map<std::string_view, EntryImpl const*, std::less<>> name_map_;
 };
 
 class BuilderImpl : public SelectorTable::Builder {
  public:
   absl::Status DeclareSelector(ast::TokenNode<util::RefStr> name,
-                               std::size_t selector_num) override {
+                               SelectorNum selector_num) override {
     if (table_.contains(selector_num)) {
       return absl::InvalidArgumentError("Selector number already exists");
     }
@@ -107,13 +108,13 @@ class BuilderImpl : public SelectorTable::Builder {
     // This is not the most efficient method, but it is simple.
     std::size_t next_selector = 0;
     for (auto& entry : new_selectors_) {
-      while (table_.contains(next_selector)) {
+      while (table_.contains(SelectorNum::Create(next_selector))) {
         ++next_selector;
         if (next_selector > std::numeric_limits<std::uint16_t>::max()) {
           return absl::InvalidArgumentError("Too many selectors");
         }
       }
-      entry->selector_num_.set(next_selector++);
+      entry->selector_num_.set(SelectorNum::Create(next_selector++));
       table_.emplace(entry->selector_num(), std::move(entry));
     }
 
@@ -129,7 +130,7 @@ class BuilderImpl : public SelectorTable::Builder {
 
  private:
   // Map from selector numbers to selector entries. Owns the entries.
-  std::map<std::size_t, std::unique_ptr<EntryImpl>> table_;
+  std::map<SelectorNum, std::unique_ptr<EntryImpl>> table_;
   std::vector<std::unique_ptr<EntryImpl>> new_selectors_;
   std::map<std::string_view, EntryImpl const*, std::less<>> name_map_;
 };

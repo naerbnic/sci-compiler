@@ -19,6 +19,8 @@ RefStr operator""_rs(char const* str, std::size_t len);
 // A reference to a constant shared string.
 //
 // The string value itself, once created, cannot be changed.
+//
+// Copies are always cheap, and do not allocate new data.
 class RefStr {
  public:
   // Default. Constructs an empty string.

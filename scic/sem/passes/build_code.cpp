@@ -1,9 +1,7 @@
 #include "scic/sem/passes/build_code.hpp"
 
 #include <algorithm>
-#include <bit>
 #include <cstddef>
-#include <cstdint>
 #include <memory>
 #include <optional>
 #include <type_traits>
@@ -69,16 +67,6 @@ absl::StatusOr<std::size_t> GetScriptId(Items items) {
   return result[0]->script_num().value();
 }
 
-// Reliably sets the value to a machine word, signed or unsigned.
-absl::StatusOr<std::uint16_t> ConvertToMachineWord(int value) {
-  auto narrowed = static_cast<std::int16_t>(value);
-  if (narrowed != value) {
-    // We've changed the value, so it must be out of range.
-    return absl::InvalidArgumentError("Value is too large for a machine word");
-  }
-  return std::bit_cast<std::uint16_t>(narrowed);
-}
-
 absl::StatusOr<std::unique_ptr<SelectorTable>> BuildFromItems(
     absl::Span<ast::Item const> items) {
   auto builder = SelectorTable::CreateBuilder();
@@ -88,8 +76,8 @@ absl::StatusOr<std::unique_ptr<SelectorTable>> BuildFromItems(
     for (auto const* class_decl : classes) {
       auto const& selectors = class_decl->selectors();
       for (auto const& selector : selectors) {
-        RETURN_IF_ERROR(
-            builder->DeclareSelector(selector.name, selector.id.value()));
+        RETURN_IF_ERROR(builder->DeclareSelector(
+            selector.name, SelectorNum::Create(selector.id.value())));
       }
     }
   }

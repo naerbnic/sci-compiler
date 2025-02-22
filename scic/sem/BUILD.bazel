@@ -53,3 +53,9 @@ cc_library(
         "@abseil-cpp//absl/status:statusor",
     ],
 )
+
+cc_library(
+    name = "class_table",
+    srcs = ["class_table.cpp"],
+    hdrs = ["class_table.hpp"],
+)

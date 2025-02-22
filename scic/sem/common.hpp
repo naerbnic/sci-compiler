@@ -1,16 +1,30 @@
 #ifndef SEM_COMMON_HPP
 #define SEM_COMMON_HPP
 
+#include <bit>
+#include <cstddef>
+#include <cstdint>
+#include <string_view>
 #include <vector>
 
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/types/span.h"
 #include "scic/parsers/sci/ast.hpp"
+#include "util/strings/ref_str.hpp"
+#include "util/types/strong_types.hpp"
 #include "util/types/tmpl.hpp"
 
 namespace sem {
 
-namespace ast = parsers::sci;
+// Import the parsers::sci namespace as namespace ast
+namespace ast {
+using namespace parsers::sci;
+}
+
 using Items = absl::Span<ast::Item const>;
+
+using NameToken = ast::TokenNode<util::RefStr>;
 
 template <class... Fs>
 void VisitItems(Items items, Fs&&... fs) {
@@ -46,6 +60,45 @@ auto GetElemsOfTypes(auto const& range) {
   } else {
     static_assert(sizeof...(Ts) > 0, "At least one type must be specified");
   }
+}
+
+// Strong types for common concepts in the sem namespace.
+
+// A tag that contains a std::size_t value.
+struct SizeTag {
+  using Value = std::size_t;
+  static constexpr bool is_const = true;
+};
+
+// A tag that contains a RefStr value.
+struct RefStrTag {
+  using Value = util::RefStr;
+  static constexpr bool is_const = true;
+
+  using View = std::string_view;
+  using ViewStorage = std::string_view;
+
+  static ViewStorage ValueToStorage(Value const& value) { return value; }
+  static View StorageToView(ViewStorage const& storage) { return storage; }
+};
+
+struct ScriptNumTag : SizeTag {};
+using ScriptNum = util::StrongValue<ScriptNumTag>;
+
+struct ClassSpeciesTag : SizeTag {};
+using ClassSpecies = util::StrongValue<ClassSpeciesTag>;
+
+struct SelectorNumTag : SizeTag {};
+using SelectorNum = util::StrongValue<SelectorNumTag>;
+
+// Reliably sets the value to a machine word, signed or unsigned.
+inline absl::StatusOr<std::uint16_t> ConvertToMachineWord(int value) {
+  auto narrowed = static_cast<std::int16_t>(value);
+  if (narrowed != value) {
+    // We've changed the value, so it must be out of range.
+    return absl::InvalidArgumentError("Value is too large for a machine word");
+  }
+  return std::bit_cast<std::uint16_t>(narrowed);
 }
 
 }  // namespace sem

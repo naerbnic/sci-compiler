@@ -1,7 +1,6 @@
 #ifndef SEM_SELECTOR_TABLE_HPP
 #define SEM_SELECTOR_TABLE_HPP
 
-#include <cstddef>
 #include <memory>
 #include <string_view>
 
@@ -20,7 +19,7 @@ class SelectorTable {
    public:
     virtual ~Builder() = default;
     virtual absl::Status DeclareSelector(ast::TokenNode<util::RefStr> name,
-                                         std::size_t selector_num) = 0;
+                                         SelectorNum selector_num) = 0;
     virtual absl::Status AddNewSelector(ast::TokenNode<util::RefStr> name) = 0;
     virtual absl::StatusOr<std::unique_ptr<SelectorTable>> Build() = 0;
   };
@@ -33,12 +32,12 @@ class SelectorTable {
 
     virtual ast::TokenNode<util::RefStr> const& name_token() const = 0;
     virtual util::RefStr const& name() const = 0;
-    virtual std::size_t selector_num() const = 0;
+    virtual SelectorNum selector_num() const = 0;
   };
 
   virtual ~SelectorTable() = default;
 
-  virtual Entry const* LookupByNumber(std::size_t selector_num) const = 0;
+  virtual Entry const* LookupByNumber(SelectorNum selector_num) const = 0;
 
   virtual Entry const* LookupByName(std::string_view name) const = 0;
 };
