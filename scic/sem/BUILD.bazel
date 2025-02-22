@@ -10,6 +10,7 @@ cc_library(
     deps = [
         "//scic/parsers/sci:ast",
         "//util/strings:ref_str",
+        "//util/types:choice",
         "//util/types:strong_types",
         "//util/types:tmpl",
         "@abseil-cpp//absl/status",
@@ -86,6 +87,7 @@ cc_library(
         ":selector_table",
         "//scic/codegen:code_generator",
         "//util/strings:ref_str",
+        "@abseil-cpp//absl/base:nullability",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/status:statusor",
     ],

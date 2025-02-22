@@ -25,6 +25,7 @@ cc_library(
         "//scic/parsers/sci:ast",
         "//scic/sem:class_table",
         "//scic/sem:common",
+        "//scic/sem:object_table",
         "//scic/sem:selector_table",
         "//util/status:status_macros",
         "//util/strings:ref_str",

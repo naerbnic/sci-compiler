@@ -12,6 +12,7 @@
 #include "absl/types/span.h"
 #include "scic/parsers/sci/ast.hpp"
 #include "util/strings/ref_str.hpp"
+#include "util/types/choice.hpp"
 #include "util/types/strong_types.hpp"
 #include "util/types/tmpl.hpp"
 
