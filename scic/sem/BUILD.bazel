@@ -36,16 +36,6 @@ cc_library(
 )
 
 cc_library(
-    name = "module_env",
-    hdrs = ["module_env.hpp"],
-    deps = [
-        ":symbol",
-        "//util/strings:ref_str",
-        "//util/types:choice",
-    ],
-)
-
-cc_library(
     name = "selector_table",
     srcs = ["selector_table.cpp"],
     hdrs = ["selector_table.hpp"],
@@ -89,6 +79,41 @@ cc_library(
         "//util/strings:ref_str",
         "@abseil-cpp//absl/base:nullability",
         "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+    ],
+)
+
+cc_library(
+    name = "proc_table",
+    srcs = ["proc_table.cpp"],
+    hdrs = ["proc_table.hpp"],
+    deps = [
+        ":common",
+        "//scic/codegen:code_generator",
+        "//util/strings:ref_str",
+        "@abseil-cpp//absl/base:nullability",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+    ],
+)
+
+cc_library(
+    name = "input",
+    hdrs = ["input.hpp"],
+    deps = ["//scic/parsers/sci:ast"],
+)
+
+cc_library(
+    name = "module_env",
+    hdrs = ["module_env.hpp"],
+    deps = [
+        ":class_table",
+        ":common",
+        ":input",
+        ":object_table",
+        ":proc_table",
+        ":selector_table",
+        "//scic/codegen:code_generator",
         "@abseil-cpp//absl/status:statusor",
     ],
 )

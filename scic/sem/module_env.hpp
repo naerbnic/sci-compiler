@@ -1,112 +1,92 @@
 #ifndef SEM_MODULE_ENV_HPP
 #define SEM_MODULE_ENV_HPP
 
-#include <cstddef>
-#include <functional>
 #include <map>
-#include <optional>
-#include <stdexcept>
-#include <string_view>
+#include <memory>
 #include <utility>
 #include <vector>
 
-#include "scic/sem/symbol.hpp"
-#include "util/strings/ref_str.hpp"
-#include "util/types/choice.hpp"
+#include "absl/status/statusor.h"
+#include "scic/codegen/code_generator.hpp"
+#include "scic/sem/class_table.hpp"
+#include "scic/sem/common.hpp"
+#include "scic/sem/input.hpp"
+#include "scic/sem/object_table.hpp"
+#include "scic/sem/proc_table.hpp"
+#include "scic/sem/selector_table.hpp"
 
 namespace sem {
 
-class Text {
+class GlobalEnvironment {
  public:
-  explicit Text(util::RefStr text) : text_(std::move(text)) {}
+  GlobalEnvironment(std::unique_ptr<SelectorTable> selector_table,
+                    std::unique_ptr<ClassTable> class_table)
+      : selector_table_(std::move(selector_table)),
+        class_table_(std::move(class_table)) {}
+
+  SelectorTable const* selector_table() const { return selector_table_.get(); }
+  ClassTable const* class_table() const { return class_table_.get(); }
 
  private:
-  util::RefStr text_;
+  std::unique_ptr<SelectorTable> selector_table_;
+  std::unique_ptr<ClassTable> class_table_;
 };
 
-// The value of an entry, either a variable or a property.
-class EntryValue : util::ChoiceBase<EntryValue, Text const*, int> {};
-
-class ProcBody {
+class ModuleEnvironment {
  public:
-  struct Temporary {
-    SymbolId name;
-    std::size_t size;
-  };
+  ModuleEnvironment(GlobalEnvironment const* global_env, ScriptNum script_num,
+                    std::unique_ptr<codegen::CodeGenerator> codegen,
+                    std::unique_ptr<ObjectTable> object_table,
+                    std::unique_ptr<ProcTable> proc_table)
+      : global_env_(std::move(global_env)),
+        script_num_(script_num),
+        codegen_(std::move(codegen)),
+        object_table_(std::move(object_table)),
+        proc_table_(std::move(proc_table)) {}
+
+  GlobalEnvironment const* global_env() const { return global_env_; }
+  codegen::CodeGenerator* codegen() const { return codegen_.get(); }
+  ObjectTable const* object_table() const { return object_table_.get(); }
+  ProcTable const* proc_table() const { return proc_table_.get(); }
 
  private:
-  std::vector<SymbolId> params_;
-  std::vector<Temporary> temporaries_;
-  // We need some representation for the assembled code. Do this later, probably
-  // using ANode from the main compiler.
+  GlobalEnvironment const* global_env_;
+  ScriptNum script_num_;
+  std::unique_ptr<codegen::CodeGenerator> codegen_;
+  std::unique_ptr<ObjectTable> object_table_;
+  std::unique_ptr<ProcTable> proc_table_;
 };
 
-class Object {
+class CompilationEnvironment {
  public:
-  enum Kind {
-    OBJECT,
-    CLASS,
-  };
+  CompilationEnvironment(
+      std::unique_ptr<GlobalEnvironment> global_env,
+      std::map<ScriptNum, std::unique_ptr<ModuleEnvironment>> module_envs)
+      : global_env_(std::move(global_env)),
+        module_envs_(std::move(module_envs)) {}
 
-  struct Property {
-    SelectorId selector;
-    EntryValue value;
-  };
+  GlobalEnvironment const* global_env() const { return global_env_.get(); }
 
-  struct Method {
-    SelectorId selector;
-    ProcBody body;
-  };
-
-  Object(Kind kind, std::optional<ClassSpecies> super = std::nullopt)
-      : kind_(kind), super_(super) {}
-
-  Property* AddProperty(SelectorId selector, EntryValue value);
-  Method* AddMethod(SelectorId selector, ProcBody body);
-
-  Property* FindProperty(SelectorId selector);
-  Property const* FindProperty(SelectorId selector) const;
-
-  Method* FindMethod(SelectorId selector);
-  Method const* FindMethod(SelectorId selector) const;
-
- private:
-  Kind kind_;
-  std::optional<ClassSpecies> super_;
-  std::vector<Property> properties_;
-  std::vector<Method> methods_;
-};
-
-class TextTable {
- public:
-  Text const* GetText(std::string_view name) {
-    auto it = texts_.find(name);
-    if (it != texts_.end()) {
-      return &it->second;
+  std::vector<ModuleEnvironment const*> module_envs() const {
+    std::vector<ModuleEnvironment const*> result;
+    for (auto& pair : module_envs_) {
+      result.push_back(pair.second.get());
     }
+    return result;
+  }
 
-    auto [insert_it, inserted] = texts_.emplace(name, Text(util::RefStr(name)));
-    if (!inserted) {
-      throw std::runtime_error("Failed to insert text");
-    }
-    return &insert_it->second;
+  ModuleEnvironment const* FindModuleEnvironmentByScriptNum(
+      ScriptNum script_num) const {
+    return module_envs_.at(script_num).get();
   }
 
  private:
-  std::map<util::RefStr, Text, std::less<>> texts_;
+  std::unique_ptr<GlobalEnvironment> global_env_;
+  std::map<ScriptNum, std::unique_ptr<ModuleEnvironment>> module_envs_;
 };
 
-class ProcTable {};
-
-class VarsTable {};
-
-class ObjectTable {
- public:
-  Object* NewObject(SymbolId name, Object::Kind kind,
-                    std::optional<ClassSpecies> super = std::nullopt);
-
- private:
-};
+absl::StatusOr<CompilationEnvironment> BuildCompilationEnvironment(
+    Input const& input);
 
 }  // namespace sem
 
