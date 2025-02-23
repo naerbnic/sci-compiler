@@ -235,6 +235,147 @@ std::optional<FunctionBuilder::BinOp> BuildAssignOp(
   }
 }
 
+absl::StatusOr<std::size_t> BuildCallArgs(ExprContext const* ctx,
+                                          ast::CallArgs const& call_args) {
+  std::size_t num_args = call_args.args().size();
+  ctx->func_builder()->AddPushImmediate(num_args);
+  for (auto const& arg : call_args.args()) {
+    RETURN_IF_ERROR(ctx->BuildExpr(arg));
+    ctx->func_builder()->AddPushOp();
+  }
+  if (call_args.rest()) {
+    auto const& rest_name = call_args.rest()->rest_var;
+    std::size_t param_offset = 1;
+    if (rest_name) {
+      auto const* rest_param = ctx->Lookup(rest_name->value());
+      if (!rest_param) {
+        return absl::NotFoundError(
+            absl::StrFormat("Parameter '%s' not found.", rest_name->value()));
+      }
+      if (!rest_param->has<ExprContext::ParamSym>()) {
+        return absl::FailedPreconditionError(absl::StrFormat(
+            "Parameter '%s' is not a procedure/method parameter.",
+            rest_name->value()));
+      }
+      param_offset = rest_param->as<ExprContext::ParamSym>().param_offset;
+    }
+
+    ctx->func_builder()->AddRestOp(param_offset);
+  }
+
+  return num_args;
+}
+
+absl::Status BuildCall(ExprContext const* ctx, ast::CallExpr const& call) {
+  ASSIGN_OR_RETURN(auto num_args, BuildCallArgs(ctx, call.call_args()));
+  auto const& target = call.target();
+  // The original appears to only support calls to names, but I think
+  // there's a reason that I made this support general expressions.
+  if (!target.has<ast::VarExpr>()) {
+    return absl::InvalidArgumentError(
+        "Only calls to names are supported at this time.");
+  }
+  auto const& target_name = target.as<ast::VarExpr>().name();
+  auto const* proc = ctx->LookupProc(target_name.value());
+  return proc->visit(
+      [&](ExprContext::LocalProc const& local) -> absl::Status {
+        ctx->func_builder()->AddProcCall(std::string(local.name.value()),
+                                         num_args, local.proc_ref);
+        return absl::OkStatus();
+      },
+      [&](ExprContext::ExternProc const& ext) -> absl::Status {
+        ctx->func_builder()->AddExternCall(std::string(ext.name.value()),
+                                           num_args, ext.script_num.value(),
+                                           ext.extern_offset);
+        return absl::OkStatus();
+      },
+      [&](ExprContext::KernelProc const& kernel) -> absl::Status {
+        ctx->func_builder()->AddKernelCall(std::string(kernel.name.value()),
+                                           num_args, kernel.kernel_offset);
+        return absl::OkStatus();
+      });
+}
+
+absl::StatusOr<std::size_t> BuildSendClause(ExprContext const* ctx,
+                                            ast::SendClause const& clause) {
+  struct SelectorNameAndArgs {
+    NameToken const& sel_name;
+    ast::CallArgs const* args;
+  };
+  auto sel_and_args = clause.visit(
+      [&](ast::PropReadSendClause const& prop_read) {
+        return SelectorNameAndArgs{prop_read.prop_name(), nullptr};
+      },
+      [&](ast::MethodSendClause const& method_send) {
+        return SelectorNameAndArgs{method_send.selector(),
+                                   &method_send.call_args()};
+      });
+
+  // I just learned that the selector name is looked up in the symbol context
+  // before being looked up in selector context, allowing code like:
+  //
+  // (procedure (Eval obj sel)
+  //   (obj sel: &rest)
+  // )
+  //
+  // We see if we have a non-prop variable, and look it up to support this.
+
+  auto const* symbol = ctx->Lookup(sel_and_args.sel_name.value());
+
+  if (symbol && symbol->has<ExprContext::VarSym>()) {
+    // Not maximally efficient, but it should work.
+    RETURN_IF_ERROR(BuildVarLoadExpr(ctx, sel_and_args.sel_name, nullptr));
+    ctx->func_builder()->AddPushOp();
+  } else {
+    auto const* selector =
+        ctx->selector_table()->LookupByName(sel_and_args.sel_name.value());
+    if (!selector) {
+      return absl::NotFoundError(absl::StrFormat(
+          "Selector '%s' not found.", sel_and_args.sel_name.value()));
+    }
+    ctx->func_builder()->AddPushImmediate(
+        int(selector->selector_num().value()));
+  }
+
+  if (sel_and_args.args) {
+    ASSIGN_OR_RETURN(auto num_args, BuildCallArgs(ctx, *sel_and_args.args));
+    return num_args + 1;
+  } else {
+    ctx->func_builder()->AddPushImmediate(0);
+    return 2;
+  }
+}
+
+absl::Status BuildSendExpr(ExprContext const* ctx, ast::SendExpr const& send) {
+  std::size_t num_args = 0;
+  for (auto const& clause : send.clauses()) {
+    ASSIGN_OR_RETURN(auto clause_num_args, BuildSendClause(ctx, clause));
+    num_args += clause_num_args;
+  }
+
+  return send.target().visit(
+      [&](ast::SelfSendTarget const& self_target) {
+        ctx->func_builder()->AddSelfSend(num_args);
+        return absl::OkStatus();
+      },
+      [&](ast::SuperSendTarget const& index_expr) -> absl::Status {
+        if (!ctx->super_info()) {
+          return absl::FailedPreconditionError(
+              "Cannot send to super without a super class.");
+        }
+        auto const& super_info = *ctx->super_info();
+        ctx->func_builder()->AddSuperSend(
+            std::string(super_info.super_name.value()), num_args,
+            int(super_info.species.value()));
+        return absl::OkStatus();
+      },
+      [&](ast::ExprSendTarget const& expr) -> absl::Status {
+        RETURN_IF_ERROR(ctx->BuildExpr(expr.target()));
+        ctx->func_builder()->AddSend(num_args);
+        return absl::OkStatus();
+      });
+}
+
 absl::Status BuildAssignExpr(ExprContext const* ctx,
                              ast::AssignExpr const& assign) {
   auto assign_op = BuildAssignOp(assign.kind());
@@ -256,6 +397,46 @@ absl::Status BuildExprList(ExprContext const* ctx,
                            ast::ExprList const& expr_list) {
   for (auto const& expr : expr_list.exprs()) {
     RETURN_IF_ERROR(ctx->BuildExpr(expr));
+  }
+  return absl::OkStatus();
+}
+
+absl::Status BuildBreakExpr(ExprContext const* ctx,
+                            ast::BreakExpr const& break_expr) {
+  std::size_t level = 0;
+  if (break_expr.level()) {
+    level = break_expr.level()->value();
+  }
+  auto* break_label = ctx->GetBreakLabel(level);
+  if (!break_label) {
+    return absl::FailedPreconditionError(
+        "Cannot break to level without a loop.");
+  }
+  if (break_expr.condition()) {
+    RETURN_IF_ERROR(ctx->BuildExpr(**break_expr.condition()));
+    ctx->func_builder()->AddBranchOp(FunctionBuilder::BT, break_label);
+  } else {
+    ctx->func_builder()->AddBranchOp(FunctionBuilder::JMP, break_label);
+  }
+  return absl::OkStatus();
+}
+
+absl::Status BuildContEpxr(ExprContext const* ctx,
+                           ast::ContinueExpr const& break_expr) {
+  std::size_t level = 0;
+  if (break_expr.level()) {
+    level = break_expr.level()->value();
+  }
+  auto* break_label = ctx->GetContLabel(level);
+  if (!break_label) {
+    return absl::FailedPreconditionError(
+        "Cannot break to level without a loop.");
+  }
+  if (break_expr.condition()) {
+    RETURN_IF_ERROR(ctx->BuildExpr(**break_expr.condition()));
+    ctx->func_builder()->AddBranchOp(FunctionBuilder::BT, break_label);
+  } else {
+    ctx->func_builder()->AddBranchOp(FunctionBuilder::JMP, break_label);
   }
   return absl::OkStatus();
 }
@@ -283,16 +464,20 @@ class ExprContextImpl : public ExprContext {
                                   &array_index.index());
         },
         [&](ast::CallExpr const& selector_ref) {
-          return absl::UnimplementedError("unimplemented");
+          return BuildCall(this, selector_ref);
         },
         [&](ast::ReturnExpr const& array_ref) {
-          return absl::UnimplementedError("unimplemented");
+          if (array_ref.expr()) {
+            RETURN_IF_ERROR(BuildExpr(**array_ref.expr()));
+          }
+          func_builder()->AddReturnOp();
+          return absl::OkStatus();
         },
         [&](ast::BreakExpr const& object_ref) {
-          return absl::UnimplementedError("unimplemented");
+          return BuildBreakExpr(this, object_ref);
         },
         [&](ast::ContinueExpr const& object_ref) {
-          return absl::UnimplementedError("unimplemented");
+          return BuildContEpxr(this, object_ref);
         },
         [&](ast::WhileExpr const& object_ref) {
           return absl::UnimplementedError("unimplemented");
@@ -313,7 +498,7 @@ class ExprContextImpl : public ExprContext {
           return absl::UnimplementedError("unimplemented");
         },
         [&](ast::SendExpr const& object_ref) {
-          return absl::UnimplementedError("unimplemented");
+          return BuildSendExpr(this, object_ref);
         },
         [&](ast::AssignExpr const& object_ref) {
           return BuildAssignExpr(this, object_ref);
@@ -330,9 +515,12 @@ class ExprContextImpl : public ExprContext {
 std::unique_ptr<ExprContext> CreateExprContext(
     codegen::CodeGenerator* codegen, codegen::FunctionBuilder* func_builder,
     ClassTable const* class_table, SelectorTable const* selector_table,
-    std::map<std::string_view, ExprContext::Sym, std::less<>> symbols) {
-  return std::make_unique<ExprContextImpl>(codegen, func_builder, class_table,
-                                           selector_table, std::move(symbols));
+    std::optional<ExprContext::SuperInfo> super_info,
+    std::map<std::string_view, ExprContext::Sym, std::less<>> symbols,
+    std::map<std::string_view, ExprContext::Proc, std::less<>> procs) {
+  return std::make_unique<ExprContextImpl>(
+      codegen, func_builder, class_table, selector_table, std::move(super_info),
+      std::move(symbols), std::move(procs));
 }
 
 }  // namespace sem
