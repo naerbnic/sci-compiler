@@ -642,7 +642,27 @@ absl::Status BuildIfExpr(ExprContext const* ctx, ast::IfExpr const& if_expr) {
 
 absl::Status BuildCondExpr(ExprContext const* ctx,
                            ast::CondExpr const& cond_expr) {
-  return absl::UnimplementedError("unimplemented");
+  auto done = ctx->func_builder()->CreateLabelRef();
+  for (std::size_t i = 0; i < cond_expr.branches().size(); ++i) {
+    auto next = ctx->func_builder()->CreateLabelRef();
+    auto const& branch = cond_expr.branches()[i];
+    bool at_end =
+        (i == cond_expr.branches().size() - 1) && !cond_expr.else_body();
+    RETURN_IF_ERROR(ctx->BuildExpr(*branch.condition));
+    ctx->func_builder()->AddBranchOp(FunctionBuilder::BT,
+                                     at_end ? &done : &next);
+    RETURN_IF_ERROR(ctx->BuildExpr(*branch.body));
+    if (!at_end) {
+      ctx->func_builder()->AddBranchOp(FunctionBuilder::JMP, &done);
+      ctx->func_builder()->AddLabel(&next);
+    }
+  }
+
+  if (cond_expr.else_body()) {
+    RETURN_IF_ERROR(ctx->BuildExpr(**cond_expr.else_body()));
+  }
+  ctx->func_builder()->AddLabel(&done);
+  return absl::OkStatus();
 }
 
 class ExprContextImpl : public ExprContext {
