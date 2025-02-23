@@ -1,6 +1,7 @@
 #ifndef SEM_MODULE_ENV_HPP
 #define SEM_MODULE_ENV_HPP
 
+#include <cstddef>
 #include <map>
 #include <memory>
 #include <utility>
@@ -14,6 +15,7 @@
 #include "scic/sem/object_table.hpp"
 #include "scic/sem/proc_table.hpp"
 #include "scic/sem/selector_table.hpp"
+#include "util/types/choice.hpp"
 
 namespace sem {
 
@@ -83,6 +85,43 @@ class CompilationEnvironment {
  private:
   std::unique_ptr<GlobalEnvironment> global_env_;
   std::map<ScriptNum, std::unique_ptr<ModuleEnvironment>> module_envs_;
+};
+
+// The environment of code compilation within a specific procedure.
+class ProcedureEnvironment {
+ public:
+  struct MethodName {
+    util::Choice<Class const*, Object const*> parent;
+    NameToken meth_name;
+  };
+
+  struct FreeProcName {
+    NameToken name;
+  };
+
+  using ProcName = util::Choice<MethodName, FreeProcName>;
+
+  ProcedureEnvironment(ModuleEnvironment const* module_env,
+                       std::size_t num_params, std::size_t num_temps,
+                       ProcName method_name)
+      : module_env_(module_env),
+        num_params_(num_params),
+        num_temps_(num_temps),
+        proc_context_(std::move(method_name)) {}
+
+  ModuleEnvironment const* module_env() const { return module_env_; }
+  std::size_t num_params() const { return num_params_; }
+  std::size_t num_temps() const { return num_temps_; }
+
+ private:
+  // The containing module environment.
+  ModuleEnvironment const* module_env_;
+
+  // The number of params and temporaries in the procedure.
+  std::size_t num_params_;
+  std::size_t num_temps_;
+
+  ProcName proc_context_;
 };
 
 absl::StatusOr<CompilationEnvironment> BuildCompilationEnvironment(

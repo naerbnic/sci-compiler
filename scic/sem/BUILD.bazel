@@ -114,6 +114,7 @@ cc_library(
         ":proc_table",
         ":selector_table",
         "//scic/codegen:code_generator",
+        "//util/types:choice",
         "@abseil-cpp//absl/status:statusor",
     ],
 )
