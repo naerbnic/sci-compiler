@@ -133,12 +133,12 @@ class ExprContext {
   std::optional<SuperInfo> super_info_;
   std::map<std::string_view, Sym, std::less<>> symbols_;
   std::map<std::string_view, Proc, std::less<>> procs_;
-  Loop const* loop_ = nullptr;
+  mutable Loop const* loop_ = nullptr;
 };
 
 class Loop {
  public:
-  explicit Loop(ExprContext* ctx, codegen::LabelRef* cont_label,
+  explicit Loop(ExprContext const* ctx, codegen::LabelRef* cont_label,
                 codegen::LabelRef* break_label)
       : ctx_(ctx),
         prev_(ctx->loop_),
@@ -159,7 +159,7 @@ class Loop {
   }
 
  private:
-  ExprContext* ctx_;
+  ExprContext const* ctx_;
   Loop const* prev_;
   codegen::LabelRef* cont_label_;
   codegen::LabelRef* break_label_;

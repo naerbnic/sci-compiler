@@ -723,6 +723,111 @@ absl::Status BuildCondExpr(ExprContext const* ctx,
   return absl::OkStatus();
 }
 
+absl::Status BuildSwitchExpr(ExprContext const* ctx,
+                             ast::SwitchExpr const& switch_expr) {
+  auto done = ctx->func_builder()->CreateLabelRef();
+  RETURN_IF_ERROR(ctx->BuildExpr(switch_expr.switch_expr()));
+  ctx->func_builder()->AddPushOp();
+  for (std::size_t i = 0; i < switch_expr.cases().size(); ++i) {
+    auto next = ctx->func_builder()->CreateLabelRef();
+    auto const& branch = switch_expr.cases()[i];
+    bool at_end =
+        (i == switch_expr.cases().size() - 1) && !switch_expr.else_case();
+    ctx->func_builder()->AddDupOp();
+    RETURN_IF_ERROR(BuildConstExpr(ctx, branch.value));
+    ctx->func_builder()->AddBinOp(FunctionBuilder::EQ);
+    ctx->func_builder()->AddBranchOp(FunctionBuilder::BT,
+                                     at_end ? &done : &next);
+    RETURN_IF_ERROR(ctx->BuildExpr(*branch.body));
+    if (!at_end) {
+      ctx->func_builder()->AddBranchOp(FunctionBuilder::JMP, &done);
+      ctx->func_builder()->AddLabel(&next);
+    }
+  }
+  if (switch_expr.else_case()) {
+    RETURN_IF_ERROR(ctx->BuildExpr(**switch_expr.else_case()));
+  }
+  ctx->func_builder()->AddLabel(&done);
+  return absl::OkStatus();
+}
+absl::Status BuildSwitchToExpr(ExprContext const* ctx,
+                               ast::SwitchToExpr const& switch_expr) {
+  auto done = ctx->func_builder()->CreateLabelRef();
+  RETURN_IF_ERROR(ctx->BuildExpr(switch_expr.switch_expr()));
+  ctx->func_builder()->AddPushOp();
+  for (std::size_t i = 0; i < switch_expr.cases().size(); ++i) {
+    auto next = ctx->func_builder()->CreateLabelRef();
+    auto const& branch = *switch_expr.cases()[i];
+    bool at_end =
+        (i == switch_expr.cases().size() - 1) && !switch_expr.else_case();
+    ctx->func_builder()->AddDupOp();
+    ctx->func_builder()->AddLoadImmediate(int(i));
+    ctx->func_builder()->AddBinOp(FunctionBuilder::EQ);
+    ctx->func_builder()->AddBranchOp(FunctionBuilder::BT,
+                                     at_end ? &done : &next);
+    RETURN_IF_ERROR(ctx->BuildExpr(branch));
+    if (!at_end) {
+      ctx->func_builder()->AddBranchOp(FunctionBuilder::JMP, &done);
+      ctx->func_builder()->AddLabel(&next);
+    }
+  }
+  if (switch_expr.else_case()) {
+    RETURN_IF_ERROR(ctx->BuildExpr(**switch_expr.else_case()));
+  }
+  ctx->func_builder()->AddLabel(&done);
+  return absl::OkStatus();
+}
+
+absl::Status BuildWhileExpr(ExprContext const* ctx,
+                            ast::WhileExpr const& while_expr) {
+  auto start = ctx->func_builder()->CreateLabelRef();
+  auto done = ctx->func_builder()->CreateLabelRef();
+
+  Loop loop(ctx, &start, &done);
+
+  ctx->func_builder()->AddLabel(&start);
+  if (while_expr.condition()) {
+    RETURN_IF_ERROR(ctx->BuildExpr(**while_expr.condition()));
+    ctx->func_builder()->AddBranchOp(FunctionBuilder::BNT, &done);
+  }
+  RETURN_IF_ERROR(ctx->BuildExpr(while_expr.body()));
+  ctx->func_builder()->AddBranchOp(FunctionBuilder::JMP, &start);
+  ctx->func_builder()->AddLabel(&done);
+  return absl::OkStatus();
+}
+
+absl::Status BuildForExpr(ExprContext const* ctx,
+                          ast::ForExpr const& for_expr) {
+  auto next = ctx->func_builder()->CreateLabelRef();
+  auto done = ctx->func_builder()->CreateLabelRef();
+
+  Loop loop(ctx, &next, &done);
+
+  // General approach:
+  //
+  //   <init>
+  // cond:
+  //   <condition>
+  //   bnt done
+  //   <body>
+  // next:
+  //   <update>
+  //   jmp cond
+  // done:
+  
+  auto cond = ctx->func_builder()->CreateLabelRef();
+  RETURN_IF_ERROR(ctx->BuildExpr(for_expr.init()));
+  ctx->func_builder()->AddLabel(&cond);
+  RETURN_IF_ERROR(ctx->BuildExpr(for_expr.condition()));
+  ctx->func_builder()->AddBranchOp(FunctionBuilder::BNT, &done);
+  RETURN_IF_ERROR(ctx->BuildExpr(for_expr.body()));
+  ctx->func_builder()->AddLabel(&next);
+  RETURN_IF_ERROR(ctx->BuildExpr(for_expr.update()));
+  ctx->func_builder()->AddBranchOp(FunctionBuilder::JMP, &cond);
+  ctx->func_builder()->AddLabel(&done);
+  return absl::OkStatus();
+}
+
 class ExprContextImpl : public ExprContext {
  public:
   using ExprContext::ExprContext;
@@ -762,30 +867,30 @@ class ExprContextImpl : public ExprContext {
         [&](ast::ContinueExpr const& cont_expr) {
           return BuildContEpxr(this, cont_expr);
         },
-        [&](ast::WhileExpr const& object_ref) {
-          return absl::UnimplementedError("unimplemented");
+        [&](ast::WhileExpr const& while_expr) {
+          return BuildWhileExpr(this, while_expr);
         },
-        [&](ast::ForExpr const& object_ref) {
-          return absl::UnimplementedError("unimplemented");
+        [&](ast::ForExpr const& for_expr) {
+          return BuildForExpr(this, for_expr);
         },
         [&](ast::IfExpr const& if_expr) { return BuildIfExpr(this, if_expr); },
         [&](ast::CondExpr const& cond_expr) {
           return BuildCondExpr(this, cond_expr);
         },
-        [&](ast::SwitchExpr const& object_ref) {
-          return absl::UnimplementedError("unimplemented");
+        [&](ast::SwitchExpr const& switch_expr) {
+          return BuildSwitchExpr(this, switch_expr);
         },
-        [&](ast::SwitchToExpr const& object_ref) {
-          return absl::UnimplementedError("unimplemented");
+        [&](ast::SwitchToExpr const& switch_to_expr) {
+          return BuildSwitchToExpr(this, switch_to_expr);
         },
-        [&](ast::SendExpr const& object_ref) {
-          return BuildSendExpr(this, object_ref);
+        [&](ast::SendExpr const& send_expr) {
+          return BuildSendExpr(this, send_expr);
         },
-        [&](ast::AssignExpr const& object_ref) {
-          return BuildAssignExpr(this, object_ref);
+        [&](ast::AssignExpr const& assign_expr) {
+          return BuildAssignExpr(this, assign_expr);
         },
-        [&](ast::ExprList const& object_ref) {
-          return BuildExprList(this, object_ref);
+        [&](ast::ExprList const& expr_list) {
+          return BuildExprList(this, expr_list);
         });
     return absl::OkStatus();
   }
