@@ -124,7 +124,6 @@ cc_test(
     ],
 )
 
-
 cc_library(
     name = "forward_ref",
     hdrs = ["forward_ref.hpp"],
@@ -134,4 +133,20 @@ cc_library(
 cc_library(
     name = "casts",
     hdrs = ["casts.hpp"],
+)
+
+cc_library(
+    name = "sequence",
+    hdrs = ["sequence.hpp"],
+    deps = ["@abseil-cpp//absl/base:nullability"],
+)
+
+cc_test(
+    name = "sequence_test",
+    srcs = ["sequence_test.cpp"],
+    deps = [
+        ":sequence",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
 )
