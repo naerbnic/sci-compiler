@@ -35,8 +35,9 @@ struct VarAndIndex {
   ast::Expr const* index;
 };
 
-absl::StatusOr<VarAndIndex> GetVarNameAndIndex(ExprContext const* ctx,
-                                               ast::Expr const& expr) {
+// Checks if the given expression is a variable expression or an array index
+// expression. Returns an error otherwise.
+absl::StatusOr<VarAndIndex> GetVarNameAndIndex(ast::Expr const& expr) {
   return expr.visit(
       [&](ast::VarExpr const& var_ref) -> absl::StatusOr<VarAndIndex> {
         return VarAndIndex{var_ref.name(), nullptr};
@@ -74,7 +75,7 @@ VarTypeAndOffset GetVarTypeAndOffset(ExprContext::VarSym const& var_sym) {
 
 absl::Status BuildAddrOfExpr(ExprContext const* ctx,
                              ast::AddrOfExpr const& addr_of) {
-  ASSIGN_OR_RETURN(auto const& result, GetVarNameAndIndex(ctx, addr_of.expr()));
+  ASSIGN_OR_RETURN(auto const& result, GetVarNameAndIndex(addr_of.expr()));
   auto const& [var_name, index] = result;
 
   auto const* sym = ctx->Lookup(var_name.value());
@@ -403,6 +404,9 @@ absl::Status BuildOrExpr(ExprContext const* ctx, NameToken const& op_name,
   return absl::OkStatus();
 }
 
+// Builds a comparison expression. This works as an n-ary operator, which
+// pairwise compares all of the arguments. It short-circuits to false
+// when the first comparison fails.
 template <FunctionBuilder::BinOp Op>
 absl::Status BuildCompExpr(ExprContext const* ctx, NameToken const& op_name,
                            ast::CallArgs const& args) {
@@ -452,7 +456,7 @@ absl::Status BuildValueExpr(ExprContext const* ctx, NameToken const& op_name,
 
   auto const& arg = op_args[0];
 
-  ASSIGN_OR_RETURN(auto var_name_and_index, GetVarNameAndIndex(ctx, arg));
+  ASSIGN_OR_RETURN(auto var_name_and_index, GetVarNameAndIndex(arg));
   return BuildVarLoadExpr(ctx, Op, var_name_and_index.var_name,
                           var_name_and_index.index);
 }
@@ -615,7 +619,7 @@ absl::Status BuildSendExpr(ExprContext const* ctx, ast::SendExpr const& send) {
 absl::Status BuildAssignExpr(ExprContext const* ctx,
                              ast::AssignExpr const& assign) {
   auto assign_op = BuildAssignOp(assign.kind());
-  ASSIGN_OR_RETURN(auto result, GetVarNameAndIndex(ctx, assign.target()));
+  ASSIGN_OR_RETURN(auto result, GetVarNameAndIndex(assign.target()));
   if (assign_op) {
     RETURN_IF_ERROR(BuildVarLoadExpr(ctx, FunctionBuilder::LOAD,
                                      result.var_name, result.index));
@@ -750,6 +754,7 @@ absl::Status BuildSwitchExpr(ExprContext const* ctx,
   ctx->func_builder()->AddLabel(&done);
   return absl::OkStatus();
 }
+
 absl::Status BuildSwitchToExpr(ExprContext const* ctx,
                                ast::SwitchToExpr const& switch_expr) {
   auto done = ctx->func_builder()->CreateLabelRef();
@@ -801,8 +806,6 @@ absl::Status BuildForExpr(ExprContext const* ctx,
   auto next = ctx->func_builder()->CreateLabelRef();
   auto done = ctx->func_builder()->CreateLabelRef();
 
-  Loop loop(ctx, &next, &done);
-
   // General approach:
   //
   //   <init>
@@ -814,13 +817,16 @@ absl::Status BuildForExpr(ExprContext const* ctx,
   //   <update>
   //   jmp cond
   // done:
-  
+
   auto cond = ctx->func_builder()->CreateLabelRef();
   RETURN_IF_ERROR(ctx->BuildExpr(for_expr.init()));
   ctx->func_builder()->AddLabel(&cond);
   RETURN_IF_ERROR(ctx->BuildExpr(for_expr.condition()));
   ctx->func_builder()->AddBranchOp(FunctionBuilder::BNT, &done);
-  RETURN_IF_ERROR(ctx->BuildExpr(for_expr.body()));
+  {
+    Loop loop(ctx, &next, &done);
+    RETURN_IF_ERROR(ctx->BuildExpr(for_expr.body()));
+  }
   ctx->func_builder()->AddLabel(&next);
   RETURN_IF_ERROR(ctx->BuildExpr(for_expr.update()));
   ctx->func_builder()->AddBranchOp(FunctionBuilder::JMP, &cond);
