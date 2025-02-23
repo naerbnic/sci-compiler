@@ -175,7 +175,9 @@ absl::Status BuildVarStoreExpr(ExprContext const* ctx,
       });
 }
 
-absl::Status BuildVarLoadExpr(ExprContext const* ctx, NameToken const& var_name,
+absl::Status BuildVarLoadExpr(ExprContext const* ctx,
+                              FunctionBuilder::ValueOp val_op,
+                              NameToken const& var_name,
                               absl::Nullable<ast::Expr const*> index) {
   auto const* sym = ctx->Lookup(var_name.value());
   if (!sym) {
@@ -191,8 +193,7 @@ absl::Status BuildVarLoadExpr(ExprContext const* ctx, NameToken const& var_name,
           RETURN_IF_ERROR(ctx->BuildExpr(*index));
         }
 
-        ctx->func_builder()->AddVarAccess(var_type, FunctionBuilder::LOAD,
-                                          var_offset,
+        ctx->func_builder()->AddVarAccess(var_type, val_op, var_offset,
                                           /*add_accum_index=*/index != nullptr,
                                           std::string(var_name->view()));
         return absl::OkStatus();
@@ -201,8 +202,7 @@ absl::Status BuildVarLoadExpr(ExprContext const* ctx, NameToken const& var_name,
         if (index) {
           return absl::FailedPreconditionError("Properties cannot be indexed.");
         }
-        ctx->func_builder()->AddPropAccess(FunctionBuilder::LOAD,
-                                           proc.prop_offset,
+        ctx->func_builder()->AddPropAccess(val_op, proc.prop_offset,
                                            std::string(proc.selector->name()));
         return absl::OkStatus();
       });
@@ -403,6 +403,27 @@ absl::Status BuildOrExpr(ExprContext const* ctx, NameToken const& op_name,
   return absl::OkStatus();
 }
 
+template <FunctionBuilder::ValueOp Op>
+absl::Status BuildValueExpr(ExprContext const* ctx, NameToken const& op_name,
+                            ast::CallArgs const& args) {
+  if (args.rest()) {
+    return absl::InvalidArgumentError(absl::StrFormat(
+        "Value operator '%s' cannot take a rest argument.", op_name.value()));
+  }
+
+  absl::Span<ast::Expr const> op_args = args.args();
+  if (op_args.size() != 1) {
+    return absl::InvalidArgumentError(absl::StrFormat(
+        "Operator '%s' must take exactly one argument.", op_name.value()));
+  }
+
+  auto const& arg = op_args[0];
+
+  ASSIGN_OR_RETURN(auto var_name_and_index, GetVarNameAndIndex(ctx, arg));
+  return BuildVarLoadExpr(ctx, Op, var_name_and_index.var_name,
+                          var_name_and_index.index);
+}
+
 using CallFunc = absl::Status (*)(ExprContext const* ctx,
                                   NameToken const& op_name,
                                   ast::CallArgs const& call);
@@ -433,6 +454,8 @@ std::map<std::string_view, CallFunc> const& GetCallBuiltins() {
       {"^", &BuildMultiExpr<FunctionBuilder::XOR>},
       {"and", &BuildAndExpr},
       {"or", &BuildOrExpr},
+      {"++", &BuildValueExpr<FunctionBuilder::INC>},
+      {"--", &BuildValueExpr<FunctionBuilder::DEC>},
   };
   return builtins;
 }
@@ -503,7 +526,8 @@ absl::StatusOr<std::size_t> BuildSendClause(ExprContext const* ctx,
 
   if (symbol && symbol->has<ExprContext::VarSym>()) {
     // Not maximally efficient, but it should work.
-    RETURN_IF_ERROR(BuildVarLoadExpr(ctx, sel_and_args.sel_name, nullptr));
+    RETURN_IF_ERROR(BuildVarLoadExpr(ctx, FunctionBuilder::LOAD,
+                                     sel_and_args.sel_name, nullptr));
     ctx->func_builder()->AddPushOp();
   } else {
     auto const* selector =
@@ -560,7 +584,8 @@ absl::Status BuildAssignExpr(ExprContext const* ctx,
   auto assign_op = BuildAssignOp(assign.kind());
   ASSIGN_OR_RETURN(auto result, GetVarNameAndIndex(ctx, assign.target()));
   if (assign_op) {
-    RETURN_IF_ERROR(BuildVarLoadExpr(ctx, result.var_name, result.index));
+    RETURN_IF_ERROR(BuildVarLoadExpr(ctx, FunctionBuilder::LOAD,
+                                     result.var_name, result.index));
     ctx->func_builder()->AddPushOp();
     RETURN_IF_ERROR(ctx->BuildExpr(assign.value()));
     ctx->func_builder()->AddBinOp(*assign_op);
@@ -681,11 +706,12 @@ class ExprContextImpl : public ExprContext {
           return BuildConstExpr(this, const_expr.value());
         },
         [&](ast::VarExpr const& var_ref) {
-          return BuildVarLoadExpr(this, var_ref.name(), nullptr);
+          return BuildVarLoadExpr(this, FunctionBuilder::LOAD, var_ref.name(),
+                                  nullptr);
         },
         [&](ast::ArrayIndexExpr const& array_index) {
-          return BuildVarLoadExpr(this, array_index.var_name(),
-                                  &array_index.index());
+          return BuildVarLoadExpr(this, FunctionBuilder::LOAD,
+                                  array_index.var_name(), &array_index.index());
         },
         [&](ast::CallExpr const& selector_ref) {
           return BuildCallExpr(this, selector_ref);
