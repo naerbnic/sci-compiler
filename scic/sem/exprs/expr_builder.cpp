@@ -403,6 +403,39 @@ absl::Status BuildOrExpr(ExprContext const* ctx, NameToken const& op_name,
   return absl::OkStatus();
 }
 
+template <FunctionBuilder::BinOp Op>
+absl::Status BuildCompExpr(ExprContext const* ctx, NameToken const& op_name,
+                           ast::CallArgs const& args) {
+  if (args.rest()) {
+    return absl::InvalidArgumentError(
+        absl::StrFormat("Comparison operator '%s' cannot take a rest argument.",
+                        op_name.value()));
+  }
+
+  absl::Span<ast::Expr const> op_args = args.args();
+  if (op_args.size() < 2) {
+    return absl::InvalidArgumentError(absl::StrFormat(
+        "Comparison operator '%s' must take at least two arguments.",
+        op_name.value()));
+  }
+
+  auto done = ctx->func_builder()->CreateLabelRef();
+
+  RETURN_IF_ERROR(ctx->BuildExpr(op_args[0]));
+  ctx->func_builder()->AddPushOp();
+  RETURN_IF_ERROR(ctx->BuildExpr(op_args[1]));
+  ctx->func_builder()->AddBinOp(Op);
+
+  for (auto const& arg : op_args.subspan(2)) {
+    ctx->func_builder()->AddBranchOp(FunctionBuilder::BNT, &done);
+    ctx->func_builder()->AddPushPrevOp();
+    RETURN_IF_ERROR(ctx->BuildExpr(arg));
+    ctx->func_builder()->AddBinOp(Op);
+  }
+  ctx->func_builder()->AddLabel(&done);
+  return absl::OkStatus();
+}
+
 template <FunctionBuilder::ValueOp Op>
 absl::Status BuildValueExpr(ExprContext const* ctx, NameToken const& op_name,
                             ast::CallArgs const& args) {
@@ -437,16 +470,16 @@ std::map<std::string_view, CallFunc> const& GetCallBuiltins() {
       {"<<", &BuildBinaryExpr<FunctionBuilder::SHL>},
       {">>", &BuildBinaryExpr<FunctionBuilder::SHR>},
       {"%", &BuildBinaryExpr<FunctionBuilder::MOD>},
-      {"<", &BuildBinaryExpr<FunctionBuilder::LT>},
-      {"<=", &BuildBinaryExpr<FunctionBuilder::LE>},
-      {">", &BuildBinaryExpr<FunctionBuilder::GT>},
-      {">=", &BuildBinaryExpr<FunctionBuilder::GE>},
-      {"==", &BuildBinaryExpr<FunctionBuilder::EQ>},
-      {"!=", &BuildBinaryExpr<FunctionBuilder::NE>},
-      {"u<", &BuildBinaryExpr<FunctionBuilder::ULT>},
-      {"u<=", &BuildBinaryExpr<FunctionBuilder::ULE>},
-      {"u>", &BuildBinaryExpr<FunctionBuilder::UGT>},
-      {"u>=", &BuildBinaryExpr<FunctionBuilder::UGE>},
+      {"<", &BuildCompExpr<FunctionBuilder::LT>},
+      {"<=", &BuildCompExpr<FunctionBuilder::LE>},
+      {">", &BuildCompExpr<FunctionBuilder::GT>},
+      {">=", &BuildCompExpr<FunctionBuilder::GE>},
+      {"==", &BuildCompExpr<FunctionBuilder::EQ>},
+      {"!=", &BuildCompExpr<FunctionBuilder::NE>},  // Is NE also n-ary?
+      {"u<", &BuildCompExpr<FunctionBuilder::ULT>},
+      {"u<=", &BuildCompExpr<FunctionBuilder::ULE>},
+      {"u>", &BuildCompExpr<FunctionBuilder::UGT>},
+      {"u>=", &BuildCompExpr<FunctionBuilder::UGE>},
       {"+", &BuildMultiExpr<FunctionBuilder::ADD>},
       {"*", &BuildMultiExpr<FunctionBuilder::MUL>},
       {"|", &BuildMultiExpr<FunctionBuilder::OR>},
