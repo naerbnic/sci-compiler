@@ -91,9 +91,6 @@ using FuncName = util::Choice<ProcedureName, MethodName>;
 
 class ObjectCodegen {
  public:
-  // Returns an ANode that will resolve to the object pointer.
-  ANode* GetObjNode() const;
-
   // Append properties to the object.
   //
   // The order of these calls is significant.  The properties are

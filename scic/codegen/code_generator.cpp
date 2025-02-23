@@ -240,8 +240,6 @@ class ANDispTable : public ANode {
   std::vector<std::unique_ptr<ANDispatch>> dispatches_;
 };
 
-ANode* ObjectCodegen::GetObjNode() const { return propListMarker_; }
-
 void ObjectCodegen::AppendProperty(std::string name, std::uint16_t selectorNum,
                                    LiteralValue value) {
   value.visit(
