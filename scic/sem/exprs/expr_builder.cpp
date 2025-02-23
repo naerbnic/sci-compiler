@@ -13,6 +13,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
+#include "absl/types/span.h"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/parsers/sci/ast.hpp"
 #include "scic/sem/class_table.hpp"
@@ -252,18 +253,188 @@ absl::StatusOr<std::size_t> BuildCallArgs(ExprContext const* ctx,
         return absl::NotFoundError(
             absl::StrFormat("Parameter '%s' not found.", rest_name->value()));
       }
-      if (!rest_param->has<ExprContext::ParamSym>()) {
+      if (!rest_param->has<ExprContext::VarSym>() ||
+          rest_param->as<ExprContext::VarSym>().has<ExprContext::ParamSym>()) {
         return absl::FailedPreconditionError(absl::StrFormat(
             "Parameter '%s' is not a procedure/method parameter.",
             rest_name->value()));
       }
-      param_offset = rest_param->as<ExprContext::ParamSym>().param_offset;
+      param_offset = rest_param->as<ExprContext::VarSym>()
+                         .as<ExprContext::ParamSym>()
+                         .param_offset;
     }
 
     ctx->func_builder()->AddRestOp(param_offset);
   }
 
   return num_args;
+}
+
+template <FunctionBuilder::UnOp Op>
+absl::Status BuildUnaryExpr(ExprContext const* ctx, NameToken const& op_name,
+                            ast::CallArgs const& args) {
+  if (args.args().size() != 1) {
+    return absl::InvalidArgumentError(absl::StrFormat(
+        "Unary operator '%s' takes one argument.", op_name.value()));
+  }
+  if (args.rest()) {
+    return absl::InvalidArgumentError(absl::StrFormat(
+        "Unary operator '%s' cannot take a rest argument.", op_name.value()));
+  }
+  RETURN_IF_ERROR(ctx->BuildExpr(args.args()[0]));
+  ctx->func_builder()->AddUnOp(Op);
+  return absl::OkStatus();
+}
+
+template <FunctionBuilder::BinOp Op>
+absl::Status BuildBinaryExpr(ExprContext const* ctx, NameToken const& op_name,
+                             ast::CallArgs const& args) {
+  if (args.args().size() != 2) {
+    return absl::InvalidArgumentError(absl::StrFormat(
+        "Binary operator '%s' takes two arguments.", op_name.value()));
+  }
+  if (args.rest()) {
+    return absl::InvalidArgumentError(absl::StrFormat(
+        "Binary operator '%s' cannot take a rest argument.", op_name.value()));
+  }
+  RETURN_IF_ERROR(ctx->BuildExpr(args.args()[0]));
+  ctx->func_builder()->AddPushOp();
+  RETURN_IF_ERROR(ctx->BuildExpr(args.args()[1]));
+  ctx->func_builder()->AddBinOp(Op);
+  return absl::OkStatus();
+}
+
+template <FunctionBuilder::BinOp Op>
+absl::Status BuildMultiExpr(ExprContext const* ctx, NameToken const& op_name,
+                            ast::CallArgs const& args) {
+  if (args.rest()) {
+    return absl::InvalidArgumentError(absl::StrFormat(
+        "Multi-argument operator '%s' cannot take a rest argument.",
+        op_name.value()));
+  }
+
+  absl::Span<ast::Expr const> op_args = args.args();
+  if (op_args.empty()) {
+    return absl::InvalidArgumentError(absl::StrFormat(
+        "Multi-argument operator '%s' must take at least one argument.",
+        op_name.value()));
+  }
+  RETURN_IF_ERROR(ctx->BuildExpr(op_args[0]));
+  for (auto const& arg : op_args.subspan(1)) {
+    ctx->func_builder()->AddPushOp();
+    RETURN_IF_ERROR(ctx->BuildExpr(arg));
+    ctx->func_builder()->AddBinOp(Op);
+  }
+  return absl::OkStatus();
+}
+
+// We need a specific function here, as the "-" operations is used for both
+// negation and subtraction.
+absl::Status BuildSubExpr(ExprContext const* ctx, NameToken const& op_name,
+                          ast::CallArgs const& args) {
+  if (args.rest()) {
+    return absl::InvalidArgumentError(absl::StrFormat(
+        "Subtraction operator '%s' cannot take a rest argument.",
+        op_name.value()));
+  }
+  absl::Span<ast::Expr const> op_args = args.args();
+  if (op_args.size() == 1) {
+    RETURN_IF_ERROR(ctx->BuildExpr(op_args[0]));
+    ctx->func_builder()->AddUnOp(FunctionBuilder::NEG);
+  } else if (op_args.size() == 2) {
+    RETURN_IF_ERROR(ctx->BuildExpr(op_args[0]));
+    ctx->func_builder()->AddPushOp();
+    RETURN_IF_ERROR(ctx->BuildExpr(op_args[1]));
+    ctx->func_builder()->AddBinOp(FunctionBuilder::SUB);
+  } else {
+    return absl::InvalidArgumentError(absl::StrFormat(
+        "Subtraction operator '%s' must take one or two arguments.",
+        op_name.value()));
+  }
+  return absl::OkStatus();
+}
+
+// An implementation of the "and" operator. This short circuits, so it
+// needs special handling.
+absl::Status BuildAndExpr(ExprContext const* ctx, NameToken const& op_name,
+                          ast::CallArgs const& args) {
+  if (args.rest()) {
+    return absl::InvalidArgumentError(absl::StrFormat(
+        "And operator '%s' cannot take a rest argument.", op_name.value()));
+  }
+
+  absl::Span<ast::Expr const> op_args = args.args();
+  if (op_args.empty()) {
+    return absl::InvalidArgumentError(absl::StrFormat(
+        "And operator '%s' must take at least one argument.", op_name.value()));
+  }
+
+  auto end_label = ctx->func_builder()->CreateLabelRef();
+  for (auto const& arg : op_args.subspan(0, op_args.size() - 1)) {
+    RETURN_IF_ERROR(ctx->BuildExpr(arg));
+    ctx->func_builder()->AddBranchOp(FunctionBuilder::BNT, &end_label);
+  }
+  RETURN_IF_ERROR(ctx->BuildExpr(op_args.back()));
+  ctx->func_builder()->AddLabel(&end_label);
+  return absl::OkStatus();
+}
+// An implementation of the "and" operator. This short circuits, so it
+// needs special handling.
+absl::Status BuildOrExpr(ExprContext const* ctx, NameToken const& op_name,
+                         ast::CallArgs const& args) {
+  if (args.rest()) {
+    return absl::InvalidArgumentError(absl::StrFormat(
+        "And operator '%s' cannot take a rest argument.", op_name.value()));
+  }
+
+  absl::Span<ast::Expr const> op_args = args.args();
+  if (op_args.empty()) {
+    return absl::InvalidArgumentError(absl::StrFormat(
+        "And operator '%s' must take at least one argument.", op_name.value()));
+  }
+
+  auto end_label = ctx->func_builder()->CreateLabelRef();
+  for (auto const& arg : op_args.subspan(0, op_args.size() - 1)) {
+    RETURN_IF_ERROR(ctx->BuildExpr(arg));
+    ctx->func_builder()->AddBranchOp(FunctionBuilder::BT, &end_label);
+  }
+  RETURN_IF_ERROR(ctx->BuildExpr(op_args.back()));
+  ctx->func_builder()->AddLabel(&end_label);
+  return absl::OkStatus();
+}
+
+using CallFunc = absl::Status (*)(ExprContext const* ctx,
+                                  NameToken const& op_name,
+                                  ast::CallArgs const& call);
+
+std::map<std::string_view, CallFunc> const& GetCallBuiltins() {
+  static std::map<std::string_view, CallFunc> builtins = {
+      {"-", &BuildSubExpr},
+      {"not", &BuildUnaryExpr<FunctionBuilder::NOT>},
+      {"~", &BuildUnaryExpr<FunctionBuilder::BNOT>},
+      {"/", &BuildBinaryExpr<FunctionBuilder::DIV>},
+      {"<<", &BuildBinaryExpr<FunctionBuilder::SHL>},
+      {">>", &BuildBinaryExpr<FunctionBuilder::SHR>},
+      {"%", &BuildBinaryExpr<FunctionBuilder::MOD>},
+      {"<", &BuildBinaryExpr<FunctionBuilder::LT>},
+      {"<=", &BuildBinaryExpr<FunctionBuilder::LE>},
+      {">", &BuildBinaryExpr<FunctionBuilder::GT>},
+      {">=", &BuildBinaryExpr<FunctionBuilder::GE>},
+      {"==", &BuildBinaryExpr<FunctionBuilder::EQ>},
+      {"!=", &BuildBinaryExpr<FunctionBuilder::NE>},
+      {"u<", &BuildBinaryExpr<FunctionBuilder::ULT>},
+      {"u<=", &BuildBinaryExpr<FunctionBuilder::ULE>},
+      {"u>", &BuildBinaryExpr<FunctionBuilder::UGT>},
+      {"u>=", &BuildBinaryExpr<FunctionBuilder::UGE>},
+      {"+", &BuildMultiExpr<FunctionBuilder::ADD>},
+      {"*", &BuildMultiExpr<FunctionBuilder::MUL>},
+      {"|", &BuildMultiExpr<FunctionBuilder::OR>},
+      {"&", &BuildMultiExpr<FunctionBuilder::AND>},
+      {"^", &BuildMultiExpr<FunctionBuilder::XOR>},
+      {"and", &BuildAndExpr},
+      {"or", &BuildOrExpr},
+  };
+  return builtins;
 }
 
 absl::Status BuildCallExpr(ExprContext const* ctx, ast::CallExpr const& call) {
@@ -276,6 +447,14 @@ absl::Status BuildCallExpr(ExprContext const* ctx, ast::CallExpr const& call) {
         "Only calls to names are supported at this time.");
   }
   auto const& target_name = target.as<ast::VarExpr>().name();
+
+  // A number of operations are represented as calls to built-in functions.
+  auto const& builtins = GetCallBuiltins();
+  auto it = builtins.find(target_name.value());
+  if (it != builtins.end()) {
+    return it->second(ctx, target_name, call.call_args());
+  }
+
   auto const* proc = ctx->LookupProc(target_name.value());
   return proc->visit(
       [&](ExprContext::LocalProc const& local) -> absl::Status {
