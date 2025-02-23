@@ -35,6 +35,12 @@ ParseResult<std::unique_ptr<Expr>> ParseExprPtr(TreeExprSpan& exprs) {
   return std::make_unique<Expr>(std::move(expr));
 }
 
+ParseResult<std::unique_ptr<LValueExpr>> ParseLValueExprPtr(
+    TreeExprSpan& exprs) {
+  ASSIGN_OR_RETURN(auto expr, ParseLValueExpr(exprs));
+  return std::make_unique<LValueExpr>(std::move(expr));
+}
+
 // Builtin Parsers
 
 ParseResult<ReturnExpr> ParseReturnExpr(TokenNode<std::string_view> keyword,
@@ -286,7 +292,7 @@ ParseResult<SendExpr> ParseSuperSendExpr(TokenNode<std::string_view> keyword,
 template <AssignExpr::Kind K>
 ParseResult<AssignExpr> ParseAssignExpr(TokenNode<std::string_view> keyword,
                                         TreeExprSpan& exprs) {
-  ASSIGN_OR_RETURN(auto var, ParseExprPtr(exprs));
+  ASSIGN_OR_RETURN(auto var, ParseLValueExprPtr(exprs));
   ASSIGN_OR_RETURN(auto value, ParseExprPtr(exprs));
   return AssignExpr(K, std::move(var), std::move(value));
 }
@@ -339,7 +345,7 @@ ParseResult<std::optional<AddrOfExpr>> ParseAddrOfExpr(TreeExprSpan& exprs) {
     return std::nullopt;
   }
 
-  ASSIGN_OR_RETURN(auto expr, ParseExprPtr(exprs));
+  ASSIGN_OR_RETURN(auto expr, ParseLValueExprPtr(exprs));
   return AddrOfExpr(std::move(expr));
 }
 
@@ -525,6 +531,39 @@ ParseResult<Expr> ParseExpr(TreeExprSpan& exprs) {
           switch (expr.kind()) {
             case list_tree::ListExpr::PARENS:
               return ParseSciListExpr(expr.elements());
+            case list_tree::ListExpr::BRACKETS:
+              return ParseArrayIndexExpr(expr.elements());
+          }
+        });
+  })(exprs);
+}
+
+ParseResult<LValueExpr> ParseLValueExpr(TreeExprSpan& exprs) {
+  return ParseOneTreeExpr([](TreeExpr const& expr) -> ParseResult<LValueExpr> {
+    return expr.visit(
+        [](list_tree::TokenExpr const& expr) {
+          auto const& token = expr.token();
+          return token.value().visit(
+              [&](tokens::Token::Ident const& ident)
+                  -> ParseResult<LValueExpr> {
+                if (ident.trailer != tokens::Token::Ident::None) {
+                  return RangeFailureOf(token.text_range(),
+                                        "Expected simple identifier.");
+                }
+                return VarExpr(
+                    TokenNode<util::RefStr>(ident.name, token.text_range()));
+              },
+              [&](auto const&) -> ParseResult<LValueExpr> {
+                return RangeFailureOf(token.text_range(),
+                                      "Unexpected token type.");
+              });
+        },
+        [](list_tree::ListExpr const& expr) -> ParseResult<LValueExpr> {
+          switch (expr.kind()) {
+            case list_tree::ListExpr::PARENS:
+              return RangeFailureOf(
+                  expr.open_token().text_range(),
+                  "Expected either a variable or an array-access expression.");
             case list_tree::ListExpr::BRACKETS:
               return ParseArrayIndexExpr(expr.elements());
           }

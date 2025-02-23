@@ -93,6 +93,7 @@ class ExprContext {
         super_info_(std::move(super_info)),
         symbols_(std::move(symbols)),
         procs_(std::move(procs)) {}
+  virtual ~ExprContext() = default;
 
   codegen::CodeGenerator* codegen() const { return codegen_; }
   codegen::FunctionBuilder* func_builder() const { return func_builder_; }

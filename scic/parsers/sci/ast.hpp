@@ -202,6 +202,7 @@ class InitialValue
 // Expr Definitions
 
 class Expr;
+class LValueExpr;
 
 class CallArgs {
  public:
@@ -231,12 +232,12 @@ class CallArgs {
 
 class AddrOfExpr {
  public:
-  AddrOfExpr(std::unique_ptr<Expr> expr) : expr_(std::move(expr)) {}
+  AddrOfExpr(std::unique_ptr<LValueExpr> expr) : expr_(std::move(expr)) {}
 
-  Expr const& expr() const { return *expr_; }
+  LValueExpr const& expr() const { return *expr_; }
 
  private:
-  std::unique_ptr<Expr> expr_;
+  std::unique_ptr<LValueExpr> expr_;
 
   DEFINE_PRINTERS(AddrOfExpr, "expr", expr_);
 };
@@ -510,15 +511,15 @@ class IncDecExpr {
     DEC,
   };
 
-  IncDecExpr(Kind kind, TokenNode<util::RefStr> var)
-      : kind_(kind), var_(std::move(var)) {}
+  IncDecExpr(Kind kind, std::unique_ptr<LValueExpr> target)
+      : kind_(kind), target_(std::move(target)) {}
 
   Kind kind() const { return kind_; }
-  TokenNode<util::RefStr> const& var() const { return var_; }
+  LValueExpr const& target() const { return *target_; }
 
  private:
   Kind kind_;
-  TokenNode<util::RefStr> var_;
+  std::unique_ptr<LValueExpr> target_;
 };
 
 class SelfSendTarget {
@@ -613,17 +614,17 @@ class AssignExpr {
     SHR,
     SHL,
   };
-  AssignExpr(Kind kind, std::unique_ptr<Expr> target,
+  AssignExpr(Kind kind, std::unique_ptr<LValueExpr> target,
              std::unique_ptr<Expr> value)
       : kind_(kind), target_(std::move(target)), value_(std::move(value)) {}
 
   Kind kind() const { return kind_; }
-  Expr const& target() const { return *target_; }
+  LValueExpr const& target() const { return *target_; }
   Expr const& value() const { return *value_; }
 
  private:
   Kind kind_;
-  std::unique_ptr<Expr> target_;
+  std::unique_ptr<LValueExpr> target_;
   std::unique_ptr<Expr> value_;
 
   DEFINE_PRINTERS(AssignExpr, "kind", kind_, "target", target_, "value",
@@ -642,13 +643,19 @@ class ExprList {
   DEFINE_PRINTERS(ExprList, "exprs", exprs_);
 };
 
-class Expr
-    : public util::ChoiceBase<Expr,  //
-                              AddrOfExpr, SelectLitExpr, VarExpr,
-                              ArrayIndexExpr, ConstValueExpr, CallExpr,
-                              ReturnExpr, BreakExpr, ContinueExpr, WhileExpr,
-                              ForExpr, IfExpr, CondExpr, SwitchExpr,
-                              SwitchToExpr, SendExpr, AssignExpr, ExprList> {
+// An expression that can be stored to. This must either be a variable or
+// an array access expression.
+class LValueExpr : public util::ChoiceBase<LValueExpr,  //
+                                           VarExpr, ArrayIndexExpr> {
+  using ChoiceBase::ChoiceBase;
+};
+
+class Expr : public util::ChoiceBase<
+                 Expr,  //
+                 AddrOfExpr, SelectLitExpr, VarExpr, ArrayIndexExpr,
+                 ConstValueExpr, CallExpr, ReturnExpr, BreakExpr, ContinueExpr,
+                 WhileExpr, ForExpr, IfExpr, CondExpr, SwitchExpr, SwitchToExpr,
+                 SendExpr, AssignExpr, IncDecExpr, ExprList> {
   using ChoiceBase::ChoiceBase;
 };
 

@@ -37,18 +37,13 @@ struct VarAndIndex {
 
 // Checks if the given expression is a variable expression or an array index
 // expression. Returns an error otherwise.
-absl::StatusOr<VarAndIndex> GetVarNameAndIndex(ast::Expr const& expr) {
+VarAndIndex GetVarNameAndIndex(ast::LValueExpr const& expr) {
   return expr.visit(
-      [&](ast::VarExpr const& var_ref) -> absl::StatusOr<VarAndIndex> {
+      [&](ast::VarExpr const& var_ref) -> VarAndIndex {
         return VarAndIndex{var_ref.name(), nullptr};
       },
-      [&](ast::ArrayIndexExpr const& index_expr)
-          -> absl::StatusOr<VarAndIndex> {
+      [&](ast::ArrayIndexExpr const& index_expr) -> VarAndIndex {
         return VarAndIndex{index_expr.var_name(), &index_expr.index()};
-      },
-      [&](auto&&) -> absl::StatusOr<VarAndIndex> {
-        return absl::UnimplementedError(
-            "An expression must either be a variable or an array index expr.");
       });
 }
 
@@ -75,28 +70,27 @@ VarTypeAndOffset GetVarTypeAndOffset(ExprContext::VarSym const& var_sym) {
 
 absl::Status BuildAddrOfExpr(ExprContext const* ctx,
                              ast::AddrOfExpr const& addr_of) {
-  ASSIGN_OR_RETURN(auto const& result, GetVarNameAndIndex(addr_of.expr()));
-  auto const& [var_name, index] = result;
+  auto const& [var_name, index] = GetVarNameAndIndex(addr_of.expr());
 
   auto const* sym = ctx->Lookup(var_name.value());
   if (!sym) {
-    // We really should be using a type that can take text ranges.
+    // We really should be using a type that can
+    // take text ranges.
     return absl::NotFoundError(
         absl::StrFormat("Variable '%s' not found.", var_name.value()));
   }
 
-  ASSIGN_OR_RETURN(
-      auto type_val,
-      sym->visit(
-          [&](ExprContext::VarSym const& var_sym)
-              -> absl::StatusOr<VarTypeAndOffset> {
-            return GetVarTypeAndOffset(var_sym);
-          },
-          [&](ExprContext::PropSym const& proc)
-              -> absl::StatusOr<VarTypeAndOffset> {
-            return absl::FailedPreconditionError(
-                "Properties cannot be used in an AddrOf expression.");
-          }));
+  ASSIGN_OR_RETURN(auto type_val, sym->visit(
+                                      [&](ExprContext::VarSym const& var_sym)
+                                          -> absl::StatusOr<VarTypeAndOffset> {
+                                        return GetVarTypeAndOffset(var_sym);
+                                      },
+                                      [&](ExprContext::PropSym const& proc)
+                                          -> absl::StatusOr<VarTypeAndOffset> {
+                                        return absl::FailedPreconditionError(
+                                            "Properties cannot be used in an "
+                                            "AddrOf expression.");
+                                      }));
 
   if (index) {
     RETURN_IF_ERROR(ctx->BuildExpr(*index));
@@ -440,27 +434,6 @@ absl::Status BuildCompExpr(ExprContext const* ctx, NameToken const& op_name,
   return absl::OkStatus();
 }
 
-template <FunctionBuilder::ValueOp Op>
-absl::Status BuildValueExpr(ExprContext const* ctx, NameToken const& op_name,
-                            ast::CallArgs const& args) {
-  if (args.rest()) {
-    return absl::InvalidArgumentError(absl::StrFormat(
-        "Value operator '%s' cannot take a rest argument.", op_name.value()));
-  }
-
-  absl::Span<ast::Expr const> op_args = args.args();
-  if (op_args.size() != 1) {
-    return absl::InvalidArgumentError(absl::StrFormat(
-        "Operator '%s' must take exactly one argument.", op_name.value()));
-  }
-
-  auto const& arg = op_args[0];
-
-  ASSIGN_OR_RETURN(auto var_name_and_index, GetVarNameAndIndex(arg));
-  return BuildVarLoadExpr(ctx, Op, var_name_and_index.var_name,
-                          var_name_and_index.index);
-}
-
 using CallFunc = absl::Status (*)(ExprContext const* ctx,
                                   NameToken const& op_name,
                                   ast::CallArgs const& call);
@@ -491,8 +464,6 @@ std::map<std::string_view, CallFunc> const& GetCallBuiltins() {
       {"^", &BuildMultiExpr<FunctionBuilder::XOR>},
       {"and", &BuildAndExpr},
       {"or", &BuildOrExpr},
-      {"++", &BuildValueExpr<FunctionBuilder::INC>},
-      {"--", &BuildValueExpr<FunctionBuilder::DEC>},
   };
   return builtins;
 }
@@ -619,7 +590,7 @@ absl::Status BuildSendExpr(ExprContext const* ctx, ast::SendExpr const& send) {
 absl::Status BuildAssignExpr(ExprContext const* ctx,
                              ast::AssignExpr const& assign) {
   auto assign_op = BuildAssignOp(assign.kind());
-  ASSIGN_OR_RETURN(auto result, GetVarNameAndIndex(assign.target()));
+  auto result = GetVarNameAndIndex(assign.target());
   if (assign_op) {
     RETURN_IF_ERROR(BuildVarLoadExpr(ctx, FunctionBuilder::LOAD,
                                      result.var_name, result.index));
@@ -631,6 +602,17 @@ absl::Status BuildAssignExpr(ExprContext const* ctx,
   }
 
   RETURN_IF_ERROR(BuildVarStoreExpr(ctx, result.var_name, result.index));
+  return absl::OkStatus();
+}
+
+absl::Status BuildIncDecExpr(ExprContext const* ctx,
+                             ast::IncDecExpr const& inc_dec) {
+  auto inc_dec_op = inc_dec.kind() == ast::IncDecExpr::INC
+                        ? FunctionBuilder::INC
+                        : FunctionBuilder::DEC;
+  auto result = GetVarNameAndIndex(inc_dec.target());
+  RETURN_IF_ERROR(
+      BuildVarLoadExpr(ctx, inc_dec_op, result.var_name, result.index));
   return absl::OkStatus();
 }
 
@@ -894,6 +876,9 @@ class ExprContextImpl : public ExprContext {
         },
         [&](ast::AssignExpr const& assign_expr) {
           return BuildAssignExpr(this, assign_expr);
+        },
+        [&](ast::IncDecExpr const& inc_dec_expr) {
+          return BuildIncDecExpr(this, inc_dec_expr);
         },
         [&](ast::ExprList const& expr_list) {
           return BuildExprList(this, expr_list);
