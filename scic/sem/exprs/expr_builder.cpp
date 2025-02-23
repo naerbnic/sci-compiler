@@ -266,7 +266,7 @@ absl::StatusOr<std::size_t> BuildCallArgs(ExprContext const* ctx,
   return num_args;
 }
 
-absl::Status BuildCall(ExprContext const* ctx, ast::CallExpr const& call) {
+absl::Status BuildCallExpr(ExprContext const* ctx, ast::CallExpr const& call) {
   ASSIGN_OR_RETURN(auto num_args, BuildCallArgs(ctx, call.call_args()));
   auto const& target = call.target();
   // The original appears to only support calls to names, but I think
@@ -441,6 +441,31 @@ absl::Status BuildContEpxr(ExprContext const* ctx,
   return absl::OkStatus();
 }
 
+absl::Status BuildIfExpr(ExprContext const* ctx, ast::IfExpr const& if_expr) {
+  RETURN_IF_ERROR(ctx->BuildExpr(if_expr.condition()));
+  if (if_expr.else_body()) {
+    auto end_label = ctx->func_builder()->CreateLabelRef();
+    auto else_label = ctx->func_builder()->CreateLabelRef();
+    ctx->func_builder()->AddBranchOp(FunctionBuilder::BNT, &else_label);
+    RETURN_IF_ERROR(ctx->BuildExpr(if_expr.then_body()));
+    ctx->func_builder()->AddBranchOp(FunctionBuilder::JMP, &end_label);
+    ctx->func_builder()->AddLabel(&else_label);
+    RETURN_IF_ERROR(ctx->BuildExpr(**if_expr.else_body()));
+    ctx->func_builder()->AddLabel(&end_label);
+  } else {
+    auto end_label = ctx->func_builder()->CreateLabelRef();
+    ctx->func_builder()->AddBranchOp(FunctionBuilder::BNT, &end_label);
+    RETURN_IF_ERROR(ctx->BuildExpr(if_expr.then_body()));
+    ctx->func_builder()->AddLabel(&end_label);
+  }
+  return absl::OkStatus();
+}
+
+absl::Status BuildCondExpr(ExprContext const* ctx,
+                           ast::CondExpr const& cond_expr) {
+  return absl::UnimplementedError("unimplemented");
+}
+
 class ExprContextImpl : public ExprContext {
  public:
   using ExprContext::ExprContext;
@@ -464,7 +489,7 @@ class ExprContextImpl : public ExprContext {
                                   &array_index.index());
         },
         [&](ast::CallExpr const& selector_ref) {
-          return BuildCall(this, selector_ref);
+          return BuildCallExpr(this, selector_ref);
         },
         [&](ast::ReturnExpr const& array_ref) {
           if (array_ref.expr()) {
@@ -473,11 +498,11 @@ class ExprContextImpl : public ExprContext {
           func_builder()->AddReturnOp();
           return absl::OkStatus();
         },
-        [&](ast::BreakExpr const& object_ref) {
-          return BuildBreakExpr(this, object_ref);
+        [&](ast::BreakExpr const& break_expr) {
+          return BuildBreakExpr(this, break_expr);
         },
-        [&](ast::ContinueExpr const& object_ref) {
-          return BuildContEpxr(this, object_ref);
+        [&](ast::ContinueExpr const& cont_expr) {
+          return BuildContEpxr(this, cont_expr);
         },
         [&](ast::WhileExpr const& object_ref) {
           return absl::UnimplementedError("unimplemented");
@@ -485,11 +510,9 @@ class ExprContextImpl : public ExprContext {
         [&](ast::ForExpr const& object_ref) {
           return absl::UnimplementedError("unimplemented");
         },
-        [&](ast::IfExpr const& object_ref) {
-          return absl::UnimplementedError("unimplemented");
-        },
-        [&](ast::CondExpr const& object_ref) {
-          return absl::UnimplementedError("unimplemented");
+        [&](ast::IfExpr const& if_expr) { return BuildIfExpr(this, if_expr); },
+        [&](ast::CondExpr const& cond_expr) {
+          return BuildCondExpr(this, cond_expr);
         },
         [&](ast::SwitchExpr const& object_ref) {
           return absl::UnimplementedError("unimplemented");
