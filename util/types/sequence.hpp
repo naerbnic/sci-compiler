@@ -29,9 +29,9 @@ concept IsIndexSequence = IsIndexable<C> && requires(C& c, std::size_t i) {
 // SeqView. This covers many of the same cases as std::span or absl::Span, but
 // does not require the use of templated code.
 template <class T>
-class SeqViewImpl {
+class SeqImpl {
  public:
-  virtual ~SeqViewImpl() = default;
+  virtual ~SeqImpl() = default;
 
   virtual std::size_t size(void* data) const = 0;
   virtual T get_at(void* data, std::size_t index) const = 0;
@@ -47,12 +47,12 @@ template <class T, class C, class F>
   requires std::is_trivially_default_constructible_v<F> &&
            std::invocable<F, C&> &&
            std::ranges::random_access_range<std::invoke_result_t<F, C&>>
-class RangeSeqViewImpl : public SeqViewImpl<T> {
+class RangeSeqImpl : public SeqImpl<T> {
   using RangeType = std::invoke_result_t<F, C&>;
 
  public:
-  static SeqViewImpl<T> const* Get() {
-    static RangeSeqViewImpl const* instance = new RangeSeqViewImpl();
+  static SeqImpl<T> const* Get() {
+    static RangeSeqImpl const* instance = new RangeSeqImpl();
     return instance;
   }
 
@@ -66,16 +66,16 @@ class RangeSeqViewImpl : public SeqViewImpl<T> {
   }
 
  private:
-  RangeSeqViewImpl() = default;
+  RangeSeqImpl() = default;
   RangeType ToView(void* data) const { return F()(*static_cast<C*>(data)); }
 };
 
 template <class T, class C, class F>
   requires std::is_trivially_default_constructible_v<F> &&
            IsIndexSequence<T, C, F>
-class IndexableSetViewImpl : public SeqViewImpl<T> {
+class IndexableSetViewImpl : public SeqImpl<T> {
  public:
-  static SeqViewImpl<T> const* Get() {
+  static SeqImpl<T> const* Get() {
     static IndexableSetViewImpl const* instance = new IndexableSetViewImpl();
     return instance;
   }
@@ -100,7 +100,7 @@ using identity_func_t = decltype([](T c) -> decltype(auto) { return c; });
 
 // A type-erased sequence view type.
 template <class T>
-class SeqView {
+class Seq {
  public:
   class iterator {
    public:
@@ -182,12 +182,12 @@ class SeqView {
     }
 
    private:
-    friend class SeqView;
+    friend class Seq;
 
-    iterator(SeqView const* parent, std::size_t index)
+    iterator(Seq const* parent, std::size_t index)
         : parent_(parent), index_(index) {}
 
-    SeqView const* parent_;
+    Seq const* parent_;
     std::size_t index_;
   };
 
@@ -196,38 +196,43 @@ class SeqView {
 
   template <class C, class F>
     requires std::is_default_constructible_v<F>
-  static SeqView CreateTransform(C& container, F transform) {
+  static Seq CreateTransform(C& container, F transform) {
     using ViewTransform = decltype([](C& container) {
       return std::views::transform(container, F());
     });
-    return SeqView(&const_cast<std::remove_const_t<C>&>(container),
-                   internal::RangeSeqViewImpl<T, C, ViewTransform>::Get());
+    return Seq(&const_cast<std::remove_const_t<C>&>(container),
+               internal::RangeSeqImpl<T, C, ViewTransform>::Get());
   }
 
-  SeqView() : data_(nullptr), impl_(nullptr){};
+  template <class C>
+  static Seq Deref(C& container) {
+    return Seq::CreateTransform(
+        container, [](auto& value) -> decltype(auto) { return *value; });
+  }
+
+  Seq() : data_(nullptr), impl_(nullptr){};
 
   template <class C>
-    requires(!std::same_as<C, SeqView> && std::ranges::random_access_range<C&>)
-  SeqView(C& container)
-      : SeqView(
+    requires(!std::same_as<C, Seq> && std::ranges::random_access_range<C&>)
+  Seq(C& container)
+      : Seq(
             // We perform a const cast to simplify the common storage of all
             // containers. The method being provided ensures that the container
             // will be converted back to the same constness of container.
             &const_cast<std::remove_const_t<C>&>(container),
-            internal::RangeSeqViewImpl<T, C,
-                                       internal::identity_func_t<C&>>::Get()) {}
+            internal::RangeSeqImpl<T, C,
+                                   internal::identity_func_t<C&>>::Get()) {}
 
   template <class C>
-    requires(!std::same_as<C, SeqView> &&
-             !std::ranges::random_access_range<C&> &&
+    requires(!std::same_as<C, Seq> && !std::ranges::random_access_range<C&> &&
              internal::IsIndexSequence<T, C, internal::identity_func_t<T>>)
-  SeqView(C& container)
-      : SeqView(&container, internal::IndexableSetViewImpl<
-                                T, C, internal::identity_func_t<T>>::Get()) {}
+  Seq(C& container)
+      : Seq(&container, internal::IndexableSetViewImpl<
+                            T, C, internal::identity_func_t<T>>::Get()) {}
 
-  ~SeqView() = default;
-  SeqView(SeqView const&) = default;
-  SeqView& operator=(SeqView const&) = default;
+  ~Seq() = default;
+  Seq(Seq const&) = default;
+  Seq& operator=(Seq const&) = default;
 
   std::size_t size() const {
     if (!impl_) return 0;
@@ -239,12 +244,16 @@ class SeqView {
   iterator end() const { return iterator(this, size()); }
 
  private:
-  SeqView(void* data, internal::SeqViewImpl<T> const* impl)
+  Seq(void* data, internal::SeqImpl<T> const* impl)
       : data_(data), impl_(impl) {}
   // A pointer to the
   absl::Nullable<void*> data_;
-  internal::SeqViewImpl<T> const* impl_;
+  internal::SeqImpl<T> const* impl_;
 };
+
+// A sequence that is backed by references to the original data.
+template <class T>
+using SeqView = Seq<T&>;
 
 }  // namespace util
 
