@@ -17,6 +17,8 @@ static_assert(std::is_move_constructible_v<SeqView<int>>);
 static_assert(std::is_copy_assignable_v<SeqView<int>>);
 static_assert(std::is_move_assignable_v<SeqView<int>>);
 
+static_assert(std::ranges::random_access_range<SeqView<int>>);
+
 TEST(SequenceTest, Empty) {
   std::array<int, 0> arr;
   SeqView<int> seq = arr;

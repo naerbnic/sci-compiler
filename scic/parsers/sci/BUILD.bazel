@@ -12,6 +12,7 @@ cc_library(
         "//util/io:printer",
         "//util/strings:ref_str",
         "//util/types:choice",
+        "//util/types:sequence",
         "@abseil-cpp//absl/strings:str_format",
         "@abseil-cpp//absl/types:span",
     ],

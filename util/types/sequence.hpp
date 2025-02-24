@@ -1,9 +1,11 @@
 #ifndef UTIL_TYPES_SEQUENCE_HPP
 #define UTIL_TYPES_SEQUENCE_HPP
 
+#include <compare>
 #include <cstddef>
 #include <iterator>
 #include <ranges>
+#include <stdexcept>
 #include <type_traits>
 
 #include "absl/base/nullability.h"
@@ -11,6 +13,17 @@
 namespace util {
 
 namespace internal {
+
+template <class C>
+concept IsIndexable = requires(C& c, std::size_t i) {
+  { c.size() } -> std::convertible_to<std::size_t>;
+  { c[i] };
+};
+
+template <class T, class C, class F>
+concept IsIndexSequence = IsIndexable<C> && requires(C& c, std::size_t i) {
+  { F()(c[i]) } -> std::convertible_to<T>;
+};
 
 // A pure abstract class that provides the underlying implementation for a
 // SeqView. This covers many of the same cases as std::span or absl::Span, but
@@ -24,9 +37,16 @@ class SeqViewImpl {
   virtual T get_at(void* data, std::size_t index) const = 0;
 };
 
+// An implementation of SeqViewImpl that is based on a base object and a
+// functor that transforms it into a range.
+//
+// The functor must be trivially default constructable, and must return a range
+// object. The assumption is that the functor's operation is trivial, and can
+// be optimized into direct line code.
 template <class T, class C, class F>
-  requires std::is_default_constructible_v<F> &&
-           std::ranges::range<std::invoke_result_t<F, C&>>
+  requires std::is_trivially_default_constructible_v<F> &&
+           std::invocable<F, C&> &&
+           std::ranges::random_access_range<std::invoke_result_t<F, C&>>
 class RangeSeqViewImpl : public SeqViewImpl<T> {
   using RangeType = std::invoke_result_t<F, C&>;
 
@@ -35,8 +55,6 @@ class RangeSeqViewImpl : public SeqViewImpl<T> {
     static RangeSeqViewImpl const* instance = new RangeSeqViewImpl();
     return instance;
   }
-
-  RangeSeqViewImpl() = default;
 
   std::size_t size(void* data) const override {
     auto view = ToView(data);
@@ -48,8 +66,35 @@ class RangeSeqViewImpl : public SeqViewImpl<T> {
   }
 
  private:
+  RangeSeqViewImpl() = default;
   RangeType ToView(void* data) const { return F()(*static_cast<C*>(data)); }
 };
+
+template <class T, class C, class F>
+  requires std::is_trivially_default_constructible_v<F> &&
+           IsIndexSequence<T, C, F>
+class IndexableSetViewImpl : public SeqViewImpl<T> {
+ public:
+  static SeqViewImpl<T> const* Get() {
+    static IndexableSetViewImpl const* instance = new IndexableSetViewImpl();
+    return instance;
+  }
+
+  IndexableSetViewImpl() = default;
+
+  std::size_t size(void* data) const override {
+    return static_cast<C*>(data)->size();
+  }
+
+  T get_at(void* data, std::size_t index) const override {
+    return F()((*static_cast<C*>(data))[index]);
+  }
+
+ private:
+};
+
+template <class T>
+using identity_func_t = decltype([](T c) -> decltype(auto) { return c; });
 
 }  // namespace internal
 
@@ -101,8 +146,39 @@ class SeqView {
       return *this;
     }
 
-    friend bool operator==(iterator const& lhs, iterator const& rhs) {
-      return lhs.parent_ == rhs.parent_ && lhs.index_ == rhs.index_;
+    iterator operator+(std::ptrdiff_t n) const {
+      return iterator(parent_, index_ + n);
+    }
+
+    friend iterator operator+(std::ptrdiff_t n, iterator const& it) {
+      return it + n;
+    }
+
+    iterator operator-(std::ptrdiff_t n) const {
+      return iterator(parent_, index_ - n);
+    }
+
+    T operator[](std::ptrdiff_t n) const { return (*parent_)[index_ + n]; }
+
+    std::ptrdiff_t operator-(iterator const& rhs) const {
+      if (parent_ != rhs.parent_) {
+        throw std::logic_error("Comparing iterators from different SeqViews");
+      }
+      return index_ - rhs.index_;
+    }
+
+    bool operator==(iterator const& rhs) const {
+      if (parent_ != rhs.parent_) {
+        throw std::logic_error("Comparing iterators from different SeqViews");
+      }
+      return index_ == rhs.index_;
+    }
+
+    std::strong_ordering operator<=>(iterator const& rhs) const {
+      if (parent_ != rhs.parent_) {
+        throw std::logic_error("Comparing iterators from different SeqViews");
+      }
+      return index_ <=> rhs.index_;
     }
 
    private:
@@ -124,23 +200,30 @@ class SeqView {
     using ViewTransform = decltype([](C& container) {
       return std::views::transform(container, F());
     });
-    return SeqView(&container,
+    return SeqView(&const_cast<std::remove_const_t<C>&>(container),
                    internal::RangeSeqViewImpl<T, C, ViewTransform>::Get());
   }
 
   SeqView() : data_(nullptr), impl_(nullptr){};
 
   template <class C>
-    requires(!std::same_as<C, SeqView>)
+    requires(!std::same_as<C, SeqView> && std::ranges::random_access_range<C&>)
   SeqView(C& container)
       : SeqView(
             // We perform a const cast to simplify the common storage of all
             // containers. The method being provided ensures that the container
             // will be converted back to the same constness of container.
             &const_cast<std::remove_const_t<C>&>(container),
-            internal::RangeSeqViewImpl<T, C, decltype([](C& container) -> C& {
-                                         return container;
-                                       })>::Get()) {}
+            internal::RangeSeqViewImpl<T, C,
+                                       internal::identity_func_t<C&>>::Get()) {}
+
+  template <class C>
+    requires(!std::same_as<C, SeqView> &&
+             !std::ranges::random_access_range<C&> &&
+             internal::IsIndexSequence<T, C, internal::identity_func_t<T>>)
+  SeqView(C& container)
+      : SeqView(&container, internal::IndexableSetViewImpl<
+                                T, C, internal::identity_func_t<T>>::Get()) {}
 
   ~SeqView() = default;
   SeqView(SeqView const&) = default;

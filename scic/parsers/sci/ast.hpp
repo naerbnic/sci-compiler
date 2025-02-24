@@ -12,6 +12,7 @@
 #include "util/io/printer.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/choice.hpp"
+#include "util/types/sequence.hpp"
 
 namespace parsers::sci {
 
@@ -490,7 +491,12 @@ class SwitchToExpr {
         else_case_(std::move(else_case)) {}
 
   Expr const& switch_expr() const { return *switch_expr_; }
-  std::vector<std::unique_ptr<Expr>> const& cases() const { return cases_; }
+  util::SeqView<Expr const&> cases() const {
+    return util::SeqView<Expr const&>::CreateTransform(
+        cases_,
+        [](std::unique_ptr<Expr> const& expr) -> Expr const& { return *expr; });
+  }
+
   std::optional<std::unique_ptr<Expr>> const& else_case() const {
     return else_case_;
   }

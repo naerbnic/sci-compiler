@@ -744,7 +744,7 @@ absl::Status BuildSwitchToExpr(ExprContext const* ctx,
   ctx->func_builder()->AddPushOp();
   for (std::size_t i = 0; i < switch_expr.cases().size(); ++i) {
     auto next = ctx->func_builder()->CreateLabelRef();
-    auto const& branch = *switch_expr.cases()[i];
+    auto const& branch = switch_expr.cases()[i];
     bool at_end =
         (i == switch_expr.cases().size() - 1) && !switch_expr.else_case();
     ctx->func_builder()->AddDupOp();
