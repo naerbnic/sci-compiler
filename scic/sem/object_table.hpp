@@ -12,6 +12,7 @@
 #include "scic/sem/common.hpp"
 #include "scic/sem/selector_table.hpp"
 #include "util/strings/ref_str.hpp"
+#include "util/types/sequence.hpp"
 
 namespace sem {
 
@@ -50,8 +51,8 @@ class Object {
 class ObjectTable {
  public:
   virtual ~ObjectTable() = default;
+  virtual util::Seq<Object const&> objects(ScriptNum script) const = 0;
   virtual Object const* LookupByName(std::string_view objName) const = 0;
-  virtual std::vector<Object const*> GetObjects(ScriptNum script) const = 0;
 };
 
 class ObjectTableBuilder {

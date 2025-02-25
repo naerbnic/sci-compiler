@@ -9,6 +9,7 @@
 #include "scic/codegen/code_generator.hpp"
 #include "scic/sem/common.hpp"
 #include "util/strings/ref_str.hpp"
+#include "util/types/sequence.hpp"
 
 namespace sem {
 
@@ -24,6 +25,7 @@ class ProcTable {
  public:
   virtual ~ProcTable() = default;
 
+  virtual util::Seq<Procedure const&> procedures() const = 0;
   virtual Procedure const* LookupByName(std::string_view name) const = 0;
 };
 

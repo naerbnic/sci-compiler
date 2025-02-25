@@ -9,6 +9,7 @@
 #include "scic/parsers/sci/ast.hpp"
 #include "scic/sem/common.hpp"
 #include "util/strings/ref_str.hpp"
+#include "util/types/sequence.hpp"
 
 namespace sem {
 
@@ -36,6 +37,8 @@ class SelectorTable {
   };
 
   virtual ~SelectorTable() = default;
+
+  virtual util::Seq<Entry const&> entries() const = 0;
 
   virtual Entry const* LookupByNumber(SelectorNum selector_num) const = 0;
 

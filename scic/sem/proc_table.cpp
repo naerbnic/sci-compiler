@@ -13,6 +13,7 @@
 #include "scic/codegen/code_generator.hpp"
 #include "scic/sem/common.hpp"
 #include "util/strings/ref_str.hpp"
+#include "util/types/sequence.hpp"
 
 namespace sem {
 namespace {
@@ -38,6 +39,10 @@ class ProcTableImpl : public ProcTable {
       std::map<std::string_view, ProcedureImpl*, std::less<>> name_table)
       : procedures_(std::move(procedures)),
         name_table_(std::move(name_table)) {}
+
+  util::Seq<Procedure const&> procedures() const override {
+    return util::Seq<Procedure const&>::Deref(procedures_);
+  }
 
   Procedure const* LookupByName(std::string_view name) const override {
     auto it = name_table_.find(name);

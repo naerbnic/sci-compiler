@@ -15,6 +15,7 @@
 #include "scic/sem/common.hpp"
 #include "scic/sem/selector_table.hpp"
 #include "util/strings/ref_str.hpp"
+#include "util/types/sequence.hpp"
 
 namespace sem {
 namespace {
@@ -91,14 +92,8 @@ class ObjectTableImpl : public ObjectTable {
     return it->second;
   }
 
-  std::vector<Object const*> GetObjects(ScriptNum script) const override {
-    std::vector<Object const*> result;
-    for (auto const& object : objects_) {
-      if (object->script_num() == script) {
-        result.push_back(object.get());
-      }
-    }
-    return result;
+  util::Seq<Object const&> objects(ScriptNum script) const override {
+    return util::Seq<Object const&>::Deref(objects_);
   }
 
  private:

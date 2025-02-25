@@ -16,6 +16,7 @@
 #include "scic/sem/common.hpp"
 #include "scic/sem/late_bound.hpp"
 #include "util/strings/ref_str.hpp"
+#include "util/types/sequence.hpp"
 
 namespace sem {
 namespace {
@@ -48,6 +49,12 @@ class SelectorTableImpl : public SelectorTable {
       std::map<SelectorNum, std::unique_ptr<EntryImpl>> table,
       std::map<std::string_view, EntryImpl const*, std::less<>> name_map)
       : table_(std::move(table)), name_map_(std::move(name_map)) {}
+
+  util::Seq<Entry const&> entries() const override {
+    return util::Seq<Entry const&>::CreateTransform(
+        table_,
+        [](auto const& entry) -> decltype(auto) { return *entry->second; });
+  }
 
   Entry const* LookupByNumber(SelectorNum selector_num) const override {
     auto it = table_.find(selector_num);

@@ -15,6 +15,7 @@
 #include "scic/sem/common.hpp"
 #include "scic/sem/selector_table.hpp"
 #include "util/strings/ref_str.hpp"
+#include "util/types/sequence.hpp"
 
 namespace sem {
 
@@ -64,16 +65,17 @@ class Class {
   virtual absl::Nullable<Class const*> prev_decl() const = 0;
 
   // The properties for this class.
-  virtual std::vector<Property const*> const& properties() const = 0;
+  virtual util::Seq<Property const&> properties() const = 0;
 
   // The methods for this class.
-  virtual std::vector<Method const*> const& methods() const = 0;
+  virtual util::Seq<Method const&> methods() const = 0;
 };
 
 class ClassTable {
  public:
   virtual ~ClassTable() = default;
 
+  virtual util::Seq<Class const&> classes() const = 0;
   virtual absl::Nullable<Class const*> LookupBySpecies(
       ClassSpecies species) const = 0;
   virtual absl::Nullable<Class const*> LookupByName(
@@ -81,6 +83,7 @@ class ClassTable {
 
   // Same as above functions, but only performs lookup in the context of the
   // original script declarations.
+  virtual util::Seq<Class const&> decl_classes() const = 0;
   virtual absl::Nullable<Class const*> LookupDeclBySpecies(
       ClassSpecies species) const = 0;
   virtual absl::Nullable<Class const*> LookupDeclByName(

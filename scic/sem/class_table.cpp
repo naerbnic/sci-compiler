@@ -20,6 +20,7 @@
 #include "scic/sem/selector_table.hpp"
 #include "util/status/status_macros.hpp"
 #include "util/strings/ref_str.hpp"
+#include "util/types/sequence.hpp"
 
 namespace sem {
 
@@ -67,14 +68,7 @@ class ClassImpl : public Class {
         species_(species),
         prev_decl_(prev_decl),
         properties_(std::move(properties)),
-        methods_(std::move(methods)) {
-    for (auto& prop : properties_) {
-      returned_properties_.push_back(&prop);
-    }
-    for (auto& method : methods_) {
-      returned_methods_.push_back(&method);
-    }
-  }
+        methods_(std::move(methods)) {}
 
   NameToken const& token_name() const override { return name_; }
   util::RefStr const& name() const override { return name_.value(); }
@@ -83,13 +77,9 @@ class ClassImpl : public Class {
   absl::Nullable<Class const*> super() const override { return *super_; }
   absl::Nullable<Class const*> prev_decl() const override { return prev_decl_; }
 
-  std::vector<Property const*> const& properties() const override {
-    return returned_properties_;
-  }
+  util::Seq<Property const&> properties() const override { return properties_; }
 
-  std::vector<Method const*> const& methods() const override {
-    return returned_methods_;
-  }
+  util::Seq<Method const&> methods() const override { return methods_; }
 
   void SetSuper(ClassImpl const* new_super) { super_.set(new_super); }
 
@@ -101,8 +91,6 @@ class ClassImpl : public Class {
   absl::Nullable<Class const*> prev_decl_;
   std::vector<PropertyImpl> properties_;
   std::vector<MethodImpl> methods_;
-  std::vector<Property const*> returned_properties_;
-  std::vector<Method const*> returned_methods_;
 };
 
 // A single layer of class definitions. All references in the class objects
@@ -152,6 +140,10 @@ class ClassTableLayer {
     return absl::OkStatus();
   }
 
+  util::Seq<Class const&> classes() const {
+    return util::Seq<Class const&>::Deref(classes_);
+  }
+
   Class const* LookupBySpecies(ClassSpecies species) const {
     auto it = species_table_.find(species);
     if (it == species_table_.end()) {
@@ -180,6 +172,10 @@ class ClassTableImpl : public ClassTable {
   explicit ClassTableImpl(ClassTableLayer decl_layer, ClassTableLayer def_layer)
       : decl_layer_(std::move(decl_layer)), def_layer_(std::move(def_layer)) {}
 
+  util::Seq<Class const&> classes() const override {
+    return def_layer_.classes();
+  }
+
   absl::Nullable<Class const*> LookupBySpecies(
       ClassSpecies species) const override {
     return def_layer_.LookupBySpecies(species);
@@ -188,6 +184,10 @@ class ClassTableImpl : public ClassTable {
   absl::Nullable<Class const*> LookupByName(
       std::string_view name) const override {
     return def_layer_.LookupByName(name);
+  }
+
+  util::Seq<Class const&> decl_classes() const override {
+    return decl_layer_.classes();
   }
 
   absl::Nullable<Class const*> LookupDeclBySpecies(
