@@ -92,6 +92,9 @@ using ClassSpecies = util::StrongValue<ClassSpeciesTag>;
 struct SelectorNumTag : SizeTag {};
 using SelectorNum = util::StrongValue<SelectorNumTag>;
 
+struct PublicIndexTag : SizeTag {};
+using PublicIndex = util::StrongValue<PublicIndexTag>;
+
 // Reliably sets the value to a machine word, signed or unsigned.
 inline absl::StatusOr<std::uint16_t> ConvertToMachineWord(int value) {
   auto narrowed = static_cast<std::int16_t>(value);

@@ -13,6 +13,7 @@
 #include "scic/parsers/sci/ast.hpp"
 #include "scic/sem/class_table.hpp"
 #include "scic/sem/common.hpp"
+#include "scic/sem/extern_table.hpp"
 #include "scic/sem/input.hpp"
 #include "scic/sem/object_table.hpp"
 #include "scic/sem/proc_table.hpp"
@@ -152,6 +153,35 @@ absl::Status AddItemsToClassTable(ClassTableBuilder* builder,
   return absl::OkStatus();
 }
 
+absl::StatusOr<std::unique_ptr<ExternTable>> BuildExternTable(
+    absl::Span<ast::Item const> items) {
+  auto builder = ExternTableBuilder::Create();
+
+  for (auto const* extern_def : GetElemsOfTypes<ast::ExternDef>(items)) {
+    for (auto const& entry : extern_def->entries()) {
+      auto module_num = entry.module_num.value();
+      if (module_num < -1) {
+        return absl::InvalidArgumentError(
+            "Module number must be -1 or greater");
+      }
+      std::optional<ScriptNum> script_num;
+      if (module_num >= 0) {
+        script_num = ScriptNum::Create(module_num);
+      }
+
+      auto public_index = entry.index.value();
+      if (public_index < 0) {
+        return absl::InvalidArgumentError("Public index must be 0 or greater");
+      }
+
+      RETURN_IF_ERROR(builder->AddExtern(entry.name, script_num,
+                                         PublicIndex::Create(public_index)));
+    }
+  }
+
+  return builder->Build();
+}
+
 absl::StatusOr<std::unique_ptr<ObjectTable>> BuildObjectTable(
     codegen::CodeGenerator* codegen, SelectorTable const* selector,
     ClassTable const* class_table, ScriptNum script_num,
@@ -283,9 +313,12 @@ absl::StatusOr<CompilationEnvironment> BuildCompilationEnvironment(
 
   ASSIGN_OR_RETURN(auto class_table, class_builder->Build());
 
+  ASSIGN_OR_RETURN(auto extern_table, BuildExternTable(global_items));
+
   // We have all the information we need to build the global table.
   auto global_env = std::make_unique<GlobalEnvironment>(
-      std::move(selector_table), std::move(class_table));
+      std::move(selector_table), std::move(class_table),
+      std::move(extern_table));
 
   // Now build the module environments.
   std::map<ScriptNum, std::unique_ptr<ModuleEnvironment>> module_envs;

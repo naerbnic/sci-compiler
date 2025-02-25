@@ -112,6 +112,19 @@ cc_library(
 )
 
 cc_library(
+    name = "extern_table",
+    srcs = ["extern_table.cpp"],
+    hdrs = ["extern_table.hpp"],
+    deps = [
+        ":common",
+        "//util/strings:ref_str",
+        "//util/types:sequence",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+    ],
+)
+
+cc_library(
     name = "input",
     hdrs = ["input.hpp"],
     deps = ["//scic/parsers/sci:ast"],
@@ -123,6 +136,7 @@ cc_library(
     deps = [
         ":class_table",
         ":common",
+        ":extern_table",
         ":input",
         ":object_table",
         ":proc_table",

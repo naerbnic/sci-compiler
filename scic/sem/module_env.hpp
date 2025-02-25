@@ -11,6 +11,7 @@
 #include "scic/codegen/code_generator.hpp"
 #include "scic/sem/class_table.hpp"
 #include "scic/sem/common.hpp"
+#include "scic/sem/extern_table.hpp"
 #include "scic/sem/input.hpp"
 #include "scic/sem/object_table.hpp"
 #include "scic/sem/proc_table.hpp"
@@ -23,16 +24,20 @@ namespace sem {
 class GlobalEnvironment {
  public:
   GlobalEnvironment(std::unique_ptr<SelectorTable> selector_table,
-                    std::unique_ptr<ClassTable> class_table)
+                    std::unique_ptr<ClassTable> class_table,
+                    std::unique_ptr<ExternTable> extern_table)
       : selector_table_(std::move(selector_table)),
-        class_table_(std::move(class_table)) {}
+        class_table_(std::move(class_table)),
+        extern_table_(std::move(extern_table)) {}
 
   SelectorTable const* selector_table() const { return selector_table_.get(); }
   ClassTable const* class_table() const { return class_table_.get(); }
+  ExternTable const* extern_table() const { return extern_table_.get(); }
 
  private:
   std::unique_ptr<SelectorTable> selector_table_;
   std::unique_ptr<ClassTable> class_table_;
+  std::unique_ptr<ExternTable> extern_table_;
 };
 
 class ModuleEnvironment {
