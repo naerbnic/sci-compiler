@@ -136,7 +136,7 @@ class ProcedureEnvironment {
 };
 
 absl::StatusOr<CompilationEnvironment> BuildCompilationEnvironment(
-    Input const& input);
+    codegen::CodeGenerator::Options codegen_options, Input const& input);
 
 }  // namespace sem
 

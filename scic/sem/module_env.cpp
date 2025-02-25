@@ -267,7 +267,7 @@ absl::StatusOr<std::unique_ptr<PublicTable>> BuildPublicTable(
 }  // namespace
 
 absl::StatusOr<CompilationEnvironment> BuildCompilationEnvironment(
-    codegen::SciTarget target, codegen::Optimization opt, Input const& input) {
+    codegen::CodeGenerator::Options codegen_options, Input const& input) {
   // Do initial processing, to get the script number from each module
   // and create the appropriate codegens.
   struct ModuleLocal {
@@ -281,7 +281,7 @@ absl::StatusOr<CompilationEnvironment> BuildCompilationEnvironment(
   for (auto const& module : input.modules) {
     ASSIGN_OR_RETURN(auto script_num, GetScriptId(module.module_items));
 
-    auto codegen = codegen::CodeGenerator::Create(target, opt);
+    auto codegen = codegen::CodeGenerator::Create(std::move(codegen_options));
 
     modules.emplace_back(ModuleLocal{
         .script_num = script_num,

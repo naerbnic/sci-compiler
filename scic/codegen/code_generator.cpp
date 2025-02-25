@@ -282,12 +282,12 @@ std::unique_ptr<ObjectCodegen> ObjectCodegen::Create(CodeGenerator* compiler,
   //
   // This does not actually allocate any space, but it does create
   // growable tables.
-  ANObject* propListMarker = compiler->objPropList->newNode<ANObject>(name);
+  compiler->objPropList->newNode<ANObject>(name);
   ANTable* props = compiler->objPropList->newNode<ANTable>("properties");
 
-  ref->Resolve(propListMarker);
+  ref->Resolve(props);
 
-  ANObject* objDictMarker = compiler->objDictList->newNode<ANObject>(name);
+  compiler->objDictList->newNode<ANObject>(name);
   ANObjTable* propDict =
       compiler->objDictList->newNode<ANObjTable>("property dictionary");
   // The size of the method dictionary.
@@ -296,20 +296,16 @@ std::unique_ptr<ObjectCodegen> ObjectCodegen::Create(CodeGenerator* compiler,
   ANObjTable* methDict =
       compiler->objDictList->newNode<ANObjTable>("method dictionary");
   methDictSize->target = methDict->getList();
-  return absl::WrapUnique(new ObjectCodegen(isObj, name, propListMarker, props,
-                                            objDictMarker, propDict,
-                                            methDictSize, methDict));
+  return absl::WrapUnique(
+      new ObjectCodegen(isObj, name, props, propDict, methDictSize, methDict));
 }
 
-ObjectCodegen::ObjectCodegen(bool isObj, std::string name,
-                             ANObject* propListMarker, ANTable* props,
-                             ANObject* objDictMarker, ANObjTable* propDict,
-                             ANode* methDictStart, ANObjTable* methDict)
+ObjectCodegen::ObjectCodegen(bool isObj, std::string name, ANTable* props,
+                             ANObjTable* propDict, ANode* methDictStart,
+                             ANObjTable* methDict)
     : isObj_(isObj),
       name_(name),
-      propListMarker_(propListMarker),
       props_(props),
-      objDictMarker_(objDictMarker),
       propDict_(propDict),
       methDictStart_(methDictStart),
       methDict_(methDict) {}
@@ -593,10 +589,9 @@ FunctionBuilder::FunctionBuilder(SciTargetStrategy const* target,
 
 // -----------------
 
-std::unique_ptr<CodeGenerator> CodeGenerator::Create(SciTarget target,
-                                                     Optimization opt) {
+std::unique_ptr<CodeGenerator> CodeGenerator::Create(Options options) {
   SciTargetStrategy const* target_strategy;
-  switch (target) {
+  switch (options.target) {
     case SciTarget::SCI_1_1:
       target_strategy = SciTargetStrategy::GetSci11();
       break;
@@ -608,7 +603,7 @@ std::unique_ptr<CodeGenerator> CodeGenerator::Create(SciTarget target,
   }
   auto compiler = absl::WrapUnique(new CodeGenerator());
   compiler->sci_target = target_strategy;
-  compiler->opt = opt;
+  compiler->opt = options.opt;
   compiler->InitAsm();
   return compiler;
 }

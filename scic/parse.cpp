@@ -43,9 +43,11 @@ bool Parse() {
       throw std::runtime_error("Invalid target architecture");
   }
 
-  Optimization opt =
-      gConfig->noOptimize ? Optimization::NO_OPTIMIZE : Optimization::OPTIMIZE;
-  gSc = CodeGenerator::Create(target, opt);
+  gSc = CodeGenerator::Create(CodeGenerator::Options{
+      .target = target,
+      .opt = gConfig->noOptimize ? Optimization::NO_OPTIMIZE
+                                 : Optimization::OPTIMIZE,
+  });
   gSyms.clearAsmPtrs();
 
   std::optional<TokenSlot> token;

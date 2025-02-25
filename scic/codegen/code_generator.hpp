@@ -113,9 +113,9 @@ class ObjectCodegen {
                                                bool isObj, std::string name,
                                                ForwardRef<ANode*>* ref);
 
-  ObjectCodegen(bool isObj, std::string name, ANObject* propListMarker,
-                ANTable* props, ANObject* objDictMarker, ANObjTable* propDict,
-                ANode* methDictStart, ANObjTable* methDict);
+  ObjectCodegen(bool isObj, std::string name, ANTable* props,
+                ANObjTable* propDict, ANode* methDictStart,
+                ANObjTable* methDict);
 
   void AppendPropDict(std::uint16_t selectorNum);
 
@@ -123,17 +123,11 @@ class ObjectCodegen {
   bool isObj_;
 
   std::string name_;
-  // The prop-list object marker.
-  ANObject* propListMarker_;
   ANTable* props_;
 
-  ANObject* objDictMarker_;
   ANObjTable* propDict_;
   ANode* methDictStart_;
   ANObjTable* methDict_;
-
-  bool wrotePropDict_ = false;
-  bool wroteMethDict_ = false;
 };
 
 class LabelRef {
@@ -321,8 +315,11 @@ class FunctionBuilder {
 
 class CodeGenerator {
  public:
-  static std::unique_ptr<CodeGenerator> Create(SciTarget target,
-                                               Optimization opt);
+  struct Options {
+    SciTarget target;
+    Optimization opt;
+  };
+  static std::unique_ptr<CodeGenerator> Create(Options options);
   ~CodeGenerator();
 
   void Assemble(std::string_view source_file_name, uint16_t scriptNum,
