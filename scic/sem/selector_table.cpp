@@ -46,14 +46,15 @@ class EntryImpl : public SelectorTable::Entry {
 class SelectorTableImpl : public SelectorTable {
  public:
   SelectorTableImpl(
-      std::map<SelectorNum, std::unique_ptr<EntryImpl>> table,
+      std::vector<std::unique_ptr<EntryImpl>> entries,
+      std::map<SelectorNum, EntryImpl const*> table,
       std::map<std::string_view, EntryImpl const*, std::less<>> name_map)
-      : table_(std::move(table)), name_map_(std::move(name_map)) {}
+      : entries_(std::move(entries)),
+        table_(std::move(table)),
+        name_map_(std::move(name_map)) {}
 
   util::Seq<Entry const&> entries() const override {
-    return util::Seq<Entry const&>::CreateTransform(
-        table_,
-        [](auto const& entry) -> decltype(auto) { return *entry->second; });
+    return util::Seq<Entry const&>::Deref(entries_);
   }
 
   Entry const* LookupByNumber(SelectorNum selector_num) const override {
@@ -61,7 +62,7 @@ class SelectorTableImpl : public SelectorTable {
     if (it == table_.end()) {
       return nullptr;
     }
-    return it->second.get();
+    return it->second;
   }
 
   Entry const* LookupByName(std::string_view name) const override {
@@ -73,8 +74,9 @@ class SelectorTableImpl : public SelectorTable {
   }
 
  private:
+  std::vector<std::unique_ptr<EntryImpl>> entries_;
   // Map from selector numbers to selector entries. Owns the entries.
-  std::map<SelectorNum, std::unique_ptr<EntryImpl>> table_;
+  std::map<SelectorNum, EntryImpl const*> table_;
   std::map<std::string_view, EntryImpl const*, std::less<>> name_map_;
 };
 
@@ -92,9 +94,9 @@ class BuilderImpl : public SelectorTable::Builder {
 
     auto entry = std::make_unique<EntryImpl>(std::move(name));
     entry->selector_num_.set(selector_num);
-    auto const* entry_ptr = entry.get();
-    table_.emplace(selector_num, std::move(entry));
-    name_map_.emplace(entry_ptr->name(), entry_ptr);
+    name_map_.emplace(entry->name(), entry.get());
+    table_.emplace(selector_num, entry.get());
+    entries_.push_back(std::move(entry));
     return absl::OkStatus();
   }
 
@@ -105,7 +107,8 @@ class BuilderImpl : public SelectorTable::Builder {
     }
     auto entry = std::make_unique<EntryImpl>(std::move(name));
     name_map_.emplace(entry->name(), entry.get());
-    new_selectors_.emplace_back(std::move(entry));
+    new_selectors_.emplace_back(entry.get());
+    entries_.emplace_back(std::move(entry));
     return absl::OkStatus();
   }
 
@@ -122,23 +125,25 @@ class BuilderImpl : public SelectorTable::Builder {
         }
       }
       entry->selector_num_.set(SelectorNum::Create(next_selector++));
-      table_.emplace(entry->selector_num(), std::move(entry));
+
+      table_.emplace(entry->selector_num(), entry);
     }
 
-    auto new_table = std::make_unique<SelectorTableImpl>(std::move(table_),
-                                                         std::move(name_map_));
+    auto new_table = std::make_unique<SelectorTableImpl>(
+        std::move(entries_), std::move(table_), std::move(name_map_));
 
     new_selectors_.clear();
     table_.clear();
     name_map_.clear();
+    entries_.clear();
 
     return new_table;
   }
 
  private:
-  // Map from selector numbers to selector entries. Owns the entries.
-  std::map<SelectorNum, std::unique_ptr<EntryImpl>> table_;
-  std::vector<std::unique_ptr<EntryImpl>> new_selectors_;
+  std::vector<std::unique_ptr<EntryImpl>> entries_;
+  std::map<SelectorNum, EntryImpl const*> table_;
+  std::vector<EntryImpl*> new_selectors_;
   std::map<std::string_view, EntryImpl const*, std::less<>> name_map_;
 };
 
