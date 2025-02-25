@@ -21,6 +21,7 @@
 #include "scic/sem/selector_table.hpp"
 #include "util/status/status_macros.hpp"
 #include "util/strings/ref_str.hpp"
+#include "util/types/sequence.hpp"
 
 namespace sem {
 
@@ -153,6 +154,43 @@ absl::Status AddItemsToClassTable(ClassTableBuilder* builder,
   return absl::OkStatus();
 }
 
+// Do initial processing, to get the script number from each module
+// and create the appropriate codegens.
+struct ModuleLocal {
+  ScriptNum script_num;
+  std::unique_ptr<codegen::CodeGenerator> codegen;
+  Items items;
+};
+
+absl::StatusOr<std::unique_ptr<SelectorTable>> BuildSelectorTable(
+    Items global_items, util::SeqView<ModuleLocal const> modules) {
+  auto selector_builder = SelectorTable::CreateBuilder();
+
+  RETURN_IF_ERROR(
+      AddItemsToSelectorTable(selector_builder.get(), global_items));
+  for (auto const& module : modules) {
+    RETURN_IF_ERROR(
+        AddItemsToSelectorTable(selector_builder.get(), module.items));
+  }
+
+  return selector_builder->Build();
+}
+
+absl::StatusOr<std::unique_ptr<ClassTable>> BuildClassTable(
+    SelectorTable const* selector_table, Items global_items,
+    util::SeqView<ModuleLocal const> modules) {
+  auto class_builder = ClassTableBuilder::Create(selector_table);
+  RETURN_IF_ERROR(AddItemsToClassTable(class_builder.get(), nullptr,
+                                       std::nullopt, global_items));
+  for (auto const& module : modules) {
+    RETURN_IF_ERROR(AddItemsToClassTable(class_builder.get(),
+                                         module.codegen.get(),
+                                         module.script_num, module.items));
+  }
+
+  return class_builder->Build();
+}
+
 absl::StatusOr<std::unique_ptr<ExternTable>> BuildExternTable(
     absl::Span<ast::Item const> items) {
   auto builder = ExternTableBuilder::Create();
@@ -264,18 +302,44 @@ absl::StatusOr<std::unique_ptr<PublicTable>> BuildPublicTable(
   return builder->Build();
 }
 
+absl::StatusOr<std::unique_ptr<GlobalEnvironment>> BuildGlobalEnvironment(
+    Items global_items, util::SeqView<ModuleLocal const> modules) {
+  ASSIGN_OR_RETURN(auto selector_table,
+                   BuildSelectorTable(global_items, modules));
+  ASSIGN_OR_RETURN(auto class_table, BuildClassTable(selector_table.get(),
+                                                     global_items, modules));
+
+  ASSIGN_OR_RETURN(auto extern_table, BuildExternTable(global_items));
+
+  return std::make_unique<GlobalEnvironment>(
+      std::move(selector_table), std::move(class_table),
+      std::move(extern_table), global_items);
+}
+
+absl::StatusOr<std::unique_ptr<ModuleEnvironment>> BuildModuleEnvironment(
+    GlobalEnvironment const* global_env, ScriptNum script_num,
+    std::unique_ptr<CodeGenerator> codegen, Items module_items) {
+  ASSIGN_OR_RETURN(
+      auto object_table,
+      BuildObjectTable(codegen.get(), global_env->selector_table(),
+                       global_env->class_table(), script_num, module_items));
+
+  ASSIGN_OR_RETURN(auto proc_table,
+                   BuildProcTable(codegen.get(), module_items));
+
+  ASSIGN_OR_RETURN(
+      auto public_table,
+      BuildPublicTable(proc_table.get(), object_table.get(), module_items));
+
+  return std::make_unique<ModuleEnvironment>(
+      global_env, script_num, std::move(codegen), std::move(object_table),
+      std::move(proc_table), std::move(public_table), module_items);
+}
+
 }  // namespace
 
 absl::StatusOr<CompilationEnvironment> BuildCompilationEnvironment(
     codegen::CodeGenerator::Options codegen_options, Input const& input) {
-  // Do initial processing, to get the script number from each module
-  // and create the appropriate codegens.
-  struct ModuleLocal {
-    ScriptNum script_num;
-    std::unique_ptr<codegen::CodeGenerator> codegen;
-    Items items;
-  };
-
   Items global_items = input.global_items;
   std::vector<ModuleLocal> modules;
   for (auto const& module : input.modules) {
@@ -290,58 +354,17 @@ absl::StatusOr<CompilationEnvironment> BuildCompilationEnvironment(
     });
   }
 
-  // Build selector table.
-  auto selector_builder = SelectorTable::CreateBuilder();
-  RETURN_IF_ERROR(
-      AddItemsToSelectorTable(selector_builder.get(), global_items));
-  for (auto const& module : modules) {
-    RETURN_IF_ERROR(
-        AddItemsToSelectorTable(selector_builder.get(), module.items));
-  }
-
-  ASSIGN_OR_RETURN(auto selector_table, selector_builder->Build());
-
-  // Build class table.
-  auto class_builder = ClassTableBuilder::Create(selector_table.get());
-  RETURN_IF_ERROR(AddItemsToClassTable(class_builder.get(), nullptr,
-                                       std::nullopt, global_items));
-  for (auto const& module : modules) {
-    RETURN_IF_ERROR(AddItemsToClassTable(class_builder.get(),
-                                         module.codegen.get(),
-                                         module.script_num, module.items));
-  }
-
-  ASSIGN_OR_RETURN(auto class_table, class_builder->Build());
-
-  ASSIGN_OR_RETURN(auto extern_table, BuildExternTable(global_items));
-
-  // We have all the information we need to build the global table.
-  auto global_env = std::make_unique<GlobalEnvironment>(
-      std::move(selector_table), std::move(class_table),
-      std::move(extern_table), global_items);
+  ASSIGN_OR_RETURN(auto global_env,
+                   BuildGlobalEnvironment(global_items, modules));
 
   // Now build the module environments.
   std::map<ScriptNum, std::unique_ptr<ModuleEnvironment>> module_envs;
   for (auto& module : modules) {
     ASSIGN_OR_RETURN(
-        auto object_table,
-        BuildObjectTable(module.codegen.get(), global_env->selector_table(),
-                         global_env->class_table(), module.script_num,
-                         module.items));
-
-    ASSIGN_OR_RETURN(auto proc_table,
-                     BuildProcTable(module.codegen.get(), module.items));
-
-    ASSIGN_OR_RETURN(
-        auto public_table,
-        BuildPublicTable(proc_table.get(), object_table.get(), module.items));
-
-    module_envs.emplace(
-        module.script_num,
-        std::make_unique<ModuleEnvironment>(
-            global_env.get(), module.script_num, std::move(module.codegen),
-            std::move(object_table), std::move(proc_table),
-            std::move(public_table), module.items));
+        auto module_env,
+        BuildModuleEnvironment(global_env.get(), module.script_num,
+                               std::move(module.codegen), module.items));
+    module_envs.emplace(module_env->script_num(), std::move(module_env));
   }
 
   return CompilationEnvironment(std::move(global_env), std::move(module_envs));
