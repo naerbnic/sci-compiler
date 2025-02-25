@@ -56,47 +56,27 @@ class Opt {
              !TemplateTraits<Opt>::IsSpecialization<U>)
   constexpr Opt(U&& value) : storage_(AnyStorage<T>(std::forward<U>(value))) {}
 
-  constexpr AnyStorage<T>::ConstPtrType operator->() const noexcept {
-    return &storage_->value();
-  }
+  constexpr auto operator->() const noexcept { return &storage_->value(); }
+  constexpr auto operator->() noexcept { return &storage_->value(); }
 
-  constexpr AnyStorage<T>::PtrType operator->() noexcept {
-    return &storage_->value();
-  }
-
-  constexpr AnyStorage<T>::ConstRefType operator*() const& noexcept {
-    return storage_->value();
-  }
-
-  constexpr AnyStorage<T>::RefType operator*() & noexcept {
-    return storage_->value();
-  }
-
-  constexpr AnyStorage<T>::ConstMoveType operator*() const&& noexcept {
-    return storage_->value();
-  }
-
-  constexpr AnyStorage<T>::MoveType operator*() && noexcept {
-    return storage_->value();
-  }
+  constexpr T const& operator*() const& noexcept { return storage_->value(); }
+  constexpr T& operator*() & noexcept { return storage_->value(); }
+  constexpr T const&& operator*() const&& noexcept { return storage_->value(); }
+  constexpr T&& operator*() && noexcept { return storage_->value(); }
 
   constexpr explicit operator bool() const noexcept {
     return storage_.has_value();
   }
+
   constexpr bool has_value() const noexcept { return storage_.has_value(); }
 
-  constexpr AnyStorage<T>::ConstRefType value() const& {
-    return storage_->value();
-  }
-  constexpr AnyStorage<T>::RefType value() & { return storage_->value(); }
-  constexpr AnyStorage<T>::ConstMoveType value() const&& {
-    return storage_->value();
-  }
-  constexpr AnyStorage<T>::MoveType value() && {
-    return std::move(storage_).value();
-  }
+  constexpr T const& value() const& { return storage_->value(); }
+  constexpr T& value() & { return storage_->value(); }
+  constexpr T const&& value() const&& { return storage_->value(); }
+  constexpr T&& value() && { return std::move(storage_).value(); }
+
   template <class U = std::remove_cv_t<T>>
-  constexpr AnyStorage<T>::ConstType value_or(U&& default_value) const& {
+  constexpr std::remove_cvref_t<T> value_or(U&& default_value) const& {
     if (storage_.has_value()) {
       return storage_->value();
     } else {
@@ -104,7 +84,7 @@ class Opt {
     }
   }
   template <class U = std::remove_cv_t<T>>
-  constexpr AnyStorage<T>::Type value_or(U&& default_value) && {
+  constexpr std::remove_cvref_t<T> value_or(U&& default_value) && {
     if (storage_.has_value()) {
       return storage_->value();
     } else {
@@ -116,15 +96,14 @@ class Opt {
   void reset() noexcept { storage_.reset(); }
   template <class... Args>
     requires std::constructible_from<T, Args...>
-  AnyStorage<T>::RefType emplace(Args&&... args) {
+  T& emplace(Args&&... args) {
     storage_.emplace(std::in_place, std::forward<Args>(args)...);
     return storage_->value();
   }
 
   template <class U, class... Args>
     requires std::constructible_from<T, std::initializer_list<U>&, Args&&...>
-  AnyStorage<T>::RefType emplace(std::initializer_list<U> ilist,
-                                 Args&&... args) {
+  T& emplace(std::initializer_list<U> ilist, Args&&... args) {
     storage_.emplace(std::in_place, std::move(ilist),
                      std::forward<Args>(args)...);
     return storage_->value();
