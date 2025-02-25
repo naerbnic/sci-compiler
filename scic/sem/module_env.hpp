@@ -14,6 +14,7 @@
 #include "scic/sem/input.hpp"
 #include "scic/sem/object_table.hpp"
 #include "scic/sem/proc_table.hpp"
+#include "scic/sem/public_table.hpp"
 #include "scic/sem/selector_table.hpp"
 #include "util/types/choice.hpp"
 
@@ -39,17 +40,21 @@ class ModuleEnvironment {
   ModuleEnvironment(GlobalEnvironment const* global_env, ScriptNum script_num,
                     std::unique_ptr<codegen::CodeGenerator> codegen,
                     std::unique_ptr<ObjectTable> object_table,
-                    std::unique_ptr<ProcTable> proc_table)
+                    std::unique_ptr<ProcTable> proc_table,
+                    std::unique_ptr<PublicTable> public_table)
       : global_env_(std::move(global_env)),
         script_num_(script_num),
         codegen_(std::move(codegen)),
         object_table_(std::move(object_table)),
-        proc_table_(std::move(proc_table)) {}
+        proc_table_(std::move(proc_table)),
+        public_table_(std::move(public_table)) {}
 
   GlobalEnvironment const* global_env() const { return global_env_; }
+  ScriptNum script_num() const { return script_num_; }
   codegen::CodeGenerator* codegen() const { return codegen_.get(); }
   ObjectTable const* object_table() const { return object_table_.get(); }
   ProcTable const* proc_table() const { return proc_table_.get(); }
+  PublicTable const* public_table() const { return public_table_.get(); }
 
  private:
   GlobalEnvironment const* global_env_;
@@ -57,6 +62,7 @@ class ModuleEnvironment {
   std::unique_ptr<codegen::CodeGenerator> codegen_;
   std::unique_ptr<ObjectTable> object_table_;
   std::unique_ptr<ProcTable> proc_table_;
+  std::unique_ptr<PublicTable> public_table_;
 };
 
 class CompilationEnvironment {

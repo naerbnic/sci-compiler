@@ -32,7 +32,11 @@ class Opt {
 
   template <class U>
     requires std::constructible_from<T, const U&>
-  constexpr Opt(Opt<U> const& other) : storage_(other.storage_) {}
+  constexpr Opt(Opt<U> const& other) {
+    if (other.has_value()) {
+      storage_.emplace(std::in_place, other.value());
+    }
+  }
 
   template <class U>
     requires std::constructible_from<T, U>
@@ -74,6 +78,17 @@ class Opt {
   constexpr T& value() & { return storage_->value(); }
   constexpr T const&& value() const&& { return storage_->value(); }
   constexpr T&& value() && { return std::move(storage_).value(); }
+
+  template <class F>
+    requires std::invocable<F, T>
+  auto Map(F&& f) const& {
+    using Ret = std::invoke_result_t<F, T const&>;
+    if (storage_.has_value()) {
+      return Opt<Ret>(std::forward<F>(f)(storage_->value()));
+    } else {
+      return Opt<Ret>(std::nullopt);
+    }
+  }
 
   template <class U = std::remove_cv_t<T>>
   constexpr std::remove_cvref_t<T> value_or(U&& default_value) const& {
@@ -165,8 +180,13 @@ class Opt {
   }
 
  private:
+  template <class T2>
+  friend class Opt;
   std::optional<AnyStorage<T>> storage_;
 };
+
+template <class T>
+using OptRef = Opt<T&>;
 
 }  // namespace util
 

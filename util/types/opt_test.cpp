@@ -45,5 +45,13 @@ TEST(OptTest, RefWorks) {
   EXPECT_TRUE(opt == opt2);
 }
 
+TEST(OptTest, RefToBasicWorks) {
+  Opt<int> value_opt = 3;
+  Opt<int const&> ref_opt = value_opt;
+  EXPECT_EQ(ref_opt.value(), 3);
+  value_opt.value() = 4;
+  EXPECT_EQ(ref_opt.value(), 4);
+}
+
 }  // namespace
 }  // namespace util

@@ -98,6 +98,20 @@ cc_library(
 )
 
 cc_library(
+    name = "public_table",
+    srcs = ["public_table.cpp"],
+    hdrs = ["public_table.hpp"],
+    deps = [
+        ":object_table",
+        ":proc_table",
+        "//util/types:choice",
+        "//util/types:sequence",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+    ],
+)
+
+cc_library(
     name = "input",
     hdrs = ["input.hpp"],
     deps = ["//scic/parsers/sci:ast"],
@@ -112,6 +126,7 @@ cc_library(
         ":input",
         ":object_table",
         ":proc_table",
+        ":public_table",
         ":selector_table",
         "//scic/codegen:code_generator",
         "//util/types:choice",

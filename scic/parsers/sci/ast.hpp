@@ -492,7 +492,8 @@ class SwitchToExpr {
 
   Expr const& switch_expr() const { return *switch_expr_; }
   util::SeqView<Expr const> cases() const {
-    return util::SeqView<Expr const>::Deref(cases_);
+    return util::SeqView<Expr const>::Deref(
+        cases_);
   }
 
   std::optional<std::unique_ptr<Expr>> const& else_case() const {

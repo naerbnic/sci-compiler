@@ -16,6 +16,7 @@
 #include "scic/sem/input.hpp"
 #include "scic/sem/object_table.hpp"
 #include "scic/sem/proc_table.hpp"
+#include "scic/sem/public_table.hpp"
 #include "scic/sem/selector_table.hpp"
 #include "util/status/status_macros.hpp"
 #include "util/strings/ref_str.hpp"
@@ -198,6 +199,41 @@ absl::StatusOr<std::unique_ptr<ProcTable>> BuildProcTable(
   return builder->Build();
 }
 
+absl::StatusOr<std::unique_ptr<PublicTable>> BuildPublicTable(
+    ProcTable const* proc_table, ObjectTable const* object_table,
+    absl::Span<ast::Item const> items) {
+  auto builder = PublicTableBuilder::Create();
+
+  auto elems = GetElemsOfTypes<ast::PublicDef>(items);
+
+  if (elems.size() != 1) {
+    return absl::InvalidArgumentError("Exactly one public table allowed");
+  }
+
+  auto const* public_def = elems[0];
+
+  for (auto const& proc : public_def->entries()) {
+    auto const* proc_entry = proc_table->LookupByName(proc.name.value());
+    auto const* obj_entry = object_table->LookupByName(proc.name.value());
+    if (!proc_entry && !obj_entry) {
+      return absl::InvalidArgumentError("Entity not found.");
+    }
+
+    if (proc_entry && obj_entry) {
+      return absl::InvalidArgumentError(
+          "Ambiguous entity between objects and procedures.");
+    }
+
+    if (proc_entry) {
+      RETURN_IF_ERROR(builder->AddProcedure(proc.index.value(), proc_entry));
+    } else {
+      RETURN_IF_ERROR(builder->AddObject(proc.index.value(), obj_entry));
+    }
+  }
+
+  return builder->Build();
+}
+
 }  // namespace
 
 absl::StatusOr<CompilationEnvironment> BuildCompilationEnvironment(
@@ -263,11 +299,15 @@ absl::StatusOr<CompilationEnvironment> BuildCompilationEnvironment(
     ASSIGN_OR_RETURN(auto proc_table,
                      BuildProcTable(module.codegen.get(), module.items));
 
-    module_envs.emplace(
-        module.script_num,
-        std::make_unique<ModuleEnvironment>(
-            global_env.get(), module.script_num, std::move(module.codegen),
-            std::move(object_table), std::move(proc_table)));
+    ASSIGN_OR_RETURN(
+        auto public_table,
+        BuildPublicTable(proc_table.get(), object_table.get(), module.items));
+
+    module_envs.emplace(module.script_num,
+                        std::make_unique<ModuleEnvironment>(
+                            global_env.get(), module.script_num,
+                            std::move(module.codegen), std::move(object_table),
+                            std::move(proc_table), std::move(public_table)));
   }
 
   return CompilationEnvironment(std::move(global_env), std::move(module_envs));
