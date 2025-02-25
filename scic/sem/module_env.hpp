@@ -25,10 +25,12 @@ class GlobalEnvironment {
  public:
   GlobalEnvironment(std::unique_ptr<SelectorTable> selector_table,
                     std::unique_ptr<ClassTable> class_table,
-                    std::unique_ptr<ExternTable> extern_table)
+                    std::unique_ptr<ExternTable> extern_table,
+                    Items global_items)
       : selector_table_(std::move(selector_table)),
         class_table_(std::move(class_table)),
-        extern_table_(std::move(extern_table)) {}
+        extern_table_(std::move(extern_table)),
+        global_items_(global_items) {}
 
   SelectorTable const* selector_table() const { return selector_table_.get(); }
   ClassTable const* class_table() const { return class_table_.get(); }
@@ -38,6 +40,7 @@ class GlobalEnvironment {
   std::unique_ptr<SelectorTable> selector_table_;
   std::unique_ptr<ClassTable> class_table_;
   std::unique_ptr<ExternTable> extern_table_;
+  Items global_items_;
 };
 
 class ModuleEnvironment {
@@ -46,13 +49,15 @@ class ModuleEnvironment {
                     std::unique_ptr<codegen::CodeGenerator> codegen,
                     std::unique_ptr<ObjectTable> object_table,
                     std::unique_ptr<ProcTable> proc_table,
-                    std::unique_ptr<PublicTable> public_table)
+                    std::unique_ptr<PublicTable> public_table,
+                    Items module_items)
       : global_env_(std::move(global_env)),
         script_num_(script_num),
         codegen_(std::move(codegen)),
         object_table_(std::move(object_table)),
         proc_table_(std::move(proc_table)),
-        public_table_(std::move(public_table)) {}
+        public_table_(std::move(public_table)),
+        module_items_(module_items) {}
 
   GlobalEnvironment const* global_env() const { return global_env_; }
   ScriptNum script_num() const { return script_num_; }
@@ -68,6 +73,7 @@ class ModuleEnvironment {
   std::unique_ptr<ObjectTable> object_table_;
   std::unique_ptr<ProcTable> proc_table_;
   std::unique_ptr<PublicTable> public_table_;
+  Items module_items_;
 };
 
 class CompilationEnvironment {

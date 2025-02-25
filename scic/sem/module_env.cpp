@@ -318,7 +318,7 @@ absl::StatusOr<CompilationEnvironment> BuildCompilationEnvironment(
   // We have all the information we need to build the global table.
   auto global_env = std::make_unique<GlobalEnvironment>(
       std::move(selector_table), std::move(class_table),
-      std::move(extern_table));
+      std::move(extern_table), global_items);
 
   // Now build the module environments.
   std::map<ScriptNum, std::unique_ptr<ModuleEnvironment>> module_envs;
@@ -336,11 +336,12 @@ absl::StatusOr<CompilationEnvironment> BuildCompilationEnvironment(
         auto public_table,
         BuildPublicTable(proc_table.get(), object_table.get(), module.items));
 
-    module_envs.emplace(module.script_num,
-                        std::make_unique<ModuleEnvironment>(
-                            global_env.get(), module.script_num,
-                            std::move(module.codegen), std::move(object_table),
-                            std::move(proc_table), std::move(public_table)));
+    module_envs.emplace(
+        module.script_num,
+        std::make_unique<ModuleEnvironment>(
+            global_env.get(), module.script_num, std::move(module.codegen),
+            std::move(object_table), std::move(proc_table),
+            std::move(public_table), module.items));
   }
 
   return CompilationEnvironment(std::move(global_env), std::move(module_envs));
