@@ -17,6 +17,8 @@ TEST(SelectorTableTest, BasicTest) {
 
   EXPECT_EQ(table->LookupByName("hello")->selector_num().value(), 0);
   EXPECT_EQ(table->LookupByName("goodbye")->selector_num().value(), 1);
+  EXPECT_EQ(table->LookupByNumber(SelectorNum::Create(0))->name(), "hello");
+  EXPECT_EQ(table->LookupByNumber(SelectorNum::Create(1))->name(), "goodbye");
 }
 
 TEST(SelectorTableTest, RepeatedDeclIsOkay) {
