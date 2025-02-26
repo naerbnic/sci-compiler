@@ -19,6 +19,17 @@ cc_library(
 )
 
 cc_library(
+    name = "test_helpers",
+    testonly = True,
+    hdrs = ["test_helpers.hpp"],
+    deps = [
+        ":common",
+        "//scic/text:text_range",
+        "//util/strings:ref_str",
+    ],
+)
+
+cc_library(
     name = "late_bound",
     hdrs = ["late_bound.hpp"],
 )
@@ -46,9 +57,8 @@ cc_test(
     deps = [
         ":common",
         ":selector_table",
-        "//scic/text:text_range",
+        ":test_helpers",
         "//util/status:status_matchers",
-        "//util/strings:ref_str",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
