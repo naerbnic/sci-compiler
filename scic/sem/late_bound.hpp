@@ -3,6 +3,7 @@
 
 #include <optional>
 #include <stdexcept>
+
 namespace sem {
 
 // Similar to an Optional, but is intended to only be updated once.
@@ -14,8 +15,8 @@ class LateBound {
  public:
   LateBound() = default;
 
-  LateBound(LateBound const&) = delete;
-  LateBound& operator=(LateBound const&) = delete;
+  LateBound(LateBound const& other) = default;
+  LateBound& operator=(LateBound const& other) = default;
 
   LateBound(LateBound&&) = default;
   LateBound& operator=(LateBound&&) = default;
@@ -36,6 +37,7 @@ class LateBound {
   T const& operator*() const { return value_.value(); }
 
  private:
+  LateBound(std::optional<T> value) : value_(std::move(value)) {}
   std::optional<T> value_;
 };
 

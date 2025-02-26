@@ -21,6 +21,7 @@ constexpr inline std::string_view kClassScriptSelName = "-classScript-";
 constexpr inline std::string_view kScriptSelName = "-script-";
 constexpr inline std::string_view kSuperSelName = "-super-";
 constexpr inline std::string_view kInfoSelName = "-info-";
+constexpr inline std::string_view kNameSelName = "name";
 
 enum StandardSelectorIndexes : uint16_t {
   SEL_OBJID = 0x1000,
