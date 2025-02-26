@@ -12,7 +12,6 @@ cc_library(
         "//util/strings:ref_str",
         "//util/types:choice",
         "//util/types:strong_types",
-        "//util/types:tmpl",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/types:span",
@@ -138,5 +137,19 @@ cc_library(
         "//scic/codegen:code_generator",
         "//util/types:choice",
         "@abseil-cpp//absl/status:statusor",
+    ],
+)
+
+cc_library(
+    name = "code_builder",
+    srcs = ["code_builder.cpp"],
+    hdrs = ["code_builder.hpp"],
+    deps = [
+        ":class_table",
+        ":common",
+        ":module_env",
+        "//scic/parsers/sci:ast",
+        "//util/status:status_macros",
+        "@abseil-cpp//absl/status",
     ],
 )

@@ -65,6 +65,7 @@ class ModuleEnvironment {
   ObjectTable const* object_table() const { return object_table_.get(); }
   ProcTable const* proc_table() const { return proc_table_.get(); }
   PublicTable const* public_table() const { return public_table_.get(); }
+  Items module_items() const { return module_items_; }
 
  private:
   GlobalEnvironment const* global_env_;

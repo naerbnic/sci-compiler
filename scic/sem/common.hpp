@@ -14,7 +14,6 @@
 #include "util/strings/ref_str.hpp"
 #include "util/types/choice.hpp"
 #include "util/types/strong_types.hpp"
-#include "util/types/tmpl.hpp"
 
 namespace sem {
 
@@ -36,31 +35,28 @@ void VisitItems(Items items, Fs&&... fs) {
 
 template <class... Ts>
 auto GetElemsOfTypes(auto const& range) {
-  if constexpr (sizeof...(Ts) == 1) {
-    // There's no need to use a choice type if there's only one type.
-    using Result = util::TypePack<Ts...>::template TypeAt<0> const*;
-    std::vector<Result> result;
-    for (auto const& item : range) {
-      item.visit([&](Ts const& elem) { result.push_back(&elem); }...,
-                 [&](auto&&) {
-                   // Not desired, so remove.
-                 });
-    }
-    return result;
-
-  } else if (sizeof...(Ts) > 1) {
-    using Result = util::Choice<Ts const*...>;
-    std::vector<Result> result;
-    for (auto const& item : range) {
-      item.visit([&](Ts const& elem) { result.push_back(Result(&elem)); }...,
-                 [&](auto&&) {
-                   // Not desired, so remove.
-                 });
-    }
-    return result;
-  } else {
-    static_assert(sizeof...(Ts) > 0, "At least one type must be specified");
+  using Result = util::Choice<Ts const*...>;
+  std::vector<Result> result;
+  for (auto const& item : range) {
+    item.visit([&](Ts const& elem) { result.push_back(Result(&elem)); }...,
+               [&](auto&&) {
+                 // Not desired, so remove.
+               });
   }
+  return result;
+}
+
+template <class T>
+auto GetElemsOfType(auto const& range) {
+  // There's no need to use a choice type if there's only one type.
+  std::vector<T const*> result;
+  for (auto const& item : range) {
+    item.visit([&](T const& elem) { result.push_back(&elem); },
+               [&](auto&&) {
+                 // Not desired, so remove.
+               });
+  }
+  return result;
 }
 
 // Strong types for common concepts in the sem namespace.

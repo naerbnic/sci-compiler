@@ -30,7 +30,7 @@ namespace {
 using codegen::CodeGenerator;
 
 absl::StatusOr<ScriptNum> GetScriptId(Items items) {
-  auto result = GetElemsOfTypes<ast::ScriptNumDef>(items);
+  auto result = GetElemsOfType<ast::ScriptNumDef>(items);
 
   if (result.size() == 0) {
     return absl::InvalidArgumentError("No script number defined");
@@ -45,7 +45,7 @@ absl::Status AddItemsToSelectorTable(SelectorTable::Builder* builder,
                                      absl::Span<ast::Item const> items) {
   {
     // First, gather declared selectors.
-    auto classes = GetElemsOfTypes<ast::SelectorsDecl>(items);
+    auto classes = GetElemsOfType<ast::SelectorsDecl>(items);
     for (auto const* class_decl : classes) {
       auto const& selectors = class_decl->selectors();
       for (auto const& selector : selectors) {
@@ -56,7 +56,7 @@ absl::Status AddItemsToSelectorTable(SelectorTable::Builder* builder,
   }
 
   {
-    auto classes = GetElemsOfTypes<ast::ClassDef>(items);
+    auto classes = GetElemsOfType<ast::ClassDef>(items);
     std::vector<ast::TokenNode<util::RefStr>> result;
     for (auto const* class_def : classes) {
       for (auto const& prop : class_def->properties()) {
@@ -92,7 +92,7 @@ absl::Status AddItemsToClassTable(ClassTableBuilder* builder,
                                   codegen::CodeGenerator* codegen,
                                   std::optional<ScriptNum> script_num,
                                   Items items) {
-  for (auto const* class_decl : GetElemsOfTypes<ast::ClassDecl>(items)) {
+  for (auto const* class_decl : GetElemsOfType<ast::ClassDecl>(items)) {
     std::vector<ClassTableBuilder::Property> properties;
     for (auto const& prop : class_decl->properties()) {
       ASSIGN_OR_RETURN(auto value,
@@ -116,7 +116,7 @@ absl::Status AddItemsToClassTable(ClassTableBuilder* builder,
         std::move(properties), std::move(methods)));
   }
 
-  for (auto const* classdef : GetElemsOfTypes<ast::ClassDef>(items)) {
+  for (auto const* classdef : GetElemsOfType<ast::ClassDef>(items)) {
     if (classdef->kind() != ast::ClassDef::CLASS) {
       continue;
     }
@@ -195,7 +195,7 @@ absl::StatusOr<std::unique_ptr<ExternTable>> BuildExternTable(
     absl::Span<ast::Item const> items) {
   auto builder = ExternTableBuilder::Create();
 
-  for (auto const* extern_def : GetElemsOfTypes<ast::ExternDef>(items)) {
+  for (auto const* extern_def : GetElemsOfType<ast::ExternDef>(items)) {
     for (auto const& entry : extern_def->entries()) {
       auto module_num = entry.module_num.value();
       if (module_num < -1) {
@@ -226,7 +226,7 @@ absl::StatusOr<std::unique_ptr<ObjectTable>> BuildObjectTable(
     absl::Span<ast::Item const> items) {
   auto builder = ObjectTableBuilder::Create(codegen, selector, class_table);
 
-  for (auto const* object : GetElemsOfTypes<ast::ClassDef>(items)) {
+  for (auto const* object : GetElemsOfType<ast::ClassDef>(items)) {
     if (object->kind() != ast::ClassDef::OBJECT) {
       continue;
     }
@@ -260,7 +260,7 @@ absl::StatusOr<std::unique_ptr<ProcTable>> BuildProcTable(
     codegen::CodeGenerator* codegen, absl::Span<ast::Item const> items) {
   auto builder = ProcTableBuilder::Create(codegen);
 
-  for (auto const* proc : GetElemsOfTypes<ast::ProcDef>(items)) {
+  for (auto const* proc : GetElemsOfType<ast::ProcDef>(items)) {
     RETURN_IF_ERROR(builder->AddProcedure(proc->name()));
   }
 
@@ -272,7 +272,7 @@ absl::StatusOr<std::unique_ptr<PublicTable>> BuildPublicTable(
     absl::Span<ast::Item const> items) {
   auto builder = PublicTableBuilder::Create();
 
-  auto elems = GetElemsOfTypes<ast::PublicDef>(items);
+  auto elems = GetElemsOfType<ast::PublicDef>(items);
 
   if (elems.size() != 1) {
     return absl::InvalidArgumentError("Exactly one public table allowed");
