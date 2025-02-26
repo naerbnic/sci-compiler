@@ -3,6 +3,7 @@
 
 #include <MacTypes.h>
 
+#include <cstddef>
 #include <memory>
 #include <optional>
 #include <string_view>
@@ -26,6 +27,7 @@ class Class {
     virtual ~Property() = default;
 
     virtual NameToken const& token_name() const = 0;
+    virtual PropIndex index() const = 0;
     virtual util::RefStr const& name() const = 0;
     virtual SelectorTable::Entry const* selector() const = 0;
     virtual codegen::LiteralValue value() const = 0;
@@ -64,7 +66,9 @@ class Class {
   // previously declared.
   virtual absl::Nullable<Class const*> prev_decl() const = 0;
 
-  // The properties for this class.
+  virtual std::size_t prop_size() const = 0;
+
+  // The properties for this class in index order.
   virtual util::Seq<Property const&> properties() const = 0;
 
   // The methods for this class.

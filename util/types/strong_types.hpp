@@ -187,7 +187,7 @@ class StrongValue : public internal::strong_types::ViewExtValueBase<Tag> {
   constexpr auto operator<=>(StrongValue const& other) const
     requires std::three_way_comparable<Value>
   {
-    return value_ == other.value_;
+    return value_ <=> other.value_;
   }
 
  private:

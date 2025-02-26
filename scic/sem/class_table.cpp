@@ -36,11 +36,13 @@ class PropertyImpl : public Class::Property {
   util::RefStr const& name() const override { return name_.value(); }
   SelectorTable::Entry const* selector() const override { return selector_; }
   codegen::LiteralValue value() const override { return value_; }
+  PropIndex index() const override { return *prop_index_; }
 
  private:
   NameToken name_;
   SelectorTable::Entry const* selector_;
   codegen::LiteralValue value_;
+  LateBound<PropIndex> prop_index_;
 };
 
 class MethodImpl : public Class::Method {
@@ -76,6 +78,8 @@ class ClassImpl : public Class {
   ClassSpecies species() const override { return species_; }
   absl::Nullable<Class const*> super() const override { return *super_; }
   absl::Nullable<Class const*> prev_decl() const override { return prev_decl_; }
+
+  std::size_t prop_size() const override { return properties_.size(); }
 
   util::Seq<Property const&> properties() const override { return properties_; }
 
@@ -389,8 +393,8 @@ class ClassTableBuilderImpl : public ClassTableBuilder {
       methods.push_back(MethodImpl(method_name, selector));
     }
 
-    return layer.AddClass(name, base.script_num, species, prev_decl, properties,
-                          methods);
+    return layer.AddClass(name, base.script_num, species, prev_decl,
+                          std::move(properties), methods);
   }
 
   absl::Status WriteDeclToLayer(ClassTableLayer& layer, ClassDecl const& decl,

@@ -9,6 +9,7 @@
 #include "absl/status/status.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "util/status/status_macros.hpp"
 
 namespace util::status {
 
@@ -93,7 +94,7 @@ class IsOkImpl {
   bool MatchAndExplain(T const& value,
                        testing::MatchResultListener* listener) const {
     if (!value.ok()) {
-      *listener << "which is not OK: " << value.status();
+      *listener << "which is not OK";
       return false;
     }
     return true;
@@ -119,6 +120,15 @@ IsOkAndHolds(ValueMatcher const& matcher) {
       internal::LocalMatcherType<ValueMatcher>>(
       internal::LocalMatcherCast(matcher));
 }
+
+#define ASSERT_OK(x) ASSERT_THAT(x, ::util::status::IsOk())
+#define ASSERT_OK_AND_ASSIGN_IMPL(statusor, lhs, rexpr) \
+  auto statusor = (rexpr);                              \
+  ASSERT_OK(statusor.status()) << statusor.status();    \
+  lhs = std::move(statusor).value()
+#define ASSERT_OK_AND_ASSIGN(lhs, rexpr)                                       \
+  ASSERT_OK_AND_ASSIGN_IMPL(STATUS_MACROS_CONCAT_(_status_or_value, __LINE__), \
+                            lhs, rexpr)
 
 }  // namespace util::status
 

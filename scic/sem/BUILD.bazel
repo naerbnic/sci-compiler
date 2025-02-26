@@ -31,10 +31,26 @@ cc_library(
         ":common",
         ":late_bound",
         "//scic/parsers/sci:ast",
+        "//scic/text:text_range",
         "//util/strings:ref_str",
         "//util/types:sequence",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)
+
+cc_test(
+    name = "selector_table_test",
+    srcs = ["selector_table_test.cpp"],
+    deps = [
+        ":common",
+        ":selector_table",
+        "//scic/text:text_range",
+        "//util/status:status_matchers",
+        "//util/strings:ref_str",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 

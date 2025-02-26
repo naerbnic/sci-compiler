@@ -57,7 +57,7 @@ class RangeSeqImpl : public SeqImpl<T> {
   }
 
   std::size_t size(void* data) const override {
-    auto view = ToView(data);
+    auto&& view = ToView(data);
     return std::end(view) - std::begin(view);
   }
 
