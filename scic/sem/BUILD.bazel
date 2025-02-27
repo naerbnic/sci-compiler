@@ -83,6 +83,18 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "class_table_test",
+    srcs = ["class_table_test.cpp"],
+    deps = [
+        ":class_table",
+        ":selector_table",
+        "//util/status:status_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "object_table",
     srcs = ["object_table.cpp"],
