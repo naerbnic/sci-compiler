@@ -67,6 +67,17 @@ class ObjectImpl : public Object {
   util::RefStr const& name() const override { return name_.value(); }
   Class const* parent() const override { return parent_; }
   codegen::PtrRef* ptr_ref() const override { return &ptr_ref_; }
+  util::Seq<Property const&> properties() const override { return properties_; }
+  util::Seq<Method const&> methods() const override { return methods_; }
+
+  Property const* LookupPropByName(std::string_view name) const override {
+    for (auto const& prop : properties_) {
+      if (prop.name() == name) {
+        return &prop;
+      }
+    }
+    return nullptr;
+  }
 
  private:
   NameToken name_;
@@ -123,6 +134,10 @@ class ObjectTableBuilderImpl : public ObjectTableBuilder {
       auto const* selector = selector_->LookupByName(prop.name.value());
       if (!selector) {
         return absl::InvalidArgumentError("Selector not found");
+      }
+      auto const* class_prop = class_->LookupPropByName(prop.name.value());
+      if (!class_prop) {
+        return absl::InvalidArgumentError("Property not found in superclass");
       }
       prop_impls.emplace_back(prop.name, selector, prop.value);
     }

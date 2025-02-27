@@ -73,6 +73,9 @@ class Class {
 
   // The methods for this class.
   virtual util::Seq<Method const&> methods() const = 0;
+
+  virtual Property const* LookupPropByName(std::string_view name) const = 0;
+  virtual Method const* LookupMethByName(std::string_view name) const = 0;
 };
 
 class ClassTable {

@@ -121,6 +121,13 @@ class PropertyList {
     return util::Seq<Class::Property const&>::Deref(properties_);
   }
   std::size_t size() const { return properties_.size(); }
+  PropertyImpl const* LookupByName(std::string_view name) const {
+    auto it = name_table_.find(name);
+    if (it == name_table_.end()) {
+      return nullptr;
+    }
+    return it->second;
+  }
 
  private:
   PropertyList(std::vector<std::unique_ptr<PropertyImpl>> properties)
@@ -184,6 +191,18 @@ class ClassImpl : public Class {
   }
 
   util::Seq<Method const&> methods() const override { return methods_; }
+
+  Property const* LookupPropByName(std::string_view name) const override {
+    return property_list_->LookupByName(name);
+  }
+  Method const* LookupMethByName(std::string_view name) const override {
+    for (auto& method : methods_) {
+      if (method.name() == name) {
+        return &method;
+      }
+    }
+    return nullptr;
+  }
 
   void SetSuper(ClassImpl* new_super) { super_.set(new_super); }
 
