@@ -82,7 +82,16 @@ PropIndex PropertyList::UpdatePropertyDef(SelectorTable::Entry const* selector,
 PropertyList PropertyList::Clone() const {
   std::vector<std::unique_ptr<PropertyImpl>> new_properties;
   for (auto& prop : properties_) {
-    new_properties.push_back(std::make_unique<PropertyImpl>(*prop));
+    auto new_prop = std::make_unique<PropertyImpl>(
+        prop->token_name(), prop->index(), prop->selector(), prop->value());
+    // Text values don't copy between classes/objects because property pointers
+    // don't work between different scripts. If the property has
+    // a text value, we set it to a default value. Assume that the value will
+    // be overwritten later, if necessary.
+    if (new_prop->value().has<codegen::TextRef>()) {
+      new_prop->SetValue(codegen::LiteralValue(0));
+    }
+    new_properties.push_back(std::move(new_prop));
   }
   return PropertyList(std::move(new_properties));
 }
