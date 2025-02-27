@@ -21,7 +21,7 @@ namespace sem {
 
 class Loop;
 
-class ExprContext {
+class ExprEnvironment {
  public:
   struct ParamSym {
     std::size_t param_offset;
@@ -73,12 +73,25 @@ class ExprContext {
       : public util::ChoiceBase<Proc, LocalProc, ExternProc, KernelProc> {
     using ChoiceBase::ChoiceBase;
   };
-
   struct SuperInfo {
     ClassSpecies species;
     NameToken super_name;
   };
 
+  virtual ~ExprEnvironment() = default;
+
+  virtual std::optional<SuperInfo> GetSuperInfo() const = 0;
+
+  virtual std::optional<SelectorNum> LookupSelector(
+      std::string_view name) const = 0;
+
+  virtual std::optional<Sym> LookupSym(std::string_view name) const = 0;
+
+  virtual Proc const* LookupProc(std::string_view name) const = 0;
+};
+
+class ExprContext {
+ public:
   ExprContext(codegen::CodeGenerator* codegen,
               codegen::FunctionBuilder* func_builder,
               ClassTable const* class_table,
@@ -93,11 +106,11 @@ class ExprContext {
         super_info_(std::move(super_info)),
         symbols_(std::move(symbols)),
         procs_(std::move(procs)) {}
+
   virtual ~ExprContext() = default;
 
   codegen::CodeGenerator* codegen() const { return codegen_; }
   codegen::FunctionBuilder* func_builder() const { return func_builder_; }
-  ClassTable const* class_table() const { return class_table_; }
   SelectorTable const* selector_table() const { return selector_table_; }
   std::optional<SuperInfo> const& super_info() const { return super_info_; }
 
