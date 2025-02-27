@@ -36,7 +36,6 @@ cc_library(
 
 cc_library(
     name = "obj_members",
-    srcs = ["obj_members.cpp"],
     hdrs = ["obj_members.hpp"],
     deps = [
         ":common",
@@ -115,6 +114,7 @@ cc_library(
     deps = [
         ":class_table",
         ":common",
+        ":obj_members",
         ":selector_table",
         "//scic/codegen:code_generator",
         "//util/strings:ref_str",
