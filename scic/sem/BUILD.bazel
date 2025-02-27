@@ -46,6 +46,20 @@ cc_library(
 )
 
 cc_library(
+    name = "property_list",
+    srcs = ["property_list.cpp"],
+    hdrs = ["property_list.hpp"],
+    deps = [
+        ":common",
+        ":obj_members",
+        ":selector_table",
+        "//scic/codegen:code_generator",
+        "//util/strings:ref_str",
+        "//util/types:sequence",
+    ],
+)
+
+cc_library(
     name = "selector_table",
     srcs = ["selector_table.cpp"],
     hdrs = ["selector_table.hpp"],
@@ -83,6 +97,7 @@ cc_library(
         ":common",
         ":late_bound",
         ":obj_members",
+        ":property_list",
         ":selector_table",
         "//scic/codegen:code_generator",
         "//scic/parsers/sci:ast",

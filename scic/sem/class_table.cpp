@@ -18,6 +18,7 @@
 #include "scic/sem/common.hpp"
 #include "scic/sem/late_bound.hpp"
 #include "scic/sem/obj_members.hpp"
+#include "scic/sem/property_list.hpp"
 #include "scic/sem/selector_table.hpp"
 #include "util/status/status_macros.hpp"
 #include "util/strings/ref_str.hpp"
@@ -37,118 +38,6 @@ struct PropertyDef {
   NameToken name;
   SelectorTable::Entry const* selector;
   codegen::LiteralValue value;
-};
-
-class PropertyImpl : public Property {
- public:
-  PropertyImpl(NameToken name, PropIndex prop_index,
-               SelectorTable::Entry const* selector,
-               codegen::LiteralValue value)
-      : name_(std::move(name)),
-        prop_index_(prop_index),
-        selector_(selector),
-        value_(value) {}
-
-  NameToken const& token_name() const override { return name_; }
-  PropIndex index() const override { return prop_index_; }
-  util::RefStr const& name() const override { return name_.value(); }
-  SelectorTable::Entry const* selector() const override { return selector_; }
-  codegen::LiteralValue value() const override { return value_; }
-
-  void SetValue(codegen::LiteralValue value) { value_ = value; }
-
- private:
-  NameToken name_;
-  PropIndex prop_index_;
-  SelectorTable::Entry const* selector_;
-  codegen::LiteralValue value_;
-};
-
-// A full property list for a class.
-//
-// This includes all properties, including those inherited from super classes.
-//
-// When an object or class is created, all of its properties are laid out in
-// memory, and are used both for initialization and for memory storage, so all
-// properties must be known at that time.
-class PropertyList {
- public:
-  PropertyList() = default;
-  PropertyList(PropertyList const&) = delete;
-  PropertyList(PropertyList&&) = default;
-  PropertyList& operator=(PropertyList const&) = delete;
-  PropertyList& operator=(PropertyList&&) = default;
-
-  // Adds a property definition to the list. If a property with the same name
-  // already exists, it is updated with the new value.
-  //
-  // Returns the index of the property in the list.
-  //
-  // The order of evaluation of this method is significant. For each new
-  // property, it will be appended to the current list of properties.
-  PropIndex UpdatePropertyDef(NameToken name,
-                              SelectorTable::Entry const* selector,
-                              codegen::LiteralValue value) {
-    auto name_it = name_table_.find(name.value());
-    if (name_it != name_table_.end()) {
-      // The property already exists. Update the value, and return the index.
-      name_it->second->SetValue(value);
-      return name_it->second->index();
-    }
-
-    auto new_index = PropIndex::Create(properties_.size());
-    auto new_prop = std::make_unique<PropertyImpl>(std::move(name), new_index,
-                                                   selector, std::move(value));
-    AddToIndex(new_prop.get());
-    properties_.push_back(std::move(new_prop));
-    return new_index;
-  }
-
-  PropIndex UpdatePropertyDef(SelectorTable::Entry const* selector,
-                              codegen::LiteralValue value) {
-    return UpdatePropertyDef(selector->name_token(), selector,
-                             std::move(value));
-  }
-
-  PropertyList Clone() const {
-    std::vector<std::unique_ptr<PropertyImpl>> new_properties;
-    for (auto& prop : properties_) {
-      new_properties.push_back(std::make_unique<PropertyImpl>(*prop));
-    }
-    return PropertyList(std::move(new_properties));
-  }
-
-  util::Seq<Property const&> properties() const {
-    return util::Seq<Property const&>::Deref(properties_);
-  }
-  std::size_t size() const { return properties_.size(); }
-  PropertyImpl const* LookupByName(std::string_view name) const {
-    auto it = name_table_.find(name);
-    if (it == name_table_.end()) {
-      return nullptr;
-    }
-    return it->second;
-  }
-
- private:
-  PropertyList(std::vector<std::unique_ptr<PropertyImpl>> properties)
-      : properties_(std::move(properties)) {
-    for (auto& prop : properties_) {
-      AddToIndex(prop.get());
-    }
-  }
-
-  void AddToIndex(PropertyImpl* prop) {
-    name_table_.emplace(prop->name(), prop);
-    selector_table_.emplace(prop->selector(), prop);
-    index_table_.emplace(prop->index(), prop);
-  }
-
-  std::vector<std::unique_ptr<PropertyImpl>> properties_;
-  std::map<std::string_view, PropertyImpl*, std::less<>> name_table_;
-  std::map<SelectorTable::Entry const*, PropertyImpl*, std::less<>>
-      selector_table_;
-  std::map<PropIndex, PropertyImpl*, std::less<>> index_table_;
 };
 
 class MethodImpl : public Method {

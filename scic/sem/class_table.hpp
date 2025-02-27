@@ -1,8 +1,6 @@
 #ifndef SEM_CLASS_TABLE_HPP
 #define SEM_CLASS_TABLE_HPP
 
-#include <MacTypes.h>
-
 #include <cstddef>
 #include <memory>
 #include <optional>
