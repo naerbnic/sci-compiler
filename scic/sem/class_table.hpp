@@ -13,6 +13,7 @@
 #include "scic/codegen/code_generator.hpp"
 #include "scic/sem/common.hpp"
 #include "scic/sem/obj_members.hpp"
+#include "scic/sem/property_list.hpp"
 #include "scic/sem/selector_table.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/sequence.hpp"
@@ -47,13 +48,11 @@ class Class {
 
   virtual std::size_t prop_size() const = 0;
 
-  // The properties for this class in index order.
-  virtual util::Seq<Property const&> properties() const = 0;
+  virtual PropertyList const& prop_list() const = 0;
 
   // The methods for this class.
   virtual util::Seq<Method const&> methods() const = 0;
 
-  virtual Property const* LookupPropByName(std::string_view name) const = 0;
   virtual Method const* LookupMethByName(std::string_view name) const = 0;
 };
 

@@ -76,15 +76,10 @@ class ClassImpl : public Class {
 
   std::size_t prop_size() const override { return property_list_->size(); }
 
-  util::Seq<Property const&> properties() const override {
-    return property_list_->properties();
-  }
+  PropertyList const& prop_list() const override { return *property_list_; }
 
   util::Seq<Method const&> methods() const override { return methods_; }
 
-  Property const* LookupPropByName(std::string_view name) const override {
-    return property_list_->LookupByName(name);
-  }
   Method const* LookupMethByName(std::string_view name) const override {
     for (auto& method : methods_) {
       if (method.name() == name) {

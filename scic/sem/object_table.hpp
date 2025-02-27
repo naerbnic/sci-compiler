@@ -11,6 +11,7 @@
 #include "scic/sem/class_table.hpp"
 #include "scic/sem/common.hpp"
 #include "scic/sem/obj_members.hpp"
+#include "scic/sem/property_list.hpp"
 #include "scic/sem/selector_table.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/sequence.hpp"
@@ -27,9 +28,8 @@ class Object {
   virtual Class const* parent() const = 0;
   // Gets the codegen::PtrRef for this object.
   virtual codegen::PtrRef* ptr_ref() const = 0;
-  virtual util::Seq<Property const&> properties() const = 0;
+  virtual PropertyList const& prop_list() const = 0;
   virtual util::Seq<Method const&> methods() const = 0;
-  virtual Property const* LookupPropByName(std::string_view name) const = 0;
 };
 
 class ObjectTable {

@@ -15,7 +15,7 @@
 #include "util/types/sequence.hpp"
 namespace sem {
 
-// A full property list for a class.
+// A full property list for a class or object.
 //
 // This includes all properties, including those inherited from super classes.
 //

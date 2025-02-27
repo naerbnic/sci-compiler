@@ -19,7 +19,7 @@ absl::Status BuildClass(ModuleEnvironment* module_env, Class const* class_def,
   auto ptr_def = module_env->codegen()->CreatePtrRef();
   auto class_gen = module_env->codegen()->CreateClass(
       std::string(class_def->name()), &ptr_def);
-  for (auto const& prop : class_def->properties()) {
+  for (auto const& prop : class_def->prop_list().properties()) {
     auto const* selector = prop.selector();
     if (selector->name() == kMethDictSelName) {
       class_gen->AppendMethodTableProperty(std::string(class_def->name()),

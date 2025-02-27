@@ -14,6 +14,7 @@
 #include "scic/sem/class_table.hpp"
 #include "scic/sem/common.hpp"
 #include "scic/sem/obj_members.hpp"
+#include "scic/sem/property_list.hpp"
 #include "scic/sem/selector_table.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/sequence.hpp"
@@ -60,7 +61,7 @@ class MethodImpl : public Method {
 class ObjectImpl : public Object {
  public:
   ObjectImpl(NameToken name, ScriptNum script_num, Class const* parent,
-             codegen::PtrRef ptr_ref, std::vector<PropertyImpl> properties,
+             codegen::PtrRef ptr_ref, PropertyList properties,
              std::vector<MethodImpl> methods)
       : name_(std::move(name)),
         script_num_(script_num),
@@ -72,24 +73,15 @@ class ObjectImpl : public Object {
   util::RefStr const& name() const override { return name_.value(); }
   Class const* parent() const override { return parent_; }
   codegen::PtrRef* ptr_ref() const override { return &ptr_ref_; }
-  util::Seq<Property const&> properties() const override { return properties_; }
+  PropertyList const& prop_list() const override { return prop_list_; }
   util::Seq<Method const&> methods() const override { return methods_; }
-
-  Property const* LookupPropByName(std::string_view name) const override {
-    for (auto const& prop : properties_) {
-      if (prop.name() == name) {
-        return &prop;
-      }
-    }
-    return nullptr;
-  }
 
  private:
   NameToken name_;
   ScriptNum script_num_;
   Class const* parent_;
   mutable codegen::PtrRef ptr_ref_;
-  std::vector<PropertyImpl> properties_;
+  PropertyList prop_list_;
   std::vector<MethodImpl> methods_;
 };
 
@@ -134,18 +126,15 @@ class ObjectTableBuilderImpl : public ObjectTableBuilder {
 
     auto ptr_ref = codegen_->CreatePtrRef();
 
-    std::vector<PropertyImpl> prop_impls;
+    PropertyList prop_list = class_->prop_list().Clone();
     for (auto const& prop : properties) {
-      auto const* selector = selector_->LookupByName(prop.name.value());
-      if (!selector) {
-        return absl::InvalidArgumentError("Selector not found");
-      }
-      auto const* class_prop = class_->LookupPropByName(prop.name.value());
-      if (!class_prop) {
+      auto const* existing_prop = prop_list.LookupByName(prop.name.value());
+      if (!existing_prop) {
         return absl::InvalidArgumentError("Property not found in superclass");
       }
-      prop_impls.emplace_back(prop.name, class_prop->index(), selector,
-                              prop.value);
+
+      prop_list.UpdatePropertyDef(prop.name, existing_prop->selector(),
+                                  prop.value);
     }
 
     std::vector<MethodImpl> method_impls;
@@ -157,7 +146,7 @@ class ObjectTableBuilderImpl : public ObjectTableBuilder {
       method_impls.emplace_back(method, selector);
     }
     auto new_object = std::make_unique<ObjectImpl>(
-        name, script_num, class_, std::move(ptr_ref), std::move(prop_impls),
+        name, script_num, class_, std::move(ptr_ref), std::move(prop_list),
         std::move(method_impls));
 
     name_table_.emplace(new_object->name(), new_object.get());
