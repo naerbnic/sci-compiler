@@ -35,6 +35,18 @@ cc_library(
 )
 
 cc_library(
+    name = "obj_members",
+    srcs = ["obj_members.cpp"],
+    hdrs = ["obj_members.hpp"],
+    deps = [
+        ":common",
+        ":selector_table",
+        "//scic/codegen:code_generator",
+        "//util/strings:ref_str",
+    ],
+)
+
+cc_library(
     name = "selector_table",
     srcs = ["selector_table.cpp"],
     hdrs = ["selector_table.hpp"],
@@ -71,6 +83,7 @@ cc_library(
     deps = [
         ":common",
         ":late_bound",
+        ":obj_members",
         ":selector_table",
         "//scic/codegen:code_generator",
         "//scic/parsers/sci:ast",
@@ -186,6 +199,8 @@ cc_library(
         ":class_table",
         ":common",
         ":module_env",
+        ":object_table",
+        ":selector_table",
         "//scic/parsers/sci:ast",
         "//util/status:status_macros",
         "@abseil-cpp//absl/status",

@@ -10,6 +10,7 @@
 #include "scic/codegen/code_generator.hpp"
 #include "scic/sem/class_table.hpp"
 #include "scic/sem/common.hpp"
+#include "scic/sem/obj_members.hpp"
 #include "scic/sem/selector_table.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/sequence.hpp"
@@ -18,26 +19,6 @@ namespace sem {
 
 class Object {
  public:
-  class Property {
-   public:
-    virtual ~Property() = default;
-
-    virtual NameToken const& token_name() const = 0;
-    virtual util::RefStr const& name() const = 0;
-    virtual SelectorTable::Entry const* selector() const = 0;
-    virtual codegen::LiteralValue value() const = 0;
-  };
-
-  class Method {
-   public:
-    virtual ~Method() = default;
-
-    virtual NameToken const& token_name() const = 0;
-    virtual util::RefStr const& name() const = 0;
-    virtual SelectorTable::Entry const* selector() const = 0;
-    virtual codegen::PtrRef* ptr_ref() const = 0;
-  };
-
   virtual ~Object() = default;
 
   virtual ScriptNum script_num() const = 0;

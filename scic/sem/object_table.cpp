@@ -13,30 +13,37 @@
 #include "scic/codegen/code_generator.hpp"
 #include "scic/sem/class_table.hpp"
 #include "scic/sem/common.hpp"
+#include "scic/sem/obj_members.hpp"
 #include "scic/sem/selector_table.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/sequence.hpp"
 
 namespace sem {
 namespace {
-class PropertyImpl : public Object::Property {
+class PropertyImpl : public Property {
  public:
-  PropertyImpl(NameToken name, SelectorTable::Entry const* selector,
+  PropertyImpl(NameToken name, PropIndex prop_index,
+               SelectorTable::Entry const* selector,
                codegen::LiteralValue value)
-      : name_(std::move(name)), selector_(selector), value_(value) {}
+      : name_(std::move(name)),
+        prop_index_(prop_index),
+        selector_(selector),
+        value_(value) {}
 
   NameToken const& token_name() const override { return name_; }
   util::RefStr const& name() const override { return name_.value(); }
+  PropIndex index() const override { return prop_index_; }
   SelectorTable::Entry const* selector() const override { return selector_; }
   codegen::LiteralValue value() const override { return value_; }
 
  private:
   NameToken name_;
+  PropIndex prop_index_;
   SelectorTable::Entry const* selector_;
   codegen::LiteralValue value_;
 };
 
-class MethodImpl : public Object::Method {
+class MethodImpl : public Method {
  public:
   MethodImpl(NameToken name, SelectorTable::Entry const* selector)
       : name_(std::move(name)), selector_(selector) {}
@@ -44,12 +51,10 @@ class MethodImpl : public Object::Method {
   NameToken const& token_name() const override { return name_; }
   util::RefStr const& name() const override { return name_.value(); }
   SelectorTable::Entry const* selector() const override { return selector_; }
-  codegen::PtrRef* ptr_ref() const override { return &ptr_ref_; }
 
  private:
   NameToken name_;
   SelectorTable::Entry const* selector_;
-  mutable codegen::PtrRef ptr_ref_;
 };
 
 class ObjectImpl : public Object {
@@ -139,7 +144,8 @@ class ObjectTableBuilderImpl : public ObjectTableBuilder {
       if (!class_prop) {
         return absl::InvalidArgumentError("Property not found in superclass");
       }
-      prop_impls.emplace_back(prop.name, selector, prop.value);
+      prop_impls.emplace_back(prop.name, class_prop->index(), selector,
+                              prop.value);
     }
 
     std::vector<MethodImpl> method_impls;

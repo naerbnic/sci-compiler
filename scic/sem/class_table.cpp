@@ -17,6 +17,7 @@
 #include "scic/parsers/sci/ast.hpp"
 #include "scic/sem/common.hpp"
 #include "scic/sem/late_bound.hpp"
+#include "scic/sem/obj_members.hpp"
 #include "scic/sem/selector_table.hpp"
 #include "util/status/status_macros.hpp"
 #include "util/strings/ref_str.hpp"
@@ -38,7 +39,7 @@ struct PropertyDef {
   codegen::LiteralValue value;
 };
 
-class PropertyImpl : public Class::Property {
+class PropertyImpl : public Property {
  public:
   PropertyImpl(NameToken name, PropIndex prop_index,
                SelectorTable::Entry const* selector,
@@ -117,8 +118,8 @@ class PropertyList {
     return PropertyList(std::move(new_properties));
   }
 
-  util::Seq<Class::Property const&> properties() const {
-    return util::Seq<Class::Property const&>::Deref(properties_);
+  util::Seq<Property const&> properties() const {
+    return util::Seq<Property const&>::Deref(properties_);
   }
   std::size_t size() const { return properties_.size(); }
   PropertyImpl const* LookupByName(std::string_view name) const {
@@ -150,7 +151,7 @@ class PropertyList {
   std::map<PropIndex, PropertyImpl*, std::less<>> index_table_;
 };
 
-class MethodImpl : public Class::Method {
+class MethodImpl : public Method {
  public:
   MethodImpl(NameToken name, SelectorTable::Entry const* selector)
       : name_(std::move(name)), selector_(selector) {}
