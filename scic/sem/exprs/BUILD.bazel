@@ -4,6 +4,7 @@ package(
 
 cc_library(
     name = "expr_context",
+    srcs = ["expr_context.cpp"],
     hdrs = ["expr_context.hpp"],
     deps = [
         "//scic/codegen:code_generator",
