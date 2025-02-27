@@ -137,6 +137,10 @@ class ObjectTableBuilderImpl : public ObjectTableBuilder {
                                   prop.value);
     }
 
+    // Update the name for the object.
+    prop_list.UpdatePropertyDef(selector_->LookupByName(kSizeSelName),
+                                codegen_->AddTextNode(class_name.value()));
+
     std::vector<MethodImpl> method_impls;
     for (auto const& method : methods) {
       auto const* selector = selector_->LookupByName(method.value());
