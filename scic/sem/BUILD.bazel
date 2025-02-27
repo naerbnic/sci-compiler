@@ -123,6 +123,19 @@ cc_test(
 )
 
 cc_library(
+    name = "var_table",
+    srcs = ["var_table.cpp"],
+    hdrs = ["var_table.hpp"],
+    deps = [
+        ":common",
+        "//util/strings:ref_str",
+        "//util/types:sequence",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+    ],
+)
+
+cc_library(
     name = "object_table",
     srcs = ["object_table.cpp"],
     hdrs = ["object_table.hpp"],
@@ -130,6 +143,7 @@ cc_library(
         ":class_table",
         ":common",
         ":obj_members",
+        ":property_list",
         ":selector_table",
         "//scic/codegen:code_generator",
         "//util/strings:ref_str",
