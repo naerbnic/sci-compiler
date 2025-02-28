@@ -39,6 +39,10 @@ class GlobalTableBuilder {
 
   virtual ~GlobalTableBuilder() = default;
 
+  // Adds a variable declaration to this table.
+  //
+  // If the same variable has been defined before, with both the same name and
+  // index, then this is a no-op.
   virtual absl::Status DeclareVar(NameToken name, std::size_t global_index) = 0;
   virtual absl::StatusOr<std::unique_ptr<VarTable>> Build() = 0;
 };

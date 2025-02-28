@@ -17,9 +17,9 @@
 namespace sem {
 namespace {
 
-class GlobalImpl : public VarTable::Variable {
+class VariableImpl : public VarTable::Variable {
  public:
-  GlobalImpl(NameToken name, std::size_t global_index)
+  VariableImpl(NameToken name, std::size_t global_index)
       : name_(std::move(name)), var_index_(global_index) {}
 
   NameToken const& token_name() const override { return name_; }
@@ -36,9 +36,9 @@ class GlobalImpl : public VarTable::Variable {
 class GlobalTableImpl : public VarTable {
  public:
   GlobalTableImpl(
-      std::vector<std::unique_ptr<GlobalImpl>> entries,
-      std::map<std::size_t, GlobalImpl const*, std::less<>> index_table,
-      std::map<std::string_view, GlobalImpl const*, std::less<>> name_map)
+      std::vector<std::unique_ptr<VariableImpl>> entries,
+      std::map<std::size_t, VariableImpl const*, std::less<>> index_table,
+      std::map<std::string_view, VariableImpl const*, std::less<>> name_map)
       : entries_(std::move(entries)),
         index_table_(std::move(index_table)),
         name_map_(std::move(name_map)) {}
@@ -64,9 +64,9 @@ class GlobalTableImpl : public VarTable {
   }
 
  private:
-  std::vector<std::unique_ptr<GlobalImpl>> entries_;
-  std::map<std::size_t, GlobalImpl const*, std::less<>> index_table_;
-  std::map<std::string_view, GlobalImpl const*, std::less<>> name_map_;
+  std::vector<std::unique_ptr<VariableImpl>> entries_;
+  std::map<std::size_t, VariableImpl const*, std::less<>> index_table_;
+  std::map<std::string_view, VariableImpl const*, std::less<>> name_map_;
 };
 
 class GlobalTableBuilderImpl : public GlobalTableBuilder {
@@ -87,7 +87,7 @@ class GlobalTableBuilderImpl : public GlobalTableBuilder {
     if (found_index) {
       return absl::InvalidArgumentError("Global index already exists");
     }
-    auto entry = std::make_unique<GlobalImpl>(std::move(name), var_index);
+    auto entry = std::make_unique<VariableImpl>(std::move(name), var_index);
     index_table_.emplace(var_index, entry.get());
     name_map_.emplace(entry->name(), entry.get());
     entries_.emplace_back(std::move(entry));
@@ -100,10 +100,15 @@ class GlobalTableBuilderImpl : public GlobalTableBuilder {
   }
 
  private:
-  std::vector<std::unique_ptr<GlobalImpl>> entries_;
-  std::map<std::size_t, GlobalImpl const*, std::less<>> index_table_;
-  std::map<std::string_view, GlobalImpl const*, std::less<>> name_map_;
+  std::vector<std::unique_ptr<VariableImpl>> entries_;
+  std::map<std::size_t, VariableImpl const*, std::less<>> index_table_;
+  std::map<std::string_view, VariableImpl const*, std::less<>> name_map_;
 };
 
 }  // namespace
+
+std::unique_ptr<GlobalTableBuilder> GlobalTableBuilder::Create() {
+  return std::make_unique<GlobalTableBuilderImpl>();
+}
+
 }  // namespace sem
