@@ -17,6 +17,7 @@
 #include "scic/sem/proc_table.hpp"
 #include "scic/sem/public_table.hpp"
 #include "scic/sem/selector_table.hpp"
+#include "scic/sem/var_table.hpp"
 #include "util/types/choice.hpp"
 
 namespace sem {
@@ -26,20 +27,24 @@ class GlobalEnvironment {
   GlobalEnvironment(std::unique_ptr<SelectorTable> selector_table,
                     std::unique_ptr<ClassTable> class_table,
                     std::unique_ptr<ExternTable> extern_table,
-                    Items global_items)
+                    std::unique_ptr<VarTable> global_table, Items global_items)
       : selector_table_(std::move(selector_table)),
         class_table_(std::move(class_table)),
         extern_table_(std::move(extern_table)),
+        global_table_(std::move(global_table)),
         global_items_(global_items) {}
 
   SelectorTable const* selector_table() const { return selector_table_.get(); }
   ClassTable const* class_table() const { return class_table_.get(); }
   ExternTable const* extern_table() const { return extern_table_.get(); }
+  VarTable const* global_table() const { return global_table_.get(); }
+  Items global_items() const { return global_items_; }
 
  private:
   std::unique_ptr<SelectorTable> selector_table_;
   std::unique_ptr<ClassTable> class_table_;
   std::unique_ptr<ExternTable> extern_table_;
+  std::unique_ptr<VarTable> global_table_;
   Items global_items_;
 };
 
@@ -50,13 +55,14 @@ class ModuleEnvironment {
                     std::unique_ptr<ObjectTable> object_table,
                     std::unique_ptr<ProcTable> proc_table,
                     std::unique_ptr<PublicTable> public_table,
-                    Items module_items)
+                    std::unique_ptr<VarTable> local_table, Items module_items)
       : global_env_(std::move(global_env)),
         script_num_(script_num),
         codegen_(std::move(codegen)),
         object_table_(std::move(object_table)),
         proc_table_(std::move(proc_table)),
         public_table_(std::move(public_table)),
+        local_table_(std::move(local_table)),
         module_items_(module_items) {}
 
   GlobalEnvironment const* global_env() const { return global_env_; }
@@ -65,6 +71,7 @@ class ModuleEnvironment {
   ObjectTable const* object_table() const { return object_table_.get(); }
   ProcTable const* proc_table() const { return proc_table_.get(); }
   PublicTable const* public_table() const { return public_table_.get(); }
+  VarTable const* local_table() const { return local_table_.get(); }
   Items module_items() const { return module_items_; }
 
  private:
@@ -74,6 +81,7 @@ class ModuleEnvironment {
   std::unique_ptr<ObjectTable> object_table_;
   std::unique_ptr<ProcTable> proc_table_;
   std::unique_ptr<PublicTable> public_table_;
+  std::unique_ptr<VarTable> local_table_;
   Items module_items_;
 };
 

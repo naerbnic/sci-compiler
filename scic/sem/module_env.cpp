@@ -1,5 +1,6 @@
 #include "scic/sem/module_env.hpp"
 
+#include <cstddef>
 #include <map>
 #include <memory>
 #include <optional>
@@ -19,6 +20,7 @@
 #include "scic/sem/proc_table.hpp"
 #include "scic/sem/public_table.hpp"
 #include "scic/sem/selector_table.hpp"
+#include "scic/sem/var_table.hpp"
 #include "util/status/status_macros.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/sequence.hpp"
@@ -220,6 +222,24 @@ absl::StatusOr<std::unique_ptr<ExternTable>> BuildExternTable(
   return builder->Build();
 }
 
+absl::StatusOr<std::unique_ptr<VarTable>> BuildGlobalTable(
+    absl::Span<ast::Item const> items) {
+  auto builder = VarTableBuilder::Create();
+
+  for (auto const* var_decl : GetElemsOfType<ast::GlobalDeclDef>(items)) {
+    for (auto const& entry : var_decl->entries()) {
+      auto name = entry.name.visit(
+          [&](ast::SingleVarDef const& single_var) {
+            return single_var.name();
+          },
+          [&](ast::ArrayVarDef array_var) { return array_var.name(); });
+      RETURN_IF_ERROR(builder->DeclareVar(name, entry.index.value(), 1));
+    }
+  }
+
+  return builder->Build();
+}
+
 absl::StatusOr<std::unique_ptr<ObjectTable>> BuildObjectTable(
     codegen::CodeGenerator* codegen, SelectorTable const* selector,
     ClassTable const* class_table, ScriptNum script_num,
@@ -302,6 +322,77 @@ absl::StatusOr<std::unique_ptr<PublicTable>> BuildPublicTable(
   return builder->Build();
 }
 
+absl::StatusOr<std::vector<codegen::LiteralValue>>
+AstConstValuesToLiteralValues(codegen::CodeGenerator* codegen,
+                              util::Seq<ast::ConstValue const&> values,
+                              std::size_t expected_length) {
+  std::vector<codegen::LiteralValue> result;
+  if (values.size() == 1) {
+    ASSIGN_OR_RETURN(auto literal_value,
+                     AstConstValueToLiteralValue(codegen, values[0]));
+    for (int i = 0; i < expected_length; ++i) {
+      result.push_back(literal_value);
+    }
+    return result;
+  }
+
+  if (values.size() != expected_length) {
+    return absl::InvalidArgumentError(
+        "Array length does not match number of initial values");
+  }
+
+  for (auto const& value : values) {
+    ASSIGN_OR_RETURN(auto literal_value,
+                     AstConstValueToLiteralValue(codegen, value));
+    result.push_back(literal_value);
+  }
+  
+  return result;
+}
+
+absl::StatusOr<std::unique_ptr<VarTable>> BuildLocalTable(
+    CodeGenerator* codegen, absl::Span<ast::Item const> items) {
+  auto builder = VarTableBuilder::Create();
+
+  for (auto const* var_decl : GetElemsOfType<ast::ModuleVarsDef>(items)) {
+    for (auto const& entry : var_decl->entries()) {
+      using VisitResult = absl::StatusOr<std::pair<NameToken, std::size_t>>;
+      ASSIGN_OR_RETURN(
+          auto result,
+          entry.name.visit(
+              [&](ast::SingleVarDef const& single_var) -> VisitResult {
+                return std::make_pair(single_var.name(), 1);
+              },
+              [&](ast::ArrayVarDef array_var) -> VisitResult {
+                return std::make_pair(array_var.name(),
+                                      array_var.size().value());
+              }));
+      auto [name, length] = std::move(result);
+      if (!entry.initial_value) {
+        return absl::FailedPreconditionError("No initial value");
+      }
+      ASSIGN_OR_RETURN(
+          auto initial_value,
+          AstConstValuesToLiteralValues(
+              codegen,
+              entry.initial_value->visit(
+                  [&](ast::ArrayInitialValue const& array)
+                      -> util::Seq<ast::ConstValue const&> {
+                    return array.value();
+                  },
+                  [&](ast::ConstValue const& value)
+                      -> util::Seq<ast::ConstValue const&> {
+                    return util::Seq<ast::ConstValue const&>::Singleton(value);
+                  }),
+              length));
+      RETURN_IF_ERROR(builder->DefineVar(name, entry.index.value(),
+                                         std::move(initial_value)));
+    }
+  }
+
+  return builder->Build();
+}
+
 absl::StatusOr<std::unique_ptr<GlobalEnvironment>> BuildGlobalEnvironment(
     Items global_items, util::SeqView<ModuleLocal const> modules) {
   ASSIGN_OR_RETURN(auto selector_table,
@@ -311,9 +402,11 @@ absl::StatusOr<std::unique_ptr<GlobalEnvironment>> BuildGlobalEnvironment(
 
   ASSIGN_OR_RETURN(auto extern_table, BuildExternTable(global_items));
 
+  ASSIGN_OR_RETURN(auto global_table, BuildGlobalTable(global_items));
+
   return std::make_unique<GlobalEnvironment>(
       std::move(selector_table), std::move(class_table),
-      std::move(extern_table), global_items);
+      std::move(extern_table), std::move(global_table), global_items);
 }
 
 absl::StatusOr<std::unique_ptr<ModuleEnvironment>> BuildModuleEnvironment(
@@ -331,9 +424,13 @@ absl::StatusOr<std::unique_ptr<ModuleEnvironment>> BuildModuleEnvironment(
       auto public_table,
       BuildPublicTable(proc_table.get(), object_table.get(), module_items));
 
+  ASSIGN_OR_RETURN(auto locals_table,
+                   BuildLocalTable(codegen.get(), module_items));
+
   return std::make_unique<ModuleEnvironment>(
       global_env, script_num, std::move(codegen), std::move(object_table),
-      std::move(proc_table), std::move(public_table), module_items);
+      std::move(proc_table), std::move(public_table), std::move(locals_table),
+      module_items);
 }
 
 }  // namespace

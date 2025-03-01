@@ -11,9 +11,9 @@ namespace sem {
 namespace {
 
 TEST(VarTableTest, SingleVariableDeclaration) {
-  auto builder = GlobalTableBuilder::Create();
+  auto builder = VarTableBuilder::Create();
   // Declare a single variable.
-  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("var1"), 0));
+  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("var1"), 0, 1));
 
   // Build the table.
   ASSERT_OK_AND_ASSIGN(auto table, builder->Build());
@@ -30,11 +30,11 @@ TEST(VarTableTest, SingleVariableDeclaration) {
 }
 
 TEST(VarTableTest, DuplicateDeclarationNoOp) {
-  auto builder = GlobalTableBuilder::Create();
+  auto builder = VarTableBuilder::Create();
   // Declare the same variable twice (same name and index).
-  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("dupVar"), 42));
+  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("dupVar"), 42, 1));
   // Duplicate invocation should be a no-op.
-  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("dupVar"), 42));
+  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("dupVar"), 42, 1));
 
   ASSERT_OK_AND_ASSIGN(auto table, builder->Build());
   auto var_ptr = table->LookupByName("dupVar");
@@ -43,27 +43,27 @@ TEST(VarTableTest, DuplicateDeclarationNoOp) {
 }
 
 TEST(VarTableTest, ConflictingNameDeclarationError) {
-  auto builder = GlobalTableBuilder::Create();
+  auto builder = VarTableBuilder::Create();
   // Declare a variable.
-  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("conflict"), 1));
+  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("conflict"), 1, 1));
   // Re-declaring the same name with a different index should error.
-  auto status = builder->DeclareVar(CreateTestNameToken("conflict"), 2);
+  auto status = builder->DeclareVar(CreateTestNameToken("conflict"), 2, 1);
   EXPECT_FALSE(status.ok());
 }
 
 TEST(VarTableTest, ConflictingIndexDeclarationError) {
-  auto builder = GlobalTableBuilder::Create();
+  auto builder = VarTableBuilder::Create();
   // Declare a variable.
-  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("varA"), 100));
+  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("varA"), 100, 1));
   // Declaring a different variable with the same index should error.
-  auto status = builder->DeclareVar(CreateTestNameToken("varB"), 100);
+  auto status = builder->DeclareVar(CreateTestNameToken("varB"), 100, 1);
   EXPECT_FALSE(status.ok());
 }
 
 TEST(VarTableTest, LookupByIndexAndName) {
-  auto builder = GlobalTableBuilder::Create();
-  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("alpha"), 10));
-  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("beta"), 20));
+  auto builder = VarTableBuilder::Create();
+  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("alpha"), 10, 1));
+  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("beta"), 20, 1));
 
   ASSERT_OK_AND_ASSIGN(auto table, builder->Build());
 

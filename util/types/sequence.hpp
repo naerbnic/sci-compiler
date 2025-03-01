@@ -94,6 +94,21 @@ class IndexableSetViewImpl : public SeqImpl<T> {
 };
 
 template <class T>
+class SingletonSeqViewImpl : public SeqImpl<T> {
+ public:
+  static SeqImpl<T> const* Get() {
+    static SingletonSeqViewImpl const* instance = new SingletonSeqViewImpl();
+    return instance;
+  }
+
+  std::size_t size(void* data) const override { return 1; }
+
+  T get_at(void* data, std::size_t index) const override {
+    return *static_cast<T*>(data);
+  }
+};
+
+template <class T>
 using identity_func_t = decltype([](T c) -> decltype(auto) { return c; });
 
 }  // namespace internal
@@ -208,6 +223,11 @@ class Seq {
   static Seq Deref(C& container) {
     return Seq::CreateTransform(
         container, [](auto& value) -> decltype(auto) { return *value; });
+  }
+
+  static Seq Singleton(T& value) {
+    return Seq(&const_cast<T&>(value),
+               internal::SingletonSeqViewImpl<T>::Get());
   }
 
   Seq() : data_(nullptr), impl_(nullptr){};

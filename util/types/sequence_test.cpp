@@ -54,5 +54,13 @@ TEST(SequenceTest, SimpleTransform) {
   EXPECT_THAT(seq, ElementsAre(2, 4, 6));
 }
 
+TEST(SequenceTest, Singleton) {
+  int x = 42;
+  auto seq = Seq<int>::Singleton(x);
+  EXPECT_EQ(seq.size(), 1);
+  EXPECT_EQ(seq[0], 42);
+  EXPECT_THAT(seq, ElementsAre(42));
+}
+
 }  // namespace
 }  // namespace util
