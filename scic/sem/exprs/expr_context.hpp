@@ -76,6 +76,7 @@ class ExprEnvironment {
       : public util::ChoiceBase<Proc, LocalProc, ExternProc, KernelProc> {
     using ChoiceBase::ChoiceBase;
   };
+  
   struct SuperInfo {
     ClassSpecies species;
     NameToken super_name;
