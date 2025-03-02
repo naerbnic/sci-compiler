@@ -97,6 +97,9 @@ using PropIndex = util::StrongValue<PropIndexTag>;
 struct GlobalIndexTag : SizeTag {};
 using GlobalIndex = util::StrongValue<GlobalIndexTag>;
 
+struct ModuleVarIndexTag : SizeTag {};
+using ModuleVarIndex = util::StrongValue<ModuleVarIndexTag>;
+
 // Reliably sets the value to a machine word, signed or unsigned.
 inline absl::StatusOr<std::uint16_t> ConvertToMachineWord(int value) {
   auto narrowed = static_cast<std::int16_t>(value);

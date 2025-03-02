@@ -22,7 +22,7 @@ namespace {
 class VariableImpl : public VarTable::Variable {
  public:
   // For a fully defined variable, the initial value must be provided.
-  VariableImpl(NameToken name, std::size_t global_index,
+  VariableImpl(NameToken name, ModuleVarIndex global_index,
                std::vector<codegen::LiteralValue> initial_value)
       : name_(std::move(name)),
         var_index_(global_index),
@@ -30,14 +30,14 @@ class VariableImpl : public VarTable::Variable {
 
   NameToken const& token_name() const override { return name_; }
   util::RefStr const& name() const override { return name_.value(); }
-  std::size_t index() const override { return var_index_; }
+  ModuleVarIndex index() const override { return var_index_; }
   util::Seq<codegen::LiteralValue const&> initial_value() const override {
     return initial_value_;
   }
 
  private:
   NameToken name_;
-  std::size_t var_index_;
+  ModuleVarIndex var_index_;
   std::vector<codegen::LiteralValue> initial_value_;
 };
 
@@ -45,7 +45,7 @@ class VarTableImpl : public VarTable {
  public:
   VarTableImpl(
       std::vector<std::unique_ptr<VariableImpl>> entries,
-      std::map<std::size_t, VariableImpl const*, std::less<>> index_table,
+      std::map<ModuleVarIndex, VariableImpl const*, std::less<>> index_table,
       std::map<std::string_view, VariableImpl const*, std::less<>> name_map)
       : entries_(std::move(entries)),
         index_table_(std::move(index_table)),
@@ -60,21 +60,21 @@ class VarTableImpl : public VarTable {
     return it != name_map_.end() ? it->second : nullptr;
   }
 
-  VarTable::Variable const* LookupByIndex(std::size_t index) const override {
+  VarTable::Variable const* LookupByIndex(ModuleVarIndex index) const override {
     auto it = index_table_.find(index);
     return it != index_table_.end() ? it->second : nullptr;
   }
 
  private:
   std::vector<std::unique_ptr<VariableImpl>> entries_;
-  std::map<std::size_t, VariableImpl const*, std::less<>> index_table_;
+  std::map<ModuleVarIndex, VariableImpl const*, std::less<>> index_table_;
   std::map<std::string_view, VariableImpl const*, std::less<>> name_map_;
 };
 
-class GlobalTableBuilderImpl : public VarTableBuilder {
+class VarTableBuilderImpl : public VarTableBuilder {
  public:
   absl::Status DefineVar(
-      NameToken name, std::size_t var_index,
+      NameToken name, ModuleVarIndex var_index,
       std::vector<codegen::LiteralValue> initial_value) override {
     if (index_table_.find(var_index) != index_table_.end()) {
       return absl::InvalidArgumentError("Variable already defined");
@@ -96,7 +96,7 @@ class GlobalTableBuilderImpl : public VarTableBuilder {
 
  private:
   std::vector<std::unique_ptr<VariableImpl>> entries_;
-  std::map<std::size_t, VariableImpl const*, std::less<>> index_table_;
+  std::map<ModuleVarIndex, VariableImpl const*, std::less<>> index_table_;
   std::map<std::string_view, VariableImpl const*, std::less<>> name_map_;
 };
 
@@ -104,17 +104,17 @@ class GlobalTableBuilderImpl : public VarTableBuilder {
 
 class DeclVariableImpl : public VarDeclTable::Variable {
  public:
-  DeclVariableImpl(NameToken name, std::size_t global_index, std::size_t length)
+  DeclVariableImpl(NameToken name, GlobalIndex global_index, std::size_t length)
       : name_(std::move(name)), var_index_(global_index), length_(length) {}
 
   NameToken const& token_name() const override { return name_; }
   util::RefStr const& name() const override { return name_.value(); }
-  std::size_t index() const override { return var_index_; }
+  GlobalIndex index() const override { return var_index_; }
   std::size_t length() const override { return length_; }
 
  private:
   NameToken name_;
-  std::size_t var_index_;
+  GlobalIndex var_index_;
   std::size_t length_;
 };
 
@@ -122,7 +122,7 @@ class GlobalDeclTableImpl : public VarDeclTable {
  public:
   GlobalDeclTableImpl(
       std::vector<std::unique_ptr<DeclVariableImpl>> entries,
-      std::map<std::size_t, DeclVariableImpl const*, std::less<>> index_table,
+      std::map<GlobalIndex, DeclVariableImpl const*, std::less<>> index_table,
       std::map<std::string_view, DeclVariableImpl const*, std::less<>> name_map)
       : entries_(std::move(entries)),
         index_table_(std::move(index_table)),
@@ -139,20 +139,20 @@ class GlobalDeclTableImpl : public VarDeclTable {
   }
 
   VarDeclTable::Variable const* LookupByIndex(
-      std::size_t index) const override {
+      GlobalIndex index) const override {
     auto it = index_table_.find(index);
     return it != index_table_.end() ? it->second : nullptr;
   }
 
  private:
   std::vector<std::unique_ptr<DeclVariableImpl>> entries_;
-  std::map<std::size_t, DeclVariableImpl const*, std::less<>> index_table_;
+  std::map<GlobalIndex, DeclVariableImpl const*, std::less<>> index_table_;
   std::map<std::string_view, DeclVariableImpl const*, std::less<>> name_table_;
 };
 
 class VarDeclTableBuilderImpl : public VarDeclTableBuilder {
  public:
-  absl::Status DeclareVar(NameToken name, std::size_t var_index,
+  absl::Status DeclareVar(NameToken name, GlobalIndex var_index,
                           std::size_t length) override {
     auto name_it = name_table_.find(name.value());
     auto index_it = index_table_.find(var_index);
@@ -182,7 +182,7 @@ class VarDeclTableBuilderImpl : public VarDeclTableBuilder {
 
  private:
   std::vector<std::unique_ptr<DeclVariableImpl>> entries_;
-  std::map<std::size_t, DeclVariableImpl const*, std::less<>> index_table_;
+  std::map<GlobalIndex, DeclVariableImpl const*, std::less<>> index_table_;
   std::map<std::string_view, DeclVariableImpl const*, std::less<>> name_table_;
 };
 
@@ -190,7 +190,7 @@ class VarDeclTableBuilderImpl : public VarDeclTableBuilder {
 
 // Expose builders.
 std::unique_ptr<VarTableBuilder> VarTableBuilder::Create() {
-  return std::make_unique<GlobalTableBuilderImpl>();
+  return std::make_unique<VarTableBuilderImpl>();
 }
 
 std::unique_ptr<VarDeclTableBuilder> VarDeclTableBuilder::Create() {

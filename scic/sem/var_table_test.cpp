@@ -7,6 +7,7 @@
 #include "absl/status/status.h"
 #include "gtest/gtest.h"
 #include "scic/codegen/code_generator.hpp"
+#include "scic/sem/common.hpp"
 #include "scic/sem/test_helpers.hpp"
 #include "util/status/status_matchers.hpp"
 
@@ -26,7 +27,8 @@ namespace {
 TEST(VarTableTest, SingleVariableFullDefinition) {
   auto builder = VarTableBuilder::Create();
   // Then define the variable with an initial value.
-  ASSERT_OK(builder->DefineVar(CreateTestNameToken("var1"), 0,
+  ASSERT_OK(builder->DefineVar(CreateTestNameToken("var1"),
+                               ModuleVarIndex::Create(0),
                                CreateTestInitialValue(1, 123)));
 
   // Build the table.
@@ -35,32 +37,35 @@ TEST(VarTableTest, SingleVariableFullDefinition) {
   // Lookup by name.
   auto var_ptr = table->LookupByName("var1");
   ASSERT_NE(var_ptr, nullptr);
-  EXPECT_EQ(var_ptr->index(), 0);
+  EXPECT_EQ(var_ptr->index().value(), 0);
   EXPECT_EQ(var_ptr->initial_value().size(), 1u);
 
   // Lookup by index.
-  var_ptr = table->LookupByIndex(0);
+  var_ptr = table->LookupByIndex(ModuleVarIndex::Create(0));
   ASSERT_NE(var_ptr, nullptr);
   EXPECT_EQ(std::string_view(var_ptr->name()), "var1");
 }
 
 TEST(VarTableTest, DuplicateDeclarationNoOpFullDefinition) {
   auto builder = VarTableBuilder::Create();
-  ASSERT_OK(builder->DefineVar(CreateTestNameToken("dupVar"), 42,
+  ASSERT_OK(builder->DefineVar(CreateTestNameToken("dupVar"),
+                               ModuleVarIndex::Create(42),
                                CreateTestInitialValue(1, 123)));
 
   ASSERT_OK_AND_ASSIGN(auto table, builder->Build());
   auto var_ptr = table->LookupByName("dupVar");
   ASSERT_NE(var_ptr, nullptr);
-  EXPECT_EQ(var_ptr->index(), 42);
+  EXPECT_EQ(var_ptr->index().value(), 42);
 }
 
 TEST(VarTableTest, LookupByIndexAndNameFullDefinition) {
   auto builder = VarTableBuilder::Create();
   // Define the variables.
-  ASSERT_OK(builder->DefineVar(CreateTestNameToken("alpha"), 10,
+  ASSERT_OK(builder->DefineVar(CreateTestNameToken("alpha"),
+                               ModuleVarIndex::Create(10),
                                CreateTestInitialValue(1, 123)));
-  ASSERT_OK(builder->DefineVar(CreateTestNameToken("beta"), 20,
+  ASSERT_OK(builder->DefineVar(CreateTestNameToken("beta"),
+                               ModuleVarIndex::Create(20),
                                CreateTestInitialValue(1, 456)));
 
   ASSERT_OK_AND_ASSIGN(auto table, builder->Build());
@@ -70,12 +75,12 @@ TEST(VarTableTest, LookupByIndexAndNameFullDefinition) {
   auto varBeta = table->LookupByName("beta");
   ASSERT_NE(varAlpha, nullptr);
   ASSERT_NE(varBeta, nullptr);
-  EXPECT_EQ(varAlpha->index(), 10);
-  EXPECT_EQ(varBeta->index(), 20);
+  EXPECT_EQ(varAlpha->index().value(), 10);
+  EXPECT_EQ(varBeta->index().value(), 20);
 
   // Lookup by index.
-  varAlpha = table->LookupByIndex(10);
-  varBeta = table->LookupByIndex(20);
+  varAlpha = table->LookupByIndex(ModuleVarIndex::Create(10));
+  varBeta = table->LookupByIndex(ModuleVarIndex::Create(20));
   ASSERT_NE(varAlpha, nullptr);
   ASSERT_NE(varBeta, nullptr);
   EXPECT_EQ(std::string_view(varAlpha->name()), "alpha");
@@ -83,12 +88,13 @@ TEST(VarTableTest, LookupByIndexAndNameFullDefinition) {
 }
 
 //
-// VarDeclTable (variable declarations only) tests
+// VarDeclTable tests
 //
 TEST(VarDeclTableTest, SingleVariableDeclaration) {
   auto builder = VarDeclTableBuilder::Create();
   // Declare a single variable.
-  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("var_decl1"), 0, 1));
+  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("var_decl1"),
+                                GlobalIndex::Create(0), 1));
 
   // Build the declaration table.
   ASSERT_OK_AND_ASSIGN(auto table, builder->Build());
@@ -96,10 +102,10 @@ TEST(VarDeclTableTest, SingleVariableDeclaration) {
   // Lookup by name.
   auto var_ptr = table->LookupByName("var_decl1");
   ASSERT_NE(var_ptr, nullptr);
-  EXPECT_EQ(var_ptr->index(), 0);
+  EXPECT_EQ(var_ptr->index().value(), 0);
 
   // Lookup by index.
-  var_ptr = table->LookupByIndex(0);
+  var_ptr = table->LookupByIndex(GlobalIndex::Create(0));
   ASSERT_NE(var_ptr, nullptr);
   EXPECT_EQ(std::string_view(var_ptr->name()), "var_decl1");
 }
@@ -107,37 +113,45 @@ TEST(VarDeclTableTest, SingleVariableDeclaration) {
 TEST(VarDeclTableTest, DuplicateDeclarationNoOpDeclOnly) {
   auto builder = VarDeclTableBuilder::Create();
   // Declare the same variable twice (same name and index) is a no-op.
-  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("dupDecl"), 42, 1));
-  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("dupDecl"), 42, 1));
+  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("dupDecl"),
+                                GlobalIndex::Create(42), 1));
+  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("dupDecl"),
+                                GlobalIndex::Create(42), 1));
 
   ASSERT_OK_AND_ASSIGN(auto table, builder->Build());
   auto var_ptr = table->LookupByName("dupDecl");
   ASSERT_NE(var_ptr, nullptr);
-  EXPECT_EQ(var_ptr->index(), 42);
+  EXPECT_EQ(var_ptr->index().value(), 42);
 }
 
 TEST(VarDeclTableTest, ConflictingNameDeclarationErrorDeclOnly) {
   auto builder = VarDeclTableBuilder::Create();
   // Declare a variable.
-  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("conflict_decl"), 1, 1));
+  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("conflict_decl"),
+                                GlobalIndex::Create(1), 1));
   // Re-declaring the same name with a different index should error.
-  auto status = builder->DeclareVar(CreateTestNameToken("conflict_decl"), 2, 1);
+  auto status = builder->DeclareVar(CreateTestNameToken("conflict_decl"),
+                                    GlobalIndex::Create(2), 1);
   EXPECT_FALSE(status.ok());
 }
 
 TEST(VarDeclTableTest, ConflictingIndexDeclarationErrorDeclOnly) {
   auto builder = VarDeclTableBuilder::Create();
   // Declare a variable.
-  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("varA_decl"), 100, 1));
+  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("varA_decl"),
+                                GlobalIndex::Create(100), 1));
   // Declaring a different variable with the same index should error.
-  auto status = builder->DeclareVar(CreateTestNameToken("varB_decl"), 100, 1);
+  auto status = builder->DeclareVar(CreateTestNameToken("varB_decl"),
+                                    GlobalIndex::Create(100), 1);
   EXPECT_FALSE(status.ok());
 }
 
 TEST(VarDeclTableTest, LookupByIndexAndNameDeclOnly) {
   auto builder = VarDeclTableBuilder::Create();
-  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("alpha_decl"), 10, 1));
-  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("beta_decl"), 20, 1));
+  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("alpha_decl"),
+                                GlobalIndex::Create(10), 1));
+  ASSERT_OK(builder->DeclareVar(CreateTestNameToken("beta_decl"),
+                                GlobalIndex::Create(20), 1));
 
   ASSERT_OK_AND_ASSIGN(auto table, builder->Build());
 
@@ -146,12 +160,12 @@ TEST(VarDeclTableTest, LookupByIndexAndNameDeclOnly) {
   auto varBeta = table->LookupByName("beta_decl");
   ASSERT_NE(varAlpha, nullptr);
   ASSERT_NE(varBeta, nullptr);
-  EXPECT_EQ(varAlpha->index(), 10);
-  EXPECT_EQ(varBeta->index(), 20);
+  EXPECT_EQ(varAlpha->index().value(), 10);
+  EXPECT_EQ(varBeta->index().value(), 20);
 
   // Lookup by index.
-  varAlpha = table->LookupByIndex(10);
-  varBeta = table->LookupByIndex(20);
+  varAlpha = table->LookupByIndex(GlobalIndex::Create(10));
+  varBeta = table->LookupByIndex(GlobalIndex::Create(20));
   ASSERT_NE(varAlpha, nullptr);
   ASSERT_NE(varBeta, nullptr);
   EXPECT_EQ(std::string_view(varAlpha->name()), "alpha_decl");

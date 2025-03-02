@@ -233,7 +233,8 @@ absl::StatusOr<std::unique_ptr<VarDeclTable>> BuildGlobalTable(
             return single_var.name();
           },
           [&](ast::ArrayVarDef array_var) { return array_var.name(); });
-      RETURN_IF_ERROR(builder->DeclareVar(name, entry.index.value(), 1));
+      RETURN_IF_ERROR(builder->DeclareVar(
+          name, GlobalIndex::Create(entry.index.value()), 1));
     }
   }
 
@@ -385,8 +386,9 @@ absl::StatusOr<std::unique_ptr<VarTable>> BuildLocalTable(
                     return util::Seq<ast::ConstValue const&>::Singleton(value);
                   }),
               length));
-      RETURN_IF_ERROR(builder->DefineVar(name, entry.index.value(),
-                                         std::move(initial_value)));
+      RETURN_IF_ERROR(
+          builder->DefineVar(name, ModuleVarIndex::Create(entry.index.value()),
+                             std::move(initial_value)));
     }
   }
 
