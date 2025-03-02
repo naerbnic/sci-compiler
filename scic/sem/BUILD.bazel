@@ -140,6 +140,7 @@ cc_test(
     name = "var_table_test",
     srcs = ["var_table_test.cpp"],
     deps = [
+        ":common",
         ":test_helpers",
         ":var_table",
         "//scic/codegen:code_generator",

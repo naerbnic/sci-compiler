@@ -1,7 +1,6 @@
 #include "scic/sem/exprs/expr_builder.hpp"
 
 #include <cstddef>
-#include <functional>
 #include <map>
 #include <memory>
 #include <optional>
@@ -16,7 +15,6 @@
 #include "absl/types/span.h"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/parsers/sci/ast.hpp"
-#include "scic/sem/class_table.hpp"
 #include "scic/sem/common.hpp"
 #include "scic/sem/exprs/expr_context.hpp"
 #include "scic/sem/selector_table.hpp"
@@ -52,18 +50,18 @@ struct VarTypeAndOffset {
   std::size_t offset;
 };
 
-VarTypeAndOffset GetVarTypeAndOffset(ExprContext::VarSym const& var_sym) {
+VarTypeAndOffset GetVarTypeAndOffset(ExprEnvironment::VarSym const& var_sym) {
   return var_sym.visit(
-      [&](ExprContext::GlobalSym const& global) -> VarTypeAndOffset {
+      [&](ExprEnvironment::GlobalSym const& global) -> VarTypeAndOffset {
         return {VarType::GLOBAL, global.global_offset};
       },
-      [&](ExprContext::TempSym const& temp) -> VarTypeAndOffset {
+      [&](ExprEnvironment::TempSym const& temp) -> VarTypeAndOffset {
         return {VarType::TEMP, temp.temp_offset};
       },
-      [&](ExprContext::ParamSym const& param) -> VarTypeAndOffset {
+      [&](ExprEnvironment::ParamSym const& param) -> VarTypeAndOffset {
         return {VarType::PARAM, param.param_offset};
       },
-      [&](ExprContext::LocalSym const& local) -> VarTypeAndOffset {
+      [&](ExprEnvironment::LocalSym const& local) -> VarTypeAndOffset {
         return {VarType::LOCAL, local.local_offset};
       });
 }
@@ -72,25 +70,20 @@ absl::Status BuildAddrOfExpr(ExprContext const* ctx,
                              ast::AddrOfExpr const& addr_of) {
   auto const& [var_name, index] = GetVarNameAndIndex(addr_of.expr());
 
-  auto const* sym = ctx->Lookup(var_name.value());
-  if (!sym) {
-    // We really should be using a type that can
-    // take text ranges.
-    return absl::NotFoundError(
-        absl::StrFormat("Variable '%s' not found.", var_name.value()));
-  }
+  ASSIGN_OR_RETURN(auto sym, ctx->LookupSym(var_name.value()));
 
-  ASSIGN_OR_RETURN(auto type_val, sym->visit(
-                                      [&](ExprContext::VarSym const& var_sym)
-                                          -> absl::StatusOr<VarTypeAndOffset> {
-                                        return GetVarTypeAndOffset(var_sym);
-                                      },
-                                      [&](ExprContext::PropSym const& proc)
-                                          -> absl::StatusOr<VarTypeAndOffset> {
-                                        return absl::FailedPreconditionError(
-                                            "Properties cannot be used in an "
-                                            "AddrOf expression.");
-                                      }));
+  ASSIGN_OR_RETURN(auto type_val,
+                   sym.visit(
+                       [&](ExprEnvironment::VarSym const& var_sym)
+                           -> absl::StatusOr<VarTypeAndOffset> {
+                         return GetVarTypeAndOffset(var_sym);
+                       },
+                       [&](ExprEnvironment::PropSym const& proc)
+                           -> absl::StatusOr<VarTypeAndOffset> {
+                         return absl::FailedPreconditionError(
+                             "Properties cannot be used in an "
+                             "AddrOf expression.");
+                       }));
 
   if (index) {
     RETURN_IF_ERROR(ctx->BuildExpr(*index));
@@ -103,13 +96,12 @@ absl::Status BuildAddrOfExpr(ExprContext const* ctx,
 
 absl::Status BuildSelectLitExpr(ExprContext const* ctx,
                                 ast::SelectLitExpr const& select_lit) {
-  auto const* selector =
-      ctx->selector_table()->LookupByName(select_lit.selector().value());
+  auto selector = ctx->LookupSelector(select_lit.selector().value());
   if (!selector) {
     return absl::NotFoundError(absl::StrFormat("Selector '%s' not found.",
                                                select_lit.selector().value()));
   }
-  ctx->func_builder()->AddLoadImmediate(int(selector->selector_num().value()));
+  ctx->func_builder()->AddLoadImmediate(int(selector->value()));
   return absl::OkStatus();
 }
 
@@ -140,14 +132,9 @@ absl::Status BuildVarStoreExpr(ExprContext const* ctx,
   // We're going to store the accumulator. Push it onto the stack.
   ctx->func_builder()->AddPushOp();
 
-  auto const* sym = ctx->Lookup(var_name.value());
-  if (!sym) {
-    // We really should be using a type that can take text ranges.
-    return absl::NotFoundError(
-        absl::StrFormat("Variable '%s' not found.", var_name.value()));
-  }
-  return sym->visit(
-      [&](ExprContext::VarSym const& var_sym) -> absl::Status {
+  ASSIGN_OR_RETURN(auto sym, ctx->LookupSym(var_name.value()));
+  return sym.visit(
+      [&](ExprEnvironment::VarSym const& var_sym) -> absl::Status {
         auto const& [var_type, var_offset] = GetVarTypeAndOffset(var_sym);
         if (index) {
           RETURN_IF_ERROR(ctx->BuildExpr(*index));
@@ -159,7 +146,7 @@ absl::Status BuildVarStoreExpr(ExprContext const* ctx,
                                           std::string(var_name->view()));
         return absl::OkStatus();
       },
-      [&](ExprContext::PropSym const& proc) -> absl::Status {
+      [&](ExprEnvironment::PropSym const& proc) -> absl::Status {
         if (index) {
           return absl::FailedPreconditionError("Properties cannot be indexed.");
         }
@@ -174,15 +161,9 @@ absl::Status BuildVarLoadExpr(ExprContext const* ctx,
                               FunctionBuilder::ValueOp val_op,
                               NameToken const& var_name,
                               absl::Nullable<ast::Expr const*> index) {
-  auto const* sym = ctx->Lookup(var_name.value());
-  if (!sym) {
-    // We really should be using a type that can take text ranges.
-    return absl::NotFoundError(
-        absl::StrFormat("Variable '%s' not found.", var_name.value()));
-  }
-
-  return sym->visit(
-      [&](ExprContext::VarSym const& var_sym) -> absl::Status {
+  ASSIGN_OR_RETURN(auto sym, ctx->LookupSym(var_name.value()));
+  return sym.visit(
+      [&](ExprEnvironment::VarSym const& var_sym) -> absl::Status {
         auto const& [var_type, var_offset] = GetVarTypeAndOffset(var_sym);
         if (index) {
           RETURN_IF_ERROR(ctx->BuildExpr(*index));
@@ -193,7 +174,7 @@ absl::Status BuildVarLoadExpr(ExprContext const* ctx,
                                           std::string(var_name->view()));
         return absl::OkStatus();
       },
-      [&](ExprContext::PropSym const& proc) -> absl::Status {
+      [&](ExprEnvironment::PropSym const& proc) -> absl::Status {
         if (index) {
           return absl::FailedPreconditionError("Properties cannot be indexed.");
         }
@@ -243,19 +224,16 @@ absl::StatusOr<std::size_t> BuildCallArgs(ExprContext const* ctx,
     auto const& rest_name = call_args.rest()->rest_var;
     std::size_t param_offset = 1;
     if (rest_name) {
-      auto const* rest_param = ctx->Lookup(rest_name->value());
-      if (!rest_param) {
-        return absl::NotFoundError(
-            absl::StrFormat("Parameter '%s' not found.", rest_name->value()));
-      }
-      if (!rest_param->has<ExprContext::VarSym>() ||
-          rest_param->as<ExprContext::VarSym>().has<ExprContext::ParamSym>()) {
+      ASSIGN_OR_RETURN(auto rest_param, ctx->LookupSym(rest_name->value()));
+      if (!rest_param.has<ExprEnvironment::VarSym>() ||
+          rest_param.as<ExprEnvironment::VarSym>()
+              .has<ExprEnvironment::ParamSym>()) {
         return absl::FailedPreconditionError(absl::StrFormat(
             "Parameter '%s' is not a procedure/method parameter.",
             rest_name->value()));
       }
-      param_offset = rest_param->as<ExprContext::VarSym>()
-                         .as<ExprContext::ParamSym>()
+      param_offset = rest_param.as<ExprEnvironment::VarSym>()
+                         .as<ExprEnvironment::ParamSym>()
                          .param_offset;
     }
 
@@ -486,20 +464,20 @@ absl::Status BuildCallExpr(ExprContext const* ctx, ast::CallExpr const& call) {
     return it->second(ctx, target_name, call.call_args());
   }
 
-  auto const* proc = ctx->LookupProc(target_name.value());
-  return proc->visit(
-      [&](ExprContext::LocalProc const& local) -> absl::Status {
+  ASSIGN_OR_RETURN(auto proc, ctx->LookupProc(target_name.value()));
+  return proc.visit(
+      [&](ExprEnvironment::LocalProc const& local) -> absl::Status {
         ctx->func_builder()->AddProcCall(std::string(local.name.value()),
                                          num_args, local.proc_ref);
         return absl::OkStatus();
       },
-      [&](ExprContext::ExternProc const& ext) -> absl::Status {
+      [&](ExprEnvironment::ExternProc const& ext) -> absl::Status {
         ctx->func_builder()->AddExternCall(std::string(ext.name.value()),
                                            num_args, ext.script_num.value(),
                                            ext.extern_offset);
         return absl::OkStatus();
       },
-      [&](ExprContext::KernelProc const& kernel) -> absl::Status {
+      [&](ExprEnvironment::KernelProc const& kernel) -> absl::Status {
         ctx->func_builder()->AddKernelCall(std::string(kernel.name.value()),
                                            num_args, kernel.kernel_offset);
         return absl::OkStatus();
@@ -530,22 +508,24 @@ absl::StatusOr<std::size_t> BuildSendClause(ExprContext const* ctx,
   //
   // We see if we have a non-prop variable, and look it up to support this.
 
-  auto const* symbol = ctx->Lookup(sel_and_args.sel_name.value());
+  auto symbol = ctx->LookupSym(sel_and_args.sel_name.value());
 
-  if (symbol && symbol->has<ExprContext::VarSym>()) {
+  if (!symbol.ok() && !absl::IsNotFound(symbol.status())) {
+    return std::move(symbol).status();
+  }
+
+  if (symbol.ok() && symbol->has<ExprEnvironment::VarSym>()) {
     // Not maximally efficient, but it should work.
     RETURN_IF_ERROR(BuildVarLoadExpr(ctx, FunctionBuilder::LOAD,
                                      sel_and_args.sel_name, nullptr));
     ctx->func_builder()->AddPushOp();
   } else {
-    auto const* selector =
-        ctx->selector_table()->LookupByName(sel_and_args.sel_name.value());
+    auto selector = ctx->LookupSelector(sel_and_args.sel_name.value());
     if (!selector) {
       return absl::NotFoundError(absl::StrFormat(
           "Selector '%s' not found.", sel_and_args.sel_name.value()));
     }
-    ctx->func_builder()->AddPushImmediate(
-        int(selector->selector_num().value()));
+    ctx->func_builder()->AddPushImmediate(int(selector->value()));
   }
 
   if (sel_and_args.args) {
@@ -574,7 +554,7 @@ absl::Status BuildSendExpr(ExprContext const* ctx, ast::SendExpr const& send) {
           return absl::FailedPreconditionError(
               "Cannot send to super without a super class.");
         }
-        auto const& super_info = *ctx->super_info();
+        auto super_info = *ctx->super_info();
         ctx->func_builder()->AddSuperSend(
             std::string(super_info.super_name.value()), num_args,
             int(super_info.species.value()));
@@ -890,14 +870,9 @@ class ExprContextImpl : public ExprContext {
 }  // namespace
 
 std::unique_ptr<ExprContext> CreateExprContext(
-    codegen::CodeGenerator* codegen, codegen::FunctionBuilder* func_builder,
-    ClassTable const* class_table, SelectorTable const* selector_table,
-    std::optional<ExprContext::SuperInfo> super_info,
-    std::map<std::string_view, ExprContext::Sym, std::less<>> symbols,
-    std::map<std::string_view, ExprContext::Proc, std::less<>> procs) {
-  return std::make_unique<ExprContextImpl>(
-      codegen, func_builder, class_table, selector_table, std::move(super_info),
-      std::move(symbols), std::move(procs));
+    ExprEnvironment const* expr_env, codegen::CodeGenerator* codegen,
+    codegen::FunctionBuilder* func_builder) {
+  return std::make_unique<ExprContextImpl>(expr_env, codegen, func_builder);
 }
 
 }  // namespace sem
