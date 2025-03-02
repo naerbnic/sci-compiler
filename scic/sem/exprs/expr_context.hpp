@@ -4,24 +4,27 @@
 #include <cstddef>
 #include <functional>
 #include <map>
+#include <memory>
 #include <optional>
 #include <stdexcept>
 #include <string_view>
-#include <utility>
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/parsers/sci/ast.hpp"
-#include "scic/sem/class_table.hpp"
 #include "scic/sem/common.hpp"
+#include "scic/sem/module_env.hpp"
+#include "scic/sem/property_list.hpp"
 #include "scic/sem/selector_table.hpp"
+#include "util/strings/ref_str.hpp"
 #include "util/types/choice.hpp"
 
 namespace sem {
 
 class Loop;
 
-class ExprContext {
+class ExprEnvironment {
  public:
   struct ParamSym {
     std::size_t param_offset;
@@ -73,48 +76,55 @@ class ExprContext {
       : public util::ChoiceBase<Proc, LocalProc, ExternProc, KernelProc> {
     using ChoiceBase::ChoiceBase;
   };
-
+  
   struct SuperInfo {
     ClassSpecies species;
     NameToken super_name;
   };
 
-  ExprContext(codegen::CodeGenerator* codegen,
-              codegen::FunctionBuilder* func_builder,
-              ClassTable const* class_table,
-              SelectorTable const* selector_table,
-              std::optional<SuperInfo> super_info,
-              std::map<std::string_view, Sym, std::less<>> symbols,
-              std::map<std::string_view, Proc, std::less<>> procs)
-      : codegen_(codegen),
-        func_builder_(func_builder),
-        class_table_(class_table),
-        selector_table_(selector_table),
-        super_info_(std::move(super_info)),
-        symbols_(std::move(symbols)),
-        procs_(std::move(procs)) {}
+  static std::unique_ptr<ExprEnvironment> Create(
+      ModuleEnvironment const* mod_env, PropertyList const* prop_list,
+      std::optional<SuperInfo> super_info,
+      std::map<util::RefStr, ParamSym, std::less<>> proc_local_table,
+      std::map<util::RefStr, TempSym, std::less<>> proc_temp_table);
+
+  virtual ~ExprEnvironment() = default;
+
+  virtual std::optional<SuperInfo> GetSuperInfo() const = 0;
+
+  virtual std::optional<SelectorNum> LookupSelector(
+      std::string_view name) const = 0;
+
+  virtual absl::StatusOr<Sym> LookupSym(std::string_view name) const = 0;
+
+  virtual absl::StatusOr<Proc> LookupProc(std::string_view name) const = 0;
+};
+
+class ExprContext {
+ public:
+  ExprContext(ExprEnvironment const* expr_env, codegen::CodeGenerator* codegen,
+              codegen::FunctionBuilder* func_builder)
+      : expr_env_(expr_env), codegen_(codegen), func_builder_(func_builder) {}
+
   virtual ~ExprContext() = default;
 
   codegen::CodeGenerator* codegen() const { return codegen_; }
   codegen::FunctionBuilder* func_builder() const { return func_builder_; }
-  ClassTable const* class_table() const { return class_table_; }
-  SelectorTable const* selector_table() const { return selector_table_; }
-  std::optional<SuperInfo> const& super_info() const { return super_info_; }
-
-  Sym const* Lookup(std::string_view name) const {
-    auto it = symbols_.find(name);
-    if (it == symbols_.end()) {
-      return nullptr;
-    }
-    return &it->second;
+  std::optional<ExprEnvironment::SuperInfo> super_info() const {
+    return expr_env_->GetSuperInfo();
   }
 
-  Proc const* LookupProc(std::string_view name) const {
-    auto it = procs_.find(name);
-    if (it == procs_.end()) {
-      return nullptr;
-    }
-    return &it->second;
+  absl::StatusOr<ExprEnvironment::Sym> LookupSym(std::string_view name) const {
+    return expr_env_->LookupSym(name);
+  }
+
+  absl::StatusOr<ExprEnvironment::Proc> LookupProc(
+      std::string_view name) const {
+    return expr_env_->LookupProc(name);
+  }
+
+  std::optional<SelectorNum> LookupSelector(std::string_view name) const {
+    return expr_env_->LookupSelector(name);
   }
 
   codegen::LabelRef* GetContLabel(std::size_t num_levels) const;
@@ -127,13 +137,9 @@ class ExprContext {
 
   Loop const* FindLoop(std::size_t at_level) const;
 
+  ExprEnvironment const* expr_env_;
   codegen::CodeGenerator* codegen_;
   codegen::FunctionBuilder* func_builder_;
-  ClassTable const* class_table_;
-  SelectorTable const* selector_table_;
-  std::optional<SuperInfo> super_info_;
-  std::map<std::string_view, Sym, std::less<>> symbols_;
-  std::map<std::string_view, Proc, std::less<>> procs_;
   mutable Loop const* loop_ = nullptr;
 };
 
