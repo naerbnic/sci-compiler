@@ -150,3 +150,22 @@ cc_test(
         "@googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "view",
+    hdrs = ["view.hpp"],
+    deps = [
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:has_ostream_operator",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)
+
+cc_test(
+    name = "view_test",
+    srcs = ["view_test.cpp"],
+    deps = [
+        ":view",
+        "@googletest//:gtest_main",
+    ],
+)
