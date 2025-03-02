@@ -1,9 +1,8 @@
-#ifndef SEM_GLOBAL_TABLE_HPP
-#define SEM_GLOBAL_TABLE_HPP
+#ifndef SEM_VAR_TABLE_HPP
+#define SEM_VAR_TABLE_HPP
 
 #include <cstddef>
 #include <memory>
-#include <optional>
 #include <string_view>
 #include <vector>
 
@@ -15,26 +14,51 @@
 #include "util/types/sequence.hpp"
 
 namespace sem {
+  
+class VarDeclTable {
+ public:
+  class Variable {
+   public:
+    virtual ~Variable() = default;
+    virtual NameToken const& token_name() const = 0;
+    virtual util::RefStr const& name() const = 0;
+    virtual std::size_t index() const = 0;
+    virtual std::size_t length() const = 0;
+  };
 
-// A table of global variables.
+  virtual ~VarDeclTable() = default;
+  virtual util::Seq<Variable const&> vars() const = 0;
+  virtual Variable const* LookupByName(std::string_view name) const = 0;
+  virtual Variable const* LookupByIndex(std::size_t global_index) const = 0;
+};
+
+class VarDeclTableBuilder {
+ public:
+  static std::unique_ptr<VarDeclTableBuilder> Create();
+  virtual ~VarDeclTableBuilder() = default;
+
+  // Adds a variable declaration.
+  // Duplicate declarations with the same name/index are allowed (no-op).
+  virtual absl::Status DeclareVar(NameToken name, std::size_t global_index,
+                                  std::size_t length) = 0;
+  virtual absl::StatusOr<std::unique_ptr<VarDeclTable>> Build() = 0;
+};
+
+// ------------------------------------------------------------------
 class VarTable {
  public:
   class Variable {
    public:
     virtual ~Variable() = default;
-
     virtual NameToken const& token_name() const = 0;
     virtual util::RefStr const& name() const = 0;
     virtual std::size_t index() const = 0;
-    virtual std::size_t length() const = 0;
-    virtual std::optional<util::Seq<codegen::LiteralValue>> initial_value()
-        const = 0;
+    // Unlike in the declaration table, an initial value is always present.
+    virtual util::Seq<codegen::LiteralValue const&> initial_value() const = 0;
   };
 
   virtual ~VarTable() = default;
-
   virtual util::Seq<Variable const&> vars() const = 0;
-
   virtual Variable const* LookupByName(std::string_view name) const = 0;
   virtual Variable const* LookupByIndex(std::size_t global_index) const = 0;
 };
@@ -42,19 +66,14 @@ class VarTable {
 class VarTableBuilder {
  public:
   static std::unique_ptr<VarTableBuilder> Create();
-
   virtual ~VarTableBuilder() = default;
 
-  // Adds a variable declaration to this table.
-  //
-  // If the same variable has been defined before, with both the same name and
-  // index, then this is a no-op.
-  virtual absl::Status DeclareVar(NameToken name, std::size_t global_index,
-                                  std::size_t length) = 0;
+  // Later define the variable with an initial value.
   virtual absl::Status DefineVar(NameToken name, std::size_t global_index,
                                  std::vector<codegen::LiteralValue> values) = 0;
   virtual absl::StatusOr<std::unique_ptr<VarTable>> Build() = 0;
 };
 
 }  // namespace sem
+
 #endif

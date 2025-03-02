@@ -142,6 +142,7 @@ cc_test(
     deps = [
         ":test_helpers",
         ":var_table",
+        "//scic/codegen:code_generator",
         "//util/status:status_matchers",
         "@abseil-cpp//absl/status",
         "@googletest//:gtest",

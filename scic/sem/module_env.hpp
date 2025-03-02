@@ -27,7 +27,7 @@ class GlobalEnvironment {
   GlobalEnvironment(std::unique_ptr<SelectorTable> selector_table,
                     std::unique_ptr<ClassTable> class_table,
                     std::unique_ptr<ExternTable> extern_table,
-                    std::unique_ptr<VarTable> global_table, Items global_items)
+                    std::unique_ptr<VarDeclTable> global_table, Items global_items)
       : selector_table_(std::move(selector_table)),
         class_table_(std::move(class_table)),
         extern_table_(std::move(extern_table)),
@@ -37,14 +37,14 @@ class GlobalEnvironment {
   SelectorTable const* selector_table() const { return selector_table_.get(); }
   ClassTable const* class_table() const { return class_table_.get(); }
   ExternTable const* extern_table() const { return extern_table_.get(); }
-  VarTable const* global_table() const { return global_table_.get(); }
+  VarDeclTable const* global_table() const { return global_table_.get(); }
   Items global_items() const { return global_items_; }
 
  private:
   std::unique_ptr<SelectorTable> selector_table_;
   std::unique_ptr<ClassTable> class_table_;
   std::unique_ptr<ExternTable> extern_table_;
-  std::unique_ptr<VarTable> global_table_;
+  std::unique_ptr<VarDeclTable> global_table_;
   Items global_items_;
 };
 

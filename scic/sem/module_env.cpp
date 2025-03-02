@@ -222,9 +222,9 @@ absl::StatusOr<std::unique_ptr<ExternTable>> BuildExternTable(
   return builder->Build();
 }
 
-absl::StatusOr<std::unique_ptr<VarTable>> BuildGlobalTable(
+absl::StatusOr<std::unique_ptr<VarDeclTable>> BuildGlobalTable(
     absl::Span<ast::Item const> items) {
-  auto builder = VarTableBuilder::Create();
+  auto builder = VarDeclTableBuilder::Create();
 
   for (auto const* var_decl : GetElemsOfType<ast::GlobalDeclDef>(items)) {
     for (auto const& entry : var_decl->entries()) {
@@ -346,7 +346,7 @@ AstConstValuesToLiteralValues(codegen::CodeGenerator* codegen,
                      AstConstValueToLiteralValue(codegen, value));
     result.push_back(literal_value);
   }
-  
+
   return result;
 }
 
