@@ -77,9 +77,8 @@ absl::Status BuildGenericProcedure(
 
 absl::Status BuildClass(ModuleEnvironment const* module_env,
                         Class const* class_def, ast::ClassDef const& ast_node) {
-  auto ptr_def = module_env->codegen()->CreatePtrRef();
-  auto class_gen = module_env->codegen()->CreateClass(
-      std::string(class_def->name()), &ptr_def);
+  auto class_gen =
+      module_env->codegen()->CreateClass(std::string(class_def->name()));
   for (auto const& prop : class_def->prop_list().properties()) {
     auto const* selector = prop.selector();
     if (selector->name() == kMethDictSelName) {

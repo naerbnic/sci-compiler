@@ -969,7 +969,7 @@ void MakeObject(Object* theObj) {
   auto objCodegen =
       theObj->num == OBJECTNUM
           ? gSc->CreateObject(theObj->name, &theObj->sym->forwardRef)
-          : gSc->CreateClass(theObj->name, &theObj->sym->forwardRef);
+          : gSc->CreateClass(theObj->name);
 
   {
     {

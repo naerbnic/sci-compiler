@@ -342,7 +342,7 @@ class CodeGenerator {
   bool SetVar(std::size_t varNum, LiteralValue value);
 
   std::unique_ptr<ObjectCodegen> CreateObject(std::string name, PtrRef* ref);
-  std::unique_ptr<ObjectCodegen> CreateClass(std::string name, PtrRef* ref);
+  std::unique_ptr<ObjectCodegen> CreateClass(std::string name);
 
   std::unique_ptr<FunctionBuilder> CreateFunction(
       FuncName name, std::optional<std::size_t> lineNum, std::size_t numTemps,
