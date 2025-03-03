@@ -2,8 +2,17 @@ cc_binary(
     name = "scic",
     srcs = ["scic.cpp"],
     deps = [
+        ":flags",
         "@abseil-cpp//absl/debugging:failure_signal_handler",
         "@abseil-cpp//absl/debugging:symbolize",
+    ],
+)
+
+cc_library(
+    name = "flags",
+    srcs = ["flags.cpp"],
+    hdrs = ["flags.hpp"],
+    deps = [
         "@argparse",
     ],
 )
