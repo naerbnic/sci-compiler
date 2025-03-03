@@ -4,6 +4,8 @@
 #include <map>
 #include <string>
 #include <vector>
+
+#include "scic/codegen/code_generator.hpp"
 namespace frontend {
 
 class CompilerFlags {
@@ -15,8 +17,7 @@ class CompilerFlags {
   std::string output_directory;
   bool verbose_output = false;
   bool output_words_high_byte_first = false;
-  bool turn_off_optimization = false;
-  std::string target_architecture = "SCI_2";
+  codegen::CodeGenerator::Options codegen_options;
   std::string selector_file = "selector";
   std::string classdef_file = "classdef";
   std::string system_header = "system.sh";

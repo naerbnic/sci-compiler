@@ -3,8 +3,22 @@ cc_binary(
     srcs = ["scic.cpp"],
     deps = [
         ":flags",
+        "//scic/codegen:code_generator",
+        "//scic/parsers/list_tree:parser",
+        "//scic/parsers/sci:parser",
+        "//scic/sem:code_builder",
+        "//scic/sem:input",
+        "//scic/sem:module_env",
+        "//scic/text:text_range",
+        "//scic/tokens:token",
+        "//scic/tokens:token_readers",
+        "//util/status:status_macros",
+        "//util/strings:ref_str",
         "@abseil-cpp//absl/debugging:failure_signal_handler",
         "@abseil-cpp//absl/debugging:symbolize",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings:str_format",
     ],
 )
 
@@ -13,6 +27,7 @@ cc_library(
     srcs = ["flags.cpp"],
     hdrs = ["flags.hpp"],
     deps = [
+        "//scic/codegen:code_generator",
         "@argparse",
     ],
 )

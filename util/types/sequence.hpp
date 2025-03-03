@@ -104,7 +104,7 @@ class SingletonSeqViewImpl : public SeqImpl<T> {
   std::size_t size(void* data) const override { return 1; }
 
   T get_at(void* data, std::size_t index) const override {
-    return *static_cast<T*>(data);
+    return *static_cast<std::remove_reference_t<T>*>(data);
   }
 };
 
@@ -226,7 +226,7 @@ class Seq {
   }
 
   static Seq Singleton(T& value) {
-    return Seq(&const_cast<T&>(value),
+    return Seq(&const_cast<std::remove_cvref_t<T>&>(value),
                internal::SingletonSeqViewImpl<T>::Get());
   }
 

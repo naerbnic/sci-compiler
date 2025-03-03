@@ -76,7 +76,7 @@ class ExprEnvironment {
       : public util::ChoiceBase<Proc, LocalProc, ExternProc, KernelProc> {
     using ChoiceBase::ChoiceBase;
   };
-  
+
   struct SuperInfo {
     ClassSpecies species;
     NameToken super_name;
@@ -172,7 +172,7 @@ class Loop {
   codegen::LabelRef* break_label_;
 };
 
-Loop const* ExprContext::FindLoop(std::size_t at_level) const {
+inline Loop const* ExprContext::FindLoop(std::size_t at_level) const {
   auto const* curr_loop = loop_;
   while (at_level > 0) {
     at_level--;
@@ -183,7 +183,8 @@ Loop const* ExprContext::FindLoop(std::size_t at_level) const {
   return curr_loop;
 }
 
-codegen::LabelRef* ExprContext::GetContLabel(std::size_t at_level) const {
+inline codegen::LabelRef* ExprContext::GetContLabel(
+    std::size_t at_level) const {
   auto const* loop = FindLoop(at_level);
   if (!loop) {
     return nullptr;
@@ -191,7 +192,8 @@ codegen::LabelRef* ExprContext::GetContLabel(std::size_t at_level) const {
   return loop->cont_label();
 }
 
-codegen::LabelRef* ExprContext::GetBreakLabel(std::size_t at_level) const {
+inline codegen::LabelRef* ExprContext::GetBreakLabel(
+    std::size_t at_level) const {
   auto const* loop = FindLoop(at_level);
   if (!loop) {
     return nullptr;

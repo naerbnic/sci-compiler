@@ -1,7 +1,14 @@
 #include "scic/frontend/flags.hpp"
+
+#include <exception>
+#include <iostream>
+#include <stdexcept>
+#include <string>
 #include <string_view>
+#include <vector>
 
 #include "argparse/argparse.hpp"
+#include "scic/codegen/code_generator.hpp"
 
 namespace frontend {
 
@@ -98,6 +105,18 @@ CompilerFlags ExtractFlags(int argc, char** argv) {
       .remaining();
 
   try {
+    auto codegen_optimization = program.get<bool>("-z")
+                                    ? codegen::Optimization::NO_OPTIMIZE
+                                    : codegen::Optimization::OPTIMIZE;
+    auto target_name = program.get<std::string>("-t");
+    codegen::SciTarget target;
+    if (target_name == "SCI_1_1") {
+      target = codegen::SciTarget::SCI_1_1;
+    } else if (target_name == "SCI_2") {
+      target = codegen::SciTarget::SCI_2;
+    } else {
+      throw std::runtime_error("Invalid target architecture");
+    }
     program.parse_args(argc, argv);
     flags.abort_if_locked = program.get<bool>("-a");
     flags.include_debug_info = program.get<bool>("-d");
@@ -105,8 +124,10 @@ CompilerFlags ExtractFlags(int argc, char** argv) {
     flags.output_directory = program.get<std::string>("-o");
     flags.verbose_output = program.get<bool>("-v");
     flags.output_words_high_byte_first = program.get<bool>("-w");
-    flags.turn_off_optimization = program.get<bool>("-z");
-    flags.target_architecture = program.get<std::string>("-t");
+    flags.codegen_options = codegen::CodeGenerator::Options{
+        .target = target,
+        .opt = codegen_optimization,
+    };
     flags.selector_file = program.get<std::string>("--selector_file");
     flags.classdef_file = program.get<std::string>("--classdef_file");
     flags.system_header = program.get<std::string>("--system_header");

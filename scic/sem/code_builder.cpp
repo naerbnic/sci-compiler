@@ -75,8 +75,8 @@ absl::Status BuildGenericProcedure(
   return absl::OkStatus();
 }
 
-absl::Status BuildClass(ModuleEnvironment* module_env, Class const* class_def,
-                        ast::ClassDef const& ast_node) {
+absl::Status BuildClass(ModuleEnvironment const* module_env,
+                        Class const* class_def, ast::ClassDef const& ast_node) {
   auto ptr_def = module_env->codegen()->CreatePtrRef();
   auto class_gen = module_env->codegen()->CreateClass(
       std::string(class_def->name()), &ptr_def);
@@ -122,8 +122,8 @@ absl::Status BuildClass(ModuleEnvironment* module_env, Class const* class_def,
   return absl::OkStatus();
 }
 
-absl::Status BuildObject(ModuleEnvironment* module_env, Object const* obj_def,
-                         ast::ClassDef const& ast_node) {
+absl::Status BuildObject(ModuleEnvironment const* module_env,
+                         Object const* obj_def, ast::ClassDef const& ast_node) {
   auto obj_gen = module_env->codegen()->CreateObject(
       std::string(obj_def->name()), obj_def->ptr_ref());
   for (auto const& prop : obj_def->prop_list().properties()) {
@@ -164,7 +164,7 @@ absl::Status BuildObject(ModuleEnvironment* module_env, Object const* obj_def,
   return absl::OkStatus();
 }
 
-absl::Status BuildProcedure(ModuleEnvironment* module_env,
+absl::Status BuildProcedure(ModuleEnvironment const* module_env,
                             Procedure const* proc_obj,
                             ast::ProcDef const& ast_node) {
   codegen::ProcedureName name(std::string(proc_obj->name()));
@@ -175,7 +175,7 @@ absl::Status BuildProcedure(ModuleEnvironment* module_env,
 
 }  // namespace
 
-absl::Status BuildCode(ModuleEnvironment* module_env) {
+absl::Status BuildCode(ModuleEnvironment const* module_env) {
   [[maybe_unused]] auto* codegen = module_env->codegen();
   // We handle every procedure, class, and object in the order it appears in the
   // AST. This matches the previous implementation, which does everything in

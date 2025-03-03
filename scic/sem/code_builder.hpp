@@ -6,7 +6,7 @@
 
 namespace sem {
 
-absl::Status BuildCode(ModuleEnvironment* module_env);
+absl::Status BuildCode(ModuleEnvironment const* module_env);
 
 }
 #endif
