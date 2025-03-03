@@ -130,7 +130,7 @@ class ExprContext {
   codegen::LabelRef* GetContLabel(std::size_t num_levels) const;
   codegen::LabelRef* GetBreakLabel(std::size_t num_levels) const;
 
-  virtual absl::Status BuildExpr(ast::Expr const& expr) const = 0;
+  virtual absl::Status BuildExpr(ast::Expr const& expr) = 0;
 
  private:
   friend class Loop;
@@ -140,12 +140,12 @@ class ExprContext {
   ExprEnvironment const* expr_env_;
   codegen::CodeGenerator* codegen_;
   codegen::FunctionBuilder* func_builder_;
-  mutable Loop const* loop_ = nullptr;
+  Loop const* loop_ = nullptr;
 };
 
 class Loop {
  public:
-  explicit Loop(ExprContext const* ctx, codegen::LabelRef* cont_label,
+  explicit Loop(ExprContext* ctx, codegen::LabelRef* cont_label,
                 codegen::LabelRef* break_label)
       : ctx_(ctx),
         prev_(ctx->loop_),
@@ -166,7 +166,7 @@ class Loop {
   }
 
  private:
-  ExprContext const* ctx_;
+  ExprContext* ctx_;
   Loop const* prev_;
   codegen::LabelRef* cont_label_;
   codegen::LabelRef* break_label_;

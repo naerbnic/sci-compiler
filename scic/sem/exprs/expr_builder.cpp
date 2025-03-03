@@ -66,7 +66,7 @@ VarTypeAndOffset GetVarTypeAndOffset(ExprEnvironment::VarSym const& var_sym) {
       });
 }
 
-absl::Status BuildAddrOfExpr(ExprContext const* ctx,
+absl::Status BuildAddrOfExpr(ExprContext* ctx,
                              ast::AddrOfExpr const& addr_of) {
   auto const& [var_name, index] = GetVarNameAndIndex(addr_of.expr());
 
@@ -94,7 +94,7 @@ absl::Status BuildAddrOfExpr(ExprContext const* ctx,
   return absl::OkStatus();
 }
 
-absl::Status BuildSelectLitExpr(ExprContext const* ctx,
+absl::Status BuildSelectLitExpr(ExprContext* ctx,
                                 ast::SelectLitExpr const& select_lit) {
   auto selector = ctx->LookupSelector(select_lit.selector().value());
   if (!selector) {
@@ -105,7 +105,7 @@ absl::Status BuildSelectLitExpr(ExprContext const* ctx,
   return absl::OkStatus();
 }
 
-absl::Status BuildConstExpr(ExprContext const* ctx,
+absl::Status BuildConstExpr(ExprContext* ctx,
                             ast::ConstValue const& const_value) {
   ASSIGN_OR_RETURN(
       codegen::LiteralValue value,
@@ -126,7 +126,7 @@ absl::Status BuildConstExpr(ExprContext const* ctx,
   return absl::OkStatus();
 }
 
-absl::Status BuildVarStoreExpr(ExprContext const* ctx,
+absl::Status BuildVarStoreExpr(ExprContext* ctx,
                                NameToken const& var_name,
                                ast::Expr const* index) {
   // We're going to store the accumulator. Push it onto the stack.
@@ -157,7 +157,7 @@ absl::Status BuildVarStoreExpr(ExprContext const* ctx,
       });
 }
 
-absl::Status BuildVarLoadExpr(ExprContext const* ctx,
+absl::Status BuildVarLoadExpr(ExprContext* ctx,
                               FunctionBuilder::ValueOp val_op,
                               NameToken const& var_name,
                               absl::Nullable<ast::Expr const*> index) {
@@ -212,7 +212,7 @@ std::optional<FunctionBuilder::BinOp> BuildAssignOp(
   }
 }
 
-absl::StatusOr<std::size_t> BuildCallArgs(ExprContext const* ctx,
+absl::StatusOr<std::size_t> BuildCallArgs(ExprContext* ctx,
                                           ast::CallArgs const& call_args) {
   std::size_t num_args = call_args.args().size();
   ctx->func_builder()->AddPushImmediate(num_args);
@@ -244,7 +244,7 @@ absl::StatusOr<std::size_t> BuildCallArgs(ExprContext const* ctx,
 }
 
 template <FunctionBuilder::UnOp Op>
-absl::Status BuildUnaryExpr(ExprContext const* ctx, NameToken const& op_name,
+absl::Status BuildUnaryExpr(ExprContext* ctx, NameToken const& op_name,
                             ast::CallArgs const& args) {
   if (args.args().size() != 1) {
     return absl::InvalidArgumentError(absl::StrFormat(
@@ -260,7 +260,7 @@ absl::Status BuildUnaryExpr(ExprContext const* ctx, NameToken const& op_name,
 }
 
 template <FunctionBuilder::BinOp Op>
-absl::Status BuildBinaryExpr(ExprContext const* ctx, NameToken const& op_name,
+absl::Status BuildBinaryExpr(ExprContext* ctx, NameToken const& op_name,
                              ast::CallArgs const& args) {
   if (args.args().size() != 2) {
     return absl::InvalidArgumentError(absl::StrFormat(
@@ -278,7 +278,7 @@ absl::Status BuildBinaryExpr(ExprContext const* ctx, NameToken const& op_name,
 }
 
 template <FunctionBuilder::BinOp Op>
-absl::Status BuildMultiExpr(ExprContext const* ctx, NameToken const& op_name,
+absl::Status BuildMultiExpr(ExprContext* ctx, NameToken const& op_name,
                             ast::CallArgs const& args) {
   if (args.rest()) {
     return absl::InvalidArgumentError(absl::StrFormat(
@@ -303,7 +303,7 @@ absl::Status BuildMultiExpr(ExprContext const* ctx, NameToken const& op_name,
 
 // We need a specific function here, as the "-" operations is used for both
 // negation and subtraction.
-absl::Status BuildSubExpr(ExprContext const* ctx, NameToken const& op_name,
+absl::Status BuildSubExpr(ExprContext* ctx, NameToken const& op_name,
                           ast::CallArgs const& args) {
   if (args.rest()) {
     return absl::InvalidArgumentError(absl::StrFormat(
@@ -329,7 +329,7 @@ absl::Status BuildSubExpr(ExprContext const* ctx, NameToken const& op_name,
 
 // An implementation of the "and" operator. This short circuits, so it
 // needs special handling.
-absl::Status BuildAndExpr(ExprContext const* ctx, NameToken const& op_name,
+absl::Status BuildAndExpr(ExprContext* ctx, NameToken const& op_name,
                           ast::CallArgs const& args) {
   if (args.rest()) {
     return absl::InvalidArgumentError(absl::StrFormat(
@@ -353,7 +353,7 @@ absl::Status BuildAndExpr(ExprContext const* ctx, NameToken const& op_name,
 }
 // An implementation of the "and" operator. This short circuits, so it
 // needs special handling.
-absl::Status BuildOrExpr(ExprContext const* ctx, NameToken const& op_name,
+absl::Status BuildOrExpr(ExprContext* ctx, NameToken const& op_name,
                          ast::CallArgs const& args) {
   if (args.rest()) {
     return absl::InvalidArgumentError(absl::StrFormat(
@@ -380,7 +380,7 @@ absl::Status BuildOrExpr(ExprContext const* ctx, NameToken const& op_name,
 // pairwise compares all of the arguments. It short-circuits to false
 // when the first comparison fails.
 template <FunctionBuilder::BinOp Op>
-absl::Status BuildCompExpr(ExprContext const* ctx, NameToken const& op_name,
+absl::Status BuildCompExpr(ExprContext* ctx, NameToken const& op_name,
                            ast::CallArgs const& args) {
   if (args.rest()) {
     return absl::InvalidArgumentError(
@@ -412,7 +412,7 @@ absl::Status BuildCompExpr(ExprContext const* ctx, NameToken const& op_name,
   return absl::OkStatus();
 }
 
-using CallFunc = absl::Status (*)(ExprContext const* ctx,
+using CallFunc = absl::Status (*)(ExprContext* ctx,
                                   NameToken const& op_name,
                                   ast::CallArgs const& call);
 
@@ -446,7 +446,7 @@ std::map<std::string_view, CallFunc> const& GetCallBuiltins() {
   return builtins;
 }
 
-absl::Status BuildCallExpr(ExprContext const* ctx, ast::CallExpr const& call) {
+absl::Status BuildCallExpr(ExprContext* ctx, ast::CallExpr const& call) {
   ASSIGN_OR_RETURN(auto num_args, BuildCallArgs(ctx, call.call_args()));
   auto const& target = call.target();
   // The original appears to only support calls to names, but I think
@@ -484,7 +484,7 @@ absl::Status BuildCallExpr(ExprContext const* ctx, ast::CallExpr const& call) {
       });
 }
 
-absl::StatusOr<std::size_t> BuildSendClause(ExprContext const* ctx,
+absl::StatusOr<std::size_t> BuildSendClause(ExprContext* ctx,
                                             ast::SendClause const& clause) {
   struct SelectorNameAndArgs {
     NameToken const& sel_name;
@@ -537,7 +537,7 @@ absl::StatusOr<std::size_t> BuildSendClause(ExprContext const* ctx,
   }
 }
 
-absl::Status BuildSendExpr(ExprContext const* ctx, ast::SendExpr const& send) {
+absl::Status BuildSendExpr(ExprContext* ctx, ast::SendExpr const& send) {
   std::size_t num_args = 0;
   for (auto const& clause : send.clauses()) {
     ASSIGN_OR_RETURN(auto clause_num_args, BuildSendClause(ctx, clause));
@@ -567,7 +567,7 @@ absl::Status BuildSendExpr(ExprContext const* ctx, ast::SendExpr const& send) {
       });
 }
 
-absl::Status BuildAssignExpr(ExprContext const* ctx,
+absl::Status BuildAssignExpr(ExprContext* ctx,
                              ast::AssignExpr const& assign) {
   auto assign_op = BuildAssignOp(assign.kind());
   auto result = GetVarNameAndIndex(assign.target());
@@ -585,7 +585,7 @@ absl::Status BuildAssignExpr(ExprContext const* ctx,
   return absl::OkStatus();
 }
 
-absl::Status BuildIncDecExpr(ExprContext const* ctx,
+absl::Status BuildIncDecExpr(ExprContext* ctx,
                              ast::IncDecExpr const& inc_dec) {
   auto inc_dec_op = inc_dec.kind() == ast::IncDecExpr::INC
                         ? FunctionBuilder::INC
@@ -596,7 +596,7 @@ absl::Status BuildIncDecExpr(ExprContext const* ctx,
   return absl::OkStatus();
 }
 
-absl::Status BuildExprList(ExprContext const* ctx,
+absl::Status BuildExprList(ExprContext* ctx,
                            ast::ExprList const& expr_list) {
   for (auto const& expr : expr_list.exprs()) {
     RETURN_IF_ERROR(ctx->BuildExpr(expr));
@@ -604,7 +604,7 @@ absl::Status BuildExprList(ExprContext const* ctx,
   return absl::OkStatus();
 }
 
-absl::Status BuildBreakExpr(ExprContext const* ctx,
+absl::Status BuildBreakExpr(ExprContext* ctx,
                             ast::BreakExpr const& break_expr) {
   std::size_t level = 0;
   if (break_expr.level()) {
@@ -624,7 +624,7 @@ absl::Status BuildBreakExpr(ExprContext const* ctx,
   return absl::OkStatus();
 }
 
-absl::Status BuildContEpxr(ExprContext const* ctx,
+absl::Status BuildContEpxr(ExprContext* ctx,
                            ast::ContinueExpr const& break_expr) {
   std::size_t level = 0;
   if (break_expr.level()) {
@@ -644,7 +644,7 @@ absl::Status BuildContEpxr(ExprContext const* ctx,
   return absl::OkStatus();
 }
 
-absl::Status BuildIfExpr(ExprContext const* ctx, ast::IfExpr const& if_expr) {
+absl::Status BuildIfExpr(ExprContext* ctx, ast::IfExpr const& if_expr) {
   RETURN_IF_ERROR(ctx->BuildExpr(if_expr.condition()));
   if (if_expr.else_body()) {
     auto end_label = ctx->func_builder()->CreateLabelRef();
@@ -664,7 +664,7 @@ absl::Status BuildIfExpr(ExprContext const* ctx, ast::IfExpr const& if_expr) {
   return absl::OkStatus();
 }
 
-absl::Status BuildCondExpr(ExprContext const* ctx,
+absl::Status BuildCondExpr(ExprContext* ctx,
                            ast::CondExpr const& cond_expr) {
   auto done = ctx->func_builder()->CreateLabelRef();
   for (std::size_t i = 0; i < cond_expr.branches().size(); ++i) {
@@ -689,7 +689,7 @@ absl::Status BuildCondExpr(ExprContext const* ctx,
   return absl::OkStatus();
 }
 
-absl::Status BuildSwitchExpr(ExprContext const* ctx,
+absl::Status BuildSwitchExpr(ExprContext* ctx,
                              ast::SwitchExpr const& switch_expr) {
   auto done = ctx->func_builder()->CreateLabelRef();
   RETURN_IF_ERROR(ctx->BuildExpr(switch_expr.switch_expr()));
@@ -717,7 +717,7 @@ absl::Status BuildSwitchExpr(ExprContext const* ctx,
   return absl::OkStatus();
 }
 
-absl::Status BuildSwitchToExpr(ExprContext const* ctx,
+absl::Status BuildSwitchToExpr(ExprContext* ctx,
                                ast::SwitchToExpr const& switch_expr) {
   auto done = ctx->func_builder()->CreateLabelRef();
   RETURN_IF_ERROR(ctx->BuildExpr(switch_expr.switch_expr()));
@@ -745,7 +745,7 @@ absl::Status BuildSwitchToExpr(ExprContext const* ctx,
   return absl::OkStatus();
 }
 
-absl::Status BuildWhileExpr(ExprContext const* ctx,
+absl::Status BuildWhileExpr(ExprContext* ctx,
                             ast::WhileExpr const& while_expr) {
   auto start = ctx->func_builder()->CreateLabelRef();
   auto done = ctx->func_builder()->CreateLabelRef();
@@ -763,8 +763,7 @@ absl::Status BuildWhileExpr(ExprContext const* ctx,
   return absl::OkStatus();
 }
 
-absl::Status BuildForExpr(ExprContext const* ctx,
-                          ast::ForExpr const& for_expr) {
+absl::Status BuildForExpr(ExprContext* ctx, ast::ForExpr const& for_expr) {
   auto next = ctx->func_builder()->CreateLabelRef();
   auto done = ctx->func_builder()->CreateLabelRef();
 
@@ -800,7 +799,7 @@ class ExprContextImpl : public ExprContext {
  public:
   using ExprContext::ExprContext;
 
-  absl::Status BuildExpr(ast::Expr const& expr) const override {
+  absl::Status BuildExpr(ast::Expr const& expr) override {
     return expr.visit(
         [&](ast::AddrOfExpr const& binary) {
           return BuildAddrOfExpr(this, binary);
