@@ -49,7 +49,10 @@ cc_library(
     hdrs = ["parser.hpp"],
     deps = [
         ":ast",
+        "//scic/parsers:include_context",
+        "//scic/text:text_range",
         "//scic/tokens:token",
+        "//scic/tokens:token_readers",
         "//scic/tokens:token_stream",
         "//util/status:status_macros",
         "@abseil-cpp//absl/container:btree",

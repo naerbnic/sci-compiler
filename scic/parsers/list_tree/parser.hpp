@@ -7,20 +7,11 @@
 
 #include "absl/container/btree_map.h"
 #include "absl/status/statusor.h"
+#include "scic/parsers/include_context.hpp"
 #include "scic/parsers/list_tree/ast.hpp"
 #include "scic/tokens/token.hpp"
 
 namespace parsers::list_tree {
-
-class IncludeContext {
- public:
-  static IncludeContext const* GetEmpty();
-
-  virtual ~IncludeContext() = default;
-
-  virtual absl::StatusOr<std::vector<tokens::Token>> LoadTokensFromInclude(
-      std::string_view path) const = 0;
-};
 
 class Parser {
  public:

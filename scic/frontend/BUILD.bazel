@@ -4,6 +4,7 @@ cc_binary(
     deps = [
         ":flags",
         "//scic/codegen:code_generator",
+        "//scic/parsers:include_context",
         "//scic/parsers/list_tree:parser",
         "//scic/parsers/sci:parser",
         "//scic/sem:code_builder",

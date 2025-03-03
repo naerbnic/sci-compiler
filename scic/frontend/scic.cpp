@@ -16,6 +16,7 @@
 #include "absl/strings/str_format.h"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/frontend/flags.hpp"
+#include "scic/parsers/include_context.hpp"
 #include "scic/parsers/list_tree/parser.hpp"
 #include "scic/parsers/sci/parser.hpp"
 #include "scic/sem/code_builder.hpp"
@@ -62,16 +63,16 @@ absl::StatusOr<std::vector<tokens::Token>> TokenizeFile(
   return tokens::TokenizeText(std::move(text));
 }
 
-class ToolIncludeContext : public parsers::list_tree::IncludeContext {
+class ToolIncludeContext : public parsers::IncludeContext {
  public:
   ToolIncludeContext(std::vector<std::filesystem::path> include_paths)
       : include_paths_(std::move(include_paths)) {}
 
-  absl::StatusOr<std::vector<tokens::Token>> LoadTokensFromInclude(
+  absl::StatusOr<text::TextRange> LoadTextFromIncludePath(
       std::string_view path) const override {
     std::ifstream file;
     for (auto const& include_path : include_paths_) {
-      auto result = TokenizeFile(include_path / path);
+      auto result = LoadFile(include_path / path);
       if (result.ok()) {
         return std::move(result).value();
       }

@@ -13,8 +13,11 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
+#include "scic/parsers/include_context.hpp"
 #include "scic/parsers/list_tree/ast.hpp"
+#include "scic/text/text_range.hpp"
 #include "scic/tokens/token.hpp"
+#include "scic/tokens/token_readers.hpp"
 #include "scic/tokens/token_stream.hpp"
 #include "util/status/status_macros.hpp"
 
@@ -23,14 +26,6 @@ namespace {
 
 using ::tokens::Token;
 using ::tokens::TokenStream;
-
-class EmptyIncludeContext : public IncludeContext {
- public:
-  absl::StatusOr<std::vector<Token>> LoadTokensFromInclude(
-      std::string_view path) const override {
-    return absl::UnimplementedError("No includes.");
-  }
-};
 
 // Returns the name of the expression, if it is a token identifier with no
 // trailer.
@@ -487,8 +482,11 @@ class ParserImpl {
       return absl::InvalidArgumentError(
           "Include argument must be either a string or symbol.");
     }
+    ASSIGN_OR_RETURN(auto include_text,
+                     include_context_->LoadTextFromIncludePath(include_path));
     ASSIGN_OR_RETURN(auto tokens,
-                     include_context_->LoadTokensFromInclude(include_path));
+                     tokens::TokenizeText(std::move(include_text)));
+
     token_stream_.PushRawTokens(std::move(tokens));
 
     return absl::OkStatus();
@@ -500,11 +498,6 @@ class ParserImpl {
 };
 
 }  // namespace
-
-IncludeContext const* IncludeContext::GetEmpty() {
-  static EmptyIncludeContext empty_context;
-  return &empty_context;
-}
 
 void Parser::AddDefine(std::string_view name, std::vector<Token> tokens) {
   defines_[name] = std::move(tokens);

@@ -13,6 +13,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "argparse/argparse.hpp"
+#include "scic/parsers/include_context.hpp"
 #include "scic/parsers/list_tree/parser.hpp"
 #include "scic/text/text_range.hpp"
 #include "scic/tokens/token.hpp"
@@ -25,6 +26,19 @@ namespace {
 
 using ::text::TextRange;
 using ::tokens::Token;
+
+absl::StatusOr<text::TextRange> LoadFile(std::filesystem::path const& path) {
+  std::ifstream file;
+  file.open(path, std::ios::in | std::ios::binary);
+  if (!file.good()) {
+    return absl::NotFoundError("Could not open file");
+  }
+
+  std::stringstream buffer;
+  buffer << file.rdbuf();
+
+  return TextRange::WithFilename(util::RefStr(path.string()), buffer.str());
+}
 
 absl::StatusOr<std::vector<Token>> TokenizeFile(
     std::filesystem::path const& path) {
@@ -46,11 +60,11 @@ class ToolIncludeContext : public IncludeContext {
   ToolIncludeContext(std::vector<std::filesystem::path> include_paths)
       : include_paths_(std::move(include_paths)) {}
 
-  absl::StatusOr<std::vector<Token>> LoadTokensFromInclude(
+  absl::StatusOr<text::TextRange> LoadTextFromIncludePath(
       std::string_view path) const override {
     std::ifstream file;
     for (auto const& include_path : include_paths_) {
-      auto result = TokenizeFile(include_path / path);
+      auto result = LoadFile(include_path / path);
       if (result.ok()) {
         return std::move(result).value();
       }

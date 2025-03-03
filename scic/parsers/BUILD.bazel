@@ -1,0 +1,11 @@
+cc_library(
+    name = "include_context",
+    srcs = ["include_context.cpp"],
+    hdrs = ["include_context.hpp"],
+    visibility = ["//scic:scic_internal"],
+    deps = [
+        "//scic/text:text_range",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+    ],
+)
