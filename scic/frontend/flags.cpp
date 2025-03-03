@@ -105,6 +105,7 @@ CompilerFlags ExtractFlags(int argc, char** argv) {
       .remaining();
 
   try {
+    program.parse_args(argc, argv);
     auto codegen_optimization = program.get<bool>("-z")
                                     ? codegen::Optimization::NO_OPTIMIZE
                                     : codegen::Optimization::OPTIMIZE;

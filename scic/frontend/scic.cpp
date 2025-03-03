@@ -172,6 +172,8 @@ absl::Status RunMain(const CompilerFlags& flags) {
     RETURN_IF_ERROR(sem::BuildCode(module));
   }
 
+  // FIXME: Add output of generated code.
+
   return absl::OkStatus();
 }
 
