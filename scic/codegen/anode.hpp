@@ -5,8 +5,8 @@
 #include <cstdint>
 #include <optional>
 
+#include "scic/codegen/list.hpp"
 #include "scic/codegen/output.hpp"
-#include "scic/list.hpp"
 #include "scic/listing.hpp"
 
 namespace codegen {

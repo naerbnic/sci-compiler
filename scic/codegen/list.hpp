@@ -10,6 +10,8 @@
 
 #include "util/types/casts.hpp"
 
+namespace codegen {
+
 class TListBase;
 
 class TNode {
@@ -275,5 +277,7 @@ class TList {
  private:
   std::unique_ptr<TListBase> list_;
 };
+
+}  // namespace codegen
 
 #endif

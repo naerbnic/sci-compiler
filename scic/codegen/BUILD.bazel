@@ -23,9 +23,9 @@ cc_library(
     visibility = ["//visibility:private"],
     deps = [
         ":common",
+        ":list",
         ":output",
         ":target",
-        "//scic:list",
         "//scic:listing",
         "//scic:opcodes",
         "//util/types:casts",
@@ -60,6 +60,16 @@ cc_library(
     name = "output",
     srcs = ["output.cpp"],
     hdrs = ["output.hpp"],
+)
+
+cc_library(
+    name = "list",
+    srcs = ["list.cpp"],
+    hdrs = ["list.hpp"],
+    visibility = ["//visibility:private"],
+    deps = [
+        "//util/types:casts",
+    ],
 )
 
 cc_library(

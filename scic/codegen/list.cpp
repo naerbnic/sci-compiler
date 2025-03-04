@@ -1,10 +1,12 @@
 //	list.cpp		sc
 
-#include "scic/list.hpp"
+#include "scic/codegen/list.hpp"
 
 #include <cassert>
 
 // ---------------
+
+namespace codegen {
 
 TNode::TNode() : list_(nullptr), next_(nullptr), prev_(nullptr) {}
 TNode::~TNode() { RemoveFromList(); }
@@ -109,3 +111,5 @@ bool TListBase::contains(TNode const* ln) {
   if (!ln) return false;
   return ln->list_ == this;
 }
+
+}  // namespace codegen

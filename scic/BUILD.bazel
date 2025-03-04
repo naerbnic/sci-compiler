@@ -58,15 +58,6 @@ cc_library(
 )
 
 cc_library(
-    name = "list",
-    srcs = ["list.cpp"],
-    hdrs = ["list.hpp"],
-    deps = [
-        "//util/types:casts",
-    ],
-)
-
-cc_library(
     name = "output",
     srcs = ["output.cpp"],
     hdrs = ["output.hpp"],

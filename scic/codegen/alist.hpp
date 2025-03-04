@@ -9,8 +9,8 @@
 #include <utility>
 
 #include "scic/codegen/anode.hpp"
+#include "scic/codegen/list.hpp"
 #include "scic/codegen/output.hpp"
-#include "scic/list.hpp"
 #include "scic/listing.hpp"
 
 namespace codegen {

@@ -11,7 +11,7 @@
 #include "scic/codegen/alist.hpp"
 #include "scic/codegen/anode.hpp"
 #include "scic/codegen/anode_impls.hpp"
-#include "scic/list.hpp"
+#include "scic/codegen/list.hpp"
 #include "scic/opcodes.hpp"
 #include "util/types/casts.hpp"
 
