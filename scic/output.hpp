@@ -10,26 +10,37 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <utility>
 
-class OutputFile {
+#include "scic/codegen/output.hpp"
+
+class OutputFile : public codegen::OutputWriter {
  public:
   OutputFile(std::string fileName);
   ~OutputFile();
 
-  void SeekTo(long offset);
-  void WriteByte(uint8_t);
-  void WriteOp(uint8_t op) { WriteByte(op); }
-  void WriteWord(int16_t);
-  void Write(const void*, size_t);
-  int WriteNullTerminatedString(std::string_view str);
-  int Write(std::string_view);
+  void SeekTo(long offset) override;
+  void WriteByte(uint8_t) override;
+  void WriteOp(uint8_t op) override { WriteByte(op); }
+  void WriteWord(int16_t) override;
+  void Write(const void*, size_t) override;
+  int WriteNullTerminatedString(std::string_view str) override;
+  int Write(std::string_view) override;
 
  protected:
   FILE* fp;
   std::string fileName;
 };
 
-struct ObjFiles {
+class ObjFiles : public codegen::OutputFiles {
+ public:
+  ObjFiles(std::unique_ptr<OutputFile> heap, std::unique_ptr<OutputFile> hunk)
+      : heap(std::move(heap)), hunk(std::move(hunk)) {}
+
+  virtual codegen::OutputWriter* GetHeap() override { return heap.get(); };
+  virtual codegen::OutputWriter* GetHunk() override { return hunk.get(); }
+
+ private:
   std::unique_ptr<OutputFile> heap;
   std::unique_ptr<OutputFile> hunk;
 };

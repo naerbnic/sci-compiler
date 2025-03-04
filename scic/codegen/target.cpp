@@ -2,8 +2,8 @@
 
 #include <cstddef>
 
+#include "scic/codegen/output.hpp"
 #include "scic/listing.hpp"
-#include "scic/output.hpp"
 
 namespace codegen {
 namespace {
@@ -14,7 +14,7 @@ class Sci11Strategy : public SciTargetStrategy {
                    int num_args) const override {
     listFile->ListByte(offset, num_args);
   }
-  void WriteNumArgs(OutputFile* out, int num_args) const override {
+  void WriteNumArgs(OutputWriter* out, int num_args) const override {
     out->WriteByte(num_args);
   }
 
@@ -28,7 +28,7 @@ class Sci2Strategy : public SciTargetStrategy {
                    int num_args) const override {
     listFile->ListByte(offset, num_args);
   }
-  void WriteNumArgs(OutputFile* out, int num_args) const override {
+  void WriteNumArgs(OutputWriter* out, int num_args) const override {
     out->WriteWord(num_args);
   }
   bool SupportsDebugInstructions() const override { return true; }

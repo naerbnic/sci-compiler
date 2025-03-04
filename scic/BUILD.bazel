@@ -75,6 +75,7 @@ cc_library(
         ":memtype",
         ":resource",
         "//scic/codegen:common",
+        "//scic/codegen:output",
         "//util/platform",
         "@abseil-cpp//absl/strings:str_format",
     ],

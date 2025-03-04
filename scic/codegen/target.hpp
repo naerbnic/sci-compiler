@@ -3,8 +3,8 @@
 
 #include <cstddef>
 
+#include "scic/codegen/output.hpp"
 #include "scic/listing.hpp"
-#include "scic/output.hpp"
 
 namespace codegen {
 
@@ -21,7 +21,7 @@ class SciTargetStrategy {
   virtual int NumArgsSize() const = 0;
   virtual void ListNumArgs(ListingFile*, std::size_t offset,
                            int num_args) const = 0;
-  virtual void WriteNumArgs(OutputFile* out, int num_args) const = 0;
+  virtual void WriteNumArgs(OutputWriter* out, int num_args) const = 0;
 
   virtual bool SupportsDebugInstructions() const = 0;
 };

@@ -78,15 +78,13 @@ void OutputFile::Write(const void* mp, size_t len) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-static std::unique_ptr<OutputFile> OpenObjFile(MemType type, std::string name);
+static std::unique_ptr<OutputFile> OpenObjFile(std::string name);
 static std::string MakeObjFileName(MemType type, int scriptNum);
 
 ObjFiles OpenObjFiles(int scriptNum) {
   //	open the new files
-  return ObjFiles{
-      .heap = OpenObjFile(MemResHeap, MakeObjFileName(MemResHeap, scriptNum)),
-      .hunk = OpenObjFile(MemResHunk, MakeObjFileName(MemResHunk, scriptNum)),
-  };
+  return ObjFiles(OpenObjFile(MakeObjFileName(MemResHeap, scriptNum)),
+                  OpenObjFile(MakeObjFileName(MemResHunk, scriptNum)));
 }
 
 static std::string MakeObjFileName(MemType type, int scriptNum) {
@@ -96,14 +94,6 @@ static std::string MakeObjFileName(MemType type, int scriptNum) {
   return dest;
 }
 
-static std::unique_ptr<OutputFile> OpenObjFile(MemType type, std::string name) {
-  auto out = std::make_unique<OutputFile>(std::move(name));
-
-  // Put out the header information.
-  uint8_t header[2];
-  header[0] = (char)type;
-  header[1] = 0;
-  out->Write(header, sizeof header);
-
-  return out;
+static std::unique_ptr<OutputFile> OpenObjFile(std::string name) {
+  return std::make_unique<OutputFile>(std::move(name));
 }

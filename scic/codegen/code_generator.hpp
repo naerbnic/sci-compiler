@@ -16,6 +16,7 @@
 #include "scic/codegen/anode.hpp"
 #include "scic/codegen/anode_impls.hpp"
 #include "scic/codegen/fixup_list.hpp"
+#include "scic/codegen/output.hpp"
 #include "scic/codegen/target.hpp"
 #include "scic/listing.hpp"
 #include "util/types/choice.hpp"
@@ -322,8 +323,8 @@ class CodeGenerator {
   static std::unique_ptr<CodeGenerator> Create(Options options);
   ~CodeGenerator();
 
-  void Assemble(std::string_view source_file_name, uint16_t scriptNum,
-                ListingFile* listFile);
+  void Assemble(std::string_view source_file_name, ListingFile* listFile,
+                OutputFiles* outputFiles);
 
   PtrRef CreatePtrRef();
 

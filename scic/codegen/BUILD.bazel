@@ -23,11 +23,11 @@ cc_library(
     visibility = ["//visibility:private"],
     deps = [
         ":common",
+        ":output",
         ":target",
         "//scic:list",
         "//scic:listing",
         "//scic:opcodes",
-        "//scic:output",
         "//util/types:casts",
         "@abseil-cpp//absl/strings:str_format",
     ],
@@ -40,8 +40,8 @@ cc_library(
     visibility = ["//visibility:private"],
     deps = [
         ":anode",
+        ":output",
         "//scic:listing",
-        "//scic:output",
     ],
 )
 
@@ -51,9 +51,15 @@ cc_library(
     hdrs = ["target.hpp"],
     visibility = ["//visibility:private"],
     deps = [
+        ":output",
         "//scic:listing",
-        "//scic:output",
     ],
+)
+
+cc_library(
+    name = "output",
+    srcs = ["output.cpp"],
+    hdrs = ["output.hpp"],
 )
 
 cc_library(
@@ -66,10 +72,10 @@ cc_library(
         ":anode",
         ":common",
         ":fixup_list",
+        ":output",
         ":target",
         "//scic:listing",
         "//scic:opcodes",
-        "//scic:output",
         "//util/types:choice",
         "//util/types:forward_ref",
         "@abseil-cpp//absl/memory",

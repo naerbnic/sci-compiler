@@ -27,6 +27,7 @@
 #include "scic/input.hpp"
 #include "scic/listing.hpp"
 #include "scic/object.hpp"
+#include "scic/output.hpp"
 #include "scic/parse.hpp"
 #include "scic/parse_class.hpp"
 #include "scic/parse_context.hpp"
@@ -229,7 +230,9 @@ static void CompileFile(std::string_view fileName, bool listCode) {
   else {
     auto listFile = listCode ? ListingFile::Open(gScript, sourceFileName)
                              : ListingFile::Null();
-    gSc->Assemble(gInputState.GetTopLevelFileName(), gScript, listFile.get());
+    auto obj_files = OpenObjFiles(gScript);
+    gSc->Assemble(gInputState.GetTopLevelFileName(), listFile.get(),
+                  &obj_files);
   }
   totalErrors += gNumErrors;
 

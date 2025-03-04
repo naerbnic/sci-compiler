@@ -7,8 +7,8 @@
 #include "scic/codegen/alist.hpp"
 #include "scic/codegen/anode.hpp"
 #include "scic/codegen/anode_impls.hpp"
+#include "scic/codegen/output.hpp"
 #include "scic/listing.hpp"
-#include "scic/output.hpp"
 
 namespace codegen {
 namespace {
@@ -44,7 +44,7 @@ class ANWordPadding : public ANode {
       listFile->ListByte(*offset, 0);
     }
   }
-  void emit(OutputFile* out) const override {
+  void emit(OutputWriter* out) const override {
     if (*offset & 1) {
       out->WriteByte(0);
     }
@@ -88,7 +88,7 @@ void FixupList::addFixup(ANode const* node, std::size_t rel_ofs) {
 
 void FixupList::list(ListingFile* listFile) { root_->list(listFile); }
 
-void FixupList::emit(HeapContext* heap_ctxt, OutputFile* out) {
+void FixupList::emit(HeapContext* heap_ctxt, OutputWriter* out) {
   {
     FixupListContext fixup_ctxt(this, heap_ctxt);
     root_->collectFixups(&fixup_ctxt);

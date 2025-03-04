@@ -5,9 +5,9 @@
 #include <cstdint>
 #include <optional>
 
+#include "scic/codegen/output.hpp"
 #include "scic/list.hpp"
 #include "scic/listing.hpp"
-#include "scic/output.hpp"
 
 namespace codegen {
 
@@ -50,7 +50,7 @@ struct ANode : TNode {
   // Adds fixups to the fixup_ctxt, if needed for this instruction.
   virtual void collectFixups(FixupContext* fixup_ctxt) const;
 
-  virtual void emit(OutputFile*) const;
+  virtual void emit(OutputWriter*) const;
   // Emits the object code for the node to the output file.
 
   virtual bool contains(ANode const* node) const;
@@ -73,7 +73,7 @@ struct ANOpCode : ANode
 
   size_t size() const override;
   void list(ListingFile* listFile) const override;
-  void emit(OutputFile*) const override;
+  void emit(OutputWriter*) const override;
 
   uint32_t op;  // type of operator
 };

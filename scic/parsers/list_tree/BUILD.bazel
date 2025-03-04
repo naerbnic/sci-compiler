@@ -91,6 +91,7 @@ cc_binary(
     srcs = ["parser_test_tool.cpp"],
     deps = [
         ":parser",
+        "//scic/parsers:include_context",
         "//scic/text:text_range",
         "//scic/tokens:token",
         "//scic/tokens:token_readers",

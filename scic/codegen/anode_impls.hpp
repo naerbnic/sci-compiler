@@ -14,9 +14,9 @@
 #include "scic/codegen/alist.hpp"
 #include "scic/codegen/anode.hpp"
 #include "scic/codegen/common.hpp"
+#include "scic/codegen/output.hpp"
 #include "scic/codegen/target.hpp"
 #include "scic/listing.hpp"
-#include "scic/output.hpp"
 
 // Sizes of parameters
 #define OPSIZE 1
@@ -31,7 +31,7 @@ class ANComputedWord : public ANode {
   void list(ListingFile* listFile) const override {
     listFile->ListWord(*offset, value());
   }
-  void emit(OutputFile* out) const override { out->WriteWord(value()); }
+  void emit(OutputWriter* out) const override { out->WriteWord(value()); }
 
  protected:
   virtual SCIWord value() const = 0;
@@ -68,7 +68,7 @@ struct ANDispatch : ANode
   size_t size() const override;
   void list(ListingFile* listFile) const override;
   void collectFixups(FixupContext*) const override;
-  void emit(OutputFile*) const override;
+  void emit(OutputWriter*) const override;
 
   std::optional<std::string> name;
   ANode* target;
@@ -83,7 +83,7 @@ struct ANWord : ANode
 
   size_t size() const override;
   void list(ListingFile* listFile) const override;
-  void emit(OutputFile*) const override;
+  void emit(OutputWriter*) const override;
 
   int value;
 };
@@ -120,7 +120,7 @@ struct ANText : ANode
   size_t setOffset(size_t ofs) override;  // set offset to ofs, return new ofs
   size_t size() const override;
   void list(ListingFile* listFile) const override;
-  void emit(OutputFile*) const override;
+  void emit(OutputWriter*) const override;
 
   std::string text;
 };
@@ -183,7 +183,7 @@ struct ANProp : ANode
 
   size_t size() const override;
   void list(ListingFile* listFile) const override;
-  void emit(OutputFile*) const override;
+  void emit(OutputWriter*) const override;
 
   std::string name;  // pointer to selector's symbol
 };
@@ -239,7 +239,7 @@ class ANLabel : public ANOpCode
 
   size_t size() const override;
   void list(ListingFile* listFile) const override;
-  void emit(OutputFile*) const override;
+  void emit(OutputWriter*) const override;
 
   uint32_t number;  // label number
 
@@ -257,7 +257,7 @@ struct ANOpUnsign : ANOpCode
 
   size_t size() const override;
   void list(ListingFile* listFile) const override;
-  void emit(OutputFile*) const override;
+  void emit(OutputWriter*) const override;
 
   uint32_t value;
   std::optional<std::string> name;
@@ -271,7 +271,7 @@ struct ANOpSign : ANOpCode
 
   size_t size() const override;
   void list(ListingFile* listFile) const override;
-  void emit(OutputFile*) const override;
+  void emit(OutputWriter*) const override;
 
   int value;
   std::optional<std::string> name;
@@ -285,7 +285,7 @@ struct ANOpExtern : ANOpCode
 
   size_t size() const override;
   void list(ListingFile* listFile) const override;
-  void emit(OutputFile*) const override;
+  void emit(OutputWriter*) const override;
 
   SciTargetStrategy const* sci_target;
   int32_t module;    // module # of destination
@@ -301,7 +301,7 @@ struct ANCall : ANOpCode {
   size_t size() const override;
   bool tryShrink() override;
   void list(ListingFile* listFile) const override;
-  void emit(OutputFile*) const override;
+  void emit(OutputWriter*) const override;
 
   SciTargetStrategy const* sci_target;
   uint32_t numArgs;     // number of arguments
@@ -318,7 +318,7 @@ struct ANBranch : ANOpCode
   size_t size() const override;
   bool tryShrink() override;
   void list(ListingFile* listFile) const override;
-  void emit(OutputFile*) const override;
+  void emit(OutputWriter*) const override;
 
   ANLabel const* target;
 };
@@ -333,7 +333,7 @@ struct ANVarAccess : ANOpCode
 
   size_t size() const override;
   void list(ListingFile* listFile) const override;
-  void emit(OutputFile*) const override;
+  void emit(OutputWriter*) const override;
 
   uint32_t addr;                    // variable address
   std::optional<std::string> name;  //  variable name
@@ -348,7 +348,7 @@ struct ANOpOfs : ANOpCode
   size_t size() const override;
   void list(ListingFile* listFile) const override;
   void collectFixups(FixupContext*) const override;
-  void emit(OutputFile*) const override;
+  void emit(OutputWriter*) const override;
 
   ANText* text;  // the offset
 };
@@ -364,7 +364,7 @@ struct ANObjID : ANOpCode
   size_t size() const override;
   void list(ListingFile* listFile) const override;
   void collectFixups(FixupContext*) const override;
-  void emit(OutputFile*) const override;
+  void emit(OutputWriter*) const override;
 
   std::optional<std::string> name;
   ANode const* target;
@@ -379,7 +379,7 @@ struct ANEffctAddr : ANVarAccess
 
   size_t size() const override;
   void list(ListingFile* listFile) const override;
-  void emit(OutputFile*) const override;
+  void emit(OutputWriter*) const override;
 
   uint32_t eaType;  // type of access
 };
@@ -391,7 +391,7 @@ struct ANSend : ANOpCode
 
   size_t size() const override;
   void list(ListingFile* listFile) const override;
-  void emit(OutputFile*) const override;
+  void emit(OutputWriter*) const override;
 
   SciTargetStrategy const* sci_target;
   uint32_t numArgs;
@@ -405,7 +405,7 @@ struct ANSuper : ANSend
 
   size_t size() const override;
   void list(ListingFile* listFile) const override;
-  void emit(OutputFile*) const override;
+  void emit(OutputWriter*) const override;
 
   uint32_t classNum;
   std::string name;
@@ -417,7 +417,7 @@ struct ANFileName : ANOpCode {
   ANFileName(std::string name);
 
   void list(ListingFile* listFile) const override;
-  void emit(OutputFile*) const override;
+  void emit(OutputWriter*) const override;
   size_t size() const override;
 
  protected:
@@ -430,7 +430,7 @@ struct ANLineNum : ANOpCode {
   ANLineNum(int num);
 
   void list(ListingFile* listFile) const override;
-  void emit(OutputFile*) const override;
+  void emit(OutputWriter*) const override;
   size_t size() const override;
 
  protected:

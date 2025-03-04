@@ -9,9 +9,9 @@
 #include <utility>
 
 #include "scic/codegen/anode.hpp"
+#include "scic/codegen/output.hpp"
 #include "scic/list.hpp"
 #include "scic/listing.hpp"
-#include "scic/output.hpp"
 
 namespace codegen {
 
@@ -98,7 +98,7 @@ struct ANComposite : ANode {
     }
   }
 
-  void emit(OutputFile* out) const override {
+  void emit(OutputWriter* out) const override {
     for (auto const& node : list_) {
       node.emit(out);
     }

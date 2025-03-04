@@ -6,6 +6,7 @@
 
 #include "scic/codegen/alist.hpp"
 #include "scic/codegen/anode.hpp"
+#include "scic/codegen/output.hpp"
 #include "scic/listing.hpp"
 
 namespace codegen {
@@ -28,7 +29,7 @@ class FixupList {
   ~FixupList();
 
   void list(ListingFile* listFile);
-  void emit(HeapContext*, OutputFile*);
+  void emit(HeapContext*, OutputWriter*);
   size_t setOffset(size_t ofs);
 
   /**

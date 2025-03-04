@@ -18,10 +18,10 @@
 #include "scic/codegen/anode.hpp"
 #include "scic/codegen/common.hpp"
 #include "scic/codegen/optimize.hpp"
+#include "scic/codegen/output.hpp"
 #include "scic/codegen/target.hpp"
 #include "scic/listing.hpp"
 #include "scic/opcodes.hpp"
-#include "scic/output.hpp"
 
 namespace codegen {
 
@@ -62,7 +62,7 @@ void ANDispatch::collectFixups(FixupContext* fixup_ctxt) const {
   if (fixup_ctxt->HeapHasNode(target)) fixup_ctxt->AddRelFixup(this, 0);
 }
 
-void ANDispatch::emit(OutputFile* out) const {
+void ANDispatch::emit(OutputWriter* out) const {
   out->WriteWord((uint32_t)(target && name ? *target->offset : 0));
 }
 
@@ -78,7 +78,7 @@ void ANWord::list(ListingFile* listFile) const {
   listFile->ListWord(*offset, value);
 }
 
-void ANWord::emit(OutputFile* out) const { out->WriteWord(value); }
+void ANWord::emit(OutputWriter* out) const { out->WriteWord(value); }
 
 ///////////////////////////////////////////////////
 // Class ANTable
@@ -111,7 +111,7 @@ void ANText::list(ListingFile* listFile) const {
   listFile->ListText(*offset, text);
 }
 
-void ANText::emit(OutputFile* out) const {
+void ANText::emit(OutputWriter* out) const {
   out->WriteNullTerminatedString(text);
 }
 
@@ -169,7 +169,7 @@ void ANProp::list(ListingFile* listFile) const {
                        name);
 }
 
-void ANProp::emit(OutputFile* out) const { out->WriteWord(value()); }
+void ANProp::emit(OutputWriter* out) const { out->WriteWord(value()); }
 
 std::string_view ANIntProp::desc() const { return "prop"; }
 
@@ -203,7 +203,7 @@ void ANLabel::list(ListingFile* listFile) const {
   listFile->Listing(".%d", number);
 }
 
-void ANLabel::emit(OutputFile*) const {}
+void ANLabel::emit(OutputWriter*) const {}
 
 ///////////////////////////////////////////////////
 // Class ANOpUnsign
@@ -232,7 +232,7 @@ void ANOpUnsign::list(ListingFile* listFile) const {
     listFile->ListArg("$%-4x\t(%s)", (SCIUWord)value, *name);
 }
 
-void ANOpUnsign::emit(OutputFile* out) const {
+void ANOpUnsign::emit(OutputWriter* out) const {
   out->WriteOp(op);
   if (op & OP_BYTE)
     out->WriteByte(value);
@@ -259,7 +259,7 @@ void ANOpSign::list(ListingFile* listFile) const {
     listFile->ListArg("$%-4x\t(%s)", (SCIUWord)value, *name);
 }
 
-void ANOpSign::emit(OutputFile* out) const {
+void ANOpSign::emit(OutputWriter* out) const {
   out->WriteOp(op);
   if (op & OP_BYTE)
     out->WriteByte(value);
@@ -321,7 +321,7 @@ void ANOpExtern::list(ListingFile* listFile) const {
   sci_target->ListNumArgs(listFile, *offset + 1, numArgs);
 }
 
-void ANOpExtern::emit(OutputFile* out) const {
+void ANOpExtern::emit(OutputWriter* out) const {
   out->WriteOp(op);
   if ((op & ~OP_BYTE) == op_calle) {
     if (op & OP_BYTE)
@@ -379,7 +379,7 @@ void ANCall::list(ListingFile* listFile) const {
   sci_target->ListNumArgs(listFile, *offset + 1, numArgs);
 }
 
-void ANCall::emit(OutputFile* out) const {
+void ANCall::emit(OutputWriter* out) const {
   if (!target || !target->offset.has_value()) {
     throw std::runtime_error(absl::StrFormat("Undefined procedure: %s", name));
     return;
@@ -426,7 +426,7 @@ void ANBranch::list(ListingFile* listFile) const {
                     ((ANLabel*)target)->number);
 }
 
-void ANBranch::emit(OutputFile* out) const {
+void ANBranch::emit(OutputWriter* out) const {
   int n = *target->offset - (*offset + size());
 
   out->WriteOp(op);
@@ -454,7 +454,7 @@ void ANVarAccess::list(ListingFile* listFile) const {
     listFile->ListArg("$%-4x", addr);
 }
 
-void ANVarAccess::emit(OutputFile* out) const {
+void ANVarAccess::emit(OutputWriter* out) const {
   out->WriteOp(op);
   if (op & OP_BYTE)
     out->WriteByte(addr);
@@ -479,7 +479,7 @@ void ANOpOfs::collectFixups(FixupContext* fixup_ctxt) const {
   fixup_ctxt->AddRelFixup(this, 1);
 }
 
-void ANOpOfs::emit(OutputFile* out) const {
+void ANOpOfs::emit(OutputWriter* out) const {
   out->WriteOp(op);
   out->WriteWord(*text->offset);
 }
@@ -505,7 +505,7 @@ void ANObjID::list(ListingFile* listFile) const {
 void ANObjID::collectFixups(FixupContext* fixup_ctxt) const {
   fixup_ctxt->AddRelFixup(this, 1);
 }
-void ANObjID::emit(OutputFile* out) const {
+void ANObjID::emit(OutputWriter* out) const {
   out->WriteOp(op);
   out->WriteWord(*target->offset);
 }
@@ -524,7 +524,7 @@ void ANEffctAddr::list(ListingFile* listFile) const {
   listFile->ListArg("$%-4x\t(%s)", addr, *name);
 }
 
-void ANEffctAddr::emit(OutputFile* out) const {
+void ANEffctAddr::emit(OutputWriter* out) const {
   out->WriteOp(op);
   if (op & OP_BYTE) {
     out->WriteByte(eaType);
@@ -550,7 +550,7 @@ void ANSend::list(ListingFile* listFile) const {
   sci_target->ListNumArgs(listFile, *offset + 1, numArgs);
 }
 
-void ANSend::emit(OutputFile* out) const {
+void ANSend::emit(OutputWriter* out) const {
   out->WriteOp(op);
   sci_target->WriteNumArgs(out, numArgs);
 }
@@ -575,7 +575,7 @@ void ANSuper::list(ListingFile* listFile) const {
   sci_target->ListNumArgs(listFile, *offset + 1, numArgs);
 }
 
-void ANSuper::emit(OutputFile* out) const {
+void ANSuper::emit(OutputWriter* out) const {
   out->WriteOp(op);
   if (op & OP_BYTE)
     out->WriteByte(classNum);
@@ -593,7 +593,7 @@ void ANFileName::list(ListingFile* listFile) const {
   listFile->Listing("file");
 }
 
-void ANFileName::emit(OutputFile* out) const {
+void ANFileName::emit(OutputWriter* out) const {
   out->WriteOp(op);
   out->WriteNullTerminatedString(name);
 }
@@ -608,7 +608,7 @@ void ANLineNum::list(ListingFile* listFile) const {
   listFile->ListSourceLine(num);
 }
 
-void ANLineNum::emit(OutputFile* out) const {
+void ANLineNum::emit(OutputWriter* out) const {
   out->WriteOp(op);
   out->WriteWord(num);
 }

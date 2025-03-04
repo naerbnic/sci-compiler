@@ -19,10 +19,10 @@
 #include "scic/codegen/anode_impls.hpp"
 #include "scic/codegen/common.hpp"
 #include "scic/codegen/fixup_list.hpp"
+#include "scic/codegen/output.hpp"
 #include "scic/codegen/target.hpp"
 #include "scic/listing.hpp"
 #include "scic/opcodes.hpp"
-#include "scic/output.hpp"
 #include "util/types/choice.hpp"
 #include "util/types/forward_ref.hpp"
 
@@ -82,7 +82,7 @@ class ANVars : public ANode
     }
   }
 
-  void emit(OutputFile* out) const override {
+  void emit(OutputWriter* out) const override {
     out->WriteWord(theVars->size());
 
     for (Var const& var : *theVars) {
@@ -210,7 +210,7 @@ class ANDispTable : public ANode {
     }
   }
 
-  void emit(OutputFile* out) const override {
+  void emit(OutputWriter* out) const override {
     out->WriteWord(dispatches_.size());
     for (auto const& dispatch : dispatches_) {
       dispatch->emit(out);
@@ -646,7 +646,7 @@ void CodeGenerator::InitAsm() {
 }
 
 void CodeGenerator::Assemble(std::string_view source_file_name,
-                             uint16_t scriptNum, ListingFile* listFile) {
+                             ListingFile* listFile, OutputFiles* outputFiles) {
   if (!active) {
     throw std::runtime_error("Compiler not active");
   }
@@ -661,24 +661,17 @@ void CodeGenerator::Assemble(std::string_view source_file_name,
   // offsets.
   heapList->setOffset(0);
 
-  ObjFiles obj_files = OpenObjFiles(scriptNum);
+  // Write headers for object files.
+  outputFiles->GetHeap()->WriteByte(0x11);
+  outputFiles->GetHeap()->WriteByte(0x00);
 
-  const std::size_t MAX_INFO_FILE_NAME = 1024;
-
-  char infoFileName[MAX_INFO_FILE_NAME];
-  if (snprintf(infoFileName, 1024, "%d.inf", (unsigned short)scriptNum) >=
-      (int)MAX_INFO_FILE_NAME) {
-    fprintf(stderr, "Error: info file name too long\n");
-    exit(1);
-  }
-  FILE* infoFile = fopen(infoFileName, "wb");
-  absl::FPrintF(infoFile, "%s\n", source_file_name);
-  fclose(infoFile);
+  outputFiles->GetHunk()->WriteByte(0x02);
+  outputFiles->GetHunk()->WriteByte(0x00);
 
   {
     CompilerHeapContext heapContext(this);
-    heapList->emit(&heapContext, obj_files.heap.get());
-    hunkList->emit(&heapContext, obj_files.hunk.get());
+    heapList->emit(&heapContext, outputFiles->GetHeap());
+    hunkList->emit(&heapContext, outputFiles->GetHunk());
   }
 
   // Now generate object code.

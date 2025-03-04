@@ -3,8 +3,8 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "scic/codegen/output.hpp"
 #include "scic/listing.hpp"
-#include "scic/output.hpp"
 
 namespace codegen {
 
@@ -23,7 +23,7 @@ bool ANode::tryShrink() { return false; };
 
 void ANode::collectFixups(FixupContext*) const {}
 
-void ANode::emit(OutputFile*) const {}
+void ANode::emit(OutputWriter*) const {}
 
 void ANode::list(ListingFile* listFile) const {}
 
@@ -43,6 +43,6 @@ void ANOpCode::list(ListingFile* listFile) const {
   listFile->ListOp(*offset, op);
 }
 
-void ANOpCode::emit(OutputFile* out) const { out->WriteOp(op); }
+void ANOpCode::emit(OutputWriter* out) const { out->WriteOp(op); }
 
 }  // namespace codegen
