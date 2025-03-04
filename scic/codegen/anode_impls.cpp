@@ -17,10 +17,10 @@
 #include "scic/codegen/alist.hpp"
 #include "scic/codegen/anode.hpp"
 #include "scic/codegen/common.hpp"
+#include "scic/codegen/listing.hpp"
 #include "scic/codegen/optimize.hpp"
 #include "scic/codegen/output.hpp"
 #include "scic/codegen/target.hpp"
-#include "scic/listing.hpp"
 #include "scic/opcodes.hpp"
 
 namespace codegen {
@@ -605,7 +605,9 @@ size_t ANFileName::size() const { return 1 + name.length() + 1; }
 ANLineNum::ANLineNum(int num) : ANOpCode(op_lineNum), num(num) {}
 
 void ANLineNum::list(ListingFile* listFile) const {
-  listFile->ListSourceLine(num);
+  // FIXME: We want to be able to report the source line here. Perhaps
+  // we can take text ranges and store them in the ANLineNum node?
+  // listFile->ListSourceLine(num);
 }
 
 void ANLineNum::emit(OutputWriter* out) const {

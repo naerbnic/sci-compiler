@@ -24,9 +24,9 @@ cc_library(
     deps = [
         ":common",
         ":list",
+        ":listing",
         ":output",
         ":target",
-        "//scic:listing",
         "//scic:opcodes",
         "//util/types:casts",
         "@abseil-cpp//absl/strings:str_format",
@@ -40,8 +40,8 @@ cc_library(
     visibility = ["//visibility:private"],
     deps = [
         ":anode",
+        ":listing",
         ":output",
-        "//scic:listing",
     ],
 )
 
@@ -51,8 +51,8 @@ cc_library(
     hdrs = ["target.hpp"],
     visibility = ["//visibility:private"],
     deps = [
+        ":listing",
         ":output",
-        "//scic:listing",
     ],
 )
 
@@ -73,6 +73,19 @@ cc_library(
 )
 
 cc_library(
+    name = "listing",
+    srcs = ["listing.cpp"],
+    hdrs = ["listing.hpp"],
+    deps = [
+        "//scic:opcodes",
+        "@abseil-cpp//absl/functional:function_ref",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:str_format",
+        "@abseil-cpp//absl/strings:string_view",
+    ],
+)
+
+cc_library(
     name = "code_generator",
     srcs = ["code_generator.cpp"],
     hdrs = [
@@ -82,9 +95,9 @@ cc_library(
         ":anode",
         ":common",
         ":fixup_list",
+        ":listing",
         ":output",
         ":target",
-        "//scic:listing",
         "//scic:opcodes",
         "//util/types:choice",
         "//util/types:forward_ref",

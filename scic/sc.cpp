@@ -21,11 +21,11 @@
 #include "argparse/argparse.hpp"
 #include "scic/banner.hpp"
 #include "scic/builtins.hpp"
+#include "scic/codegen/listing.hpp"
 #include "scic/config.hpp"
 #include "scic/error.hpp"
 #include "scic/global_compiler.hpp"
 #include "scic/input.hpp"
-#include "scic/listing.hpp"
 #include "scic/object.hpp"
 #include "scic/output.hpp"
 #include "scic/parse.hpp"
@@ -228,10 +228,11 @@ static void CompileFile(std::string_view fileName, bool listCode) {
   if (gScript == -1)
     Error("No script number specified.  Can't write output files.");
   else {
-    auto listFile = listCode ? ListingFile::Open(gScript, sourceFileName)
-                             : ListingFile::Null();
+    auto path = gConfig->outDir / absl::StrFormat("%d.sl", gScript);
+    auto listFile = listCode ? codegen::ListingFile::Open(path)
+                             : codegen::ListingFile::Null();
     auto obj_files = OpenObjFiles(gScript);
-    gSc->Assemble(gInputState.GetTopLevelFileName(), listFile.get(),
+    gSc->Assemble(gInputState.GetTopLevelFileName(), gScript, listFile.get(),
                   &obj_files);
   }
   totalErrors += gNumErrors;

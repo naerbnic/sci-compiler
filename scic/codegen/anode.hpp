@@ -6,8 +6,8 @@
 #include <optional>
 
 #include "scic/codegen/list.hpp"
+#include "scic/codegen/listing.hpp"
 #include "scic/codegen/output.hpp"
-#include "scic/listing.hpp"
 
 namespace codegen {
 

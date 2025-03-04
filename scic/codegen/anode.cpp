@@ -3,8 +3,8 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "scic/codegen/listing.hpp"
 #include "scic/codegen/output.hpp"
-#include "scic/listing.hpp"
 
 namespace codegen {
 

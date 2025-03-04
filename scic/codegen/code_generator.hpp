@@ -18,7 +18,6 @@
 #include "scic/codegen/fixup_list.hpp"
 #include "scic/codegen/output.hpp"
 #include "scic/codegen/target.hpp"
-#include "scic/listing.hpp"
 #include "util/types/choice.hpp"
 #include "util/types/forward_ref.hpp"
 
@@ -323,8 +322,8 @@ class CodeGenerator {
   static std::unique_ptr<CodeGenerator> Create(Options options);
   ~CodeGenerator();
 
-  void Assemble(std::string_view source_file_name, ListingFile* listFile,
-                OutputFiles* outputFiles);
+  void Assemble(std::string_view source_file_name, std::size_t scriptNum,
+                ListingFile* listFile, OutputFiles* outputFiles);
 
   PtrRef CreatePtrRef();
 

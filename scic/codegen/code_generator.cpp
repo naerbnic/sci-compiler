@@ -19,9 +19,9 @@
 #include "scic/codegen/anode_impls.hpp"
 #include "scic/codegen/common.hpp"
 #include "scic/codegen/fixup_list.hpp"
+#include "scic/codegen/listing.hpp"
 #include "scic/codegen/output.hpp"
 #include "scic/codegen/target.hpp"
-#include "scic/listing.hpp"
 #include "scic/opcodes.hpp"
 #include "util/types/choice.hpp"
 #include "util/types/forward_ref.hpp"
@@ -646,7 +646,8 @@ void CodeGenerator::InitAsm() {
 }
 
 void CodeGenerator::Assemble(std::string_view source_file_name,
-                             ListingFile* listFile, OutputFiles* outputFiles) {
+                             std::size_t scriptNum, ListingFile* listFile,
+                             OutputFiles* outputFiles) {
   if (!active) {
     throw std::runtime_error("Compiler not active");
   }
@@ -675,6 +676,11 @@ void CodeGenerator::Assemble(std::string_view source_file_name,
   }
 
   // Now generate object code.
+
+  listFile->Listing("\n\t\t\t\tListing of %s:\t[script %d]\n\n",
+                    source_file_name, scriptNum);
+  listFile->Listing("LINE/\tOFFSET\tCODE\t\t\t\tNAME");
+  listFile->Listing("LABEL\t(HEX)\n");
   listFile->Listing(
       "----------------------\n"
       "-------- Heap --------\n"

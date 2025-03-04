@@ -7,8 +7,8 @@
 #include "scic/codegen/alist.hpp"
 #include "scic/codegen/anode.hpp"
 #include "scic/codegen/anode_impls.hpp"
+#include "scic/codegen/listing.hpp"
 #include "scic/codegen/output.hpp"
-#include "scic/listing.hpp"
 
 namespace codegen {
 namespace {
