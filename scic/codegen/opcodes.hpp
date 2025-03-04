@@ -1,7 +1,7 @@
 //	opcodes.hpp
 
-#ifndef OPCODES_HPP
-#define OPCODES_HPP
+#ifndef CODEGEN_OPCODES_HPP
+#define CODEGEN_OPCODES_HPP
 
 #include <cstdint>
 

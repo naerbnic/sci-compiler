@@ -73,11 +73,6 @@ cc_library(
 )
 
 cc_library(
-    name = "opcodes",
-    hdrs = ["opcodes.hpp"],
-)
-
-cc_library(
     name = "debug_utils",
     hdrs = ["debug_utils.hpp"],
     deps = [

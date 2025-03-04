@@ -16,8 +16,8 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "scic/codegen/opcodes.hpp"
 #include "scic/codegen/text_sink.hpp"
-#include "scic/opcodes.hpp"
 
 namespace codegen {
 namespace {

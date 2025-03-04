@@ -18,10 +18,10 @@
 #include "scic/codegen/anode.hpp"
 #include "scic/codegen/common.hpp"
 #include "scic/codegen/listing.hpp"
+#include "scic/codegen/opcodes.hpp"
 #include "scic/codegen/optimize.hpp"
 #include "scic/codegen/output.hpp"
 #include "scic/codegen/target.hpp"
-#include "scic/opcodes.hpp"
 
 namespace codegen {
 

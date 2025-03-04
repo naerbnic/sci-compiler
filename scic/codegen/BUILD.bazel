@@ -25,9 +25,9 @@ cc_library(
         ":common",
         ":list",
         ":listing",
+        ":opcodes",
         ":output",
         ":target",
-        "//scic:opcodes",
         "//util/types:casts",
         "@abseil-cpp//absl/strings:str_format",
     ],
@@ -80,13 +80,19 @@ cc_library(
 )
 
 cc_library(
+    name = "opcodes",
+    hdrs = ["opcodes.hpp"],
+    visibility = ["//visibility:private"],
+)
+
+cc_library(
     name = "listing",
     srcs = ["listing.cpp"],
     hdrs = ["listing.hpp"],
     visibility = ["//visibility:private"],
     deps = [
+        ":opcodes",
         ":text_sink",
-        "//scic:opcodes",
         "@abseil-cpp//absl/functional:function_ref",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
@@ -105,10 +111,10 @@ cc_library(
         ":common",
         ":fixup_list",
         ":listing",
+        ":opcodes",
         ":output",
         ":target",
         ":text_sink",
-        "//scic:opcodes",
         "//util/types:choice",
         "//util/types:forward_ref",
         "@abseil-cpp//absl/memory",

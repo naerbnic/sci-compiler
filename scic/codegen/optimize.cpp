@@ -12,7 +12,7 @@
 #include "scic/codegen/anode.hpp"
 #include "scic/codegen/anode_impls.hpp"
 #include "scic/codegen/list.hpp"
-#include "scic/opcodes.hpp"
+#include "scic/codegen/opcodes.hpp"
 #include "util/types/casts.hpp"
 
 namespace codegen {

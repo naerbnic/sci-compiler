@@ -20,10 +20,10 @@
 #include "scic/codegen/common.hpp"
 #include "scic/codegen/fixup_list.hpp"
 #include "scic/codegen/listing.hpp"
+#include "scic/codegen/opcodes.hpp"
 #include "scic/codegen/output.hpp"
 #include "scic/codegen/target.hpp"
 #include "scic/codegen/text_sink.hpp"
-#include "scic/opcodes.hpp"
 #include "util/types/choice.hpp"
 #include "util/types/forward_ref.hpp"
 
