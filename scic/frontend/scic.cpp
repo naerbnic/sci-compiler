@@ -1,10 +1,15 @@
 #include <algorithm>
+#include <bit>
+#include <cstddef>
+#include <cstdint>
 #include <exception>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <ostream>
 #include <sstream>
+#include <stdexcept>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -15,6 +20,8 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "scic/codegen/code_generator.hpp"
+#include "scic/codegen/output.hpp"
+#include "scic/codegen/text_sink.hpp"
 #include "scic/frontend/flags.hpp"
 #include "scic/parsers/include_context.hpp"
 #include "scic/parsers/list_tree/parser.hpp"
@@ -89,6 +96,81 @@ class ToolIncludeContext : public parsers::IncludeContext {
  private:
   std::vector<std::filesystem::path> include_paths_;
 };
+
+class StreamOutputWriter : public codegen::OutputWriter {
+ public:
+  StreamOutputWriter(std::ofstream stream) : stream_(std::move(stream)) {}
+
+  void WriteByte(std::uint8_t c) override { stream_.put(c); }
+  void WriteOp(std::uint8_t op) override { WriteByte(op); }
+  void WriteWord(std::int16_t w) override {
+    // write a word in proper byte order
+    //	NOTE:  this code assumes knowledge of the size of SCIWord
+
+    // Ensure we're working with the raw bits by using an unsigned value.
+    uint16_t u = w;
+
+    std::endian targetEndian = std::endian::big;
+
+    if (std::endian::native != targetEndian) {
+      // Swap the bytes.
+      u = (u >> 8) | (u << 8);
+    }
+
+    Write(&u, sizeof u);
+  }
+  void Write(const void* ptr, std::size_t size) override {
+    stream_.write(reinterpret_cast<const char*>(ptr), size);
+  }
+  int WriteNullTerminatedString(std::string_view str) override {
+    Write(str.data(), str.size());
+    WriteByte(0);
+    return str.size() + 1;
+  }
+  int Write(std::string_view str) override {
+    WriteWord(str.size());
+    Write(str.data(), str.size());
+    return str.size() + 2;
+  }
+
+ private:
+  std::ofstream stream_;
+};
+
+class StreamOutputFiles : public codegen::OutputFiles {
+ public:
+  StreamOutputFiles(std::unique_ptr<StreamOutputWriter> heap,
+                    std::unique_ptr<StreamOutputWriter> hunk)
+      : heap_(std::move(heap)), hunk_(std::move(hunk)) {}
+
+  codegen::OutputWriter* GetHeap() override { return heap_.get(); }
+  codegen::OutputWriter* GetHunk() override { return hunk_.get(); }
+
+ private:
+  std::unique_ptr<StreamOutputWriter> heap_;
+  std::unique_ptr<StreamOutputWriter> hunk_;
+};
+
+std::unique_ptr<StreamOutputWriter> OpenOutputWriter(
+    std::filesystem::path const& path) {
+  std::ofstream file;
+  file.open(path, std::ios::out | std::ios::trunc | std::ios::binary);
+  if (!file.good()) {
+    throw std::runtime_error("Could not open file");
+  }
+
+  return std::make_unique<StreamOutputWriter>(std::move(file));
+}
+
+std::unique_ptr<codegen::OutputFiles> CreateOutputFilesForScript(
+    std::filesystem::path const& root_path, std::size_t script_num) {
+  auto heap =
+      OpenOutputWriter(root_path / absl::StrFormat("%d.hep", script_num));
+  auto hunk =
+      OpenOutputWriter(root_path / absl::StrFormat("%d.scr", script_num));
+
+  return std::make_unique<StreamOutputFiles>(std::move(heap), std::move(hunk));
+}
 
 absl::Status RunMain(const CompilerFlags& flags) {
   // Load our files into memory.
@@ -172,7 +254,17 @@ absl::Status RunMain(const CompilerFlags& flags) {
     RETURN_IF_ERROR(sem::BuildCode(module));
   }
 
-  // FIXME: Add output of generated code.
+  for (auto const* module : compilation_env.module_envs()) {
+    auto output_files = CreateOutputFilesForScript(
+        flags.output_directory, module->script_num().value());
+
+    auto list_sink = codegen::TextSink::FileTrunc(
+        flags.output_directory /
+        absl::StrFormat("%d.sl", module->script_num().value()));
+
+    module->codegen()->Assemble("<unknown>", module->script_num().value(),
+                                list_sink.get(), output_files.get());
+  }
 
   return absl::OkStatus();
 }

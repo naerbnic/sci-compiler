@@ -1,6 +1,7 @@
 #ifndef FRONTEND_FLAGS_HPP
 #define FRONTEND_FLAGS_HPP
 
+#include <filesystem>
 #include <map>
 #include <string>
 #include <vector>
@@ -14,7 +15,7 @@ class CompilerFlags {
   bool include_debug_info = false;
   std::map<std::string, std::string> command_line_defines;
   bool generate_code_listing = false;
-  std::string output_directory;
+  std::filesystem::path output_directory;
   bool verbose_output = false;
   bool output_words_high_byte_first = false;
   codegen::CodeGenerator::Options codegen_options;

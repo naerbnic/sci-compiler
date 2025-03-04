@@ -10,7 +10,6 @@ namespace codegen {
 class OutputWriter {
  public:
   virtual ~OutputWriter() = default;
-  virtual void SeekTo(long offset) = 0;
   virtual void WriteByte(std::uint8_t) = 0;
   virtual void WriteOp(std::uint8_t op) = 0;
   virtual void WriteWord(std::int16_t) = 0;

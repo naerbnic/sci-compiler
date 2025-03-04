@@ -19,7 +19,7 @@ class OutputFile : public codegen::OutputWriter {
   OutputFile(std::string fileName);
   ~OutputFile();
 
-  void SeekTo(long offset) override;
+  void SeekTo(long offset);
   void WriteByte(uint8_t) override;
   void WriteOp(uint8_t op) override { WriteByte(op); }
   void WriteWord(int16_t) override;
