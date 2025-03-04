@@ -78,20 +78,6 @@ cc_library(
 )
 
 cc_library(
-    name = "listing",
-    srcs = ["listing.cpp"],
-    hdrs = ["listing.hpp"],
-    deps = [
-        ":config",
-        ":opcodes",
-        "@abseil-cpp//absl/base:nullability",
-        "@abseil-cpp//absl/functional:function_ref",
-        "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:str_format",
-    ],
-)
-
-cc_library(
     name = "debug_utils",
     hdrs = ["debug_utils.hpp"],
     deps = [
