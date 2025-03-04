@@ -73,10 +73,18 @@ cc_library(
 )
 
 cc_library(
+    name = "text_sink",
+    srcs = ["text_sink.cpp"],
+    hdrs = ["text_sink.hpp"],
+    deps = ["@abseil-cpp//absl/strings:str_format"],
+)
+
+cc_library(
     name = "listing",
     srcs = ["listing.cpp"],
     hdrs = ["listing.hpp"],
     deps = [
+        ":text_sink",
         "//scic:opcodes",
         "@abseil-cpp//absl/functional:function_ref",
         "@abseil-cpp//absl/strings",
@@ -98,6 +106,7 @@ cc_library(
         ":listing",
         ":output",
         ":target",
+        ":text_sink",
         "//scic:opcodes",
         "//util/types:choice",
         "//util/types:forward_ref",

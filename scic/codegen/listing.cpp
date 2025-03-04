@@ -7,19 +7,16 @@
 
 #include <cstdint>
 #include <cstdio>
-#include <filesystem>
-#include <fstream>
-#include <ios>
 #include <memory>
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <utility>
 
 #include "absl/functional/function_ref.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "scic/codegen/text_sink.hpp"
 #include "scic/opcodes.hpp"
 
 namespace codegen {
@@ -114,19 +111,13 @@ struct OpStr {
 
 class ListingFileImpl : public ListingFile {
  public:
-  explicit ListingFileImpl(std::fstream listFile)
-      : listFile_(std::move(listFile)) {}
-
-  ~ListingFileImpl() override { listFile_.close(); }
+  explicit ListingFileImpl(TextSink* sink) : sink_(sink) {}
 
  protected:
-  bool Write(std::string_view text) override {
-    listFile_ << text;
-    return listFile_.good();
-  }
+  bool Write(std::string_view text) override { return sink_->Write(text); }
 
  private:
-  std::fstream listFile_;
+  TextSink* sink_;
 };
 
 class NullListingFileImpl : public ListingFile {
@@ -153,17 +144,8 @@ class ListingFileSink {
   }
 };
 
-std::unique_ptr<ListingFile> ListingFile::Open(
-    std::filesystem::path sourceFileName) {
-  std::fstream listFile;
-  listFile.exceptions(std::fstream::failbit | std::fstream::badbit);
-  listFile.open(sourceFileName, std::ios::out | std::ios::trunc);
-  if (!listFile.good()) {
-    throw std::runtime_error(
-        absl::StrFormat("Can't open %s for listing", sourceFileName));
-  }
-
-  auto result = std::make_unique<ListingFileImpl>(std::move(listFile));
+std::unique_ptr<ListingFile> ListingFile::ToSink(TextSink* sink) {
+  auto result = std::make_unique<ListingFileImpl>(sink);
 
   return result;
 }

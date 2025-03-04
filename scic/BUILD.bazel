@@ -156,7 +156,7 @@ cc_binary(
         ":symtypes",
         "//scic/codegen:code_generator",
         "//scic/codegen:common",
-        "//scic/codegen:listing",
+        "//scic/codegen:text_sink",
         "//util/platform",
         "//util/types:overload",
         "@abseil-cpp//absl/cleanup",

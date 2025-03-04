@@ -4,12 +4,12 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
-#include <filesystem>
 #include <memory>
 #include <string_view>
 
 #include "absl/functional/function_ref.h"
 #include "absl/strings/str_format.h"
+#include "scic/codegen/text_sink.hpp"
 
 namespace codegen {
 
@@ -18,8 +18,7 @@ class ListingFileSink;
 
 class ListingFile {
  public:
-  static std::unique_ptr<ListingFile> Open(
-      std::filesystem::path sourceFileName);
+  static std::unique_ptr<ListingFile> ToSink(TextSink* sink);
   static std::unique_ptr<ListingFile> Null();
 
   virtual ~ListingFile() = default;

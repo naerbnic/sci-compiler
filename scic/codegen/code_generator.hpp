@@ -18,6 +18,7 @@
 #include "scic/codegen/fixup_list.hpp"
 #include "scic/codegen/output.hpp"
 #include "scic/codegen/target.hpp"
+#include "scic/codegen/text_sink.hpp"
 #include "util/types/choice.hpp"
 #include "util/types/forward_ref.hpp"
 
@@ -323,7 +324,7 @@ class CodeGenerator {
   ~CodeGenerator();
 
   void Assemble(std::string_view source_file_name, std::size_t scriptNum,
-                ListingFile* listFile, OutputFiles* outputFiles);
+                TextSink* listFile, OutputFiles* outputFiles);
 
   PtrRef CreatePtrRef();
 

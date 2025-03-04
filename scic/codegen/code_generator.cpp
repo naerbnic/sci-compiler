@@ -22,6 +22,7 @@
 #include "scic/codegen/listing.hpp"
 #include "scic/codegen/output.hpp"
 #include "scic/codegen/target.hpp"
+#include "scic/codegen/text_sink.hpp"
 #include "scic/opcodes.hpp"
 #include "util/types/choice.hpp"
 #include "util/types/forward_ref.hpp"
@@ -646,7 +647,7 @@ void CodeGenerator::InitAsm() {
 }
 
 void CodeGenerator::Assemble(std::string_view source_file_name,
-                             std::size_t scriptNum, ListingFile* listFile,
+                             std::size_t scriptNum, TextSink* listSink,
                              OutputFiles* outputFiles) {
   if (!active) {
     throw std::runtime_error("Compiler not active");
@@ -677,6 +678,8 @@ void CodeGenerator::Assemble(std::string_view source_file_name,
 
   // Now generate object code.
 
+  auto listFile = ListingFile::ToSink(listSink);
+
   listFile->Listing("\n\t\t\t\tListing of %s:\t[script %d]\n\n",
                     source_file_name, scriptNum);
   listFile->Listing("LINE/\tOFFSET\tCODE\t\t\t\tNAME");
@@ -685,13 +688,13 @@ void CodeGenerator::Assemble(std::string_view source_file_name,
       "----------------------\n"
       "-------- Heap --------\n"
       "----------------------\n");
-  heapList->list(listFile);
+  heapList->list(listFile.get());
   listFile->Listing(
       "\n\n\n\n"
       "----------------------\n"
       "-------- Hunk --------\n"
       "----------------------\n");
-  hunkList->list(listFile);
+  hunkList->list(listFile.get());
 
   hunkList = nullptr;
   heapList = nullptr;
