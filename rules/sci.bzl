@@ -173,7 +173,7 @@ def _sci_binary_impl(ctx):
         script[_SciScriptInfo].headers
         for script in ctx.attr.srcs
     ] + [system_info.headers]).to_list()
-    include_dirs = [hdr.dirname for hdr in hdrs]
+    include_dirs = set([hdr.dirname for hdr in hdrs])
     for src_value in ctx.attr.srcs:
         src_info = src_value[_SciScriptInfo]
         srcs.append(src_info.src)
@@ -200,7 +200,7 @@ def _sci_binary_impl(ctx):
                 .add("--classdef_file", build_env_info.classdef_file)
                 .add("--system_header", system_info.system_header)
                 .add("--game_header", build_env_info.game_header)
-                .add_all(include_dirs, before_each = "-I")
+                .add_all(list(include_dirs), before_each = "-I")
                 .add("-o", out_dir.path)
                 .add_all(srcs),
         ],
