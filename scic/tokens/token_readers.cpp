@@ -84,7 +84,7 @@ status::StatusOr<int> CharDigitValue(CharStream& stream, uint8_t base) {
     return TokenError(stream, "Invalid digit: %c", c);
   }
   stream++;
-  return index;
+  return int(index);
 }
 
 }  // namespace

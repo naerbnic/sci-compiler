@@ -48,7 +48,7 @@ template <class... Args>
 status::StatusOr<std::size_t> GetOnlyNonnull(void const* ptr, Args&&... args) {
   if (ptr) {
     if (AreAllNull(std::forward<Args>(args)...)) {
-      return 0;
+      return 0UL;
     } else {
       return status::InvalidArgumentError("Multiple non-nullptr values");
     }

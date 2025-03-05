@@ -4,14 +4,14 @@
 #include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/status/statusor.h"
+#include "util/status/result.hpp"
 
 namespace status {
 
 using Status = absl::Status;
 
 template <class T>
-using StatusOr = absl::StatusOr<T>;
+using StatusOr = util::Result<T, Status>;
 
 inline Status OkStatus() { return absl::OkStatus(); }
 inline Status NotFoundError(std::string_view message) {

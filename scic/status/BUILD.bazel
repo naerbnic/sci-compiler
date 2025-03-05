@@ -6,7 +6,7 @@ cc_library(
     name = "status",
     hdrs = ["status.hpp"],
     deps = [
+        "//util/status:result",
         "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/status:statusor",
     ],
 )

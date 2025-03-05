@@ -29,8 +29,8 @@ concept ConvertibleToExclusive =
 template <class T, class Err>
 class Result {
  public:
-  using ValueType = T;
-  using ErrType = Err;
+  using value_type = T;
+  using err_type = Err;
   static Result ValueOf(T value) { return Result(Ok{std::move(value)}); }
   static Result ErrorOf(Err err) { return Result(Error{std::move(err)}); }
 
@@ -144,7 +144,7 @@ class Result {
 
   friend std::ostream& operator<<(std::ostream& os,
                                   Result<T, Err> const& result)
-    requires(requires(Value const& v, Err const& err, std::ostream& os) {
+    requires(requires(T const& v, Err const& err, std::ostream& os) {
       { os << v } -> std::same_as<std::ostream&>;
       { os << err } -> std::same_as<std::ostream&>;
     })
@@ -181,7 +181,7 @@ auto ApplyResults(F&& body, Result<Ts, Errs>&&... values) {
   if constexpr (util::TemplateTraits<Result>::IsSpecialization<ReturnValue>) {
     // If this is a Result instance, then all of the errors should be
     // convertible to that error type.
-    using ErrType = typename ReturnValue::ErrType;
+    using ErrType = typename ReturnValue::err_type;
     static_assert((std::convertible_to<Errs, ErrType> && ...));
 
     std::optional<ErrType> min_err;

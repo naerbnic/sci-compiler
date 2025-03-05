@@ -532,7 +532,7 @@ status::StatusOr<std::size_t> BuildSendClause(ExprContext* ctx,
     return num_args + 1;
   } else {
     ctx->func_builder()->AddPushImmediate(0);
-    return 2;
+    return 2UL;
   }
 }
 
