@@ -1,0 +1,14 @@
+package(
+    default_visibility = ["//scic:__subpackages__"],
+)
+
+cc_library(
+    name = "debug_utils",
+    hdrs = ["debug_utils.hpp"],
+    deps = [
+        "@abseil-cpp//absl/debugging:stacktrace",
+        "@abseil-cpp//absl/debugging:symbolize",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)

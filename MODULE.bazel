@@ -30,4 +30,4 @@ git_override(
     # Even better, set up Renovate and let it do the work for you (see "Suggestion: Updates" in the README).
 )
 
-register_toolchains("//toolchain:compiled_sci_compiler_toolchain", dev_dependency = True)
+register_toolchains("//toolchain:updated_sci_compiler_toolchain", dev_dependency = True)

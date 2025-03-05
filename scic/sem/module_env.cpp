@@ -9,6 +9,7 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/parsers/sci/ast.hpp"
@@ -295,8 +296,14 @@ absl::StatusOr<std::unique_ptr<PublicTable>> BuildPublicTable(
 
   auto elems = GetElemsOfType<ast::PublicDef>(items);
 
+  if (elems.size() == 0) {
+    // It's okay to have no public table. Just return an empty public object.
+    return builder->Build();
+  }
+
   if (elems.size() != 1) {
-    return absl::InvalidArgumentError("Exactly one public table allowed");
+    return absl::InvalidArgumentError(absl::StrFormat(
+        "No more than one public table allowed. Got %d", elems.size()));
   }
 
   auto const* public_def = elems[0];
@@ -369,26 +376,31 @@ absl::StatusOr<std::unique_ptr<VarTable>> BuildLocalTable(
                                       array_var.size().value());
               }));
       auto [name, length] = std::move(result);
+      std::vector<codegen::LiteralValue> initial_values;
       if (!entry.initial_value) {
-        return absl::FailedPreconditionError("No initial value");
+        for (int i = 0; i < length; ++i) {
+          initial_values.push_back(0);
+        }
+      } else {
+        ASSIGN_OR_RETURN(
+            initial_values,
+            AstConstValuesToLiteralValues(
+                codegen,
+                entry.initial_value->visit(
+                    [&](ast::ArrayInitialValue const& array)
+                        -> util::Seq<ast::ConstValue const&> {
+                      return array.value();
+                    },
+                    [&](ast::ConstValue const& value)
+                        -> util::Seq<ast::ConstValue const&> {
+                      return util::Seq<ast::ConstValue const&>::Singleton(
+                          value);
+                    }),
+                length));
       }
-      ASSIGN_OR_RETURN(
-          auto initial_value,
-          AstConstValuesToLiteralValues(
-              codegen,
-              entry.initial_value->visit(
-                  [&](ast::ArrayInitialValue const& array)
-                      -> util::Seq<ast::ConstValue const&> {
-                    return array.value();
-                  },
-                  [&](ast::ConstValue const& value)
-                      -> util::Seq<ast::ConstValue const&> {
-                    return util::Seq<ast::ConstValue const&>::Singleton(value);
-                  }),
-              length));
       RETURN_IF_ERROR(
           builder->DefineVar(name, ModuleVarIndex::Create(entry.index.value()),
-                             std::move(initial_value)));
+                             std::move(initial_values)));
     }
   }
 
@@ -444,7 +456,7 @@ absl::StatusOr<CompilationEnvironment> BuildCompilationEnvironment(
   for (auto const& module : input.modules) {
     ASSIGN_OR_RETURN(auto script_num, GetScriptId(module.module_items));
 
-    auto codegen = codegen::CodeGenerator::Create(std::move(codegen_options));
+    auto codegen = codegen::CodeGenerator::Create(codegen_options);
 
     modules.emplace_back(ModuleLocal{
         .script_num = script_num,

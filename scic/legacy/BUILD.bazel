@@ -72,17 +72,6 @@ cc_library(
     ],
 )
 
-cc_library(
-    name = "debug_utils",
-    hdrs = ["debug_utils.hpp"],
-    deps = [
-        "@abseil-cpp//absl/debugging:stacktrace",
-        "@abseil-cpp//absl/debugging:symbolize",
-        "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:str_format",
-    ],
-)
-
 cc_binary(
     name = "scic",
     srcs = [

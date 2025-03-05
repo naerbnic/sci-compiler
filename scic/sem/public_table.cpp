@@ -86,8 +86,7 @@ class PublicTableBuilderImpl : public PublicTableBuilder {
 }  // namespace
 
 std::unique_ptr<PublicTableBuilder> PublicTableBuilder::Create() {
-  // return std::make_unique<PublicTableBuilderImpl>();
-  return nullptr;
+  return std::make_unique<PublicTableBuilderImpl>();
 }
 
 }  // namespace sem

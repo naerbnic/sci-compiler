@@ -220,8 +220,8 @@ cc_library(
 
 cc_library(
     name = "module_env",
-    hdrs = ["module_env.hpp"],
     srcs = ["module_env.cpp"],
+    hdrs = ["module_env.hpp"],
     deps = [
         ":class_table",
         ":common",
@@ -240,6 +240,7 @@ cc_library(
         "//util/types:sequence",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings:str_format",
         "@abseil-cpp//absl/types:span",
     ],
 )
