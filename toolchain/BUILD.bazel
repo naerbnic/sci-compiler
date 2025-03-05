@@ -18,8 +18,22 @@ compiled_toolchain_config(
     ],
 )
 
+compiled_toolchain_config(
+    name = "updated_sci_toolchain_config",
+    scic = "//scic/frontend:scic",
+    systems = [
+        "//sci_lib/sci_1_1",
+    ],
+)
+
 toolchain(
     name = "compiled_sci_compiler_toolchain",
     toolchain = ":compiled_sci_toolchain_config",
+    toolchain_type = ":sci_compiler_toolchain_type",
+)
+
+toolchain(
+    name = "updated_sci_compiler_toolchain",
+    toolchain = ":updated_sci_toolchain_config",
     toolchain_type = ":sci_compiler_toolchain_type",
 )
