@@ -33,7 +33,8 @@ CompilerFlags ExtractFlags(int argc, char** argv) {
           define.substr(pos + 1);
     }
   };
-  argparse::ArgumentParser program("sc", std::string(frontend::kProgramBanner));
+  argparse::ArgumentParser program("scic",
+                                   std::string(frontend::kProgramBanner));
   program.add_argument("-a")
       .help("abort compile if database locked")
       .default_value(false)
@@ -118,7 +119,6 @@ CompilerFlags ExtractFlags(int argc, char** argv) {
     } else {
       throw std::runtime_error("Invalid target architecture");
     }
-    program.parse_args(argc, argv);
     flags.abort_if_locked = program.get<bool>("-a");
     flags.include_debug_info = program.get<bool>("-d");
     flags.generate_code_listing = program.get<bool>("-l");
