@@ -16,8 +16,6 @@
 
 #include "absl/debugging/failure_signal_handler.h"
 #include "absl/debugging/symbolize.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/codegen/output.hpp"
@@ -29,6 +27,7 @@
 #include "scic/sem/code_builder.hpp"
 #include "scic/sem/input.hpp"
 #include "scic/sem/module_env.hpp"
+#include "scic/status/status.hpp"
 #include "scic/text/text_range.hpp"
 #include "scic/tokens/token.hpp"
 #include "scic/tokens/token_readers.hpp"
@@ -50,11 +49,11 @@ std::vector<T> ConcatVectors(std::vector<T> first, std::vector<T> second,
   return first;
 }
 
-absl::StatusOr<text::TextRange> LoadFile(std::filesystem::path path) {
+status::StatusOr<text::TextRange> LoadFile(std::filesystem::path path) {
   std::ifstream file;
   file.open(path, std::ios::in | std::ios::binary);
   if (!file.good()) {
-    return absl::NotFoundError("Could not open file");
+    return status::NotFoundError("Could not open file");
   }
 
   std::stringstream buffer;
@@ -64,7 +63,7 @@ absl::StatusOr<text::TextRange> LoadFile(std::filesystem::path path) {
                                        buffer.str());
 }
 
-absl::StatusOr<std::vector<tokens::Token>> TokenizeFile(
+status::StatusOr<std::vector<tokens::Token>> TokenizeFile(
     std::filesystem::path const& path) {
   ASSIGN_OR_RETURN(auto text, LoadFile(std::move(path)));
   return tokens::TokenizeText(std::move(text));
@@ -75,7 +74,7 @@ class ToolIncludeContext : public parsers::IncludeContext {
   ToolIncludeContext(std::vector<std::filesystem::path> include_paths)
       : include_paths_(std::move(include_paths)) {}
 
-  absl::StatusOr<text::TextRange> LoadTextFromIncludePath(
+  status::StatusOr<text::TextRange> LoadTextFromIncludePath(
       std::string_view path) const override {
     std::ifstream file;
     for (auto const& include_path : include_paths_) {
@@ -84,12 +83,12 @@ class ToolIncludeContext : public parsers::IncludeContext {
         return std::move(result).value();
       }
 
-      if (!absl::IsNotFound(result.status())) {
+      if (!status::IsNotFound(result.status())) {
         return result.status();
       }
     }
 
-    return absl::NotFoundError(
+    return status::NotFoundError(
         absl::StrFormat("Could not find include file: %s", path));
   }
 
@@ -172,7 +171,7 @@ std::unique_ptr<codegen::OutputFiles> CreateOutputFilesForScript(
   return std::make_unique<StreamOutputFiles>(std::move(heap), std::move(hunk));
 }
 
-absl::Status RunMain(const CompilerFlags& flags) {
+status::Status RunMain(const CompilerFlags& flags) {
   // Load our files into memory.
   ASSIGN_OR_RETURN(auto selector_tokens, TokenizeFile(flags.selector_file));
   ASSIGN_OR_RETURN(auto classdef_tokens, TokenizeFile(flags.classdef_file));
@@ -218,7 +217,7 @@ absl::Status RunMain(const CompilerFlags& flags) {
 
   if (!global_items_result.ok()) {
     std::cerr << global_items_result.status() << std::endl;
-    return absl::FailedPreconditionError("Failed to parse global items");
+    return status::FailedPreconditionError("Failed to parse global items");
   }
 
   sem::Input input;
@@ -238,7 +237,7 @@ absl::Status RunMain(const CompilerFlags& flags) {
 
     if (!source_items_result.ok()) {
       std::cerr << source_items_result.status() << std::endl;
-      return absl::FailedPreconditionError("Failed to parse source items");
+      return status::FailedPreconditionError("Failed to parse source items");
     }
 
     input.modules.push_back(sem::Input::Module{
@@ -266,7 +265,7 @@ absl::Status RunMain(const CompilerFlags& flags) {
                                 list_sink.get(), output_files.get());
   }
 
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
 }  // namespace frontend

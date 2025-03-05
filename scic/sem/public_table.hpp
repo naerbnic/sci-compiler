@@ -4,10 +4,9 @@
 #include <cstddef>
 #include <memory>
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "scic/sem/object_table.hpp"
 #include "scic/sem/proc_table.hpp"
+#include "scic/status/status.hpp"
 #include "util/types/choice.hpp"
 #include "util/types/sequence.hpp"
 
@@ -34,10 +33,10 @@ class PublicTableBuilder {
 
   virtual ~PublicTableBuilder() = default;
 
-  virtual absl::Status AddProcedure(std::size_t index,
+  virtual status::Status AddProcedure(std::size_t index,
                                     Procedure const* proc) = 0;
-  virtual absl::Status AddObject(std::size_t index, Object const* object) = 0;
-  virtual absl::StatusOr<std::unique_ptr<PublicTable>> Build() = 0;
+  virtual status::Status AddObject(std::size_t index, Object const* object) = 0;
+  virtual status::StatusOr<std::unique_ptr<PublicTable>> Build() = 0;
 };
 
 }  // namespace sem

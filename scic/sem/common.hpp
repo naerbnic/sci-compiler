@@ -7,10 +7,9 @@
 #include <string_view>
 #include <vector>
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "absl/types/span.h"
 #include "scic/parsers/sci/ast.hpp"
+#include "scic/status/status.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/choice.hpp"
 #include "util/types/strong_types.hpp"
@@ -101,11 +100,12 @@ struct ModuleVarIndexTag : SizeTag {};
 using ModuleVarIndex = util::StrongValue<ModuleVarIndexTag>;
 
 // Reliably sets the value to a machine word, signed or unsigned.
-inline absl::StatusOr<std::uint16_t> ConvertToMachineWord(int value) {
+inline status::StatusOr<std::uint16_t> ConvertToMachineWord(int value) {
   auto narrowed = static_cast<std::int16_t>(value);
   if (narrowed != value) {
     // We've changed the value, so it must be out of range.
-    return absl::InvalidArgumentError("Value is too large for a machine word");
+    return status::InvalidArgumentError(
+        "Value is too large for a machine word");
   }
   return std::bit_cast<std::uint16_t>(narrowed);
 }

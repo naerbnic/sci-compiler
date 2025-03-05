@@ -1,0 +1,12 @@
+package(
+    default_visibility = ["//scic:scic_internal"],
+)
+
+cc_library(
+    name = "status",
+    hdrs = ["status.hpp"],
+    deps = [
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+    ],
+)

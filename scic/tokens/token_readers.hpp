@@ -5,24 +5,24 @@
 #include <string>
 #include <vector>
 
-#include "absl/status/statusor.h"
+#include "scic/status/status.hpp"
 #include "scic/text/text_range.hpp"
 #include "scic/tokens/char_stream.hpp"
 #include "scic/tokens/token.hpp"
 
 namespace tokens {
 
-absl::StatusOr<std::optional<Token>> NextToken(CharStream& stream);
-absl::StatusOr<std::vector<Token>> TokenizeText(text::TextRange text);
+status::StatusOr<std::optional<Token>> NextToken(CharStream& stream);
+status::StatusOr<std::vector<Token>> TokenizeText(text::TextRange text);
 
 // These are generally internal, and are provided for testing.
-absl::StatusOr<int> ReadKey(CharStream& stream);
-absl::StatusOr<int> ReadNumber(CharStream& stream);
-absl::StatusOr<std::string> ReadString(CharStream& stream);
-absl::StatusOr<Token::Ident> ReadIdent(CharStream& stream);
-absl::StatusOr<std::optional<Token::PreProcessor>> ReadPreprocessor(
+status::StatusOr<int> ReadKey(CharStream& stream);
+status::StatusOr<int> ReadNumber(CharStream& stream);
+status::StatusOr<std::string> ReadString(CharStream& stream);
+status::StatusOr<Token::Ident> ReadIdent(CharStream& stream);
+status::StatusOr<std::optional<Token::PreProcessor>> ReadPreprocessor(
     CharStream& stream);
-absl::StatusOr<Token::TokenValue> ReadToken(CharStream& stream);
+status::StatusOr<Token::TokenValue> ReadToken(CharStream& stream);
 
 }  // namespace tokens
 

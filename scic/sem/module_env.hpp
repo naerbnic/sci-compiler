@@ -7,7 +7,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/status/statusor.h"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/sem/class_table.hpp"
 #include "scic/sem/common.hpp"
@@ -18,6 +17,7 @@
 #include "scic/sem/public_table.hpp"
 #include "scic/sem/selector_table.hpp"
 #include "scic/sem/var_table.hpp"
+#include "scic/status/status.hpp"
 #include "util/types/choice.hpp"
 
 namespace sem {
@@ -151,7 +151,7 @@ class ProcedureEnvironment {
   ProcName proc_context_;
 };
 
-absl::StatusOr<CompilationEnvironment> BuildCompilationEnvironment(
+status::StatusOr<CompilationEnvironment> BuildCompilationEnvironment(
     codegen::CodeGenerator::Options codegen_options, Input const& input);
 
 }  // namespace sem

@@ -6,9 +6,9 @@
 #include <vector>
 
 #include "absl/container/btree_map.h"
-#include "absl/status/statusor.h"
 #include "scic/parsers/include_context.hpp"
 #include "scic/parsers/list_tree/ast.hpp"
+#include "scic/status/status.hpp"
 #include "scic/tokens/token.hpp"
 
 namespace parsers::list_tree {
@@ -24,7 +24,7 @@ class Parser {
 
   auto const& defines() const { return defines_; }
 
-  absl::StatusOr<std::vector<Expr>> ParseTree(
+  status::StatusOr<std::vector<Expr>> ParseTree(
       std::vector<tokens::Token> tokens);
 
  private:

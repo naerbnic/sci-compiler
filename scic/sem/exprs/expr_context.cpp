@@ -11,11 +11,10 @@
 #include <utility>
 
 #include "absl/base/nullability.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "scic/sem/common.hpp"
 #include "scic/sem/module_env.hpp"
 #include "scic/sem/property_list.hpp"
+#include "scic/status/status.hpp"
 #include "util/status/status_macros.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/choice.hpp"
@@ -41,17 +40,17 @@ bool AreAllNull(Args&&... args) {
   return ((args == nullptr) && ...);
 }
 
-absl::StatusOr<std::size_t> GetOnlyNonnull() {
-  return absl::InvalidArgumentError("No non-nullptr values");
+status::StatusOr<std::size_t> GetOnlyNonnull() {
+  return status::InvalidArgumentError("No non-nullptr values");
 }
 
 template <class... Args>
-absl::StatusOr<std::size_t> GetOnlyNonnull(void const* ptr, Args&&... args) {
+status::StatusOr<std::size_t> GetOnlyNonnull(void const* ptr, Args&&... args) {
   if (ptr) {
     if (AreAllNull(std::forward<Args>(args)...)) {
       return 0;
     } else {
-      return absl::InvalidArgumentError("Multiple non-nullptr values");
+      return status::InvalidArgumentError("Multiple non-nullptr values");
     }
   } else {
     ASSIGN_OR_RETURN(auto index, GetOnlyNonnull(std::forward<Args>(args)...));
@@ -86,7 +85,7 @@ class ExprEnvironmentImpl : public ExprEnvironment {
     return sel->selector_num();
   }
 
-  absl::StatusOr<Sym> LookupSym(std::string_view name) const override {
+  status::StatusOr<Sym> LookupSym(std::string_view name) const override {
     // Lookup in all sources, to detect any ambiguities.
     auto const* prop = prop_list_ ? prop_list_->LookupByName(name) : nullptr;
     auto const* param = GetOrNull(proc_local_table_, name);
@@ -121,7 +120,7 @@ class ExprEnvironmentImpl : public ExprEnvironment {
     }
   }
 
-  absl::StatusOr<Proc> LookupProc(std::string_view name) const override {
+  status::StatusOr<Proc> LookupProc(std::string_view name) const override {
     auto const* proc = mod_env_->proc_table()->LookupByName(name);
     auto const* ext =
         mod_env_->global_env()->extern_table()->LookupByName(name);

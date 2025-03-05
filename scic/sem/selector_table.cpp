@@ -12,12 +12,11 @@
 #include <utility>
 #include <vector>
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "scic/parsers/sci/ast.hpp"
 #include "scic/sem/common.hpp"
 #include "scic/sem/late_bound.hpp"
+#include "scic/status/status.hpp"
 #include "scic/text/text_range.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/sequence.hpp"
@@ -86,8 +85,8 @@ class SelectorTableImpl : public SelectorTable {
 
 class BuilderImpl : public SelectorTable::Builder {
  public:
-  absl::Status DeclareSelector(ast::TokenNode<util::RefStr> name,
-                               SelectorNum selector_num) override {
+  status::Status DeclareSelector(ast::TokenNode<util::RefStr> name,
+                                 SelectorNum selector_num) override {
     auto num_it = num_map_.find(selector_num);
     auto name_it = name_map_.find(name.value());
 
@@ -98,15 +97,15 @@ class BuilderImpl : public SelectorTable::Builder {
       if (num_exists && name_exists) {
         if (num_it->second == name_it->second) {
           // An entry already exists with this combination of name and number.
-          return absl::OkStatus();
+          return status::OkStatus();
         } else {
-          return absl::InvalidArgumentError(
+          return status::InvalidArgumentError(
               "Selector number and name already exist");
         }
       } else if (num_exists) {
-        return absl::InvalidArgumentError("Selector number already exists");
+        return status::InvalidArgumentError("Selector number already exists");
       } else {
-        return absl::InvalidArgumentError("Selector name already exists");
+        return status::InvalidArgumentError("Selector name already exists");
       }
     }
 
@@ -115,22 +114,22 @@ class BuilderImpl : public SelectorTable::Builder {
     name_map_.emplace(entry->name(), entry.get());
     num_map_.emplace(selector_num, entry.get());
     entries_.push_back(std::move(entry));
-    return absl::OkStatus();
+    return status::OkStatus();
   }
 
-  absl::Status AddNewSelector(ast::TokenNode<util::RefStr> name) override {
+  status::Status AddNewSelector(ast::TokenNode<util::RefStr> name) override {
     if (name_map_.contains(name.value())) {
       // This is fine, as we can reuse the entry.
-      return absl::OkStatus();
+      return status::OkStatus();
     }
     auto entry = std::make_unique<EntryImpl>(std::move(name));
     name_map_.emplace(entry->name(), entry.get());
     new_selectors_.emplace_back(entry.get());
     entries_.emplace_back(std::move(entry));
-    return absl::OkStatus();
+    return status::OkStatus();
   }
 
-  absl::StatusOr<std::unique_ptr<SelectorTable>> Build() override {
+  status::StatusOr<std::unique_ptr<SelectorTable>> Build() override {
     // Starting from selector 0, see if there is a gap in the table. If so,
     // assign the next selector number to the new selector.
     // This is not the most efficient method, but it is simple.
@@ -139,7 +138,7 @@ class BuilderImpl : public SelectorTable::Builder {
       while (num_map_.contains(SelectorNum::Create(next_selector))) {
         ++next_selector;
         if (next_selector > std::numeric_limits<std::uint16_t>::max()) {
-          return absl::InvalidArgumentError("Too many selectors");
+          return status::InvalidArgumentError("Too many selectors");
         }
       }
       entry->selector_num_.set(SelectorNum::Create(next_selector++));

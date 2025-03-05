@@ -4,7 +4,6 @@
 #include <string_view>
 #include <vector>
 
-#include "absl/status/status.h"
 #include "gtest/gtest.h"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/sem/common.hpp"

@@ -9,11 +9,10 @@ cc_library(
     hdrs = ["common.hpp"],
     deps = [
         "//scic/parsers/sci:ast",
+        "//scic/status",
         "//util/strings:ref_str",
         "//util/types:choice",
         "//util/types:strong_types",
-        "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/types:span",
     ],
 )
@@ -67,11 +66,10 @@ cc_library(
         ":common",
         ":late_bound",
         "//scic/parsers/sci:ast",
+        "//scic/status",
         "//scic/text:text_range",
         "//util/strings:ref_str",
         "//util/types:sequence",
-        "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/strings:str_format",
     ],
 )
@@ -101,12 +99,11 @@ cc_library(
         ":selector_table",
         "//scic/codegen:code_generator",
         "//scic/parsers/sci:ast",
+        "//scic/status",
         "//util/status:status_macros",
         "//util/strings:ref_str",
         "//util/types:sequence",
         "@abseil-cpp//absl/base:nullability",
-        "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/status:statusor",
     ],
 )
 
@@ -129,10 +126,9 @@ cc_library(
     deps = [
         ":common",
         "//scic/codegen:code_generator",
+        "//scic/status",
         "//util/strings:ref_str",
         "//util/types:sequence",
-        "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/status:statusor",
     ],
 )
 
@@ -145,7 +141,6 @@ cc_test(
         ":var_table",
         "//scic/codegen:code_generator",
         "//util/status:status_matchers",
-        "@abseil-cpp//absl/status",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -162,11 +157,10 @@ cc_library(
         ":property_list",
         ":selector_table",
         "//scic/codegen:code_generator",
+        "//scic/status",
         "//util/strings:ref_str",
         "//util/types:sequence",
         "@abseil-cpp//absl/base:nullability",
-        "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/status:statusor",
     ],
 )
 
@@ -177,11 +171,10 @@ cc_library(
     deps = [
         ":common",
         "//scic/codegen:code_generator",
+        "//scic/status",
         "//util/strings:ref_str",
         "//util/types:sequence",
         "@abseil-cpp//absl/base:nullability",
-        "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/status:statusor",
     ],
 )
 
@@ -192,10 +185,9 @@ cc_library(
     deps = [
         ":object_table",
         ":proc_table",
+        "//scic/status",
         "//util/types:choice",
         "//util/types:sequence",
-        "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/status:statusor",
     ],
 )
 
@@ -205,10 +197,9 @@ cc_library(
     hdrs = ["extern_table.hpp"],
     deps = [
         ":common",
+        "//scic/status",
         "//util/strings:ref_str",
         "//util/types:sequence",
-        "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/status:statusor",
     ],
 )
 
@@ -234,12 +225,11 @@ cc_library(
         ":var_table",
         "//scic/codegen:code_generator",
         "//scic/parsers/sci:ast",
+        "//scic/status",
         "//util/status:status_macros",
         "//util/strings:ref_str",
         "//util/types:choice",
         "//util/types:sequence",
-        "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/strings:str_format",
         "@abseil-cpp//absl/types:span",
     ],
@@ -261,8 +251,8 @@ cc_library(
         "//scic/parsers/sci:ast",
         "//scic/sem/exprs:expr_builder",
         "//scic/sem/exprs:expr_context",
+        "//scic/status",
         "//util/status:status_macros",
         "//util/strings:ref_str",
-        "@abseil-cpp//absl/status",
     ],
 )

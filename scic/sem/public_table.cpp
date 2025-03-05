@@ -6,10 +6,9 @@
 #include <utility>
 #include <vector>
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "scic/sem/object_table.hpp"
 #include "scic/sem/proc_table.hpp"
+#include "scic/status/status.hpp"
 #include "util/types/choice.hpp"
 #include "util/types/sequence.hpp"
 
@@ -57,28 +56,29 @@ class PublicTableImpl : public PublicTable {
 
 class PublicTableBuilderImpl : public PublicTableBuilder {
  public:
-  absl::Status AddProcedure(std::size_t index, Procedure const* proc) override {
+  status::Status AddProcedure(std::size_t index,
+                              Procedure const* proc) override {
     return AddEntry(std::make_unique<PublicTableEntryImpl>(index, proc));
   }
 
-  absl::Status AddObject(std::size_t index, Object const* object) override {
+  status::Status AddObject(std::size_t index, Object const* object) override {
     return AddEntry(std::make_unique<PublicTableEntryImpl>(index, object));
   }
 
-  absl::StatusOr<std::unique_ptr<PublicTable>> Build() override {
+  status::StatusOr<std::unique_ptr<PublicTable>> Build() override {
     return std::make_unique<PublicTableImpl>(std::move(entries_),
                                              std::move(index_map_));
   }
 
  private:
-  absl::Status AddEntry(std::unique_ptr<PublicTableEntryImpl> entry) {
+  status::Status AddEntry(std::unique_ptr<PublicTableEntryImpl> entry) {
     auto index = entry->index();
     if (index_map_.contains(index)) {
-      return absl::InvalidArgumentError("Duplicate index");
+      return status::InvalidArgumentError("Duplicate index");
     }
     index_map_.emplace(index, entry.get());
     entries_.emplace_back(std::move(entry));
-    return absl::OkStatus();
+    return status::OkStatus();
   }
   std::vector<std::unique_ptr<PublicTableEntryImpl>> entries_;
   std::map<std::size_t, PublicTableEntryImpl const*> index_map_;

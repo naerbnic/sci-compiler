@@ -3,7 +3,7 @@
 
 #include <string_view>
 
-#include "absl/status/statusor.h"
+#include "scic/status/status.hpp"
 #include "scic/text/text_range.hpp"
 
 namespace parsers {
@@ -14,7 +14,7 @@ class IncludeContext {
 
   virtual ~IncludeContext() = default;
 
-  virtual absl::StatusOr<text::TextRange> LoadTextFromIncludePath(
+  virtual status::StatusOr<text::TextRange> LoadTextFromIncludePath(
       std::string_view path) const = 0;
 };
 

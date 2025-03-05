@@ -6,10 +6,9 @@
 #include <string_view>
 #include <vector>
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/sem/common.hpp"
+#include "scic/status/status.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/sequence.hpp"
 
@@ -39,9 +38,9 @@ class VarDeclTableBuilder {
 
   // Adds a variable declaration.
   // Duplicate declarations with the same name/index are allowed (no-op).
-  virtual absl::Status DeclareVar(NameToken name, GlobalIndex global_index,
-                                  std::size_t length) = 0;
-  virtual absl::StatusOr<std::unique_ptr<VarDeclTable>> Build() = 0;
+  virtual status::Status DeclareVar(NameToken name, GlobalIndex global_index,
+                                    std::size_t length) = 0;
+  virtual status::StatusOr<std::unique_ptr<VarDeclTable>> Build() = 0;
 };
 
 // ------------------------------------------------------------------
@@ -69,9 +68,10 @@ class VarTableBuilder {
   virtual ~VarTableBuilder() = default;
 
   // Later define the variable with an initial value.
-  virtual absl::Status DefineVar(NameToken name, ModuleVarIndex var_index,
-                                 std::vector<codegen::LiteralValue> values) = 0;
-  virtual absl::StatusOr<std::unique_ptr<VarTable>> Build() = 0;
+  virtual status::Status DefineVar(
+      NameToken name, ModuleVarIndex var_index,
+      std::vector<codegen::LiteralValue> values) = 0;
+  virtual status::StatusOr<std::unique_ptr<VarTable>> Build() = 0;
 };
 
 }  // namespace sem

@@ -8,13 +8,12 @@
 #include <vector>
 
 #include "absl/base/nullability.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/sem/common.hpp"
 #include "scic/sem/obj_members.hpp"
 #include "scic/sem/property_list.hpp"
 #include "scic/sem/selector_table.hpp"
+#include "scic/status/status.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/sequence.hpp"
 
@@ -87,18 +86,18 @@ class ClassTableBuilder {
 
   virtual ~ClassTableBuilder() = default;
 
-  virtual absl::Status AddClassDecl(NameToken name, ScriptNum script_num,
-                                    ClassSpecies species,
-                                    std::optional<ClassSpecies> super_species,
-                                    std::vector<Property> properties,
-                                    std::vector<NameToken> methods) = 0;
+  virtual status::Status AddClassDecl(NameToken name, ScriptNum script_num,
+                                      ClassSpecies species,
+                                      std::optional<ClassSpecies> super_species,
+                                      std::vector<Property> properties,
+                                      std::vector<NameToken> methods) = 0;
 
-  virtual absl::Status AddClassDef(NameToken name, ScriptNum script_num,
-                                   std::optional<NameToken> super_name,
-                                   std::vector<Property> properties,
-                                   std::vector<NameToken> methods) = 0;
+  virtual status::Status AddClassDef(NameToken name, ScriptNum script_num,
+                                     std::optional<NameToken> super_name,
+                                     std::vector<Property> properties,
+                                     std::vector<NameToken> methods) = 0;
 
-  virtual absl::StatusOr<std::unique_ptr<ClassTable>> Build() = 0;
+  virtual status::StatusOr<std::unique_ptr<ClassTable>> Build() = 0;
 };
 
 }  // namespace sem

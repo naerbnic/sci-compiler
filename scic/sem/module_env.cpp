@@ -7,8 +7,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "scic/codegen/code_generator.hpp"
@@ -22,6 +20,7 @@
 #include "scic/sem/public_table.hpp"
 #include "scic/sem/selector_table.hpp"
 #include "scic/sem/var_table.hpp"
+#include "scic/status/status.hpp"
 #include "util/status/status_macros.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/sequence.hpp"
@@ -32,20 +31,20 @@ namespace {
 
 using codegen::CodeGenerator;
 
-absl::StatusOr<ScriptNum> GetScriptId(Items items) {
+status::StatusOr<ScriptNum> GetScriptId(Items items) {
   auto result = GetElemsOfType<ast::ScriptNumDef>(items);
 
   if (result.size() == 0) {
-    return absl::InvalidArgumentError("No script number defined");
+    return status::InvalidArgumentError("No script number defined");
   } else if (result.size() > 1) {
-    return absl::InvalidArgumentError("Multiple script numbers defined");
+    return status::InvalidArgumentError("Multiple script numbers defined");
   }
 
   return ScriptNum::Create(result[0]->script_num().value());
 }
 
-absl::Status AddItemsToSelectorTable(SelectorTable::Builder* builder,
-                                     absl::Span<ast::Item const> items) {
+status::Status AddItemsToSelectorTable(SelectorTable::Builder* builder,
+                                       absl::Span<ast::Item const> items) {
   {
     // First, gather declared selectors.
     auto classes = GetElemsOfType<ast::SelectorsDecl>(items);
@@ -71,30 +70,30 @@ absl::Status AddItemsToSelectorTable(SelectorTable::Builder* builder,
     }
   }
 
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
-absl::StatusOr<codegen::LiteralValue> AstConstValueToLiteralValue(
+status::StatusOr<codegen::LiteralValue> AstConstValueToLiteralValue(
     CodeGenerator* codegen, ast::ConstValue const& value) {
   return value.visit(
       [&](ast::NumConstValue const& num)
-          -> absl::StatusOr<codegen::LiteralValue> {
+          -> status::StatusOr<codegen::LiteralValue> {
         return num.value().value();
       },
       [&](ast::StringConstValue const& str)
-          -> absl::StatusOr<codegen::LiteralValue> {
+          -> status::StatusOr<codegen::LiteralValue> {
         if (!codegen) {
-          return absl::InvalidArgumentError(
+          return status::InvalidArgumentError(
               "String constants cannot be used in this context");
         }
         return codegen->AddTextNode(str.value().value());
       });
 }
 
-absl::Status AddItemsToClassTable(ClassTableBuilder* builder,
-                                  codegen::CodeGenerator* codegen,
-                                  std::optional<ScriptNum> script_num,
-                                  Items items) {
+status::Status AddItemsToClassTable(ClassTableBuilder* builder,
+                                    codegen::CodeGenerator* codegen,
+                                    std::optional<ScriptNum> script_num,
+                                    Items items) {
   for (auto const* class_decl : GetElemsOfType<ast::ClassDecl>(items)) {
     std::vector<ClassTableBuilder::Property> properties;
     for (auto const& prop : class_decl->properties()) {
@@ -125,7 +124,7 @@ absl::Status AddItemsToClassTable(ClassTableBuilder* builder,
     }
 
     if (!script_num) {
-      return absl::InvalidArgumentError(
+      return status::InvalidArgumentError(
           "Can't process a classdef in a global context");
     }
     auto const& name = classdef->name();
@@ -154,7 +153,7 @@ absl::Status AddItemsToClassTable(ClassTableBuilder* builder,
                                          std::move(methods)));
   }
 
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
 // Do initial processing, to get the script number from each module
@@ -165,7 +164,7 @@ struct ModuleLocal {
   Items items;
 };
 
-absl::StatusOr<std::unique_ptr<SelectorTable>> BuildSelectorTable(
+status::StatusOr<std::unique_ptr<SelectorTable>> BuildSelectorTable(
     Items global_items, util::SeqView<ModuleLocal const> modules) {
   auto selector_builder = SelectorTable::CreateBuilder();
 
@@ -179,7 +178,7 @@ absl::StatusOr<std::unique_ptr<SelectorTable>> BuildSelectorTable(
   return selector_builder->Build();
 }
 
-absl::StatusOr<std::unique_ptr<ClassTable>> BuildClassTable(
+status::StatusOr<std::unique_ptr<ClassTable>> BuildClassTable(
     SelectorTable const* selector_table, Items global_items,
     util::SeqView<ModuleLocal const> modules) {
   auto class_builder = ClassTableBuilder::Create(selector_table);
@@ -194,7 +193,7 @@ absl::StatusOr<std::unique_ptr<ClassTable>> BuildClassTable(
   return class_builder->Build();
 }
 
-absl::StatusOr<std::unique_ptr<ExternTable>> BuildExternTable(
+status::StatusOr<std::unique_ptr<ExternTable>> BuildExternTable(
     absl::Span<ast::Item const> items) {
   auto builder = ExternTableBuilder::Create();
 
@@ -202,7 +201,7 @@ absl::StatusOr<std::unique_ptr<ExternTable>> BuildExternTable(
     for (auto const& entry : extern_def->entries()) {
       auto module_num = entry.module_num.value();
       if (module_num < -1) {
-        return absl::InvalidArgumentError(
+        return status::InvalidArgumentError(
             "Module number must be -1 or greater");
       }
       std::optional<ScriptNum> script_num;
@@ -212,7 +211,8 @@ absl::StatusOr<std::unique_ptr<ExternTable>> BuildExternTable(
 
       auto public_index = entry.index.value();
       if (public_index < 0) {
-        return absl::InvalidArgumentError("Public index must be 0 or greater");
+        return status::InvalidArgumentError(
+            "Public index must be 0 or greater");
       }
 
       RETURN_IF_ERROR(builder->AddExtern(entry.name, script_num,
@@ -223,7 +223,7 @@ absl::StatusOr<std::unique_ptr<ExternTable>> BuildExternTable(
   return builder->Build();
 }
 
-absl::StatusOr<std::unique_ptr<VarDeclTable>> BuildGlobalTable(
+status::StatusOr<std::unique_ptr<VarDeclTable>> BuildGlobalTable(
     absl::Span<ast::Item const> items) {
   auto builder = VarDeclTableBuilder::Create();
 
@@ -242,7 +242,7 @@ absl::StatusOr<std::unique_ptr<VarDeclTable>> BuildGlobalTable(
   return builder->Build();
 }
 
-absl::StatusOr<std::unique_ptr<ObjectTable>> BuildObjectTable(
+status::StatusOr<std::unique_ptr<ObjectTable>> BuildObjectTable(
     codegen::CodeGenerator* codegen, SelectorTable const* selector,
     ClassTable const* class_table, ScriptNum script_num,
     absl::Span<ast::Item const> items) {
@@ -254,7 +254,7 @@ absl::StatusOr<std::unique_ptr<ObjectTable>> BuildObjectTable(
     }
 
     if (!object->parent()) {
-      return absl::InvalidArgumentError("Object has no parent class");
+      return status::InvalidArgumentError("Object has no parent class");
     }
 
     std::vector<ObjectTableBuilder::Property> properties;
@@ -278,7 +278,7 @@ absl::StatusOr<std::unique_ptr<ObjectTable>> BuildObjectTable(
   return builder->Build();
 }
 
-absl::StatusOr<std::unique_ptr<ProcTable>> BuildProcTable(
+status::StatusOr<std::unique_ptr<ProcTable>> BuildProcTable(
     codegen::CodeGenerator* codegen, absl::Span<ast::Item const> items) {
   auto builder = ProcTableBuilder::Create(codegen);
 
@@ -289,7 +289,7 @@ absl::StatusOr<std::unique_ptr<ProcTable>> BuildProcTable(
   return builder->Build();
 }
 
-absl::StatusOr<std::unique_ptr<PublicTable>> BuildPublicTable(
+status::StatusOr<std::unique_ptr<PublicTable>> BuildPublicTable(
     ProcTable const* proc_table, ObjectTable const* object_table,
     absl::Span<ast::Item const> items) {
   auto builder = PublicTableBuilder::Create();
@@ -302,7 +302,7 @@ absl::StatusOr<std::unique_ptr<PublicTable>> BuildPublicTable(
   }
 
   if (elems.size() != 1) {
-    return absl::InvalidArgumentError(absl::StrFormat(
+    return status::InvalidArgumentError(absl::StrFormat(
         "No more than one public table allowed. Got %d", elems.size()));
   }
 
@@ -312,11 +312,11 @@ absl::StatusOr<std::unique_ptr<PublicTable>> BuildPublicTable(
     auto const* proc_entry = proc_table->LookupByName(proc.name.value());
     auto const* obj_entry = object_table->LookupByName(proc.name.value());
     if (!proc_entry && !obj_entry) {
-      return absl::InvalidArgumentError("Entity not found.");
+      return status::InvalidArgumentError("Entity not found.");
     }
 
     if (proc_entry && obj_entry) {
-      return absl::InvalidArgumentError(
+      return status::InvalidArgumentError(
           "Ambiguous entity between objects and procedures.");
     }
 
@@ -330,7 +330,7 @@ absl::StatusOr<std::unique_ptr<PublicTable>> BuildPublicTable(
   return builder->Build();
 }
 
-absl::StatusOr<std::vector<codegen::LiteralValue>>
+status::StatusOr<std::vector<codegen::LiteralValue>>
 AstConstValuesToLiteralValues(codegen::CodeGenerator* codegen,
                               util::Seq<ast::ConstValue const&> values,
                               std::size_t expected_length) {
@@ -345,7 +345,7 @@ AstConstValuesToLiteralValues(codegen::CodeGenerator* codegen,
   }
 
   if (values.size() != expected_length) {
-    return absl::InvalidArgumentError(
+    return status::InvalidArgumentError(
         "Array length does not match number of initial values");
   }
 
@@ -358,13 +358,13 @@ AstConstValuesToLiteralValues(codegen::CodeGenerator* codegen,
   return result;
 }
 
-absl::StatusOr<std::unique_ptr<VarTable>> BuildLocalTable(
+status::StatusOr<std::unique_ptr<VarTable>> BuildLocalTable(
     CodeGenerator* codegen, absl::Span<ast::Item const> items) {
   auto builder = VarTableBuilder::Create();
 
   for (auto const* var_decl : GetElemsOfType<ast::ModuleVarsDef>(items)) {
     for (auto const& entry : var_decl->entries()) {
-      using VisitResult = absl::StatusOr<std::pair<NameToken, std::size_t>>;
+      using VisitResult = status::StatusOr<std::pair<NameToken, std::size_t>>;
       ASSIGN_OR_RETURN(
           auto result,
           entry.name.visit(
@@ -407,7 +407,7 @@ absl::StatusOr<std::unique_ptr<VarTable>> BuildLocalTable(
   return builder->Build();
 }
 
-absl::StatusOr<std::unique_ptr<GlobalEnvironment>> BuildGlobalEnvironment(
+status::StatusOr<std::unique_ptr<GlobalEnvironment>> BuildGlobalEnvironment(
     Items global_items, util::SeqView<ModuleLocal const> modules) {
   ASSIGN_OR_RETURN(auto selector_table,
                    BuildSelectorTable(global_items, modules));
@@ -423,7 +423,7 @@ absl::StatusOr<std::unique_ptr<GlobalEnvironment>> BuildGlobalEnvironment(
       std::move(extern_table), std::move(global_table), global_items);
 }
 
-absl::StatusOr<std::unique_ptr<ModuleEnvironment>> BuildModuleEnvironment(
+status::StatusOr<std::unique_ptr<ModuleEnvironment>> BuildModuleEnvironment(
     GlobalEnvironment const* global_env, ScriptNum script_num,
     std::unique_ptr<CodeGenerator> codegen, Items module_items) {
   ASSIGN_OR_RETURN(
@@ -449,7 +449,7 @@ absl::StatusOr<std::unique_ptr<ModuleEnvironment>> BuildModuleEnvironment(
 
 }  // namespace
 
-absl::StatusOr<CompilationEnvironment> BuildCompilationEnvironment(
+status::StatusOr<CompilationEnvironment> BuildCompilationEnvironment(
     codegen::CodeGenerator::Options codegen_options, Input const& input) {
   Items global_items = input.global_items;
   std::vector<ModuleLocal> modules;

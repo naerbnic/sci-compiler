@@ -9,12 +9,11 @@
 #include <utility>
 #include <vector>
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_format.h"
 #include "scic/legacy/chartype.hpp"
+#include "scic/status/status.hpp"
 #include "scic/text/text_range.hpp"
 #include "scic/tokens/char_stream.hpp"
 #include "scic/tokens/token.hpp"
@@ -59,23 +58,23 @@ Token::PunctType CharToPunctType(char c) {
   }
 }
 
-absl::Status ExpectNonEmpty(CharStream& stream) {
+status::Status ExpectNonEmpty(CharStream& stream) {
   if (!stream) {
-    return absl::FailedPreconditionError("Unexpected end of stream");
+    return status::FailedPreconditionError("Unexpected end of stream");
   }
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
 #define CHECK_NONEMPTY(stream) RETURN_IF_ERROR(ExpectNonEmpty(stream))
 
 template <class... Args>
-absl::Status TokenError(CharStream const& stream,
-                        absl::FormatSpec<Args...> const& spec,
-                        Args const&... args) {
-  return absl::FailedPreconditionError(absl::StrFormat(spec, args...));
+status::Status TokenError(CharStream const& stream,
+                          absl::FormatSpec<Args...> const& spec,
+                          Args const&... args) {
+  return status::FailedPreconditionError(absl::StrFormat(spec, args...));
 }
 
-absl::StatusOr<int> CharDigitValue(CharStream& stream, uint8_t base) {
+status::StatusOr<int> CharDigitValue(CharStream& stream, uint8_t base) {
   char c = absl::ascii_tolower(*stream);
   auto index = hexDigits.find(c);
   if (index == std::string_view::npos) {
@@ -90,7 +89,7 @@ absl::StatusOr<int> CharDigitValue(CharStream& stream, uint8_t base) {
 
 }  // namespace
 
-absl::StatusOr<int> ReadKey(CharStream& stream) {
+status::StatusOr<int> ReadKey(CharStream& stream) {
   CHECK_NONEMPTY(stream);
 
   int result;
@@ -155,7 +154,7 @@ absl::StatusOr<int> ReadKey(CharStream& stream) {
   return result;
 }
 
-absl::StatusOr<int> ReadNumber(CharStream& stream) {
+status::StatusOr<int> ReadNumber(CharStream& stream) {
   // Determine the sign of the number
   int sign;
   if (*stream != '-')
@@ -182,7 +181,7 @@ absl::StatusOr<int> ReadNumber(CharStream& stream) {
   return val;
 }
 
-absl::StatusOr<std::string> ReadString(CharStream& stream) {
+status::StatusOr<std::string> ReadString(CharStream& stream) {
   char open = *stream++;
   char close = (open == ALT_QUOTE) ? '}' : open;
 
@@ -261,7 +260,7 @@ absl::StatusOr<std::string> ReadString(CharStream& stream) {
   return parsed_string;
 }
 
-absl::StatusOr<Token::Ident> ReadIdent(CharStream& stream) {
+status::StatusOr<Token::Ident> ReadIdent(CharStream& stream) {
   std::string ident;
   Token::Ident::Trailer trailer = Token::Ident::None;
   while (stream && !IsTerm(*stream)) {
@@ -285,7 +284,7 @@ absl::StatusOr<Token::Ident> ReadIdent(CharStream& stream) {
   };
 }
 
-absl::StatusOr<std::optional<Token::PreProcessor>> ReadPreprocessor(
+status::StatusOr<std::optional<Token::PreProcessor>> ReadPreprocessor(
     CharStream& stream) {
   // We should be at the beginning of a line. Skip over any whitespace.
   auto curr_stream = stream.SkipCharsOf(" \t");
@@ -351,7 +350,7 @@ absl::StatusOr<std::optional<Token::PreProcessor>> ReadPreprocessor(
 
 // Read a token, assuming that the current stream location is at the
 // start of the token.
-absl::StatusOr<Token::TokenValue> ReadToken(CharStream& stream) {
+status::StatusOr<Token::TokenValue> ReadToken(CharStream& stream) {
   if (IsTok(*stream)) {
     // This is equivalent to our Punct struct.
     return Token::Punct{
@@ -396,7 +395,7 @@ absl::StatusOr<Token::TokenValue> ReadToken(CharStream& stream) {
   return Token::TokenValue(ident);
 }
 
-absl::StatusOr<std::optional<Token>> NextToken(CharStream& stream) {
+status::StatusOr<std::optional<Token>> NextToken(CharStream& stream) {
   bool at_start_of_line = stream.AtStart();
 
   while (true) {
@@ -438,7 +437,7 @@ absl::StatusOr<std::optional<Token>> NextToken(CharStream& stream) {
   return Token(token_start.GetTextTo(stream), token_value);
 }
 
-absl::StatusOr<std::vector<Token>> TokenizeText(text::TextRange text) {
+status::StatusOr<std::vector<Token>> TokenizeText(text::TextRange text) {
   std::vector<Token> tokens;
   CharStream stream(std::move(text));
   while (true) {

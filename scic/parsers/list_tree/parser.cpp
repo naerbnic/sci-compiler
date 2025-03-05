@@ -9,12 +9,11 @@
 #include <vector>
 
 #include "absl/container/btree_map.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "scic/parsers/include_context.hpp"
 #include "scic/parsers/list_tree/ast.hpp"
+#include "scic/status/status.hpp"
 #include "scic/text/text_range.hpp"
 #include "scic/tokens/token.hpp"
 #include "scic/tokens/token_readers.hpp"
@@ -47,7 +46,7 @@ class ProcessedTokenStream {
       absl::btree_map<std::string, std::vector<Token>>* defines)
       : token_stream_(std::move(token_stream)), defines_(std::move(defines)) {}
 
-  absl::StatusOr<std::optional<Token>> GetNextToken() {
+  status::StatusOr<std::optional<Token>> GetNextToken() {
     if (!pushed_tokens_.empty()) {
       auto token = std::move(pushed_tokens_.back());
       pushed_tokens_.pop_back();
@@ -57,7 +56,7 @@ class ProcessedTokenStream {
       auto token = token_stream_->NextToken();
       if (!token) {
         if (!preproc_stack_.empty()) {
-          return absl::InvalidArgumentError(
+          return status::InvalidArgumentError(
               "Unexpected end of input when "
               "preprocessor directive still active.");
         }
@@ -101,7 +100,7 @@ class ProcessedTokenStream {
   }
 
  private:
-  absl::Status HandlePreProcessorToken(Token::PreProcessor const& preproc) {
+  status::Status HandlePreProcessorToken(Token::PreProcessor const& preproc) {
     enum class StackChange {
       // Push a new frame
       Push,
@@ -192,7 +191,7 @@ class ProcessedTokenStream {
         // If we were producing tokens in the previous clause, we don't want
         // to now.
         if (preproc_stack_.empty()) {
-          return absl::InvalidArgumentError(
+          return status::InvalidArgumentError(
               "Unexpected #elif or #else without #if.");
         }
         preproc_stack_.back().producing_tokens = false;
@@ -201,7 +200,7 @@ class ProcessedTokenStream {
         // If we popped, the previous frame should already have the state
         // needed. Just return to skip any conditionals.
         preproc_stack_.pop_back();
-        return absl::OkStatus();
+        return status::OkStatus();
     }
 
     // If we're here, we should have at least one frame on the stack, with
@@ -210,7 +209,7 @@ class ProcessedTokenStream {
     if (preproc_stack_.back().case_triggered) {
       // We've already triggered a case in this frame, so we should not
       // do any further checks.
-      return absl::OkStatus();
+      return status::OkStatus();
     }
 
     // Check the conditional to see if we should produce tokens for the next
@@ -241,13 +240,13 @@ class ProcessedTokenStream {
       preproc_stack_.back().case_triggered = true;
     }
 
-    return absl::OkStatus();
+    return status::OkStatus();
   }
 
-  absl::StatusOr<bool> IsDef(absl::Span<Token const> tokens) {
+  status::StatusOr<bool> IsDef(absl::Span<Token const> tokens) {
     if (tokens.size() != 1) {
       // We need exactly one token.
-      return absl::InvalidArgumentError(absl::StrFormat(
+      return status::InvalidArgumentError(absl::StrFormat(
           "Expected a single identifier for preprocessor condition. Got %d",
           tokens.size()));
     }
@@ -255,7 +254,7 @@ class ProcessedTokenStream {
     auto* ident = tokens[0].AsIdent();
 
     if (!ident) {
-      return absl::InvalidArgumentError(absl::StrFormat(
+      return status::InvalidArgumentError(absl::StrFormat(
           "Expected an identifier for preprocessor condition. Got %v",
           tokens[0]));
     }
@@ -263,10 +262,10 @@ class ProcessedTokenStream {
     return defines_->contains(ident->name);
   }
 
-  absl::StatusOr<bool> IsTrue(absl::Span<Token const> tokens) {
+  status::StatusOr<bool> IsTrue(absl::Span<Token const> tokens) {
     if (tokens.size() != 1) {
       // We need exactly one token.
-      return absl::InvalidArgumentError(
+      return status::InvalidArgumentError(
           "Expected a single identifier for preprocessor condition.");
     }
 
@@ -281,19 +280,19 @@ class ProcessedTokenStream {
       auto* ident = token->AsIdent();
       if (ident) {
         if (previous_defs.contains(ident->name)) {
-          return absl::InvalidArgumentError(
+          return status::InvalidArgumentError(
               "Infinite loop in preprocessor condition.");
         }
         previous_defs.insert(ident->name);
 
         auto define = defines_->find(ident->name);
         if (define == defines_->end()) {
-          return absl::InvalidArgumentError(
+          return status::InvalidArgumentError(
               "Undefined identifier in preprocessor condition.");
         }
 
         if (define->second.size() != 1) {
-          return absl::InvalidArgumentError(
+          return status::InvalidArgumentError(
               "Expected a single token for preprocessor condition.");
         }
 
@@ -334,7 +333,7 @@ class ParserImpl {
       : token_stream_(std::move(token_stream)),
         include_context_(include_context) {}
 
-  absl::StatusOr<std::optional<Expr>> ParseExpr() {
+  status::StatusOr<std::optional<Expr>> ParseExpr() {
     ASSIGN_OR_RETURN(auto token, token_stream_.GetNextToken());
     if (!token) {
       return std::nullopt;
@@ -367,16 +366,16 @@ class ParserImpl {
     return Expr(std::move(list_expr));
   }
 
-  absl::StatusOr<ListExpr> ParseList(ListExpr::Kind kind,
-                                     Token::PunctType close_punct,
-                                     Token start_paren) {
+  status::StatusOr<ListExpr> ParseList(ListExpr::Kind kind,
+                                       Token::PunctType close_punct,
+                                       Token start_paren) {
     // We've already read the opening parenthesis.
     std::vector<Expr> elements;
 
     while (true) {
       ASSIGN_OR_RETURN(auto next_token, token_stream_.GetNextToken());
       if (!next_token) {
-        return absl::InvalidArgumentError("Unexpected end of list.");
+        return status::InvalidArgumentError("Unexpected end of list.");
       }
 
       auto* punct = next_token->AsPunct();
@@ -389,13 +388,13 @@ class ParserImpl {
 
       ASSIGN_OR_RETURN(auto next_expr, ParseExpr());
       if (!next_expr) {
-        return absl::InvalidArgumentError("Unexpected end of list.");
+        return status::InvalidArgumentError("Unexpected end of list.");
       }
       elements.push_back(std::move(next_expr).value());
     }
   }
 
-  absl::StatusOr<std::optional<Expr>> TopLevelExpr() {
+  status::StatusOr<std::optional<Expr>> TopLevelExpr() {
     while (true) {
       ASSIGN_OR_RETURN(auto expr, ParseExpr());
       if (!expr) {
@@ -431,15 +430,15 @@ class ParserImpl {
     }
   }
 
-  absl::Status HandleDefine(absl::Span<Expr const> rest_elements) {
+  status::Status HandleDefine(absl::Span<Expr const> rest_elements) {
     if (rest_elements.size() < 2) {
-      return absl::InvalidArgumentError(
+      return status::InvalidArgumentError(
           "A define needs a symbol and a sequence of values.");
     }
 
     auto name = GetExprPlainIdent(rest_elements[0]);
     if (!name) {
-      return absl::InvalidArgumentError(absl::StrFormat(
+      return status::InvalidArgumentError(absl::StrFormat(
           "First element of define must be an identifier. Got %v",
           rest_elements[0]));
     }
@@ -453,21 +452,21 @@ class ParserImpl {
     }
 
     token_stream_.SetDefinition(*name, std::move(value_tokens));
-    return absl::OkStatus();
+    return status::OkStatus();
   }
 
-  absl::Status HandleInclude(absl::Span<Expr const> rest_elements) {
+  status::Status HandleInclude(absl::Span<Expr const> rest_elements) {
     // This could cause preprocessor desyncs, if we include a file that
     // has misformatted preprocessor directives. If we want to handle this,
     // we will have to track the source of each define clause.
     if (rest_elements.size() != 1) {
-      return absl::InvalidArgumentError("Include requires a single argument.");
+      return status::InvalidArgumentError("Include requires a single argument.");
     }
 
     // An include argument can be a string or an identifier.
     auto const& incl_value = rest_elements[0];
     if (!incl_value.has<TokenExpr>()) {
-      return absl::InvalidArgumentError(
+      return status::InvalidArgumentError(
           "Include argument must be either a string or symbol.");
     }
 
@@ -479,7 +478,7 @@ class ParserImpl {
     } else if (auto* ident = token_expr.token().AsIdent()) {
       include_path = ident->name;
     } else {
-      return absl::InvalidArgumentError(
+      return status::InvalidArgumentError(
           "Include argument must be either a string or symbol.");
     }
     ASSIGN_OR_RETURN(auto include_text,
@@ -489,7 +488,7 @@ class ParserImpl {
 
     token_stream_.PushRawTokens(std::move(tokens));
 
-    return absl::OkStatus();
+    return status::OkStatus();
   }
 
  private:
@@ -503,7 +502,8 @@ void Parser::AddDefine(std::string_view name, std::vector<Token> tokens) {
   defines_[name] = std::move(tokens);
 }
 
-absl::StatusOr<std::vector<Expr>> Parser::ParseTree(std::vector<Token> tokens) {
+status::StatusOr<std::vector<Expr>> Parser::ParseTree(
+    std::vector<Token> tokens) {
   auto token_stream = std::make_unique<TokenStream>();
   token_stream->PushTokens(std::move(tokens));
 

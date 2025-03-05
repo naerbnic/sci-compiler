@@ -5,9 +5,8 @@
 #include <optional>
 #include <string_view>
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "scic/sem/common.hpp"
+#include "scic/status/status.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/sequence.hpp"
 
@@ -37,10 +36,10 @@ class ExternTableBuilder {
 
   virtual ~ExternTableBuilder() = default;
 
-  virtual absl::Status AddExtern(NameToken name,
-                                 std::optional<ScriptNum> script_num,
-                                 PublicIndex index) = 0;
-  virtual absl::StatusOr<std::unique_ptr<ExternTable>> Build() = 0;
+  virtual status::Status AddExtern(NameToken name,
+                                   std::optional<ScriptNum> script_num,
+                                   PublicIndex index) = 0;
+  virtual status::StatusOr<std::unique_ptr<ExternTable>> Build() = 0;
 };
 
 }  // namespace sem

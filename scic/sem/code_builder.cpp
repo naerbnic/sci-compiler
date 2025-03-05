@@ -7,7 +7,6 @@
 #include <string>
 #include <utility>
 
-#include "absl/status/status.h"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/parsers/sci/ast.hpp"
 #include "scic/sem/class_table.hpp"
@@ -19,13 +18,14 @@
 #include "scic/sem/proc_table.hpp"
 #include "scic/sem/property_list.hpp"
 #include "scic/sem/selector_table.hpp"
+#include "scic/status/status.hpp"
 #include "util/status/status_macros.hpp"
 #include "util/strings/ref_str.hpp"
 
 namespace sem {
 namespace {
 
-absl::Status BuildGenericProcedure(
+status::Status BuildGenericProcedure(
     ModuleEnvironment const* mod_env, PropertyList const* prop_list,
     std::optional<ExprEnvironment::SuperInfo> super_info,
     codegen::FuncName func_name, codegen::PtrRef* proc_ref,
@@ -72,11 +72,12 @@ absl::Status BuildGenericProcedure(
   // Add a trailing return.
   func_builder->AddReturnOp();
 
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
-absl::Status BuildClass(ModuleEnvironment const* module_env,
-                        Class const* class_def, ast::ClassDef const& ast_node) {
+status::Status BuildClass(ModuleEnvironment const* module_env,
+                          Class const* class_def,
+                          ast::ClassDef const& ast_node) {
   auto class_gen =
       module_env->codegen()->CreateClass(std::string(class_def->name()));
   for (auto const& prop : class_def->prop_list().properties()) {
@@ -118,11 +119,12 @@ absl::Status BuildClass(ModuleEnvironment const* module_env,
                                           &meth_ptr_ref, method));
   }
 
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
-absl::Status BuildObject(ModuleEnvironment const* module_env,
-                         Object const* obj_def, ast::ClassDef const& ast_node) {
+status::Status BuildObject(ModuleEnvironment const* module_env,
+                           Object const* obj_def,
+                           ast::ClassDef const& ast_node) {
   auto obj_gen = module_env->codegen()->CreateObject(
       std::string(obj_def->name()), obj_def->ptr_ref());
   for (auto const& prop : obj_def->prop_list().properties()) {
@@ -160,12 +162,12 @@ absl::Status BuildObject(ModuleEnvironment const* module_env,
                                           &meth_ptr_ref, method));
   }
 
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
-absl::Status BuildProcedure(ModuleEnvironment const* module_env,
-                            Procedure const* proc_obj,
-                            ast::ProcDef const& ast_node) {
+status::Status BuildProcedure(ModuleEnvironment const* module_env,
+                              Procedure const* proc_obj,
+                              ast::ProcDef const& ast_node) {
   codegen::ProcedureName name(std::string(proc_obj->name()));
 
   return BuildGenericProcedure(module_env, nullptr, std::nullopt,
@@ -174,7 +176,7 @@ absl::Status BuildProcedure(ModuleEnvironment const* module_env,
 
 }  // namespace
 
-absl::Status BuildCode(ModuleEnvironment const* module_env) {
+status::Status BuildCode(ModuleEnvironment const* module_env) {
   [[maybe_unused]] auto* codegen = module_env->codegen();
   // We handle every procedure, class, and object in the order it appears in the
   // AST. This matches the previous implementation, which does everything in
@@ -203,13 +205,13 @@ absl::Status BuildCode(ModuleEnvironment const* module_env) {
             }
 
             default:
-              return absl::InvalidArgumentError("Unknown class kind");
+              return status::InvalidArgumentError("Unknown class kind");
           }
-          return absl::OkStatus();
+          return status::OkStatus();
         }));
   }
 
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
 }  // namespace sem

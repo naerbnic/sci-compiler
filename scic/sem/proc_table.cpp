@@ -8,10 +8,9 @@
 #include <vector>
 
 #include "absl/base/nullability.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/sem/common.hpp"
+#include "scic/status/status.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/sequence.hpp"
 
@@ -62,15 +61,15 @@ class ProcTableBuilderImpl : public ProcTableBuilder {
   explicit ProcTableBuilderImpl(codegen::CodeGenerator* codegen)
       : codegen_(codegen) {}
 
-  absl::Status AddProcedure(NameToken name) override {
+  status::Status AddProcedure(NameToken name) override {
     auto ptr_ref = codegen_->CreatePtrRef();
     auto new_proc = std::make_unique<ProcedureImpl>(name, std::move(ptr_ref));
     name_table_.emplace(new_proc->name(), new_proc.get());
     procedures_.push_back(std::move(new_proc));
-    return absl::OkStatus();
+    return status::OkStatus();
   }
 
-  absl::StatusOr<std::unique_ptr<ProcTable>> Build() override {
+  status::StatusOr<std::unique_ptr<ProcTable>> Build() override {
     return std::make_unique<ProcTableImpl>(std::move(procedures_),
                                            std::move(name_table_));
   }

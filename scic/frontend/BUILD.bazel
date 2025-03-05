@@ -13,6 +13,7 @@ cc_binary(
         "//scic/sem:code_builder",
         "//scic/sem:input",
         "//scic/sem:module_env",
+        "//scic/status",
         "//scic/text:text_range",
         "//scic/tokens:token",
         "//scic/tokens:token_readers",
@@ -20,8 +21,6 @@ cc_binary(
         "//util/strings:ref_str",
         "@abseil-cpp//absl/debugging:failure_signal_handler",
         "@abseil-cpp//absl/debugging:symbolize",
-        "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/strings:str_format",
     ],
 )

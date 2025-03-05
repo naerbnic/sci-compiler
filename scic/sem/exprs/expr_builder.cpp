@@ -9,8 +9,6 @@
 #include <utility>
 
 #include "absl/base/nullability.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "scic/codegen/code_generator.hpp"
@@ -18,6 +16,7 @@
 #include "scic/sem/common.hpp"
 #include "scic/sem/exprs/expr_context.hpp"
 #include "scic/sem/selector_table.hpp"
+#include "scic/status/status.hpp"
 #include "util/status/status_macros.hpp"
 
 namespace sem {
@@ -66,8 +65,8 @@ VarTypeAndOffset GetVarTypeAndOffset(ExprEnvironment::VarSym const& var_sym) {
       });
 }
 
-absl::Status BuildAddrOfExpr(ExprContext* ctx,
-                             ast::AddrOfExpr const& addr_of) {
+status::Status BuildAddrOfExpr(ExprContext* ctx,
+                               ast::AddrOfExpr const& addr_of) {
   auto const& [var_name, index] = GetVarNameAndIndex(addr_of.expr());
 
   ASSIGN_OR_RETURN(auto sym, ctx->LookupSym(var_name.value()));
@@ -75,12 +74,12 @@ absl::Status BuildAddrOfExpr(ExprContext* ctx,
   ASSIGN_OR_RETURN(auto type_val,
                    sym.visit(
                        [&](ExprEnvironment::VarSym const& var_sym)
-                           -> absl::StatusOr<VarTypeAndOffset> {
+                           -> status::StatusOr<VarTypeAndOffset> {
                          return GetVarTypeAndOffset(var_sym);
                        },
                        [&](ExprEnvironment::PropSym const& proc)
-                           -> absl::StatusOr<VarTypeAndOffset> {
-                         return absl::FailedPreconditionError(
+                           -> status::StatusOr<VarTypeAndOffset> {
+                         return status::FailedPreconditionError(
                              "Properties cannot be used in an "
                              "AddrOf expression.");
                        }));
@@ -91,50 +90,49 @@ absl::Status BuildAddrOfExpr(ExprContext* ctx,
   ctx->func_builder()->AddLoadVarAddr(type_val.type, type_val.offset,
                                       /*add_accum_index=*/index != nullptr,
                                       std::string(var_name->view()));
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
-absl::Status BuildSelectLitExpr(ExprContext* ctx,
-                                ast::SelectLitExpr const& select_lit) {
+status::Status BuildSelectLitExpr(ExprContext* ctx,
+                                  ast::SelectLitExpr const& select_lit) {
   auto selector = ctx->LookupSelector(select_lit.selector().value());
   if (!selector) {
-    return absl::NotFoundError(absl::StrFormat("Selector '%s' not found.",
-                                               select_lit.selector().value()));
+    return status::NotFoundError(absl::StrFormat(
+        "Selector '%s' not found.", select_lit.selector().value()));
   }
   ctx->func_builder()->AddLoadImmediate(int(selector->value()));
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
-absl::Status BuildConstExpr(ExprContext* ctx,
-                            ast::ConstValue const& const_value) {
+status::Status BuildConstExpr(ExprContext* ctx,
+                              ast::ConstValue const& const_value) {
   ASSIGN_OR_RETURN(
       codegen::LiteralValue value,
       const_value.visit(
           [&](ast::NumConstValue const& num)
-              -> absl::StatusOr<codegen::LiteralValue> {
+              -> status::StatusOr<codegen::LiteralValue> {
             ASSIGN_OR_RETURN(auto machine_value,
                              ConvertToMachineWord(num.value().value()));
             return codegen::LiteralValue(machine_value);
           },
           [&](ast::StringConstValue const& str)
-              -> absl::StatusOr<codegen::LiteralValue> {
+              -> status::StatusOr<codegen::LiteralValue> {
             ;
             return ctx->codegen()->AddTextNode(str.value().value());
           }));
 
   ctx->func_builder()->AddLoadImmediate(value);
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
-absl::Status BuildVarStoreExpr(ExprContext* ctx,
-                               NameToken const& var_name,
-                               ast::Expr const* index) {
+status::Status BuildVarStoreExpr(ExprContext* ctx, NameToken const& var_name,
+                                 ast::Expr const* index) {
   // We're going to store the accumulator. Push it onto the stack.
   ctx->func_builder()->AddPushOp();
 
   ASSIGN_OR_RETURN(auto sym, ctx->LookupSym(var_name.value()));
   return sym.visit(
-      [&](ExprEnvironment::VarSym const& var_sym) -> absl::Status {
+      [&](ExprEnvironment::VarSym const& var_sym) -> status::Status {
         auto const& [var_type, var_offset] = GetVarTypeAndOffset(var_sym);
         if (index) {
           RETURN_IF_ERROR(ctx->BuildExpr(*index));
@@ -144,26 +142,27 @@ absl::Status BuildVarStoreExpr(ExprContext* ctx,
                                           var_offset,
                                           /*add_accum_index=*/index != nullptr,
                                           std::string(var_name->view()));
-        return absl::OkStatus();
+        return status::OkStatus();
       },
-      [&](ExprEnvironment::PropSym const& proc) -> absl::Status {
+      [&](ExprEnvironment::PropSym const& proc) -> status::Status {
         if (index) {
-          return absl::FailedPreconditionError("Properties cannot be indexed.");
+          return status::FailedPreconditionError(
+              "Properties cannot be indexed.");
         }
         ctx->func_builder()->AddPropAccess(FunctionBuilder::STORE,
                                            proc.prop_offset,
                                            std::string(proc.selector->name()));
-        return absl::OkStatus();
+        return status::OkStatus();
       });
 }
 
-absl::Status BuildVarLoadExpr(ExprContext* ctx,
-                              FunctionBuilder::ValueOp val_op,
-                              NameToken const& var_name,
-                              absl::Nullable<ast::Expr const*> index) {
+status::Status BuildVarLoadExpr(ExprContext* ctx,
+                                FunctionBuilder::ValueOp val_op,
+                                NameToken const& var_name,
+                                absl::Nullable<ast::Expr const*> index) {
   ASSIGN_OR_RETURN(auto sym, ctx->LookupSym(var_name.value()));
   return sym.visit(
-      [&](ExprEnvironment::VarSym const& var_sym) -> absl::Status {
+      [&](ExprEnvironment::VarSym const& var_sym) -> status::Status {
         auto const& [var_type, var_offset] = GetVarTypeAndOffset(var_sym);
         if (index) {
           RETURN_IF_ERROR(ctx->BuildExpr(*index));
@@ -172,15 +171,16 @@ absl::Status BuildVarLoadExpr(ExprContext* ctx,
         ctx->func_builder()->AddVarAccess(var_type, val_op, var_offset,
                                           /*add_accum_index=*/index != nullptr,
                                           std::string(var_name->view()));
-        return absl::OkStatus();
+        return status::OkStatus();
       },
-      [&](ExprEnvironment::PropSym const& proc) -> absl::Status {
+      [&](ExprEnvironment::PropSym const& proc) -> status::Status {
         if (index) {
-          return absl::FailedPreconditionError("Properties cannot be indexed.");
+          return status::FailedPreconditionError(
+              "Properties cannot be indexed.");
         }
         ctx->func_builder()->AddPropAccess(val_op, proc.prop_offset,
                                            std::string(proc.selector->name()));
-        return absl::OkStatus();
+        return status::OkStatus();
       });
 }
 
@@ -212,8 +212,8 @@ std::optional<FunctionBuilder::BinOp> BuildAssignOp(
   }
 }
 
-absl::StatusOr<std::size_t> BuildCallArgs(ExprContext* ctx,
-                                          ast::CallArgs const& call_args) {
+status::StatusOr<std::size_t> BuildCallArgs(ExprContext* ctx,
+                                            ast::CallArgs const& call_args) {
   std::size_t num_args = call_args.args().size();
   ctx->func_builder()->AddPushImmediate(num_args);
   for (auto const& arg : call_args.args()) {
@@ -228,7 +228,7 @@ absl::StatusOr<std::size_t> BuildCallArgs(ExprContext* ctx,
       if (!rest_param.has<ExprEnvironment::VarSym>() ||
           rest_param.as<ExprEnvironment::VarSym>()
               .has<ExprEnvironment::ParamSym>()) {
-        return absl::FailedPreconditionError(absl::StrFormat(
+        return status::FailedPreconditionError(absl::StrFormat(
             "Parameter '%s' is not a procedure/method parameter.",
             rest_name->value()));
       }
@@ -244,51 +244,51 @@ absl::StatusOr<std::size_t> BuildCallArgs(ExprContext* ctx,
 }
 
 template <FunctionBuilder::UnOp Op>
-absl::Status BuildUnaryExpr(ExprContext* ctx, NameToken const& op_name,
-                            ast::CallArgs const& args) {
+status::Status BuildUnaryExpr(ExprContext* ctx, NameToken const& op_name,
+                              ast::CallArgs const& args) {
   if (args.args().size() != 1) {
-    return absl::InvalidArgumentError(absl::StrFormat(
+    return status::InvalidArgumentError(absl::StrFormat(
         "Unary operator '%s' takes one argument.", op_name.value()));
   }
   if (args.rest()) {
-    return absl::InvalidArgumentError(absl::StrFormat(
+    return status::InvalidArgumentError(absl::StrFormat(
         "Unary operator '%s' cannot take a rest argument.", op_name.value()));
   }
   RETURN_IF_ERROR(ctx->BuildExpr(args.args()[0]));
   ctx->func_builder()->AddUnOp(Op);
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
 template <FunctionBuilder::BinOp Op>
-absl::Status BuildBinaryExpr(ExprContext* ctx, NameToken const& op_name,
-                             ast::CallArgs const& args) {
+status::Status BuildBinaryExpr(ExprContext* ctx, NameToken const& op_name,
+                               ast::CallArgs const& args) {
   if (args.args().size() != 2) {
-    return absl::InvalidArgumentError(absl::StrFormat(
+    return status::InvalidArgumentError(absl::StrFormat(
         "Binary operator '%s' takes two arguments.", op_name.value()));
   }
   if (args.rest()) {
-    return absl::InvalidArgumentError(absl::StrFormat(
+    return status::InvalidArgumentError(absl::StrFormat(
         "Binary operator '%s' cannot take a rest argument.", op_name.value()));
   }
   RETURN_IF_ERROR(ctx->BuildExpr(args.args()[0]));
   ctx->func_builder()->AddPushOp();
   RETURN_IF_ERROR(ctx->BuildExpr(args.args()[1]));
   ctx->func_builder()->AddBinOp(Op);
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
 template <FunctionBuilder::BinOp Op>
-absl::Status BuildMultiExpr(ExprContext* ctx, NameToken const& op_name,
-                            ast::CallArgs const& args) {
+status::Status BuildMultiExpr(ExprContext* ctx, NameToken const& op_name,
+                              ast::CallArgs const& args) {
   if (args.rest()) {
-    return absl::InvalidArgumentError(absl::StrFormat(
+    return status::InvalidArgumentError(absl::StrFormat(
         "Multi-argument operator '%s' cannot take a rest argument.",
         op_name.value()));
   }
 
   absl::Span<ast::Expr const> op_args = args.args();
   if (op_args.empty()) {
-    return absl::InvalidArgumentError(absl::StrFormat(
+    return status::InvalidArgumentError(absl::StrFormat(
         "Multi-argument operator '%s' must take at least one argument.",
         op_name.value()));
   }
@@ -298,15 +298,15 @@ absl::Status BuildMultiExpr(ExprContext* ctx, NameToken const& op_name,
     RETURN_IF_ERROR(ctx->BuildExpr(arg));
     ctx->func_builder()->AddBinOp(Op);
   }
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
 // We need a specific function here, as the "-" operations is used for both
 // negation and subtraction.
-absl::Status BuildSubExpr(ExprContext* ctx, NameToken const& op_name,
-                          ast::CallArgs const& args) {
+status::Status BuildSubExpr(ExprContext* ctx, NameToken const& op_name,
+                            ast::CallArgs const& args) {
   if (args.rest()) {
-    return absl::InvalidArgumentError(absl::StrFormat(
+    return status::InvalidArgumentError(absl::StrFormat(
         "Subtraction operator '%s' cannot take a rest argument.",
         op_name.value()));
   }
@@ -320,25 +320,25 @@ absl::Status BuildSubExpr(ExprContext* ctx, NameToken const& op_name,
     RETURN_IF_ERROR(ctx->BuildExpr(op_args[1]));
     ctx->func_builder()->AddBinOp(FunctionBuilder::SUB);
   } else {
-    return absl::InvalidArgumentError(absl::StrFormat(
+    return status::InvalidArgumentError(absl::StrFormat(
         "Subtraction operator '%s' must take one or two arguments.",
         op_name.value()));
   }
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
 // An implementation of the "and" operator. This short circuits, so it
 // needs special handling.
-absl::Status BuildAndExpr(ExprContext* ctx, NameToken const& op_name,
-                          ast::CallArgs const& args) {
+status::Status BuildAndExpr(ExprContext* ctx, NameToken const& op_name,
+                            ast::CallArgs const& args) {
   if (args.rest()) {
-    return absl::InvalidArgumentError(absl::StrFormat(
+    return status::InvalidArgumentError(absl::StrFormat(
         "And operator '%s' cannot take a rest argument.", op_name.value()));
   }
 
   absl::Span<ast::Expr const> op_args = args.args();
   if (op_args.empty()) {
-    return absl::InvalidArgumentError(absl::StrFormat(
+    return status::InvalidArgumentError(absl::StrFormat(
         "And operator '%s' must take at least one argument.", op_name.value()));
   }
 
@@ -349,20 +349,20 @@ absl::Status BuildAndExpr(ExprContext* ctx, NameToken const& op_name,
   }
   RETURN_IF_ERROR(ctx->BuildExpr(op_args.back()));
   ctx->func_builder()->AddLabel(&end_label);
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 // An implementation of the "and" operator. This short circuits, so it
 // needs special handling.
-absl::Status BuildOrExpr(ExprContext* ctx, NameToken const& op_name,
-                         ast::CallArgs const& args) {
+status::Status BuildOrExpr(ExprContext* ctx, NameToken const& op_name,
+                           ast::CallArgs const& args) {
   if (args.rest()) {
-    return absl::InvalidArgumentError(absl::StrFormat(
+    return status::InvalidArgumentError(absl::StrFormat(
         "And operator '%s' cannot take a rest argument.", op_name.value()));
   }
 
   absl::Span<ast::Expr const> op_args = args.args();
   if (op_args.empty()) {
-    return absl::InvalidArgumentError(absl::StrFormat(
+    return status::InvalidArgumentError(absl::StrFormat(
         "And operator '%s' must take at least one argument.", op_name.value()));
   }
 
@@ -373,24 +373,24 @@ absl::Status BuildOrExpr(ExprContext* ctx, NameToken const& op_name,
   }
   RETURN_IF_ERROR(ctx->BuildExpr(op_args.back()));
   ctx->func_builder()->AddLabel(&end_label);
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
 // Builds a comparison expression. This works as an n-ary operator, which
 // pairwise compares all of the arguments. It short-circuits to false
 // when the first comparison fails.
 template <FunctionBuilder::BinOp Op>
-absl::Status BuildCompExpr(ExprContext* ctx, NameToken const& op_name,
-                           ast::CallArgs const& args) {
+status::Status BuildCompExpr(ExprContext* ctx, NameToken const& op_name,
+                             ast::CallArgs const& args) {
   if (args.rest()) {
-    return absl::InvalidArgumentError(
+    return status::InvalidArgumentError(
         absl::StrFormat("Comparison operator '%s' cannot take a rest argument.",
                         op_name.value()));
   }
 
   absl::Span<ast::Expr const> op_args = args.args();
   if (op_args.size() < 2) {
-    return absl::InvalidArgumentError(absl::StrFormat(
+    return status::InvalidArgumentError(absl::StrFormat(
         "Comparison operator '%s' must take at least two arguments.",
         op_name.value()));
   }
@@ -409,12 +409,11 @@ absl::Status BuildCompExpr(ExprContext* ctx, NameToken const& op_name,
     ctx->func_builder()->AddBinOp(Op);
   }
   ctx->func_builder()->AddLabel(&done);
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
-using CallFunc = absl::Status (*)(ExprContext* ctx,
-                                  NameToken const& op_name,
-                                  ast::CallArgs const& call);
+using CallFunc = status::Status (*)(ExprContext* ctx, NameToken const& op_name,
+                                    ast::CallArgs const& call);
 
 std::map<std::string_view, CallFunc> const& GetCallBuiltins() {
   static std::map<std::string_view, CallFunc> builtins = {
@@ -446,13 +445,13 @@ std::map<std::string_view, CallFunc> const& GetCallBuiltins() {
   return builtins;
 }
 
-absl::Status BuildCallExpr(ExprContext* ctx, ast::CallExpr const& call) {
+status::Status BuildCallExpr(ExprContext* ctx, ast::CallExpr const& call) {
   ASSIGN_OR_RETURN(auto num_args, BuildCallArgs(ctx, call.call_args()));
   auto const& target = call.target();
   // The original appears to only support calls to names, but I think
   // there's a reason that I made this support general expressions.
   if (!target.has<ast::VarExpr>()) {
-    return absl::InvalidArgumentError(
+    return status::InvalidArgumentError(
         "Only calls to names are supported at this time.");
   }
   auto const& target_name = target.as<ast::VarExpr>().name();
@@ -466,26 +465,26 @@ absl::Status BuildCallExpr(ExprContext* ctx, ast::CallExpr const& call) {
 
   ASSIGN_OR_RETURN(auto proc, ctx->LookupProc(target_name.value()));
   return proc.visit(
-      [&](ExprEnvironment::LocalProc const& local) -> absl::Status {
+      [&](ExprEnvironment::LocalProc const& local) -> status::Status {
         ctx->func_builder()->AddProcCall(std::string(local.name.value()),
                                          num_args, local.proc_ref);
-        return absl::OkStatus();
+        return status::OkStatus();
       },
-      [&](ExprEnvironment::ExternProc const& ext) -> absl::Status {
+      [&](ExprEnvironment::ExternProc const& ext) -> status::Status {
         ctx->func_builder()->AddExternCall(std::string(ext.name.value()),
                                            num_args, ext.script_num.value(),
                                            ext.extern_offset);
-        return absl::OkStatus();
+        return status::OkStatus();
       },
-      [&](ExprEnvironment::KernelProc const& kernel) -> absl::Status {
+      [&](ExprEnvironment::KernelProc const& kernel) -> status::Status {
         ctx->func_builder()->AddKernelCall(std::string(kernel.name.value()),
                                            num_args, kernel.kernel_offset);
-        return absl::OkStatus();
+        return status::OkStatus();
       });
 }
 
-absl::StatusOr<std::size_t> BuildSendClause(ExprContext* ctx,
-                                            ast::SendClause const& clause) {
+status::StatusOr<std::size_t> BuildSendClause(ExprContext* ctx,
+                                              ast::SendClause const& clause) {
   struct SelectorNameAndArgs {
     NameToken const& sel_name;
     ast::CallArgs const* args;
@@ -510,7 +509,7 @@ absl::StatusOr<std::size_t> BuildSendClause(ExprContext* ctx,
 
   auto symbol = ctx->LookupSym(sel_and_args.sel_name.value());
 
-  if (!symbol.ok() && !absl::IsNotFound(symbol.status())) {
+  if (!symbol.ok() && !status::IsNotFound(symbol.status())) {
     return std::move(symbol).status();
   }
 
@@ -522,7 +521,7 @@ absl::StatusOr<std::size_t> BuildSendClause(ExprContext* ctx,
   } else {
     auto selector = ctx->LookupSelector(sel_and_args.sel_name.value());
     if (!selector) {
-      return absl::NotFoundError(absl::StrFormat(
+      return status::NotFoundError(absl::StrFormat(
           "Selector '%s' not found.", sel_and_args.sel_name.value()));
     }
     ctx->func_builder()->AddPushImmediate(int(selector->value()));
@@ -537,7 +536,7 @@ absl::StatusOr<std::size_t> BuildSendClause(ExprContext* ctx,
   }
 }
 
-absl::Status BuildSendExpr(ExprContext* ctx, ast::SendExpr const& send) {
+status::Status BuildSendExpr(ExprContext* ctx, ast::SendExpr const& send) {
   std::size_t num_args = 0;
   for (auto const& clause : send.clauses()) {
     ASSIGN_OR_RETURN(auto clause_num_args, BuildSendClause(ctx, clause));
@@ -547,28 +546,28 @@ absl::Status BuildSendExpr(ExprContext* ctx, ast::SendExpr const& send) {
   return send.target().visit(
       [&](ast::SelfSendTarget const& self_target) {
         ctx->func_builder()->AddSelfSend(num_args);
-        return absl::OkStatus();
+        return status::OkStatus();
       },
-      [&](ast::SuperSendTarget const& index_expr) -> absl::Status {
+      [&](ast::SuperSendTarget const& index_expr) -> status::Status {
         if (!ctx->super_info()) {
-          return absl::FailedPreconditionError(
+          return status::FailedPreconditionError(
               "Cannot send to super without a super class.");
         }
         auto super_info = *ctx->super_info();
         ctx->func_builder()->AddSuperSend(
             std::string(super_info.super_name.value()), num_args,
             int(super_info.species.value()));
-        return absl::OkStatus();
+        return status::OkStatus();
       },
-      [&](ast::ExprSendTarget const& expr) -> absl::Status {
+      [&](ast::ExprSendTarget const& expr) -> status::Status {
         RETURN_IF_ERROR(ctx->BuildExpr(expr.target()));
         ctx->func_builder()->AddSend(num_args);
-        return absl::OkStatus();
+        return status::OkStatus();
       });
 }
 
-absl::Status BuildAssignExpr(ExprContext* ctx,
-                             ast::AssignExpr const& assign) {
+status::Status BuildAssignExpr(ExprContext* ctx,
+                               ast::AssignExpr const& assign) {
   auto assign_op = BuildAssignOp(assign.kind());
   auto result = GetVarNameAndIndex(assign.target());
   if (assign_op) {
@@ -582,37 +581,36 @@ absl::Status BuildAssignExpr(ExprContext* ctx,
   }
 
   RETURN_IF_ERROR(BuildVarStoreExpr(ctx, result.var_name, result.index));
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
-absl::Status BuildIncDecExpr(ExprContext* ctx,
-                             ast::IncDecExpr const& inc_dec) {
+status::Status BuildIncDecExpr(ExprContext* ctx,
+                               ast::IncDecExpr const& inc_dec) {
   auto inc_dec_op = inc_dec.kind() == ast::IncDecExpr::INC
                         ? FunctionBuilder::INC
                         : FunctionBuilder::DEC;
   auto result = GetVarNameAndIndex(inc_dec.target());
   RETURN_IF_ERROR(
       BuildVarLoadExpr(ctx, inc_dec_op, result.var_name, result.index));
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
-absl::Status BuildExprList(ExprContext* ctx,
-                           ast::ExprList const& expr_list) {
+status::Status BuildExprList(ExprContext* ctx, ast::ExprList const& expr_list) {
   for (auto const& expr : expr_list.exprs()) {
     RETURN_IF_ERROR(ctx->BuildExpr(expr));
   }
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
-absl::Status BuildBreakExpr(ExprContext* ctx,
-                            ast::BreakExpr const& break_expr) {
+status::Status BuildBreakExpr(ExprContext* ctx,
+                              ast::BreakExpr const& break_expr) {
   std::size_t level = 0;
   if (break_expr.level()) {
     level = break_expr.level()->value();
   }
   auto* break_label = ctx->GetBreakLabel(level);
   if (!break_label) {
-    return absl::FailedPreconditionError(
+    return status::FailedPreconditionError(
         "Cannot break to level without a loop.");
   }
   if (break_expr.condition()) {
@@ -621,18 +619,18 @@ absl::Status BuildBreakExpr(ExprContext* ctx,
   } else {
     ctx->func_builder()->AddBranchOp(FunctionBuilder::JMP, break_label);
   }
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
-absl::Status BuildContEpxr(ExprContext* ctx,
-                           ast::ContinueExpr const& break_expr) {
+status::Status BuildContEpxr(ExprContext* ctx,
+                             ast::ContinueExpr const& break_expr) {
   std::size_t level = 0;
   if (break_expr.level()) {
     level = break_expr.level()->value();
   }
   auto* break_label = ctx->GetContLabel(level);
   if (!break_label) {
-    return absl::FailedPreconditionError(
+    return status::FailedPreconditionError(
         "Cannot break to level without a loop.");
   }
   if (break_expr.condition()) {
@@ -641,10 +639,10 @@ absl::Status BuildContEpxr(ExprContext* ctx,
   } else {
     ctx->func_builder()->AddBranchOp(FunctionBuilder::JMP, break_label);
   }
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
-absl::Status BuildIfExpr(ExprContext* ctx, ast::IfExpr const& if_expr) {
+status::Status BuildIfExpr(ExprContext* ctx, ast::IfExpr const& if_expr) {
   RETURN_IF_ERROR(ctx->BuildExpr(if_expr.condition()));
   if (if_expr.else_body()) {
     auto end_label = ctx->func_builder()->CreateLabelRef();
@@ -661,11 +659,10 @@ absl::Status BuildIfExpr(ExprContext* ctx, ast::IfExpr const& if_expr) {
     RETURN_IF_ERROR(ctx->BuildExpr(if_expr.then_body()));
     ctx->func_builder()->AddLabel(&end_label);
   }
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
-absl::Status BuildCondExpr(ExprContext* ctx,
-                           ast::CondExpr const& cond_expr) {
+status::Status BuildCondExpr(ExprContext* ctx, ast::CondExpr const& cond_expr) {
   auto done = ctx->func_builder()->CreateLabelRef();
   for (std::size_t i = 0; i < cond_expr.branches().size(); ++i) {
     auto next = ctx->func_builder()->CreateLabelRef();
@@ -686,11 +683,11 @@ absl::Status BuildCondExpr(ExprContext* ctx,
     RETURN_IF_ERROR(ctx->BuildExpr(**cond_expr.else_body()));
   }
   ctx->func_builder()->AddLabel(&done);
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
-absl::Status BuildSwitchExpr(ExprContext* ctx,
-                             ast::SwitchExpr const& switch_expr) {
+status::Status BuildSwitchExpr(ExprContext* ctx,
+                               ast::SwitchExpr const& switch_expr) {
   auto done = ctx->func_builder()->CreateLabelRef();
   RETURN_IF_ERROR(ctx->BuildExpr(switch_expr.switch_expr()));
   ctx->func_builder()->AddPushOp();
@@ -714,11 +711,11 @@ absl::Status BuildSwitchExpr(ExprContext* ctx,
     RETURN_IF_ERROR(ctx->BuildExpr(**switch_expr.else_case()));
   }
   ctx->func_builder()->AddLabel(&done);
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
-absl::Status BuildSwitchToExpr(ExprContext* ctx,
-                               ast::SwitchToExpr const& switch_expr) {
+status::Status BuildSwitchToExpr(ExprContext* ctx,
+                                 ast::SwitchToExpr const& switch_expr) {
   auto done = ctx->func_builder()->CreateLabelRef();
   RETURN_IF_ERROR(ctx->BuildExpr(switch_expr.switch_expr()));
   ctx->func_builder()->AddPushOp();
@@ -742,11 +739,11 @@ absl::Status BuildSwitchToExpr(ExprContext* ctx,
     RETURN_IF_ERROR(ctx->BuildExpr(**switch_expr.else_case()));
   }
   ctx->func_builder()->AddLabel(&done);
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
-absl::Status BuildWhileExpr(ExprContext* ctx,
-                            ast::WhileExpr const& while_expr) {
+status::Status BuildWhileExpr(ExprContext* ctx,
+                              ast::WhileExpr const& while_expr) {
   auto start = ctx->func_builder()->CreateLabelRef();
   auto done = ctx->func_builder()->CreateLabelRef();
 
@@ -760,10 +757,10 @@ absl::Status BuildWhileExpr(ExprContext* ctx,
   RETURN_IF_ERROR(ctx->BuildExpr(while_expr.body()));
   ctx->func_builder()->AddBranchOp(FunctionBuilder::JMP, &start);
   ctx->func_builder()->AddLabel(&done);
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
-absl::Status BuildForExpr(ExprContext* ctx, ast::ForExpr const& for_expr) {
+status::Status BuildForExpr(ExprContext* ctx, ast::ForExpr const& for_expr) {
   auto next = ctx->func_builder()->CreateLabelRef();
   auto done = ctx->func_builder()->CreateLabelRef();
 
@@ -792,14 +789,14 @@ absl::Status BuildForExpr(ExprContext* ctx, ast::ForExpr const& for_expr) {
   RETURN_IF_ERROR(ctx->BuildExpr(for_expr.update()));
   ctx->func_builder()->AddBranchOp(FunctionBuilder::JMP, &cond);
   ctx->func_builder()->AddLabel(&done);
-  return absl::OkStatus();
+  return status::OkStatus();
 }
 
 class ExprContextImpl : public ExprContext {
  public:
   using ExprContext::ExprContext;
 
-  absl::Status BuildExpr(ast::Expr const& expr) override {
+  status::Status BuildExpr(ast::Expr const& expr) override {
     return expr.visit(
         [&](ast::AddrOfExpr const& binary) {
           return BuildAddrOfExpr(this, binary);
@@ -826,7 +823,7 @@ class ExprContextImpl : public ExprContext {
             RETURN_IF_ERROR(BuildExpr(**array_ref.expr()));
           }
           func_builder()->AddReturnOp();
-          return absl::OkStatus();
+          return status::OkStatus();
         },
         [&](ast::BreakExpr const& break_expr) {
           return BuildBreakExpr(this, break_expr);
@@ -862,7 +859,7 @@ class ExprContextImpl : public ExprContext {
         [&](ast::ExprList const& expr_list) {
           return BuildExprList(this, expr_list);
         });
-    return absl::OkStatus();
+    return status::OkStatus();
   }
 };
 

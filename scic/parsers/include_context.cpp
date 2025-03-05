@@ -2,8 +2,7 @@
 
 #include <string_view>
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
+#include "scic/status/status.hpp"
 #include "scic/text/text_range.hpp"
 
 namespace parsers {
@@ -11,9 +10,9 @@ namespace {
 
 class EmptyIncludeContext : public IncludeContext {
  public:
-  absl::StatusOr<text::TextRange> LoadTextFromIncludePath(
+  status::StatusOr<text::TextRange> LoadTextFromIncludePath(
       std::string_view path) const override {
-    return absl::UnimplementedError("No includes.");
+    return status::UnimplementedError("No includes.");
   }
 };
 

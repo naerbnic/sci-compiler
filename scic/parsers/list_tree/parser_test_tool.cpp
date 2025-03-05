@@ -9,12 +9,11 @@
 #include <utility>
 #include <vector>
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "argparse/argparse.hpp"
 #include "scic/parsers/include_context.hpp"
 #include "scic/parsers/list_tree/parser.hpp"
+#include "scic/status/status.hpp"
 #include "scic/text/text_range.hpp"
 #include "scic/tokens/token.hpp"
 #include "scic/tokens/token_readers.hpp"
@@ -27,11 +26,11 @@ namespace {
 using ::text::TextRange;
 using ::tokens::Token;
 
-absl::StatusOr<text::TextRange> LoadFile(std::filesystem::path const& path) {
+status::StatusOr<text::TextRange> LoadFile(std::filesystem::path const& path) {
   std::ifstream file;
   file.open(path, std::ios::in | std::ios::binary);
   if (!file.good()) {
-    return absl::NotFoundError("Could not open file");
+    return status::NotFoundError("Could not open file");
   }
 
   std::stringstream buffer;
@@ -40,12 +39,12 @@ absl::StatusOr<text::TextRange> LoadFile(std::filesystem::path const& path) {
   return TextRange::WithFilename(util::RefStr(path.string()), buffer.str());
 }
 
-absl::StatusOr<std::vector<Token>> TokenizeFile(
+status::StatusOr<std::vector<Token>> TokenizeFile(
     std::filesystem::path const& path) {
   std::ifstream file;
   file.open(path, std::ios::in | std::ios::binary);
   if (!file.good()) {
-    return absl::NotFoundError("Could not open file");
+    return status::NotFoundError("Could not open file");
   }
 
   std::stringstream buffer;
@@ -60,7 +59,7 @@ class ToolIncludeContext : public IncludeContext {
   ToolIncludeContext(std::vector<std::filesystem::path> include_paths)
       : include_paths_(std::move(include_paths)) {}
 
-  absl::StatusOr<text::TextRange> LoadTextFromIncludePath(
+  status::StatusOr<text::TextRange> LoadTextFromIncludePath(
       std::string_view path) const override {
     std::ifstream file;
     for (auto const& include_path : include_paths_) {
@@ -69,12 +68,12 @@ class ToolIncludeContext : public IncludeContext {
         return std::move(result).value();
       }
 
-      if (!absl::IsNotFound(result.status())) {
+      if (!status::IsNotFound(result.status())) {
         return result.status();
       }
     }
 
-    return absl::NotFoundError(
+    return status::NotFoundError(
         absl::StrFormat("Could not find include file: %s", path));
   }
 
@@ -82,7 +81,7 @@ class ToolIncludeContext : public IncludeContext {
   std::vector<std::filesystem::path> include_paths_;
 };
 
-absl::StatusOr<int> RunMain(int argc, char** argv) {
+status::StatusOr<int> RunMain(int argc, char** argv) {
   argparse::ArgumentParser program("parser_test_tool", "Test tool for parser");
   program.add_argument("-I", "--include")
       .help("Add an include path")

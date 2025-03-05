@@ -5,14 +5,13 @@
 #include <string_view>
 #include <vector>
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/sem/class_table.hpp"
 #include "scic/sem/common.hpp"
 #include "scic/sem/obj_members.hpp"
 #include "scic/sem/property_list.hpp"
 #include "scic/sem/selector_table.hpp"
+#include "scic/status/status.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/sequence.hpp"
 
@@ -52,12 +51,12 @@ class ObjectTableBuilder {
 
   virtual ~ObjectTableBuilder() = default;
 
-  virtual absl::Status AddObject(NameToken name, ScriptNum script_num,
-                                 NameToken class_name,
-                                 std::vector<Property> properties,
-                                 std::vector<NameToken> methods) = 0;
+  virtual status::Status AddObject(NameToken name, ScriptNum script_num,
+                                   NameToken class_name,
+                                   std::vector<Property> properties,
+                                   std::vector<NameToken> methods) = 0;
 
-  virtual absl::StatusOr<std::unique_ptr<ObjectTable>> Build() = 0;
+  virtual status::StatusOr<std::unique_ptr<ObjectTable>> Build() = 0;
 };
 
 }  // namespace sem

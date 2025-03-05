@@ -8,10 +8,9 @@
 #include <utility>
 #include <vector>
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/sem/common.hpp"
+#include "scic/status/status.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/sequence.hpp"
 
@@ -73,11 +72,11 @@ class VarTableImpl : public VarTable {
 
 class VarTableBuilderImpl : public VarTableBuilder {
  public:
-  absl::Status DefineVar(
+  status::Status DefineVar(
       NameToken name, ModuleVarIndex var_index,
       std::vector<codegen::LiteralValue> initial_value) override {
     if (index_table_.find(var_index) != index_table_.end()) {
-      return absl::InvalidArgumentError("Variable already defined");
+      return status::InvalidArgumentError("Variable already defined");
     }
     // Create a new VariableImpl.
     auto entry = std::make_unique<VariableImpl>(std::move(name), var_index,
@@ -86,10 +85,10 @@ class VarTableBuilderImpl : public VarTableBuilder {
     index_table_.emplace(var_index, entry.get());
     name_map_.emplace(entry->name(), entry.get());
     entries_.emplace_back(std::move(entry));
-    return absl::OkStatus();
+    return status::OkStatus();
   }
 
-  absl::StatusOr<std::unique_ptr<VarTable>> Build() override {
+  status::StatusOr<std::unique_ptr<VarTable>> Build() override {
     return std::make_unique<VarTableImpl>(
         std::move(entries_), std::move(index_table_), std::move(name_map_));
   }
@@ -152,8 +151,8 @@ class GlobalDeclTableImpl : public VarDeclTable {
 
 class VarDeclTableBuilderImpl : public VarDeclTableBuilder {
  public:
-  absl::Status DeclareVar(NameToken name, GlobalIndex var_index,
-                          std::size_t length) override {
+  status::Status DeclareVar(NameToken name, GlobalIndex var_index,
+                            std::size_t length) override {
     auto name_it = name_table_.find(name.value());
     auto index_it = index_table_.find(var_index);
 
@@ -161,10 +160,10 @@ class VarDeclTableBuilderImpl : public VarDeclTableBuilder {
     bool found_index = index_it != index_table_.end();
     if (found_name && found_index && name_it->second == index_it->second &&
         name_it->second->length() == length) {
-      return absl::OkStatus();
+      return status::OkStatus();
     }
     if (found_name || found_index) {
-      return absl::InvalidArgumentError("Variable already declared");
+      return status::InvalidArgumentError("Variable already declared");
     }
 
     auto entry =
@@ -172,10 +171,10 @@ class VarDeclTableBuilderImpl : public VarDeclTableBuilder {
     index_table_.emplace(var_index, entry.get());
     name_table_.emplace(entry->name(), entry.get());
     entries_.emplace_back(std::move(entry));
-    return absl::OkStatus();
+    return status::OkStatus();
   }
 
-  absl::StatusOr<std::unique_ptr<VarDeclTable>> Build() override {
+  status::StatusOr<std::unique_ptr<VarDeclTable>> Build() override {
     return std::make_unique<GlobalDeclTableImpl>(
         std::move(entries_), std::move(index_table_), std::move(name_table_));
   }

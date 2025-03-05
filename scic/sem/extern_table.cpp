@@ -8,9 +8,8 @@
 #include <utility>
 #include <vector>
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "scic/sem/common.hpp"
+#include "scic/status/status.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/sequence.hpp"
 
@@ -64,10 +63,10 @@ class ExternTableImpl : public ExternTable {
 
 class ExternTableBuilderImpl : public ExternTableBuilder {
  public:
-  absl::Status AddExtern(NameToken name, std::optional<ScriptNum> script_num,
-                         PublicIndex index) override {
+  status::Status AddExtern(NameToken name, std::optional<ScriptNum> script_num,
+                           PublicIndex index) override {
     if (name_map_.contains(name.value())) {
-      return absl::InvalidArgumentError("Duplicate extern name");
+      return status::InvalidArgumentError("Duplicate extern name");
     }
 
     auto extern_item =
@@ -76,9 +75,9 @@ class ExternTableBuilderImpl : public ExternTableBuilder {
     name_map_.emplace(name.value(), extern_item.get());
     externs_.push_back(std::move(extern_item));
 
-    return absl::OkStatus();
+    return status::OkStatus();
   }
-  absl::StatusOr<std::unique_ptr<ExternTable>> Build() override {
+  status::StatusOr<std::unique_ptr<ExternTable>> Build() override {
     return std::make_unique<ExternTableImpl>(std::move(externs_),
                                              std::move(name_map_));
   }

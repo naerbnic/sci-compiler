@@ -11,8 +11,6 @@
 #include <vector>
 
 #include "absl/base/nullability.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/parsers/sci/ast.hpp"
 #include "scic/sem/common.hpp"
@@ -20,6 +18,7 @@
 #include "scic/sem/obj_members.hpp"
 #include "scic/sem/property_list.hpp"
 #include "scic/sem/selector_table.hpp"
+#include "scic/status/status.hpp"
 #include "util/status/status_macros.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/sequence.hpp"
@@ -91,10 +90,10 @@ class ClassImpl : public Class {
 
   void SetSuper(ClassImpl* new_super) { super_.set(new_super); }
 
-  absl::Status ResolveProperties(SelectorTable const* selector_table) {
+  status::Status ResolveProperties(SelectorTable const* selector_table) {
     if (property_list_.has_value()) {
       // We already have resolved this object. Nothing to be done.
-      return absl::OkStatus();
+      return status::OkStatus();
     }
     auto* super = *super_;
 
@@ -146,7 +145,7 @@ class ClassImpl : public Class {
                                     int(property_list.size()));
 
     property_list_.set(std::move(property_list));
-    return absl::OkStatus();
+    return status::OkStatus();
   }
 
  private:
@@ -164,17 +163,17 @@ class ClassImpl : public Class {
 // should be to this layer, with the exception of the prev_decl field.
 class ClassTableLayer {
  public:
-  absl::Status AddClass(NameToken name, ScriptNum script_num,
-                        ClassSpecies species,
-                        absl::Nullable<Class const*> prev_decl,
-                        std::vector<PropertyDef> property_defs,
-                        std::vector<MethodImpl> methods) {
+  status::Status AddClass(NameToken name, ScriptNum script_num,
+                          ClassSpecies species,
+                          absl::Nullable<Class const*> prev_decl,
+                          std::vector<PropertyDef> property_defs,
+                          std::vector<MethodImpl> methods) {
     if (name_table_.contains(name.value())) {
-      return absl::InvalidArgumentError("Class name already exists");
+      return status::InvalidArgumentError("Class name already exists");
     }
 
     if (species_table_.contains(species)) {
-      return absl::InvalidArgumentError("Class species already exists");
+      return status::InvalidArgumentError("Class species already exists");
     }
 
     auto new_class = std::make_unique<ClassImpl>(
@@ -184,34 +183,34 @@ class ClassTableLayer {
     classes_.push_back(std::move(new_class));
     name_table_.emplace(new_class_ptr->name(), new_class_ptr);
     species_table_.emplace(new_class_ptr->species(), new_class_ptr);
-    return absl::OkStatus();
+    return status::OkStatus();
   }
 
-  absl::Status SetClassSuper(ClassSpecies species,
-                             std::optional<ClassSpecies> super_species) {
+  status::Status SetClassSuper(ClassSpecies species,
+                               std::optional<ClassSpecies> super_species) {
     auto it = species_table_.find(species);
     if (it == species_table_.end()) {
-      return absl::InvalidArgumentError("Class species not found");
+      return status::InvalidArgumentError("Class species not found");
     }
     auto* class_impl = it->second;
 
     if (super_species.has_value()) {
       auto it2 = species_table_.find(*super_species);
       if (it2 == species_table_.end()) {
-        return absl::InvalidArgumentError("Class species not found");
+        return status::InvalidArgumentError("Class species not found");
       }
       class_impl->SetSuper(it2->second);
     } else {
       class_impl->SetSuper(nullptr);
     }
-    return absl::OkStatus();
+    return status::OkStatus();
   }
 
-  absl::Status ResolveProperties(SelectorTable const* selector_table) {
+  status::Status ResolveProperties(SelectorTable const* selector_table) {
     for (auto& class_impl : classes_) {
       RETURN_IF_ERROR(class_impl->ResolveProperties(selector_table));
     }
-    return absl::OkStatus();
+    return status::OkStatus();
   }
 
   util::Seq<Class const&> classes() const {
@@ -284,14 +283,14 @@ class ClassTableBuilderImpl : public ClassTableBuilder {
   explicit ClassTableBuilderImpl(SelectorTable const* sel_table)
       : sel_table_(sel_table) {}
 
-  absl::Status AddClassDecl(NameToken name, ScriptNum script_num,
-                            ClassSpecies species,
-                            std::optional<ClassSpecies> super_species,
-                            std::vector<Property> properties,
-                            std::vector<NameToken> methods) override {
+  status::Status AddClassDecl(NameToken name, ScriptNum script_num,
+                              ClassSpecies species,
+                              std::optional<ClassSpecies> super_species,
+                              std::vector<Property> properties,
+                              std::vector<NameToken> methods) override {
     for (auto const& prop : properties) {
       if (!prop.value.has<int>()) {
-        return absl::InvalidArgumentError(
+        return status::InvalidArgumentError(
             "Property value must be a number in a "
             "class declaration.");
       }
@@ -307,13 +306,13 @@ class ClassTableBuilderImpl : public ClassTableBuilder {
         .species = species,
         .super_num = super_species,
     });
-    return absl::OkStatus();
+    return status::OkStatus();
   }
 
-  absl::Status AddClassDef(NameToken name, ScriptNum script_num,
-                           std::optional<NameToken> super_name,
-                           std::vector<Property> properties,
-                           std::vector<NameToken> methods) override {
+  status::Status AddClassDef(NameToken name, ScriptNum script_num,
+                             std::optional<NameToken> super_name,
+                             std::vector<Property> properties,
+                             std::vector<NameToken> methods) override {
     defs_.push_back(ClassDef{
         .base =
             ClassBase{
@@ -324,10 +323,10 @@ class ClassTableBuilderImpl : public ClassTableBuilder {
             },
         .super_name = super_name,
     });
-    return absl::OkStatus();
+    return status::OkStatus();
   }
 
-  absl::StatusOr<std::unique_ptr<ClassTable>> Build() override {
+  status::StatusOr<std::unique_ptr<ClassTable>> Build() override {
     // Start by building the declaration layer.
     ClassTableLayer decl_layer;
     {
@@ -396,7 +395,7 @@ class ClassTableBuilderImpl : public ClassTableBuilder {
           auto const* super_decl =
               def_layer.LookupByName(def.super_name->value());
           if (!super_decl) {
-            return absl::InvalidArgumentError("Super class not found");
+            return status::InvalidArgumentError("Super class not found");
           }
           super_species = super_decl->species();
         }
@@ -443,15 +442,15 @@ class ClassTableBuilderImpl : public ClassTableBuilder {
     std::optional<NameToken> super_name;
   };
 
-  absl::Status WriteBaseToLayer(ClassTableLayer& layer, ClassBase const& base,
-                                ClassSpecies species,
-                                absl::Nullable<Class const*> prev_decl) {
+  status::Status WriteBaseToLayer(ClassTableLayer& layer, ClassBase const& base,
+                                  ClassSpecies species,
+                                  absl::Nullable<Class const*> prev_decl) {
     auto const& name = base.name;
     std::vector<PropertyDef> properties;
     for (auto const& prop : base.properties) {
       auto const* selector = sel_table_->LookupByName(prop.name.value());
       if (!selector) {
-        return absl::InvalidArgumentError("Selector not found");
+        return status::InvalidArgumentError("Selector not found");
       }
 
       ASSIGN_OR_RETURN(auto value, ConvertToMachineWord(prop.value.as<int>()));
@@ -462,7 +461,7 @@ class ClassTableBuilderImpl : public ClassTableBuilder {
     for (auto const& method_name : base.methods) {
       auto const* selector = sel_table_->LookupByName(method_name.value());
       if (!selector) {
-        return absl::InvalidArgumentError("Selector not found");
+        return status::InvalidArgumentError("Selector not found");
       }
       methods.push_back(MethodImpl(method_name, selector));
     }
@@ -471,8 +470,8 @@ class ClassTableBuilderImpl : public ClassTableBuilder {
                           std::move(properties), methods);
   }
 
-  absl::Status WriteDeclToLayer(ClassTableLayer& layer, ClassDecl const& decl,
-                                absl::Nullable<Class const*> prev_decl) {
+  status::Status WriteDeclToLayer(ClassTableLayer& layer, ClassDecl const& decl,
+                                  absl::Nullable<Class const*> prev_decl) {
     return WriteBaseToLayer(layer, decl.base, decl.species, prev_decl);
   }
 

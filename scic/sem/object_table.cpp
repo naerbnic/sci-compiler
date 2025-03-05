@@ -8,14 +8,13 @@
 #include <vector>
 
 #include "absl/base/nullability.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/sem/class_table.hpp"
 #include "scic/sem/common.hpp"
 #include "scic/sem/obj_members.hpp"
 #include "scic/sem/property_list.hpp"
 #include "scic/sem/selector_table.hpp"
+#include "scic/status/status.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/sequence.hpp"
 
@@ -116,12 +115,13 @@ class ObjectTableBuilderImpl : public ObjectTableBuilder {
                          ClassTable const* class_table)
       : codegen_(codegen), selector_(selector), class_table_(class_table) {}
 
-  absl::Status AddObject(NameToken name, ScriptNum script_num,
-                         NameToken class_name, std::vector<Property> properties,
-                         std::vector<NameToken> methods) override {
+  status::Status AddObject(NameToken name, ScriptNum script_num,
+                           NameToken class_name,
+                           std::vector<Property> properties,
+                           std::vector<NameToken> methods) override {
     auto const* class_ = class_table_->LookupByName(class_name.value());
     if (!class_) {
-      return absl::InvalidArgumentError("Class not found");
+      return status::InvalidArgumentError("Class not found");
     }
 
     auto ptr_ref = codegen_->CreatePtrRef();
@@ -130,7 +130,7 @@ class ObjectTableBuilderImpl : public ObjectTableBuilder {
     for (auto const& prop : properties) {
       auto const* existing_prop = prop_list.LookupByName(prop.name.value());
       if (!existing_prop) {
-        return absl::InvalidArgumentError("Property not found in superclass");
+        return status::InvalidArgumentError("Property not found in superclass");
       }
 
       prop_list.UpdatePropertyDef(prop.name, existing_prop->selector(),
@@ -145,7 +145,7 @@ class ObjectTableBuilderImpl : public ObjectTableBuilder {
     for (auto const& method : methods) {
       auto const* selector = selector_->LookupByName(method.value());
       if (!selector) {
-        return absl::InvalidArgumentError("Selector not found");
+        return status::InvalidArgumentError("Selector not found");
       }
       method_impls.emplace_back(method, selector);
     }
@@ -155,10 +155,10 @@ class ObjectTableBuilderImpl : public ObjectTableBuilder {
 
     name_table_.emplace(new_object->name(), new_object.get());
     objects_.push_back(std::move(new_object));
-    return absl::OkStatus();
+    return status::OkStatus();
   }
 
-  absl::StatusOr<std::unique_ptr<ObjectTable>> Build() override {
+  status::StatusOr<std::unique_ptr<ObjectTable>> Build() override {
     return std::make_unique<ObjectTableImpl>(std::move(objects_),
                                              std::move(name_table_));
   }

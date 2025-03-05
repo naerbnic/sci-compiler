@@ -9,14 +9,13 @@
 #include <stdexcept>
 #include <string_view>
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/parsers/sci/ast.hpp"
 #include "scic/sem/common.hpp"
 #include "scic/sem/module_env.hpp"
 #include "scic/sem/property_list.hpp"
 #include "scic/sem/selector_table.hpp"
+#include "scic/status/status.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/choice.hpp"
 
@@ -95,9 +94,9 @@ class ExprEnvironment {
   virtual std::optional<SelectorNum> LookupSelector(
       std::string_view name) const = 0;
 
-  virtual absl::StatusOr<Sym> LookupSym(std::string_view name) const = 0;
+  virtual status::StatusOr<Sym> LookupSym(std::string_view name) const = 0;
 
-  virtual absl::StatusOr<Proc> LookupProc(std::string_view name) const = 0;
+  virtual status::StatusOr<Proc> LookupProc(std::string_view name) const = 0;
 };
 
 class ExprContext {
@@ -114,11 +113,12 @@ class ExprContext {
     return expr_env_->GetSuperInfo();
   }
 
-  absl::StatusOr<ExprEnvironment::Sym> LookupSym(std::string_view name) const {
+  status::StatusOr<ExprEnvironment::Sym> LookupSym(
+      std::string_view name) const {
     return expr_env_->LookupSym(name);
   }
 
-  absl::StatusOr<ExprEnvironment::Proc> LookupProc(
+  status::StatusOr<ExprEnvironment::Proc> LookupProc(
       std::string_view name) const {
     return expr_env_->LookupProc(name);
   }
@@ -130,7 +130,7 @@ class ExprContext {
   codegen::LabelRef* GetContLabel(std::size_t num_levels) const;
   codegen::LabelRef* GetBreakLabel(std::size_t num_levels) const;
 
-  virtual absl::Status BuildExpr(ast::Expr const& expr) = 0;
+  virtual status::Status BuildExpr(ast::Expr const& expr) = 0;
 
  private:
   friend class Loop;
