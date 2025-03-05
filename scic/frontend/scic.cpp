@@ -285,7 +285,7 @@ int main(int argc, char** argv) {
 
   auto status = frontend::RunMain(flags);
   if (!status.ok()) {
-    std::cerr << status.message() << std::endl;
+    std::cerr << status << std::endl;
     return 1;
   }
   return 0;
