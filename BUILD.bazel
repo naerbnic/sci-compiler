@@ -6,7 +6,7 @@ package_group(
 
 alias(
     name = "scic",
-    actual = "//scic",
+    actual = "//scic/legacy:scic",
     visibility = ["//visibility:public"],
 )
 

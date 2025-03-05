@@ -1,0 +1,171 @@
+package(
+    default_visibility = [":scic_internal"],
+)
+
+package_group(
+    name = "scic_internal",
+    packages = [
+        "//scic/...",
+    ],
+)
+
+cc_library(
+    name = "config",
+    srcs = ["config.cpp"],
+    hdrs = ["config.hpp"],
+)
+
+cc_library(
+    name = "symtypes",
+    hdrs = ["symtypes.hpp"],
+)
+
+cc_library(
+    name = "text",
+    srcs = ["text.cpp"],
+    hdrs = ["text.hpp"],
+)
+
+cc_library(
+    name = "input",
+    srcs = ["input.cpp"],
+    hdrs = ["input.hpp"],
+    deps = [
+        "@abseil-cpp//absl/cleanup",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)
+
+cc_library(
+    name = "common",
+    hdrs = ["common.hpp"],
+)
+
+cc_library(
+    name = "resource",
+    srcs = ["resource.cpp"],
+    hdrs = ["resource.hpp"],
+    deps = [
+        ":memtype",
+        "//scic/codegen:common",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)
+
+cc_library(
+    name = "memtype",
+    hdrs = ["memtype.hpp"],
+)
+
+cc_library(
+    name = "output",
+    srcs = ["output.cpp"],
+    hdrs = ["output.hpp"],
+    deps = [
+        ":config",
+        ":memtype",
+        ":resource",
+        "//scic/codegen:common",
+        "//scic/codegen:output",
+        "//util/platform",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)
+
+cc_library(
+    name = "debug_utils",
+    hdrs = ["debug_utils.hpp"],
+    deps = [
+        "@abseil-cpp//absl/debugging:stacktrace",
+        "@abseil-cpp//absl/debugging:symbolize",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)
+
+cc_binary(
+    name = "scic",
+    srcs = [
+        "banner.cpp",
+        "banner.hpp",
+        "builtins.cpp",
+        "builtins.hpp",
+        "class.cpp",
+        "class.hpp",
+        "compile.cpp",
+        "compile.hpp",
+        "define.cpp",
+        "define.hpp",
+        "error.cpp",
+        "error.hpp",
+        "expr.cpp",
+        "expr.hpp",
+        "global_compiler.cpp",
+        "global_compiler.hpp",
+        "loop.cpp",
+        "loop.hpp",
+        "object.cpp",
+        "object.hpp",
+        "parse.cpp",
+        "parse.hpp",
+        "parse_class.cpp",
+        "parse_class.hpp",
+        "parse_context.cpp",
+        "parse_context.hpp",
+        "parse_object.cpp",
+        "parse_object.hpp",
+        "pnode.cpp",
+        "pnode.hpp",
+        "proc.cpp",
+        "proc.hpp",
+        "public.cpp",
+        "public.hpp",
+        "resource.cpp",
+        "resource.hpp",
+        "sc.cpp",
+        "sc.hpp",
+        "selector.cpp",
+        "selector.hpp",
+        "share.cpp",
+        "share.hpp",
+        "symbol.cpp",
+        "symbol.hpp",
+        "symtbl.cpp",
+        "symtbl.hpp",
+        "token.cpp",
+        "token.hpp",
+        "toktypes.cpp",
+        "toktypes.hpp",
+        "update.cpp",
+        "update.hpp",
+        "vocab.hpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":chartype",
+        ":common",
+        ":config",
+        ":input",
+        ":memtype",
+        ":output",
+        ":symtypes",
+        "//scic/codegen:code_generator",
+        "//scic/codegen:common",
+        "//scic/codegen:text_sink",
+        "//util/platform",
+        "//util/types:overload",
+        "@abseil-cpp//absl/cleanup",
+        "@abseil-cpp//absl/container:btree",
+        "@abseil-cpp//absl/debugging:failure_signal_handler",
+        "@abseil-cpp//absl/debugging:symbolize",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:str_format",
+        "@argparse",
+    ],
+)
+
+cc_library(
+    name = "chartype",
+    srcs = ["chartype.cpp"],
+    hdrs = ["chartype.hpp"],
+)

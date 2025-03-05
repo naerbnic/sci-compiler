@@ -14,7 +14,7 @@
 #include "absl/strings/ascii.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_format.h"
-#include "scic/chartype.hpp"
+#include "scic/legacy/chartype.hpp"
 #include "scic/text/text_range.hpp"
 #include "scic/tokens/char_stream.hpp"
 #include "scic/tokens/token.hpp"

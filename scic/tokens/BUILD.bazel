@@ -34,7 +34,7 @@ cc_library(
     deps = [
         ":char_stream",
         ":token",
-        "//scic:chartype",
+        "//scic/legacy:chartype",
         "//scic/text:text_range",
         "//util/status:status_macros",
         "//util/strings:ref_str",
