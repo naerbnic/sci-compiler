@@ -3,7 +3,6 @@
 
 #include <memory>
 #include <ostream>
-#include <ranges>
 #include <source_location>
 #include <string_view>
 #include <utility>
@@ -66,9 +65,8 @@ class Status {
     os << status.status_;
     auto const& payload = status.GetPayload();
     if (!payload.locations_.empty()) {
-      os << "\n== Source Locations ==\n";
-      for (auto const& location :
-           std::views::reverse(status.payload_->locations_)) {
+      os << "\n== Stack Trace ==\n";
+      for (auto const& location : status.payload_->locations_) {
         os << "- " << location.file_name() << ":" << location.line() << "\n";
       }
     }
@@ -80,9 +78,8 @@ class Status {
     absl::Format(&sink, "%v", status.status_);
     auto const& payload = status.GetPayload();
     if (!payload.locations_.empty()) {
-      absl::Format(&sink, "\n== Source Locations ==\n");
-      for (auto const& location :
-           std::views::reverse(status.payload_->locations_)) {
+      absl::Format(&sink, "\n== Stack Trace ==\n");
+      for (auto const& location : status.payload_->locations_) {
         absl::Format(&sink, "- %s:%d\n", location.file_name(), location.line());
       }
     }
