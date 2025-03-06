@@ -177,7 +177,15 @@ status::Status BuildProcedure(ModuleEnvironment const* module_env,
 }  // namespace
 
 status::Status BuildCode(ModuleEnvironment const* module_env) {
-  [[maybe_unused]] auto* codegen = module_env->codegen();
+  auto* codegen = module_env->codegen();
+  // Add variables to the current module based on the local table.
+  for (auto const& local_var : module_env->local_table()->vars()) {
+    auto initial_value = local_var.initial_value();
+    auto base_index = local_var.index().value();
+    for (int i = 0; i < initial_value.size(); ++i) {
+      codegen->SetVar(base_index + i, initial_value[i]);
+    }
+  }
   // We handle every procedure, class, and object in the order it appears in the
   // AST. This matches the previous implementation, which does everything in
   // source order.
