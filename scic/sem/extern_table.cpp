@@ -72,7 +72,7 @@ class ExternTableBuilderImpl : public ExternTableBuilder {
     auto extern_item =
         std::make_unique<ExternImpl>(std::move(name), script_num, index);
 
-    name_map_.emplace(name.value(), extern_item.get());
+    name_map_.emplace(extern_item->name(), extern_item.get());
     externs_.push_back(std::move(extern_item));
 
     return status::OkStatus();

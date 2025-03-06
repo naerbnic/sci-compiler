@@ -14,7 +14,6 @@ cc_library(
         "//scic/sem:property_list",
         "//scic/sem:selector_table",
         "//scic/status",
-        "//util/debug:debug_utils",
         "//util/status:status_macros",
         "//util/strings:ref_str",
         "//util/types:choice",

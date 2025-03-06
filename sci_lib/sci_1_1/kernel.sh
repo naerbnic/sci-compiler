@@ -140,5 +140,9 @@
     SetVideoMode -1 $86
     SetQuitStr -1 $87
     DbugStr -1 $88
-    Empty -1 $89
-    Empty -1 $8a)
+    ; Both of these were marked as "Empty" in the ScummVM table.
+    ; Avoid a name collision.
+    ; 
+    ; Empty -1 $89
+    ; Empty -1 $8a
+)

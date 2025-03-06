@@ -17,8 +17,9 @@
 #include "scic/parsers/sci/const_value_parsers.hpp"
 #include "scic/parsers/sci/expr_parsers.hpp"
 #include "scic/parsers/sci/parser_common.hpp"
-#include "util/types/choice.hpp"
 #include "util/status/status_macros.hpp"
+#include "util/strings/ref_str.hpp"
+#include "util/types/choice.hpp"
 
 namespace parsers::sci {
 
@@ -39,7 +40,7 @@ ParserItemMap const& TopLevelParsers() {
         {"script#", ParseScriptNumItem},
         {"public", ParsePublicItem},
         {"extern", ParseExternItem},
-        {"global_decl", ParseGlobalDeclItem},
+        {"globaldecl", ParseGlobalDeclItem},
         {"global", ParseGlobalItem},
         {"local", ParseLocalItem},
         {"procedure", ParseProcItem},

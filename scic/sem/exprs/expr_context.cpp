@@ -15,7 +15,6 @@
 #include "scic/sem/module_env.hpp"
 #include "scic/sem/property_list.hpp"
 #include "scic/status/status.hpp"
-#include "util/debug/debug_utils.hpp"
 #include "util/status/status_macros.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/choice.hpp"
@@ -87,41 +86,70 @@ class ExprEnvironmentImpl : public ExprEnvironment {
   }
 
   status::StatusOr<Sym> LookupSym(std::string_view name) const override {
-    DebugPrint("LookupSym: %v", Escaped(name));
-    // Lookup in all sources, to detect any ambiguities.
-    auto const* prop = prop_list_ ? prop_list_->LookupByName(name) : nullptr;
-    auto const* param = GetOrNull(proc_local_table_, name);
-    auto const* temp = GetOrNull(proc_temp_table_, name);
-    auto const* global =
-        mod_env_->global_env()->global_table()->LookupByName(name);
-    DebugPrint("Num global vars: %d",
-               mod_env_->global_env()->global_table()->vars().size());
-    auto const* module_var = mod_env_->local_table()->LookupByName(name);
+    // We use the following order of resolution, where the results are not
+    // ambiguous:
+    //
+    // - Params and Temps (no collision)
+    // - Properties (if it exists)
+    // - Globals and ModuleVars (if this is script0, check that indexes match).
+    {
+      auto const* param = GetOrNull(proc_local_table_, name);
+      auto const* temp = GetOrNull(proc_temp_table_, name);
 
-    ASSIGN_OR_RETURN(std::size_t index,
-                     GetOnlyNonnull(prop, param, temp, global, module_var));
+      if (param || temp) {
+        if (param && temp) {
+          return status::InvalidArgumentError("Ambiguous symbol");
+        }
 
-    switch (index) {
-      case 0:
+        if (param) {
+          return *param;
+        } else {
+          return *temp;
+        }
+      }
+    }
+
+    {
+      auto const* prop = prop_list_ ? prop_list_->LookupByName(name) : nullptr;
+
+      if (prop) {
         return PropSym{
             .prop_offset = prop->index().value(),
             .selector = prop->selector(),
         };
-      case 1:
-        return *param;
-      case 2:
-        return *temp;
-      case 3:
-        return GlobalSym{
-            .global_offset = global->index().value(),
-        };
-      case 4:
-        return LocalSym{
-            .local_offset = module_var->index().value(),
-        };
-      default:
-        throw std::logic_error("Unreachable");
+      }
     }
+
+    {
+      auto const* global =
+          mod_env_->global_env()->global_table()->LookupByName(name);
+      auto const* module_var = mod_env_->local_table()->LookupByName(name);
+
+      if (module_var || global) {
+        if (module_var && global) {
+          if (mod_env_->script_num().value() == 0 &&
+              module_var->index().value() == global->index().value()) {
+            return LocalSym{
+                .local_offset = module_var->index().value(),
+            };
+          } else {
+            return status::InvalidArgumentError("Ambiguous symbol");
+          }
+        }
+
+        if (module_var) {
+          return LocalSym{
+              .local_offset = module_var->index().value(),
+          };
+        } else {
+          return GlobalSym{
+              .global_offset = global->index().value(),
+          };
+        }
+      }
+    }
+
+    return status::NotFoundError("Symbol not found");
   }
 
   status::StatusOr<Proc> LookupProc(std::string_view name) const override {

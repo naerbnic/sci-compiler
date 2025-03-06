@@ -45,8 +45,7 @@ template <typename T, typename... Args>
 std::vector<T> ConcatVectors(std::vector<T> first, std::vector<T> second,
                              Args... args) {
   std::ranges::move(std::move(second), std::back_inserter(first));
-  auto rest = ConcatVectors(std::move(first), std::forward<Args>(args)...);
-  return first;
+  return ConcatVectors(std::move(first), std::forward<Args>(args)...);
 }
 
 status::StatusOr<text::TextRange> LoadFile(std::filesystem::path path) {
