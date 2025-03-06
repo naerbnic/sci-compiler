@@ -423,7 +423,7 @@ std::map<std::string_view, CallFunc> const& GetCallBuiltins() {
       {"/", &BuildBinaryExpr<FunctionBuilder::DIV>},
       {"<<", &BuildBinaryExpr<FunctionBuilder::SHL>},
       {">>", &BuildBinaryExpr<FunctionBuilder::SHR>},
-      {"%", &BuildBinaryExpr<FunctionBuilder::MOD>},
+      {"mod", &BuildBinaryExpr<FunctionBuilder::MOD>},
       {"<", &BuildCompExpr<FunctionBuilder::LT>},
       {"<=", &BuildCompExpr<FunctionBuilder::LE>},
       {">", &BuildCompExpr<FunctionBuilder::GT>},
