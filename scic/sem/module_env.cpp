@@ -148,9 +148,9 @@ status::Status AddItemsToClassTable(ClassTableBuilder* builder,
       methods.push_back(ast_method.name());
     }
 
-    RETURN_IF_ERROR(builder->AddClassDef(name, *script_num, super_name,
-                                         std::move(properties),
-                                         std::move(methods)));
+    RETURN_IF_ERROR(builder->AddClassDef(
+        name, *script_num, super_name, std::move(properties),
+        std::move(methods), codegen->CreatePtrRef()));
   }
 
   return status::OkStatus();
@@ -290,7 +290,8 @@ status::StatusOr<std::unique_ptr<ProcTable>> BuildProcTable(
 }
 
 status::StatusOr<std::unique_ptr<PublicTable>> BuildPublicTable(
-    ProcTable const* proc_table, ObjectTable const* object_table,
+    ScriptNum script_num, ProcTable const* proc_table,
+    ObjectTable const* object_table, ClassTable const* class_table,
     absl::Span<ast::Item const> items) {
   auto builder = PublicTableBuilder::Create();
 
@@ -311,20 +312,40 @@ status::StatusOr<std::unique_ptr<PublicTable>> BuildPublicTable(
   for (auto const& entity : public_def->entries()) {
     auto const* proc_entry = proc_table->LookupByName(entity.name.value());
     auto const* obj_entry = object_table->LookupByName(entity.name.value());
-    if (!proc_entry && !obj_entry) {
+    auto const* class_entry = class_table->LookupByName(entity.name.value());
+    // Classes participate in public tables, but only those that are declared
+    // in this script.
+    if (class_entry && class_entry->script_num() != script_num) {
+      class_entry = nullptr;
+    }
+
+    if (!proc_entry && !obj_entry && !class_entry) {
       return status::InvalidArgumentError(
           absl::StrFormat("Entity not found: %s", entity.name.value()));
     }
 
-    if (proc_entry && obj_entry) {
+    std::size_t num_resolved = 0;
+    if (proc_entry) {
+      ++num_resolved;
+    }
+    if (obj_entry) {
+      ++num_resolved;
+    }
+    if (class_entry) {
+      ++num_resolved;
+    }
+
+    if (num_resolved > 1) {
       return status::InvalidArgumentError(
-          "Ambiguous entity between objects and procedures.");
+          absl::StrFormat("Ambiguous entity: %s", entity.name.value()));
     }
 
     if (proc_entry) {
       RETURN_IF_ERROR(builder->AddProcedure(entity.index.value(), proc_entry));
-    } else {
+    } else if (obj_entry) {
       RETURN_IF_ERROR(builder->AddObject(entity.index.value(), obj_entry));
+    } else if (class_entry) {
+      RETURN_IF_ERROR(builder->AddClass(entity.index.value(), class_entry));
     }
   }
 
@@ -437,7 +458,8 @@ status::StatusOr<std::unique_ptr<ModuleEnvironment>> BuildModuleEnvironment(
 
   ASSIGN_OR_RETURN(
       auto public_table,
-      BuildPublicTable(proc_table.get(), object_table.get(), module_items));
+      BuildPublicTable(script_num, proc_table.get(), object_table.get(),
+                       global_env->class_table(), module_items));
 
   ASSIGN_OR_RETURN(auto locals_table,
                    BuildLocalTable(codegen.get(), module_items));

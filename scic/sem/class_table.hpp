@@ -45,6 +45,15 @@ class Class {
   // previously declared.
   virtual absl::Nullable<Class const*> prev_decl() const = 0;
 
+  // Returns the PtrRef to the class in its module.
+  //
+  // This pointer is generated in the module the class was defined in, if
+  // it was defined in a module. This _must not_ be used in other
+  // codegen instances.
+  //
+  // Returns nullptr if this class was not defined in a module.
+  virtual absl::Nullable<codegen::PtrRef*> class_ref() const = 0;
+
   virtual std::size_t prop_size() const = 0;
 
   virtual PropertyList const& prop_list() const = 0;
@@ -95,7 +104,8 @@ class ClassTableBuilder {
   virtual status::Status AddClassDef(NameToken name, ScriptNum script_num,
                                      std::optional<NameToken> super_name,
                                      std::vector<Property> properties,
-                                     std::vector<NameToken> methods) = 0;
+                                     std::vector<NameToken> methods,
+                                     codegen::PtrRef class_ref) = 0;
 
   virtual status::StatusOr<std::unique_ptr<ClassTable>> Build() = 0;
 };

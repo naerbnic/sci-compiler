@@ -230,6 +230,10 @@ status::Status BuildCode(ModuleEnvironment const* module_env) {
         [&](Object const* obj) {
           codegen->AddPublic(std::string(obj->name()), entry.index(),
                              obj->ptr_ref());
+        },
+        [&](Class const* cls) {
+          codegen->AddPublic(std::string(cls->name()), entry.index(),
+                             cls->class_ref());
         });
   }
 

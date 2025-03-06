@@ -58,6 +58,7 @@ class ClassImpl : public Class {
  public:
   ClassImpl(NameToken name, ScriptNum script_num, ClassSpecies species,
             absl::Nullable<Class const*> prev_decl,
+            std::optional<codegen::PtrRef> class_ref,
             std::vector<PropertyDef> property_defs,
             std::vector<MethodImpl> methods)
       : name_(std::move(name)),
@@ -73,6 +74,12 @@ class ClassImpl : public Class {
   ClassSpecies species() const override { return species_; }
   absl::Nullable<Class const*> super() const override { return *super_; }
   absl::Nullable<Class const*> prev_decl() const override { return prev_decl_; }
+  absl::Nullable<codegen::PtrRef*> class_ref() const override {
+    if (!class_ref_) {
+      return nullptr;
+    }
+    return &*class_ref_;
+  }
 
   std::size_t prop_size() const override { return property_list_->size(); }
 
@@ -155,6 +162,7 @@ class ClassImpl : public Class {
   ClassSpecies species_;
   LateBound<absl::Nullable<ClassImpl*>> super_;
   absl::Nullable<Class const*> prev_decl_;
+  mutable std::optional<codegen::PtrRef> class_ref_;
   std::vector<PropertyDef> property_defs_;
   LateBound<PropertyList> property_list_;
   std::vector<MethodImpl> methods_;
@@ -167,6 +175,7 @@ class ClassTableLayer {
   status::Status AddClass(NameToken name, ScriptNum script_num,
                           ClassSpecies species,
                           absl::Nullable<Class const*> prev_decl,
+                          std::optional<codegen::PtrRef> class_ref,
                           std::vector<PropertyDef> property_defs,
                           std::vector<MethodImpl> methods) {
     if (name_table_.contains(name.value())) {
@@ -178,7 +187,7 @@ class ClassTableLayer {
     }
 
     auto new_class = std::make_unique<ClassImpl>(
-        std::move(name), script_num, species, prev_decl,
+        std::move(name), script_num, species, prev_decl, std::move(class_ref),
         std::move(property_defs), std::move(methods));
     auto* new_class_ptr = new_class.get();
     classes_.push_back(std::move(new_class));
@@ -322,7 +331,8 @@ class ClassTableBuilderImpl : public ClassTableBuilder {
   status::Status AddClassDef(NameToken name, ScriptNum script_num,
                              std::optional<NameToken> super_name,
                              std::vector<Property> properties,
-                             std::vector<NameToken> methods) override {
+                             std::vector<NameToken> methods,
+                             codegen::PtrRef class_ref) override {
     defs_.push_back(ClassDef{
         .base =
             ClassBase{
@@ -332,6 +342,7 @@ class ClassTableBuilderImpl : public ClassTableBuilder {
                 .methods = std::move(methods),
             },
         .super_name = super_name,
+        .class_ref = std::move(class_ref),
     });
     return status::OkStatus();
   }
@@ -378,8 +389,8 @@ class ClassTableBuilderImpl : public ClassTableBuilder {
 
         ClassSpecies species =
             prev_decl ? prev_decl->species() : find_next_species();
-        RETURN_IF_ERROR(
-            WriteBaseToLayer(def_layer, def.base, species, prev_decl));
+        RETURN_IF_ERROR(WriteBaseToLayer(def_layer, def.base, species,
+                                         prev_decl, std::move(def.class_ref)));
         def_species.insert(species);
       }
 
@@ -450,11 +461,13 @@ class ClassTableBuilderImpl : public ClassTableBuilder {
   struct ClassDef {
     ClassBase base;
     std::optional<NameToken> super_name;
+    mutable codegen::PtrRef class_ref;
   };
 
   status::Status WriteBaseToLayer(ClassTableLayer& layer, ClassBase const& base,
                                   ClassSpecies species,
-                                  absl::Nullable<Class const*> prev_decl) {
+                                  absl::Nullable<Class const*> prev_decl,
+                                  std::optional<codegen::PtrRef> class_ref) {
     auto const& name = base.name;
     std::vector<PropertyDef> properties;
     for (auto const& prop : base.properties) {
@@ -477,12 +490,13 @@ class ClassTableBuilderImpl : public ClassTableBuilder {
     }
 
     return layer.AddClass(name, base.script_num, species, prev_decl,
-                          std::move(properties), methods);
+                          std::move(class_ref), std::move(properties), methods);
   }
 
   status::Status WriteDeclToLayer(ClassTableLayer& layer, ClassDecl const& decl,
                                   absl::Nullable<Class const*> prev_decl) {
-    return WriteBaseToLayer(layer, decl.base, decl.species, prev_decl);
+    return WriteBaseToLayer(layer, decl.base, decl.species, prev_decl,
+                            /*class_ref=*/std::nullopt);
   }
 
   SelectorTable const* sel_table_;

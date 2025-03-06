@@ -1,6 +1,5 @@
 #include "scic/sem/exprs/expr_context.hpp"
 
-#include <cstddef>
 #include <functional>
 #include <map>
 #include <memory>
@@ -11,11 +10,11 @@
 #include <utility>
 
 #include "absl/base/nullability.h"
+#include "absl/strings/str_format.h"
 #include "scic/sem/common.hpp"
 #include "scic/sem/module_env.hpp"
 #include "scic/sem/property_list.hpp"
 #include "scic/status/status.hpp"
-#include "util/status/status_macros.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/choice.hpp"
 
@@ -38,24 +37,6 @@ auto GetOrNull(C& c, T&& key) -> std::decay_t<C>::mapped_type const* {
 template <class... Args>
 bool AreAllNull(Args&&... args) {
   return ((args == nullptr) && ...);
-}
-
-status::StatusOr<std::size_t> GetOnlyNonnull() {
-  return status::InvalidArgumentError("No non-nullptr values");
-}
-
-template <class... Args>
-status::StatusOr<std::size_t> GetOnlyNonnull(void const* ptr, Args&&... args) {
-  if (ptr) {
-    if (AreAllNull(std::forward<Args>(args)...)) {
-      return 0UL;
-    } else {
-      return status::InvalidArgumentError("Multiple non-nullptr values");
-    }
-  } else {
-    ASSIGN_OR_RETURN(auto index, GetOnlyNonnull(std::forward<Args>(args)...));
-    return index + 1;
-  }
 }
 
 class ExprEnvironmentImpl : public ExprEnvironment {
@@ -157,28 +138,36 @@ class ExprEnvironmentImpl : public ExprEnvironment {
     auto const* ext =
         mod_env_->global_env()->extern_table()->LookupByName(name);
 
-    ASSIGN_OR_RETURN(std::size_t index, GetOnlyNonnull(proc, ext));
-    switch (index) {
-      case 0:
-        return LocalProc{
-            .name = proc->token_name(),
-            .proc_ref = proc->ptr_ref(),
+    if (proc && ext) {
+      return status::InvalidArgumentError(
+          absl::StrFormat("Ambiguous procedure: %s", name));
+    }
+
+    if (!proc && !ext) {
+      return status::NotFoundError(
+          absl::StrFormat("Procedure not found: %s", name));
+    }
+
+    if (proc) {
+      return LocalProc{
+          .name = proc->token_name(),
+          .proc_ref = proc->ptr_ref(),
+      };
+    } else if (ext) {
+      if (ext->script_num()) {
+        return ExternProc{
+            .name = ext->token_name(),
+            .script_num = *ext->script_num(),
+            .extern_offset = ext->index().value(),
         };
-      case 1:
-        if (ext->script_num()) {
-          return ExternProc{
-              .name = ext->token_name(),
-              .script_num = *ext->script_num(),
-              .extern_offset = ext->index().value(),
-          };
-        } else {
-          return KernelProc{
-              .name = ext->token_name(),
-              .kernel_offset = ext->index().value(),
-          };
-        }
-      default:
-        throw std::logic_error("Unreachable");
+      } else {
+        return KernelProc{
+            .name = ext->token_name(),
+            .kernel_offset = ext->index().value(),
+        };
+      }
+    } else {
+      throw std::logic_error("Unreachable");
     }
   }
 

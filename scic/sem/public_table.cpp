@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 
+#include "scic/sem/class_table.hpp"
 #include "scic/sem/object_table.hpp"
 #include "scic/sem/proc_table.hpp"
 #include "scic/status/status.hpp"
@@ -21,15 +22,18 @@ class PublicTableEntryImpl : public PublicTable::Entry {
       : index_(index), value_(proc) {}
   PublicTableEntryImpl(std::size_t index, Object const* object)
       : index_(index), value_(object) {}
+  PublicTableEntryImpl(std::size_t index, Class const* cls)
+      : index_(index), value_(cls) {}
 
   std::size_t index() const override { return index_; }
-  util::Choice<Procedure const*, Object const*> value() const override {
+  util::Choice<Procedure const*, Object const*, Class const*> value()
+      const override {
     return value_;
   }
 
  private:
   std::size_t index_;
-  util::Choice<Procedure const*, Object const*> value_;
+  util::Choice<Procedure const*, Object const*, Class const*> value_;
 };
 
 class PublicTableImpl : public PublicTable {
@@ -63,6 +67,10 @@ class PublicTableBuilderImpl : public PublicTableBuilder {
 
   status::Status AddObject(std::size_t index, Object const* object) override {
     return AddEntry(std::make_unique<PublicTableEntryImpl>(index, object));
+  }
+
+  status::Status AddClass(std::size_t index, Class const* class_) override {
+    return AddEntry(std::make_unique<PublicTableEntryImpl>(index, class_));
   }
 
   status::StatusOr<std::unique_ptr<PublicTable>> Build() override {
