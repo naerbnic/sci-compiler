@@ -60,12 +60,14 @@ class MethodImpl : public Method {
 class ObjectImpl : public Object {
  public:
   ObjectImpl(NameToken name, ScriptNum script_num, Class const* parent,
-             codegen::PtrRef ptr_ref, PropertyList properties,
+             codegen::PtrRef ptr_ref, PropertyList prop_list,
              std::vector<MethodImpl> methods)
       : name_(std::move(name)),
         script_num_(script_num),
         parent_(parent),
-        ptr_ref_(std::move(ptr_ref)) {}
+        ptr_ref_(std::move(ptr_ref)),
+        prop_list_(std::move(prop_list)),
+        methods_(std::move(methods)) {}
 
   ScriptNum script_num() const override { return script_num_; }
   NameToken const& token_name() const override { return name_; }
