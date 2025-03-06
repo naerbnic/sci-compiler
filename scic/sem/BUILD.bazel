@@ -252,6 +252,7 @@ cc_library(
         "//scic/sem/exprs:expr_builder",
         "//scic/sem/exprs:expr_context",
         "//scic/status",
+        "//util/debug:debug_utils",
         "//util/status:status_macros",
         "//util/strings:ref_str",
     ],

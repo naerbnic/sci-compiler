@@ -78,6 +78,11 @@ struct ProcedureName {
   explicit ProcedureName(std::string name) : procName(std::move(name)) {}
 
   std::string procName;
+
+  template <class Sink>
+  friend void AbslStringify(Sink& sink, ProcedureName const& name) {
+    absl::Format(&sink, "Proc:%s", name.procName);
+  }
 };
 
 struct MethodName {
@@ -86,6 +91,11 @@ struct MethodName {
 
   std::string objName;
   std::string methName;
+
+  template <class Sink>
+  friend void AbslStringify(Sink& sink, MethodName const& name) {
+    absl::Format(&sink, "Method:%s::%s", name.objName, name.methName);
+  }
 };
 
 using FuncName = util::Choice<ProcedureName, MethodName>;

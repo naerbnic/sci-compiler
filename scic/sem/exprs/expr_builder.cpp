@@ -799,24 +799,26 @@ class ExprContextImpl : public ExprContext {
   status::Status BuildExpr(ast::Expr const& expr) override {
     return expr.visit(
         [&](ast::AddrOfExpr const& binary) {
-          return BuildAddrOfExpr(this, binary);
+          return BuildAddrOfExpr(this, binary).WithLocation();
         },
         [&](ast::SelectLitExpr const& select_lit) {
-          return BuildSelectLitExpr(this, select_lit);
+          return BuildSelectLitExpr(this, select_lit).WithLocation();
         },
         [&](ast::ConstValueExpr const& const_expr) {
-          return BuildConstExpr(this, const_expr.value());
+          return BuildConstExpr(this, const_expr.value()).WithLocation();
         },
         [&](ast::VarExpr const& var_ref) {
           return BuildVarLoadExpr(this, FunctionBuilder::LOAD, var_ref.name(),
-                                  nullptr);
+                                  nullptr)
+              .WithLocation();
         },
         [&](ast::ArrayIndexExpr const& array_index) {
           return BuildVarLoadExpr(this, FunctionBuilder::LOAD,
-                                  array_index.var_name(), &array_index.index());
+                                  array_index.var_name(), &array_index.index())
+              .WithLocation();
         },
         [&](ast::CallExpr const& selector_ref) {
-          return BuildCallExpr(this, selector_ref);
+          return BuildCallExpr(this, selector_ref).WithLocation();
         },
         [&](ast::ReturnExpr const& array_ref) {
           if (array_ref.expr()) {
@@ -826,40 +828,41 @@ class ExprContextImpl : public ExprContext {
           return status::OkStatus();
         },
         [&](ast::BreakExpr const& break_expr) {
-          return BuildBreakExpr(this, break_expr);
+          return BuildBreakExpr(this, break_expr).WithLocation();
         },
         [&](ast::ContinueExpr const& cont_expr) {
-          return BuildContEpxr(this, cont_expr);
+          return BuildContEpxr(this, cont_expr).WithLocation();
         },
         [&](ast::WhileExpr const& while_expr) {
-          return BuildWhileExpr(this, while_expr);
+          return BuildWhileExpr(this, while_expr).WithLocation();
         },
         [&](ast::ForExpr const& for_expr) {
-          return BuildForExpr(this, for_expr);
+          return BuildForExpr(this, for_expr).WithLocation();
         },
-        [&](ast::IfExpr const& if_expr) { return BuildIfExpr(this, if_expr); },
+        [&](ast::IfExpr const& if_expr) {
+          return BuildIfExpr(this, if_expr).WithLocation();
+        },
         [&](ast::CondExpr const& cond_expr) {
-          return BuildCondExpr(this, cond_expr);
+          return BuildCondExpr(this, cond_expr).WithLocation();
         },
         [&](ast::SwitchExpr const& switch_expr) {
-          return BuildSwitchExpr(this, switch_expr);
+          return BuildSwitchExpr(this, switch_expr).WithLocation();
         },
         [&](ast::SwitchToExpr const& switch_to_expr) {
-          return BuildSwitchToExpr(this, switch_to_expr);
+          return BuildSwitchToExpr(this, switch_to_expr).WithLocation();
         },
         [&](ast::SendExpr const& send_expr) {
-          return BuildSendExpr(this, send_expr);
+          return BuildSendExpr(this, send_expr).WithLocation();
         },
         [&](ast::AssignExpr const& assign_expr) {
-          return BuildAssignExpr(this, assign_expr);
+          return BuildAssignExpr(this, assign_expr).WithLocation();
         },
         [&](ast::IncDecExpr const& inc_dec_expr) {
-          return BuildIncDecExpr(this, inc_dec_expr);
+          return BuildIncDecExpr(this, inc_dec_expr).WithLocation();
         },
         [&](ast::ExprList const& expr_list) {
-          return BuildExprList(this, expr_list);
+          return BuildExprList(this, expr_list).WithLocation();
         });
-    return status::OkStatus();
   }
 };
 

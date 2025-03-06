@@ -8,6 +8,11 @@
 namespace sem {
 namespace {
 
+TEST(SelectorTableTest, EmptyTest) {
+  auto builder = SelectorTable::CreateBuilder();
+  ASSERT_OK_AND_ASSIGN(auto table, builder->Build());
+}
+
 TEST(SelectorTableTest, BasicTest) {
   auto builder = SelectorTable::CreateBuilder();
   ASSERT_OK(builder->DeclareSelector(CreateTestNameToken("hello"),

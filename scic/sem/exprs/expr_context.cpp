@@ -15,6 +15,7 @@
 #include "scic/sem/module_env.hpp"
 #include "scic/sem/property_list.hpp"
 #include "scic/status/status.hpp"
+#include "util/debug/debug_utils.hpp"
 #include "util/status/status_macros.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/choice.hpp"
@@ -86,12 +87,15 @@ class ExprEnvironmentImpl : public ExprEnvironment {
   }
 
   status::StatusOr<Sym> LookupSym(std::string_view name) const override {
+    DebugPrint("LookupSym: %v", Escaped(name));
     // Lookup in all sources, to detect any ambiguities.
     auto const* prop = prop_list_ ? prop_list_->LookupByName(name) : nullptr;
     auto const* param = GetOrNull(proc_local_table_, name);
     auto const* temp = GetOrNull(proc_temp_table_, name);
     auto const* global =
         mod_env_->global_env()->global_table()->LookupByName(name);
+    DebugPrint("Num global vars: %d",
+               mod_env_->global_env()->global_table()->vars().size());
     auto const* module_var = mod_env_->local_table()->LookupByName(name);
 
     ASSIGN_OR_RETURN(std::size_t index,

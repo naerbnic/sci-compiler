@@ -28,6 +28,9 @@ class Status {
 
   Status WithLocation(
       std::source_location location = std::source_location::current()) const {
+    if (status_.ok()) {
+      return *this;
+    }
     auto new_payload = CopyPayload();
     new_payload.locations_.push_back(std::move(location));
     return Status(status_, std::make_shared<Payload>(std::move(new_payload)));

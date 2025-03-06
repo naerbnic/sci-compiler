@@ -124,7 +124,7 @@ IsOkAndHolds(ValueMatcher const& matcher) {
 #define ASSERT_OK(x) ASSERT_THAT(x, ::util::status::IsOk())
 #define ASSERT_OK_AND_ASSIGN_IMPL(statusor, lhs, rexpr) \
   auto statusor = (rexpr);                              \
-  ASSERT_OK(statusor.status()) << statusor.status();    \
+  ASSERT_OK(statusor) << statusor.status();    \
   lhs = std::move(statusor).value()
 #define ASSERT_OK_AND_ASSIGN(lhs, rexpr)                                       \
   ASSERT_OK_AND_ASSIGN_IMPL(STATUS_MACROS_CONCAT_(_status_or_value, __LINE__), \

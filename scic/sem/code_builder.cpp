@@ -19,6 +19,7 @@
 #include "scic/sem/property_list.hpp"
 #include "scic/sem/selector_table.hpp"
 #include "scic/status/status.hpp"
+#include "util/debug/debug_utils.hpp"
 #include "util/status/status_macros.hpp"
 #include "util/strings/ref_str.hpp"
 
@@ -30,6 +31,7 @@ status::Status BuildGenericProcedure(
     std::optional<ExprEnvironment::SuperInfo> super_info,
     codegen::FuncName func_name, codegen::PtrRef* proc_ref,
     ast::ProcDef const& ast_node) {
+  DebugPrint("Building generic procedure: %v", func_name);
   std::size_t curr_param_offset = 0;
   std::map<util::RefStr, ExprEnvironment::ParamSym, std::less<>> param_map;
   for (auto const& arg : ast_node.args()) {
