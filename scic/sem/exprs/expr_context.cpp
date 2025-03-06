@@ -1,5 +1,6 @@
 #include "scic/sem/exprs/expr_context.hpp"
 
+#include <cstddef>
 #include <functional>
 #include <map>
 #include <memory>
@@ -105,9 +106,12 @@ class ExprEnvironmentImpl : public ExprEnvironment {
       auto const* global =
           mod_env_->global_env()->global_table()->LookupByName(name);
       auto const* module_var = mod_env_->local_table()->LookupByName(name);
+      auto const* obj = mod_env_->object_table()->LookupByName(name);
+      auto const* cls =
+          mod_env_->global_env()->class_table()->LookupByName(name);
 
-      if (module_var || global) {
-        if (module_var && global) {
+      if (module_var || global || obj || cls) {
+        if (module_var && global && !obj && !cls) {
           if (mod_env_->script_num().value() == 0 &&
               module_var->index().value() == global->index().value()) {
             return LocalSym{
@@ -118,14 +122,42 @@ class ExprEnvironmentImpl : public ExprEnvironment {
           }
         }
 
+        std::size_t num_resolved = 0;
+        if (module_var) {
+          ++num_resolved;
+        }
+        if (global) {
+          ++num_resolved;
+        }
+        if (obj) {
+          ++num_resolved;
+        }
+        if (cls) {
+          ++num_resolved;
+        }
+
+        if (num_resolved > 1) {
+          return status::InvalidArgumentError("Ambiguous symbol");
+        }
+
         if (module_var) {
           return LocalSym{
               .local_offset = module_var->index().value(),
           };
-        } else {
+        } else if (global) {
           return GlobalSym{
               .global_offset = global->index().value(),
           };
+        } else if (obj) {
+          return ObjectSym{
+              .obj = obj,
+          };
+        } else if (cls) {
+          return ClassSym{
+              .cls = cls,
+          };
+        } else {
+          throw std::logic_error("Unreachable");
         }
       }
     }

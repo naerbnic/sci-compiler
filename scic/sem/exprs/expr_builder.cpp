@@ -82,6 +82,16 @@ status::Status BuildAddrOfExpr(ExprContext* ctx,
                          return status::FailedPreconditionError(
                              "Properties cannot be used in an "
                              "AddrOf expression.");
+                       },
+                       [&](ExprEnvironment::ObjectSym const& obj)
+                           -> status::StatusOr<VarTypeAndOffset> {
+                         return status::FailedPreconditionError(
+                             "Objects cannot be used in an AddrOf expression.");
+                       },
+                       [&](ExprEnvironment::ClassSym const& cls)
+                           -> status::StatusOr<VarTypeAndOffset> {
+                         return status::FailedPreconditionError(
+                             "Classes cannot be used in an AddrOf expression.");
                        }));
 
   if (index) {
@@ -153,6 +163,14 @@ status::Status BuildVarStoreExpr(ExprContext* ctx, NameToken const& var_name,
                                            proc.prop_offset,
                                            std::string(proc.selector->name()));
         return status::OkStatus();
+      },
+      [&](ExprEnvironment::ObjectSym const& obj) -> status::Status {
+        return status::FailedPreconditionError(
+            "Objects cannot be assigned to.");
+      },
+      [&](ExprEnvironment::ClassSym const& cls) -> status::Status {
+        return status::FailedPreconditionError(
+            "Classes cannot be assigned to.");
       });
 }
 
@@ -160,6 +178,11 @@ status::Status BuildVarLoadExpr(ExprContext* ctx,
                                 FunctionBuilder::ValueOp val_op,
                                 NameToken const& var_name,
                                 absl::Nullable<ast::Expr const*> index) {
+  if (var_name.value() == "self") {
+    ctx->func_builder()->AddLoadSelfOp();
+    return status::OkStatus();
+  }
+
   ASSIGN_OR_RETURN(auto sym, ctx->LookupSym(var_name.value()));
   return sym.visit(
       [&](ExprEnvironment::VarSym const& var_sym) -> status::Status {
@@ -180,6 +203,21 @@ status::Status BuildVarLoadExpr(ExprContext* ctx,
         }
         ctx->func_builder()->AddPropAccess(val_op, proc.prop_offset,
                                            std::string(proc.selector->name()));
+        return status::OkStatus();
+      },
+      [&](ExprEnvironment::ObjectSym const& obj) -> status::Status {
+        if (index) {
+          return status::FailedPreconditionError("Objects cannot be indexed");
+        }
+        ctx->func_builder()->AddLoadOffsetTo(obj.obj->ptr_ref());
+        return status::OkStatus();
+      },
+      [&](ExprEnvironment::ClassSym const& cls) -> status::Status {
+        if (index) {
+          return status::FailedPreconditionError("Classes cannot be indexed");
+        }
+        ctx->func_builder()->AddLoadClassOp(std::string(cls.cls->name()),
+                                            cls.cls->species().value());
         return status::OkStatus();
       });
 }

@@ -11,8 +11,10 @@
 
 #include "scic/codegen/code_generator.hpp"
 #include "scic/parsers/sci/ast.hpp"
+#include "scic/sem/class_table.hpp"
 #include "scic/sem/common.hpp"
 #include "scic/sem/module_env.hpp"
+#include "scic/sem/object_table.hpp"
 #include "scic/sem/property_list.hpp"
 #include "scic/sem/selector_table.hpp"
 #include "scic/status/status.hpp"
@@ -51,7 +53,17 @@ class ExprEnvironment {
     SelectorTable::Entry const* selector;
   };
 
-  struct Sym : public util::ChoiceBase<Sym, PropSym, VarSym> {
+  // A symbol value for a local Object.
+  struct ObjectSym {
+    Object const* obj;
+  };
+
+  struct ClassSym {
+    Class const* cls;
+  };
+
+  struct Sym
+      : public util::ChoiceBase<Sym, PropSym, VarSym, ObjectSym, ClassSym> {
     using ChoiceBase::ChoiceBase;
   };
 
