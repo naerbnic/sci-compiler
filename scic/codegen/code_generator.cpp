@@ -743,11 +743,11 @@ std::unique_ptr<ObjectCodegen> CodeGenerator::CreateObject(std::string name,
   return ObjectCodegen::Create(this, true, name, &ref->ref_);
 }
 
-std::unique_ptr<ObjectCodegen> CodeGenerator::CreateClass(std::string name) {
+std::unique_ptr<ObjectCodegen> CodeGenerator::CreateClass(std::string name,
+                                                          PtrRef* ref) {
   // Classes are referenced by their species number, not their pointer. We
   // create a dummy local PtrRef which is resolved, but not used elsewhere.
-  PtrRef dummy_ref;
-  return ObjectCodegen::Create(this, false, name, &dummy_ref.ref_);
+  return ObjectCodegen::Create(this, false, name, &ref->ref_);
 }
 
 std::unique_ptr<FunctionBuilder> CodeGenerator::CreateFunction(

@@ -78,8 +78,9 @@ status::Status BuildGenericProcedure(
 status::Status BuildClass(ModuleEnvironment const* module_env,
                           Class const* class_def,
                           ast::ClassDef const& ast_node) {
-  auto class_gen =
-      module_env->codegen()->CreateClass(std::string(class_def->name()));
+  auto ptr_ref = module_env->codegen()->CreatePtrRef();
+  auto class_gen = module_env->codegen()->CreateClass(
+      std::string(class_def->name()), &ptr_ref);
   for (auto const& prop : class_def->prop_list().properties()) {
     auto const* selector = prop.selector();
     if (selector->name() == kMethDictSelName) {
