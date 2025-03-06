@@ -65,6 +65,7 @@ class ClassImpl : public Class {
         script_num_(script_num),
         species_(species),
         prev_decl_(prev_decl),
+        class_ref_(std::move(class_ref)),
         property_defs_(std::move(property_defs)),
         methods_(std::move(methods)) {}
 
