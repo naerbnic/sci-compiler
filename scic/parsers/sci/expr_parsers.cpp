@@ -297,6 +297,13 @@ ParseResult<AssignExpr> ParseAssignExpr(TokenNode<std::string_view> keyword,
   return AssignExpr(K, std::move(var), std::move(value));
 }
 
+template <IncDecExpr::Kind K>
+ParseResult<IncDecExpr> ParseIncDecExpr(TokenNode<std::string_view> keyword,
+                                        TreeExprSpan& exprs) {
+  ASSIGN_OR_RETURN(auto var, ParseLValueExprPtr(exprs));
+  return IncDecExpr(K, std::move(var));
+}
+
 BuiltinsMap const& GetBuiltinParsers() {
   static const BuiltinsMap instance = {
       {"return"_rs, ParseReturnExpr},
@@ -324,6 +331,8 @@ BuiltinsMap const& GetBuiltinParsers() {
       {"^="_rs, ParseAssignExpr<AssignExpr::Kind::XOR>},
       {">>="_rs, ParseAssignExpr<AssignExpr::Kind::SHR>},
       {"<<="_rs, ParseAssignExpr<AssignExpr::Kind::SHL>},
+      {"++"_rs, ParseIncDecExpr<IncDecExpr::INC>},
+      {"--"_rs, ParseIncDecExpr<IncDecExpr::DEC>},
   };
   return instance;
 }
