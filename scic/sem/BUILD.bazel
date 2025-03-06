@@ -186,6 +186,7 @@ cc_library(
     srcs = ["public_table.cpp"],
     hdrs = ["public_table.hpp"],
     deps = [
+        ":class_table",
         ":object_table",
         ":proc_table",
         "//scic/status",
@@ -257,5 +258,6 @@ cc_library(
         "//scic/status",
         "//util/status:status_macros",
         "//util/strings:ref_str",
+        "@abseil-cpp//absl/strings:str_format",
     ],
 )

@@ -117,13 +117,37 @@ ParseResult<ForExpr> ParseForExpr(TokenNode<std::string_view> keyword,
 ParseResult<IfExpr> ParseIfExpr(TokenNode<std::string_view> keyword,
                                 TreeExprSpan& exprs) {
   ASSIGN_OR_RETURN(auto condition, ParseExprPtr(exprs));
-  ASSIGN_OR_RETURN(auto then_body, ParseExprPtr(exprs));
-  std::optional<std::unique_ptr<Expr>> else_body;
-  if (!exprs.empty()) {
-    ASSIGN_OR_RETURN(else_body, ParseExprPtr(exprs));
+
+  bool has_else = false;
+  std::vector<Expr> then_exprs;
+
+  while (!exprs.empty()) {
+    if (StartsWith(IsIdentExprWith("else"))(exprs)) {
+      ASSIGN_OR_RETURN(auto else_token, ParseOneIdentTokenNode(exprs));
+      has_else = true;
+      break;
+    } else {
+      ASSIGN_OR_RETURN(auto then_expr, ParseExpr(exprs));
+      then_exprs.push_back(std::move(then_expr));
+    }
   }
-  return IfExpr(std::move(condition), std::move(then_body),
-                std::move(else_body));
+
+  if (!has_else) {
+    return IfExpr(std::move(condition),
+                  std::make_unique<Expr>(ExprList(std::move(then_exprs))),
+                  std::nullopt);
+  }
+
+  std::vector<Expr> else_exprs;
+
+  while (!exprs.empty()) {
+    ASSIGN_OR_RETURN(auto else_expr, ParseExpr(exprs));
+    else_exprs.push_back(std::move(else_expr));
+  }
+
+  return IfExpr(std::move(condition),
+                std::make_unique<Expr>(ExprList(std::move(then_exprs))),
+                std::make_unique<Expr>(ExprList(std::move(else_exprs))));
 }
 
 ParseResult<CondExpr> ParseCondExpr(TokenNode<std::string_view> keyword,
