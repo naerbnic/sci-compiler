@@ -308,11 +308,12 @@ status::StatusOr<std::unique_ptr<PublicTable>> BuildPublicTable(
 
   auto const* public_def = elems[0];
 
-  for (auto const& proc : public_def->entries()) {
-    auto const* proc_entry = proc_table->LookupByName(proc.name.value());
-    auto const* obj_entry = object_table->LookupByName(proc.name.value());
+  for (auto const& entity : public_def->entries()) {
+    auto const* proc_entry = proc_table->LookupByName(entity.name.value());
+    auto const* obj_entry = object_table->LookupByName(entity.name.value());
     if (!proc_entry && !obj_entry) {
-      return status::InvalidArgumentError("Entity not found.");
+      return status::InvalidArgumentError(
+          absl::StrFormat("Entity not found: %s", entity.name.value()));
     }
 
     if (proc_entry && obj_entry) {
@@ -321,9 +322,9 @@ status::StatusOr<std::unique_ptr<PublicTable>> BuildPublicTable(
     }
 
     if (proc_entry) {
-      RETURN_IF_ERROR(builder->AddProcedure(proc.index.value(), proc_entry));
+      RETURN_IF_ERROR(builder->AddProcedure(entity.index.value(), proc_entry));
     } else {
-      RETURN_IF_ERROR(builder->AddObject(proc.index.value(), obj_entry));
+      RETURN_IF_ERROR(builder->AddObject(entity.index.value(), obj_entry));
     }
   }
 

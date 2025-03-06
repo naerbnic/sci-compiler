@@ -46,7 +46,7 @@ ParserItemMap const& TopLevelParsers() {
         {"procedure", ParseProcItem},
         {"class", ParseClassItem},
         {"instance", ParseInstanceItem},
-        {"classdecl", ParseClassDeclItem},
+        {"classdef", ParseClassDeclItem},
         {"selectors", ParseSelectorsItem},
     });
   })());

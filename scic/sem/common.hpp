@@ -7,6 +7,7 @@
 #include <string_view>
 #include <vector>
 
+#include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "scic/parsers/sci/ast.hpp"
 #include "scic/status/status.hpp"
@@ -101,13 +102,19 @@ using ModuleVarIndex = util::StrongValue<ModuleVarIndexTag>;
 
 // Reliably sets the value to a machine word, signed or unsigned.
 inline status::StatusOr<std::uint16_t> ConvertToMachineWord(int value) {
-  auto narrowed = static_cast<std::int16_t>(value);
-  if (narrowed != value) {
-    // We've changed the value, so it must be out of range.
-    return status::InvalidArgumentError(
-        "Value is too large for a machine word");
+  auto narrowed_i16 = static_cast<std::int16_t>(value);
+  if (narrowed_i16 == value) {
+    return std::bit_cast<std::uint16_t>(narrowed_i16);
   }
-  return std::bit_cast<std::uint16_t>(narrowed);
+
+  auto narrowed_u16 = static_cast<std::uint16_t>(value);
+  if (narrowed_u16 == value) {
+    return narrowed_u16;
+  }
+
+  // We've changed the value, so it must be out of range.
+  return status::InvalidArgumentError(
+      absl::StrFormat("Value is too large for a machine word: %x", value));
 }
 
 }  // namespace sem

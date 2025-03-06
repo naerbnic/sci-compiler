@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "absl/base/nullability.h"
+#include "absl/strings/str_format.h"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/parsers/sci/ast.hpp"
 #include "scic/sem/common.hpp"
@@ -190,14 +191,16 @@ class ClassTableLayer {
                                std::optional<ClassSpecies> super_species) {
     auto it = species_table_.find(species);
     if (it == species_table_.end()) {
-      return status::InvalidArgumentError("Class species not found");
+      return status::InvalidArgumentError(
+          absl::StrFormat("Class species not found: %d", species.value()));
     }
     auto* class_impl = it->second;
 
     if (super_species.has_value()) {
       auto it2 = species_table_.find(*super_species);
       if (it2 == species_table_.end()) {
-        return status::InvalidArgumentError("Class species not found");
+        return status::InvalidArgumentError(absl::StrFormat(
+            "Class super species not found %d", super_species->value()));
       }
       class_impl->SetSuper(it2->second);
     } else {
@@ -295,6 +298,13 @@ class ClassTableBuilderImpl : public ClassTableBuilder {
             "class declaration.");
       }
     }
+
+    // Backwards Compatibility: The number 0xFFFF is used to indicate
+    // no super class in the original code.
+    if (super_species && super_species->value() == 0xFFFF) {
+      super_species = std::nullopt;
+    }
+
     decls_.push_back(ClassDecl{
         .base =
             ClassBase{
@@ -409,7 +419,7 @@ class ClassTableBuilderImpl : public ClassTableBuilder {
           continue;
         }
 
-        auto const* curr_decl = def_layer.LookupByName(decl.base.name.value());
+        auto const* curr_decl = decl_layer.LookupByName(decl.base.name.value());
         RETURN_IF_ERROR(
             def_layer.SetClassSuper(curr_decl->species(), decl.super_num));
       }
