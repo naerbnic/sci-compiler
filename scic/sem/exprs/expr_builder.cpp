@@ -446,7 +446,7 @@ std::map<std::string_view, CallFunc> const& GetCallBuiltins() {
 }
 
 status::Status BuildCallExpr(ExprContext* ctx, ast::CallExpr const& call) {
-  ASSIGN_OR_RETURN(auto num_args, BuildCallArgs(ctx, call.call_args()));
+  // We represent both builtin operators and calls as CallExpr ASTs.
   auto const& target = call.target();
   // The original appears to only support calls to names, but I think
   // there's a reason that I made this support general expressions.
@@ -462,6 +462,10 @@ status::Status BuildCallExpr(ExprContext* ctx, ast::CallExpr const& call) {
   if (it != builtins.end()) {
     return it->second(ctx, target_name, call.call_args());
   }
+
+  // Not a builtin, so treat as a normal procedure call.
+
+  ASSIGN_OR_RETURN(auto num_args, BuildCallArgs(ctx, call.call_args()));
 
   ASSIGN_OR_RETURN(auto proc, ctx->LookupProc(target_name.value()));
   return proc.visit(
