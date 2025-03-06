@@ -4,4 +4,7 @@
 (global
   foo 0 = 1)
 
+(public
+  bar 0)
+
 (procedure (bar x y) (+ foo BLAH))

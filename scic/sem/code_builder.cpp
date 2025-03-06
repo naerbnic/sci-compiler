@@ -219,6 +219,19 @@ status::Status BuildCode(ModuleEnvironment const* module_env) {
         }));
   }
 
+  // Add public declarations for the current module.
+  for (auto const& entry : module_env->public_table()->entries()) {
+    entry.value().visit(
+        [&](Procedure const* proc) {
+          codegen->AddPublic(std::string(proc->name()), entry.index(),
+                             proc->ptr_ref());
+        },
+        [&](Object const* obj) {
+          codegen->AddPublic(std::string(obj->name()), entry.index(),
+                             obj->ptr_ref());
+        });
+  }
+
   return status::OkStatus();
 }
 
