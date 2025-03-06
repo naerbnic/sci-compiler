@@ -9,6 +9,7 @@
 
 #include "absl/types/span.h"
 #include "scic/text/text_range.hpp"
+#include "scic/tokens/token_source.hpp"
 #include "util/io/printer.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/choice.hpp"
@@ -58,8 +59,8 @@ template <class T>
 class TokenNode {
  public:
   using element_type = internal::NodeElementType<T>::type;
-  TokenNode(T value, text::TextRange text_range)
-      : value_(std::move(value)), text_range_(std::move(text_range)) {}
+  TokenNode(T value, tokens::TokenSource token_source)
+      : value_(std::move(value)), token_source_(std::move(token_source)) {}
 
   TokenNode(TokenNode const&) = default;
   TokenNode(TokenNode&&) = default;
@@ -70,11 +71,14 @@ class TokenNode {
     requires(std::convertible_to<U, T> && !std::same_as<U, T>)
   TokenNode(TokenNode<U> other)
       : value_(std::move(other).value()),
-        text_range_(std::move(other).text_range()) {}
+        token_source_(std::move(other).token_source()) {}
 
   T const& value() const& { return value_; }
   T&& value() && { return std::move(value_); }
-  text::TextRange const& text_range() const { return text_range_; }
+  tokens::TokenSource const& token_source() const { return token_source_; }
+  text::TextRange const& text_range() const {
+    return token_source_.sources()[0];
+  }
 
   // Act as a smart pointer to the value. If the internal type is a pointer,
   // act as if it were transparent.
@@ -112,9 +116,9 @@ class TokenNode {
   }
 
   T value_;
-  text::TextRange text_range_;
+  tokens::TokenSource token_source_;
 
-  DEFINE_PRINTERS(TokenNode, "value", value_, "text_range", text_range_);
+  DEFINE_PRINTERS(TokenNode, "value", value_, "text_range", token_source_);
 };
 
 // AST Nodes for the SCI language parse tree.
@@ -492,8 +496,7 @@ class SwitchToExpr {
 
   Expr const& switch_expr() const { return *switch_expr_; }
   util::SeqView<Expr const> cases() const {
-    return util::SeqView<Expr const>::Deref(
-        cases_);
+    return util::SeqView<Expr const>::Deref(cases_);
   }
 
   std::optional<std::unique_ptr<Expr>> const& else_case() const {

@@ -14,8 +14,8 @@
 #include "scic/parsers/sci/ast.hpp"
 #include "scic/parsers/sci/const_value_parsers.hpp"
 #include "scic/parsers/sci/parser_common.hpp"
-#include "scic/text/text_range.hpp"
 #include "scic/tokens/token.hpp"
+#include "scic/tokens/token_source.hpp"
 #include "util/status/status_macros.hpp"
 #include "util/strings/ref_str.hpp"
 
@@ -461,7 +461,7 @@ ParseResult<Expr> ParseSciListExpr(TreeExprSpan const& exprs) {
     auto const& builtins = GetBuiltinParsers();
     if (auto it = builtins.find(name.value()); it != builtins.end()) {
       return it->second(
-          TokenNode<std::string_view>(name.value(), name.text_range()),
+          TokenNode<std::string_view>(name.value(), name.token_source()),
           local_exprs);
     }
     target_expr = VarExpr(std::move(name));
@@ -512,15 +512,15 @@ ParseResult<Expr> ParseExpr(TreeExprSpan& exprs) {
                                         "Expected simple identifier.");
                 }
                 return VarExpr(
-                    TokenNode<util::RefStr>(ident.name, token.text_range()));
+                    TokenNode<util::RefStr>(ident.name, token.source()));
               },
               [&](tokens::Token::Number const& num) -> ParseResult<Expr> {
-                return ConstValueExpr(NumConstValue(
-                    TokenNode<int>(num.value, token.text_range())));
+                return ConstValueExpr(
+                    NumConstValue(TokenNode<int>(num.value, token.source())));
               },
               [&](tokens::Token::String const& str) -> ParseResult<Expr> {
                 return ConstValueExpr(StringConstValue(TokenNode<util::RefStr>(
-                    str.decodedString, token.text_range())));
+                    str.decodedString, token.source())));
               },
               [&](auto const&) -> ParseResult<Expr> {
                 return RangeFailureOf(token.text_range(),
@@ -551,7 +551,7 @@ ParseResult<LValueExpr> ParseLValueExpr(TreeExprSpan& exprs) {
                                         "Expected simple identifier.");
                 }
                 return VarExpr(
-                    TokenNode<util::RefStr>(ident.name, token.text_range()));
+                    TokenNode<util::RefStr>(ident.name, token.source()));
               },
               [&](auto const&) -> ParseResult<LValueExpr> {
                 return RangeFailureOf(token.text_range(),

@@ -17,7 +17,9 @@
 #include "scic/parsers/sci/ast.hpp"
 #include "scic/text/text_range.hpp"
 #include "scic/tokens/token.hpp"
+#include "scic/tokens/token_source.hpp"
 #include "util/status/status_macros.hpp"
+#include "util/strings/ref_str.hpp"
 
 namespace parsers::sci {
 
@@ -111,7 +113,7 @@ auto ParseTokenExpr(F parser) {
   };
 }
 
-template <IsParserOf<text::TextRange const&, tokens::Token::Ident const&> F>
+template <IsParserOf<tokens::TokenSource const&, tokens::Token::Ident const&> F>
 auto ParseIdentToken(F parser) {
   using ParserInfo = ParserTraits<F>;
   return [parser = std::move(parser)](
@@ -125,7 +127,7 @@ auto ParseIdentToken(F parser) {
   };
 }
 
-template <IsParserOf<text::TextRange const&, int> F>
+template <IsParserOf<tokens::TokenSource const&, int> F>
 auto ParseNumToken(F parser) {
   using ParserInfo = ParserTraits<F>;
   return [parser = std::move(parser)](
@@ -138,7 +140,7 @@ auto ParseNumToken(F parser) {
     return parser(token.text_range(), num->value);
   };
 }
-template <IsParserOf<text::TextRange const&, util::RefStr const&> F>
+template <IsParserOf<tokens::TokenSource const&, util::RefStr const&> F>
 auto ParseStringToken(F parser) {
   using ParserInfo = ParserTraits<F>;
   return [parser = std::move(parser)](
@@ -152,16 +154,16 @@ auto ParseStringToken(F parser) {
   };
 }
 
-template <IsParserOf<text::TextRange const&, tokens::Token::Ident const&> F>
+template <IsParserOf<tokens::TokenSource const&, tokens::Token::Ident const&> F>
 auto ParseOneIdentToken(F parser) {
   return ParseOneTreeExpr(ParseTokenExpr(ParseIdentToken(std::move(parser))));
 }
 
 ParseResult<TokenNode<std::string_view>> ParseSimpleIdentNameNodeView(
-    text::TextRange const& range, tokens::Token::Ident const& ident);
+  tokens::TokenSource const& range, tokens::Token::Ident const& ident);
 
 ParseResult<TokenNode<util::RefStr>> ParseSimpleIdentNameNode(
-    text::TextRange const& range, tokens::Token::Ident const& ident);
+  tokens::TokenSource const& range, tokens::Token::Ident const& ident);
 
 ParseResult<std::pair<TokenNode<util::RefStr>, tokens::Token::Ident::Trailer>>
 ParseIdentNameNode(list_tree::TokenExpr const& token);

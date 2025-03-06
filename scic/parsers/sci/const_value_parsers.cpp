@@ -11,10 +11,10 @@ namespace parsers::sci {
 ParseResult<ConstValue> ParseConstValue(list_tree::TokenExpr const& expr) {
   if (auto num = expr.token().AsNumber()) {
     return ConstValue(
-        NumConstValue(TokenNode<int>(num->value, expr.text_range())));
+        NumConstValue(TokenNode<int>(num->value, expr.token_source())));
   } else if (auto str = expr.token().AsString()) {
     return ConstValue(StringConstValue(
-        TokenNode<util::RefStr>(str->decodedString, expr.text_range())));
+        TokenNode<util::RefStr>(str->decodedString, expr.token_source())));
   } else {
     return RangeFailureOf(expr.text_range(), "Expected number or string.");
   }

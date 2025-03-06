@@ -11,6 +11,7 @@ cc_library(
     deps = [
         "//scic/text:text_range",
         "//scic/tokens:token",
+        "//scic/tokens:token_source",
         "//util/types:choice",
         "@abseil-cpp//absl/strings:str_format",
         "@abseil-cpp//absl/types:span",

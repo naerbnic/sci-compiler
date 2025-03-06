@@ -68,6 +68,7 @@ cc_library(
         "//scic/parsers/sci:ast",
         "//scic/status",
         "//scic/text:text_range",
+        "//scic/tokens:token_source",
         "//util/strings:ref_str",
         "//util/types:sequence",
         "@abseil-cpp//absl/strings:str_format",

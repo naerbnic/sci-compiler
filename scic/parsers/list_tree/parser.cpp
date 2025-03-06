@@ -80,7 +80,7 @@ class ProcessedTokenStream {
         // in the stream with the defined tokens.
         auto define = defines_->find(ident->name);
         if (define != defines_->end()) {
-          token_stream_->PushTokens(define->second);
+          token_stream_->PushTokens(define->second, token->text_range());
           continue;
         }
       }
@@ -460,7 +460,8 @@ class ParserImpl {
     // has misformatted preprocessor directives. If we want to handle this,
     // we will have to track the source of each define clause.
     if (rest_elements.size() != 1) {
-      return status::InvalidArgumentError("Include requires a single argument.");
+      return status::InvalidArgumentError(
+          "Include requires a single argument.");
     }
 
     // An include argument can be a string or an identifier.

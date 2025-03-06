@@ -9,6 +9,7 @@
 #include "absl/types/span.h"
 #include "scic/parsers/list_tree/parser_test_utils.hpp"
 #include "scic/parsers/sci/ast.hpp"
+#include "scic/tokens/token_source.hpp"
 #include "scic/text/text_range.hpp"
 
 namespace parsers::sci {
@@ -16,7 +17,8 @@ namespace {
 
 TokenNode<std::string_view> StringViewTokenNode(std::string_view value) {
   return TokenNode<std::string_view>(
-      value, text::TextRange::OfString(std::string(value)));
+      value,
+      tokens::TokenSource(text::TextRange::OfString(std::string(value))));
 }
 
 TEST(PublicTest, Unimplemented) {

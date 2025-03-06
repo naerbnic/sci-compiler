@@ -18,6 +18,7 @@
 #include "scic/sem/late_bound.hpp"
 #include "scic/status/status.hpp"
 #include "scic/text/text_range.hpp"
+#include "scic/tokens/token_source.hpp"
 #include "util/strings/ref_str.hpp"
 #include "util/types/sequence.hpp"
 
@@ -187,7 +188,8 @@ std::unique_ptr<SelectorTable::Builder> SelectorTable::CreateBuilder() {
   for (auto const& [name, selector_num] : standard_properties) {
     auto status = builder->DeclareSelector(
         ast::TokenNode<util::RefStr>(
-            util::RefStr(name), text::TextRange::OfString(std::string(name))),
+            util::RefStr(name),
+            tokens::TokenSource(text::TextRange::OfString(std::string(name)))),
         SelectorNum::Create(selector_num));
     if (!status.ok()) {
       throw std::runtime_error(absl::StrFormat(

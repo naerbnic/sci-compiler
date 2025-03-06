@@ -5,8 +5,9 @@
 
 #include "absl/strings/str_format.h"
 #include "scic/text/text_range.hpp"
-#include "util/types/choice.hpp"
+#include "scic/tokens/token_source.hpp"
 #include "util/strings/ref_str.hpp"
+#include "util/types/choice.hpp"
 
 namespace tokens {
 
@@ -85,8 +86,15 @@ class Token {
   Token() = default;
   Token(text::TextRange text_range, TokenValue value);
 
-  text::TextRange const& text_range() const { return text_range_; }
+  TokenSource const& source() const { return source_; }
+  text::TextRange const& text_range() const { return source_.sources()[0]; }
   TokenValue const& value() const { return value_; }
+
+  Token AddSource(text::TextRange source) const {
+    Token result = *this;
+    result.source_.AddSource(source);
+    return result;
+  }
 
   Ident const* AsIdent() const { return value_.try_get<Ident>(); }
   Punct const* AsPunct() const { return value_.try_get<Punct>(); }
@@ -97,7 +105,7 @@ class Token {
   }
 
  private:
-  text::TextRange text_range_;
+  TokenSource source_;
   TokenValue value_;
 
   template <class Sink>
