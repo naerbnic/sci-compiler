@@ -32,16 +32,17 @@ std::decay_t<T> WithLocationHelper(
 #define STATUS_MACROS_CONCAT_INNER_(x, y) x##y
 #define STATUS_MACROS_CONCAT_(x, y) STATUS_MACROS_CONCAT_INNER_(x, y)
 
-#define RETURN_IF_ERROR(expr)                                              \
-  do {                                                                     \
-    const auto status = (expr);                                            \
-    if (!status.ok()) return ::util::internal::WithLocationHelper(status); \
+#define RETURN_IF_ERROR(expr)                                         \
+  do {                                                                \
+    const auto status = (expr);                                       \
+    if (!status.ok())                                                 \
+      return ::util::internal::WithLocationHelper(std::move(status)); \
   } while (0)
 
-#define ASSIGN_OR_RETURN_IMPL(statusor, lhs, rexpr)                 \
-  auto statusor = (rexpr);                                          \
-  if (!statusor.ok())                                               \
-    return ::util::internal::WithLocationHelper(statusor.status()); \
+#define ASSIGN_OR_RETURN_IMPL(statusor, lhs, rexpr)                            \
+  auto statusor = (rexpr);                                                     \
+  if (!statusor.ok())                                                          \
+    return ::util::internal::WithLocationHelper(std::move(statusor).status()); \
   lhs = std::move(statusor).value()
 
 #define ASSIGN_OR_RETURN(lhs, rexpr)                                       \
