@@ -7,6 +7,7 @@
 #include <string>
 #include <utility>
 
+#include "absl/strings/str_format.h"
 #include "scic/codegen/code_generator.hpp"
 #include "scic/parsers/sci/ast.hpp"
 #include "scic/sem/class_table.hpp"
@@ -25,6 +26,8 @@
 namespace sem {
 namespace {
 
+using namespace ::util::ref_str_literals;
+
 status::Status BuildGenericProcedure(
     ModuleEnvironment const* mod_env, PropertyList const* prop_list,
     std::optional<ExprEnvironment::SuperInfo> super_info,
@@ -32,7 +35,18 @@ status::Status BuildGenericProcedure(
     ast::ProcDef const& ast_node) {
   std::size_t curr_param_offset = 0;
   std::map<util::RefStr, ExprEnvironment::ParamSym, std::less<>> param_map;
+
+  // "argc" is always the first parameter, giving a concrete number for the
+  // number of parameters provided.
+  param_map.emplace("argc"_rs, ExprEnvironment::ParamSym{
+                                   .param_offset = curr_param_offset++,
+                               });
+
   for (auto const& arg : ast_node.args()) {
+    if (param_map.contains(arg.value())) {
+      return status::InvalidArgumentError(
+          absl::StrFormat("Duplicate parameter: %s", arg.value()));
+    }
     param_map.emplace(arg.value(), ExprEnvironment::ParamSym{
                                        .param_offset = curr_param_offset++,
                                    });

@@ -130,7 +130,7 @@ class ExprEnvironmentImpl : public ExprEnvironment {
       }
     }
 
-    return status::NotFoundError("Symbol not found");
+    return status::NotFoundError(absl::StrFormat("Symbol not found: %s", name));
   }
 
   status::StatusOr<Proc> LookupProc(std::string_view name) const override {
