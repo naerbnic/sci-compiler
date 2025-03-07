@@ -108,7 +108,7 @@ class StreamOutputWriter : public codegen::OutputWriter {
     // Ensure we're working with the raw bits by using an unsigned value.
     uint16_t u = w;
 
-    std::endian targetEndian = std::endian::big;
+    std::endian targetEndian = std::endian::little;
 
     if (std::endian::native != targetEndian) {
       // Swap the bytes.

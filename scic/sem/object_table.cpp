@@ -129,6 +129,16 @@ class ObjectTableBuilderImpl : public ObjectTableBuilder {
     auto ptr_ref = codegen_->CreatePtrRef();
 
     PropertyList prop_list = class_->prop_list().Clone();
+
+    // Update the standard properties for the object.
+    prop_list.UpdatePropertyDef(selector_->LookupByName(kScriptSelName),
+                                0xFFFF);
+    prop_list.UpdatePropertyDef(selector_->LookupByName(kNameSelName),
+                                codegen_->AddTextNode(name.value()));
+    prop_list.UpdatePropertyDef(selector_->LookupByName(kSuperSelName),
+                                int(class_->species().value()));
+    prop_list.UpdatePropertyDef(selector_->LookupByName(kInfoSelName), 0);
+
     for (auto const& prop : properties) {
       auto const* existing_prop = prop_list.LookupByName(prop.name.value());
       if (!existing_prop) {
@@ -138,10 +148,6 @@ class ObjectTableBuilderImpl : public ObjectTableBuilder {
       prop_list.UpdatePropertyDef(prop.name, existing_prop->selector(),
                                   prop.value);
     }
-
-    // Update the name for the object.
-    prop_list.UpdatePropertyDef(selector_->LookupByName(kSizeSelName),
-                                codegen_->AddTextNode(class_name.value()));
 
     std::vector<MethodImpl> method_impls;
     for (auto const& method : methods) {

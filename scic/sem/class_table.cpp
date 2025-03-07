@@ -114,7 +114,6 @@ class ClassImpl : public Class {
 
       property_list = super->property_list_->Clone();
     } else {
-      // Initialize properties with the standard properties.
       property_list.UpdatePropertyDef(
           selector_table->LookupByName(kObjIdSelName), 0x1234);
       property_list.UpdatePropertyDef(
@@ -126,15 +125,23 @@ class ClassImpl : public Class {
       property_list.UpdatePropertyDef(
           selector_table->LookupByName(kClassScriptSelName), 0);
       property_list.UpdatePropertyDef(
-          selector_table->LookupByName(kScriptSelName),
-          int(script_num_.value()));
+          selector_table->LookupByName(kScriptSelName), 0);
       property_list.UpdatePropertyDef(
-          selector_table->LookupByName(kSuperSelName),
-          int(*super_ ? super->species_.value() : 0xFFFF));
-      // This is a class, so the info has the class bit set.
+          selector_table->LookupByName(kSuperSelName), 0);
       property_list.UpdatePropertyDef(
-          selector_table->LookupByName(kInfoSelName), 0x8000);
+          selector_table->LookupByName(kInfoSelName), 0);
+      property_list.UpdatePropertyDef(
+          selector_table->LookupByName(kNameSelName), 0);
     }
+    // Initialize properties with the standard properties.
+    property_list.UpdatePropertyDef(
+        selector_table->LookupByName(kScriptSelName), int(species_.value()));
+    property_list.UpdatePropertyDef(
+        selector_table->LookupByName(kSuperSelName),
+        int(*super_ ? super->species_.value() : 0xFFFF));
+    // This is a class, so the info has the class bit set.
+    property_list.UpdatePropertyDef(selector_table->LookupByName(kInfoSelName),
+                                    0x8000);
 
     std::optional<PropIndex> last_index;
 

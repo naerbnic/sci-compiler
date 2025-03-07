@@ -148,10 +148,10 @@ status::Status BuildObject(ModuleEnvironment const* module_env,
   for (auto const& prop : obj_def->prop_list().properties()) {
     auto const* selector = prop.selector();
     if (selector->name() == kMethDictSelName) {
-      obj_gen->AppendMethodTableProperty(std::string(obj_def->name()),
+      obj_gen->AppendMethodTableProperty(std::string(selector->name()),
                                          selector->selector_num().value());
     } else if (selector->name() == kPropDictSelName) {
-      obj_gen->AppendPropTableProperty(std::string(obj_def->name()),
+      obj_gen->AppendPropTableProperty(std::string(selector->name()),
                                        selector->selector_num().value());
     } else {
       obj_gen->AppendProperty(std::string(selector->name()),

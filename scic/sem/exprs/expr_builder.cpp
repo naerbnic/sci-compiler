@@ -571,10 +571,10 @@ status::StatusOr<std::size_t> BuildSendClause(ExprContext* ctx,
 
   if (sel_and_args.args) {
     ASSIGN_OR_RETURN(auto num_args, BuildCallArgs(ctx, *sel_and_args.args));
-    return num_args + 1;
+    return num_args + 2;
   } else {
     ctx->func_builder()->AddPushImmediate(0);
-    return 2UL;
+    return 3UL;
   }
 }
 
