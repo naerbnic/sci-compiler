@@ -106,6 +106,10 @@ status::Status BuildClass(ModuleEnvironment const* module_env,
     } else if (selector->name() == kPropDictSelName) {
       class_gen->AppendPropTableProperty(std::string(class_def->name()),
                                          selector->selector_num().value());
+    } else if (selector->name() == kNameSelName) {
+      class_gen->AppendProperty(
+          std::string(selector->name()), selector->selector_num().value(),
+          module_env->codegen()->AddTextNode(class_def->name()));
     } else {
       class_gen->AppendProperty(std::string(selector->name()),
                                 selector->selector_num().value(), prop.value());

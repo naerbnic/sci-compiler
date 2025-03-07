@@ -574,7 +574,7 @@ status::StatusOr<std::size_t> BuildSendClause(ExprContext* ctx,
     return num_args + 2;
   } else {
     ctx->func_builder()->AddPushImmediate(0);
-    return 3UL;
+    return 2UL;
   }
 }
 
@@ -741,7 +741,7 @@ status::Status BuildSwitchExpr(ExprContext* ctx,
     ctx->func_builder()->AddDupOp();
     RETURN_IF_ERROR(BuildConstExpr(ctx, branch.value));
     ctx->func_builder()->AddBinOp(FunctionBuilder::EQ);
-    ctx->func_builder()->AddBranchOp(FunctionBuilder::BT,
+    ctx->func_builder()->AddBranchOp(FunctionBuilder::BNT,
                                      at_end ? &done : &next);
     RETURN_IF_ERROR(ctx->BuildExpr(*branch.body));
     if (!at_end) {

@@ -332,7 +332,7 @@ void FunctionBuilder::AddPushOp() {
 }
 
 void FunctionBuilder::AddPushImmediate(int value) {
-  code_node_->getList()->newNode<ANOpUnsign>(op_pushi, value);
+  code_node_->getList()->newNode<ANOpSign>(op_pushi, value);
 }
 
 void FunctionBuilder::AddPushPrevOp() {
