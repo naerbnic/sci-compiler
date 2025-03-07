@@ -137,12 +137,12 @@ status::Status BuildConstExpr(ExprContext* ctx,
 
 status::Status BuildVarStoreExpr(ExprContext* ctx, NameToken const& var_name,
                                  ast::Expr const* index) {
-  // We're going to store the accumulator. Push it onto the stack.
-  ctx->func_builder()->AddPushOp();
-
   ASSIGN_OR_RETURN(auto sym, ctx->LookupSym(var_name.value()));
   return sym.visit(
       [&](ExprEnvironment::VarSym const& var_sym) -> status::Status {
+        // Variable assignment is stored from the top element of the stack,
+        // since the index needs to be in the accumulator.
+        ctx->func_builder()->AddPushOp();
         auto const& [var_type, var_offset] = GetVarTypeAndOffset(var_sym);
         if (index) {
           RETURN_IF_ERROR(ctx->BuildExpr(*index));
@@ -155,12 +155,15 @@ status::Status BuildVarStoreExpr(ExprContext* ctx, NameToken const& var_name,
         return status::OkStatus();
       },
       [&](ExprEnvironment::PropSym const& proc) -> status::Status {
+        // Property assignment is stored from the accumulator, which is already
+        // where the value is.
         if (index) {
           return status::FailedPreconditionError(
               "Properties cannot be indexed.");
         }
+        // In property accesses, the offset is the index * 2.
         ctx->func_builder()->AddPropAccess(FunctionBuilder::STORE,
-                                           proc.prop_offset,
+                                           proc.prop_offset * 2,
                                            std::string(proc.selector->name()));
         return status::OkStatus();
       },
@@ -201,7 +204,7 @@ status::Status BuildVarLoadExpr(ExprContext* ctx,
           return status::FailedPreconditionError(
               "Properties cannot be indexed.");
         }
-        ctx->func_builder()->AddPropAccess(val_op, proc.prop_offset,
+        ctx->func_builder()->AddPropAccess(val_op, proc.prop_offset * 2,
                                            std::string(proc.selector->name()));
         return status::OkStatus();
       },
@@ -712,7 +715,7 @@ status::Status BuildCondExpr(ExprContext* ctx, ast::CondExpr const& cond_expr) {
     bool at_end =
         (i == cond_expr.branches().size() - 1) && !cond_expr.else_body();
     RETURN_IF_ERROR(ctx->BuildExpr(*branch.condition));
-    ctx->func_builder()->AddBranchOp(FunctionBuilder::BT,
+    ctx->func_builder()->AddBranchOp(FunctionBuilder::BNT,
                                      at_end ? &done : &next);
     RETURN_IF_ERROR(ctx->BuildExpr(*branch.body));
     if (!at_end) {
@@ -753,6 +756,7 @@ status::Status BuildSwitchExpr(ExprContext* ctx,
     RETURN_IF_ERROR(ctx->BuildExpr(**switch_expr.else_case()));
   }
   ctx->func_builder()->AddLabel(&done);
+  ctx->func_builder()->AddTossOp();
   return status::OkStatus();
 }
 
@@ -769,7 +773,7 @@ status::Status BuildSwitchToExpr(ExprContext* ctx,
     ctx->func_builder()->AddDupOp();
     ctx->func_builder()->AddLoadImmediate(int(i));
     ctx->func_builder()->AddBinOp(FunctionBuilder::EQ);
-    ctx->func_builder()->AddBranchOp(FunctionBuilder::BT,
+    ctx->func_builder()->AddBranchOp(FunctionBuilder::BNT,
                                      at_end ? &done : &next);
     RETURN_IF_ERROR(ctx->BuildExpr(branch));
     if (!at_end) {
@@ -781,6 +785,7 @@ status::Status BuildSwitchToExpr(ExprContext* ctx,
     RETURN_IF_ERROR(ctx->BuildExpr(**switch_expr.else_case()));
   }
   ctx->func_builder()->AddLabel(&done);
+  ctx->func_builder()->AddTossOp();
   return status::OkStatus();
 }
 

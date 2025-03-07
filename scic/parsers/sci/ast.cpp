@@ -5,8 +5,8 @@
 #include <vector>
 namespace parsers::sci {
 
-CallArgs::CallArgs(std::vector<Expr> args, std::optional<Rest>)
-    : args_(std::move(args)) {}
+CallArgs::CallArgs(std::vector<Expr> args, std::optional<Rest> rest)
+    : args_(std::move(args)), rest_(std::move(rest)) {}
 CallArgs::~CallArgs() = default;
 
 CallArgs::CallArgs(CallArgs&&) = default;

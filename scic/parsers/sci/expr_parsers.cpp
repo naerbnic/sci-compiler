@@ -417,6 +417,10 @@ ParseResult<CallArgs> ParseCallArgs(TreeExprSpan& args) {
                               "Expected no more arguments after &rest clause.");
       }
 
+      rest_expr = CallArgs::Rest{
+          .rest_var = std::move(rest_var),
+      };
+
       break;
     }
 
