@@ -109,7 +109,9 @@ class SingletonSeqViewImpl : public SeqImpl<T> {
 };
 
 template <class T>
-using identity_func_t = decltype([](T c) -> decltype(auto) { return c; });
+struct identity_func_t {
+  auto operator()(T c) -> decltype(auto) { return c; }
+};
 
 }  // namespace internal
 
