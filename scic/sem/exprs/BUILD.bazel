@@ -34,7 +34,6 @@ cc_library(
         "//scic/sem:common",
         "//scic/sem:selector_table",
         "//scic/status",
-        "//util/debug:debug_utils",
         "//util/status:status_macros",
         "@abseil-cpp//absl/base:nullability",
         "@abseil-cpp//absl/strings:str_format",

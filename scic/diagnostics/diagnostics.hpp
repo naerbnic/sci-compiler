@@ -5,6 +5,7 @@
 #ifndef ERRORS_ERRORS_HPP
 #define ERRORS_ERRORS_HPP
 
+#include <memory>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -12,68 +13,115 @@
 
 #include "absl/strings/str_format.h"
 #include "scic/text/text_range.hpp"
+#include "scic/tokens/token_source.hpp"
 
 namespace diag {
 
+class DiagMessage {
+ public:
+  DiagMessage() = default;
+
+  DiagMessage(std::string message, std::optional<tokens::TokenSource> source)
+      : message_(std::move(message)), source_(std::move(source)) {}
+
+  std::string const& message() const { return message_; }
+  std::optional<text::FileRange> use_range() const {
+    if (source_) {
+      return source_->use_range().GetRange();
+    }
+    return std::nullopt;
+  }
+
+ private:
+  std::string message_;
+  std::optional<tokens::TokenSource> source_;
+};
+
+enum DiagnosticKind {
+  ERROR,
+  WARNING,
+  INFO,
+};
+
+class DiagnosticBase {
+ public:
+  virtual ~DiagnosticBase() = default;
+
+  virtual DiagnosticKind kind() const = 0;
+  virtual DiagMessage primary() const = 0;
+};
+
+class DiagnosticImpl : public DiagnosticBase {
+ public:
+  DiagnosticImpl(DiagnosticKind kind, DiagMessage primary)
+      : kind_(kind), primary_(std::move(primary)) {}
+
+  DiagnosticKind kind() const override { return kind_; }
+  DiagMessage primary() const override { return primary_; }
+
+ private:
+  DiagnosticKind kind_;
+  DiagMessage primary_;
+};
+
 class Diagnostic {
  public:
-  enum Kind {
-    ERROR,
-    WARNING,
-    INFO,
-  };
+  using Kind = DiagnosticKind;
 
-  Diagnostic(Kind kind, std::optional<text::TextRange> text,
-             std::string message)
-      : kind_(kind), text_(std::move(text)), message_(std::move(message)) {}
+  Diagnostic(Kind kind, DiagMessage primary)
+      : impl_(std::make_shared<DiagnosticImpl>(kind, std::move(primary))) {}
 
-  Kind kind() const { return kind_; }
-  std::optional<text::TextRange> const& text() const { return text_; }
-  std::string const& message() const { return message_; }
+  template <std::derived_from<DiagnosticBase> T>
+  Diagnostic(T&& impl) : impl_(std::make_shared<T>(std::forward(impl))) {}
+
+  Kind kind() const { return impl_->kind(); }
+  DiagMessage primary() const { return impl_->primary(); }
 
   template <class... Args>
   static Diagnostic RangeError(text::TextRange const& text,
                                absl::FormatSpec<Args...> const& spec,
                                Args const&... args) {
-    return Diagnostic(ERROR, text, absl::StrFormat(spec, args...));
+    return Diagnostic(ERROR, DiagMessage(absl::StrFormat(spec, args...), text));
   }
 
   template <class... Args>
   static Diagnostic RangeWarning(text::TextRange const& text,
                                  absl::FormatSpec<Args...> const& spec,
                                  Args const&... args) {
-    return Diagnostic(WARNING, text, absl::StrFormat(spec, args...));
+    return Diagnostic(WARNING,
+                      DiagMessage(absl::StrFormat(spec, args...), text));
   }
 
   template <class... Args>
   static Diagnostic RangeInfo(text::TextRange const& text,
                               absl::FormatSpec<Args...> const& spec,
                               Args const&... args) {
-    return Diagnostic(INFO, text, absl::StrFormat(spec, args...));
+    return Diagnostic(INFO, DiagMessage(absl::StrFormat(spec, args...), text));
   }
 
   template <class... Args>
   static Diagnostic Error(absl::FormatSpec<Args...> const& spec,
                           Args const&... args) {
-    return Diagnostic(ERROR, std::nullopt, absl::StrFormat(spec, args...));
+    return Diagnostic(
+        ERROR, DiagMessage(absl::StrFormat(spec, args...), std::nullopt));
   }
 
   template <class... Args>
   static Diagnostic Warning(absl::FormatSpec<Args...> const& spec,
                             Args const&... args) {
-    return Diagnostic(WARNING, std::nullopt, absl::StrFormat(spec, args...));
+    return Diagnostic(
+        WARNING, DiagMessage(absl::StrFormat(spec, args...), std::nullopt));
   }
 
   template <class... Args>
   static Diagnostic Info(absl::FormatSpec<Args...> const& spec,
                          Args const&... args) {
-    return Diagnostic(INFO, std::nullopt, absl::StrFormat(spec, args...));
+    return Diagnostic(
+        INFO, DiagMessage(absl::StrFormat(spec, args...), std::nullopt));
   }
 
  private:
-  Kind kind_;
-  std::optional<text::TextRange> text_;
-  std::string message_;
+  std::shared_ptr<DiagnosticBase> impl_;
 
   template <class Sink>
   friend void AbslStringify(Sink& sink, Diagnostic const& diag) {
@@ -89,26 +137,29 @@ class Diagnostic {
         break;
     }
 
-    if (diag.text()) {
-      auto range = diag.text().value().GetRange();
-      absl::Format(&sink, "%s:%d:%d", range.filename(),
-                   range.start().line_index() + 1,
-                   range.start().column_index() + 1);
+    auto primary = diag.primary();
+    auto range = primary.use_range();
+
+    if (range) {
+      absl::Format(&sink, "%s:%d:%d", range->filename(),
+                   range->start().line_index() + 1,
+                   range->start().column_index() + 1);
     }
 
-    absl::Format(&sink, ": %s", diag.message());
+    absl::Format(&sink, ": %s", primary.message());
   }
 
   friend std::ostream& operator<<(std::ostream& os, Diagnostic const& diag) {
-    if (diag.text()) {
-      auto range = diag.text().value().GetRange();
-      os << range.filename() << ":" << (range.start().line_index() + 1) << ":"
-         << (range.start().column_index() + 1);
-      if (range.end().line_index() != range.start().line_index()) {
-        os << "-" << (range.end().line_index() + 1) << ":"
-           << (range.end().column_index() + 1);
-      } else if (range.end().column_index() != range.start().column_index()) {
-        os << "-" << (range.end().column_index() + 1);
+    auto primary = diag.primary();
+    auto range = primary.use_range();
+    if (range) {
+      os << range->filename() << ":" << (range->start().line_index() + 1) << ":"
+         << (range->start().column_index() + 1);
+      if (range->end().line_index() != range->start().line_index()) {
+        os << "-" << (range->end().line_index() + 1) << ":"
+           << (range->end().column_index() + 1);
+      } else if (range->end().column_index() != range->start().column_index()) {
+        os << "-" << (range->end().column_index() + 1);
       }
       os << ": ";
     }
@@ -124,7 +175,7 @@ class Diagnostic {
         break;
     }
 
-    return os << diag.message();
+    return os << primary.message();
   }
 };
 

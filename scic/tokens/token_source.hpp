@@ -36,6 +36,12 @@ class TokenSource {
   // object is destroyed or moved.
   util::Seq<text::TextRange const&> sources() const;
 
+  // Returns the location the token was originally found in.
+  text::TextRange const& use_range() const { return sources_.back(); }
+
+  // Returns the source of the token contents.
+  text::TextRange const& content_range() const { return sources_.front(); }
+
  private:
   // The sources of this token, in the order they were applied. The first
   // element is the source of the actual token contents. The last is the final

@@ -53,7 +53,7 @@ TEST(ParseItemsTest, Extern) {
 
 TEST(ParseItemsTest, GlobalDecl) {
   auto result = TryParseItems(R"(
-        (global_decl foo 0)
+        (globaldecl foo 0)
     )");
 
   EXPECT_TRUE(result.ok());
@@ -98,7 +98,7 @@ TEST(ParseItemsTest, Class) {
                 (return)))
       )");
 
-  EXPECT_TRUE(result.ok()) << result.status().messages()[0].message();
+  EXPECT_TRUE(result.ok()) << result.status().messages()[0].primary().message();
   EXPECT_THAT(result.value(), ElementsAre(util::ChoiceOf<ClassDef>(_)));
 }
 
@@ -111,13 +111,13 @@ TEST(ParseItemsTest, Instance) {
                 (return)))
       )");
 
-  EXPECT_TRUE(result.ok()) << result.status().messages()[0].message();
+  EXPECT_TRUE(result.ok()) << result.status().messages()[0].primary().message();
   EXPECT_THAT(result.value(), ElementsAre(util::ChoiceOf<ClassDef>(_)));
 }
 
 TEST(ParseItemsTest, ClassDecl) {
   auto result = TryParseItems(R"(
-          (classdecl Foo
+          (classdef Foo
             script# 1
             class# 2
             super# -1
@@ -126,7 +126,7 @@ TEST(ParseItemsTest, ClassDecl) {
               (methods quux))
       )");
 
-  EXPECT_TRUE(result.ok()) << result.status().messages()[0].message();
+  EXPECT_TRUE(result.ok()) << result.status().messages()[0].primary().message();
   EXPECT_THAT(result.value(), ElementsAre(util::ChoiceOf<ClassDecl>(_)));
 }
 
@@ -138,7 +138,7 @@ TEST(ParseItemsTest, Selectors) {
                 -objID- 4096)
         )");
 
-  EXPECT_TRUE(result.ok()) << result.status().messages()[0].message();
+  EXPECT_TRUE(result.ok()) << result.status().messages()[0].primary().message();
   EXPECT_THAT(result.value(), ElementsAre(util::ChoiceOf<SelectorsDecl>(_)));
 }
 
