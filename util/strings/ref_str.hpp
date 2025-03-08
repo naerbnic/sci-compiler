@@ -98,11 +98,14 @@ class RefStr {
 }  // namespace util
 
 // Allow for strings as hash keys.
+namespace std {
 template <>
-struct ::std::hash<::util::RefStr> {
+struct hash<::util::RefStr> {
   std::size_t operator()(::util::RefStr const& str) const {
     return std::hash<::std::string_view>{}(str);
   }
 };
+
+}
 
 #endif
