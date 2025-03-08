@@ -136,9 +136,10 @@ class ListingFileSink {
 
  private:
   ListingFile* listing_file_;
+  bool Write(std::string_view text) { return listing_file_->Write(text); }
 
   friend void AbslFormatFlush(ListingFileSink* sink, absl::string_view text) {
-    if (!sink->listing_file_->Write(text)) {
+    if (!sink->Write(text)) {
       throw std::runtime_error("Error writing list file");
     }
   }
