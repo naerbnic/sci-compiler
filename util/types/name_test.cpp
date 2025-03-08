@@ -5,13 +5,13 @@
 class Foo {};
 
 namespace util {
-namespace {
 
 class Bar {};
+namespace {
 
 TEST(NameTest, BasicWorks) { EXPECT_EQ(TypeName<Foo>(), "Foo"); }
 TEST(NameTest, InNamespaceWorks) {
-  EXPECT_EQ(TypeName<Bar>(), "util::(anonymous namespace)::Bar");
+  EXPECT_EQ(TypeName<Bar>(), "util::Bar");
 }
 
 }  // namespace
