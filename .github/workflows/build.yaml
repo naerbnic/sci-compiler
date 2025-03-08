@@ -14,7 +14,7 @@ jobs:
                 # Share repository cache between workflows.
                 repository-cache: true
             - name: Build for macOS
-              run: bazel build //:all
+              run: bazel test //...
     build-linux:
         runs-on: ubuntu-latest
         steps:
@@ -25,7 +25,7 @@ jobs:
                 disk-cache: ${{ github.workflow }}
                 repository-cache: true
             - name: Build for Linux
-              run: bazel build //:all
+              run: bazel test //...
     build-windows:
         runs-on: windows-latest
         steps:
@@ -36,5 +36,5 @@ jobs:
                 disk-cache: ${{ github.workflow }}
                 repository-cache: true
             - name: Build for Windows
-              run: bazel build //:all
+              run: bazel test //...
             
