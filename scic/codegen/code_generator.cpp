@@ -354,7 +354,7 @@ void FunctionBuilder::AddRestOp(std::size_t value) {
   if (value < 256) {
     op |= OP_BYTE;
   }
-  code_node_->getList()->newNode<ANOpUnsign>(op, value);
+  code_node_->getList()->newNode<ANOpUnsign>(op, std::uint32_t(value));
 }
 
 void FunctionBuilder::AddLoadImmediate(LiteralValue value) {

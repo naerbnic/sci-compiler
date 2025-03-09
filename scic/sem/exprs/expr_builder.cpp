@@ -4,6 +4,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -250,6 +251,8 @@ std::optional<FunctionBuilder::BinOp> BuildAssignOp(
       return FunctionBuilder::SHR;
     case parsers::sci::AssignExpr::SHL:
       return FunctionBuilder::SHL;
+    default:
+      throw std::logic_error("Unreachable");
   }
 }
 

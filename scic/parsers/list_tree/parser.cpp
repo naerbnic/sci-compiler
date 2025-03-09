@@ -3,6 +3,7 @@
 #include <memory>
 #include <optional>
 #include <set>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -160,12 +161,14 @@ class ProcessedTokenStream {
         stack_change = StackChange::Next;
         condition = Condition::Always;
         break;
-
         // Cases that pop a preprocessing frame.
       case tokens::Token::PPT_ENDIF:
         stack_change = StackChange::Pop;
         condition = Condition::Always;
         break;
+      default:
+        throw std::runtime_error(absl::StrFormat(
+            "Unexpected preprocessor directive: %d", preproc.type));
     }
 
     switch (stack_change) {
@@ -233,6 +236,9 @@ class ProcessedTokenStream {
       case Condition::Always:
         condition_result = true;
         break;
+      default:
+        throw std::runtime_error(
+            absl::StrFormat("Unexpected condition type: %d", condition));
     }
 
     if (condition_result) {

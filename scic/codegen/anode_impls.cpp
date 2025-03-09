@@ -602,7 +602,7 @@ size_t ANFileName::size() const { return 1 + name.length() + 1; }
 
 ////////////////////////////////////////////////////////////////////////////
 
-ANLineNum::ANLineNum(int num) : ANOpCode(op_lineNum), num(num) {}
+ANLineNum::ANLineNum(std::size_t num) : ANOpCode(op_lineNum), num(num) {}
 
 void ANLineNum::list(ListingFile* listFile) const {
   // FIXME: We want to be able to report the source line here. Perhaps

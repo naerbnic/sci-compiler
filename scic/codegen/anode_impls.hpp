@@ -427,14 +427,14 @@ struct ANFileName : ANOpCode {
 struct ANLineNum : ANOpCode {
   //	contains the current line number
 
-  ANLineNum(int num);
+  ANLineNum(std::size_t num);
 
   void list(ListingFile* listFile) const override;
   void emit(OutputWriter*) const override;
   size_t size() const override;
 
  protected:
-  int num;
+  std::size_t num;
 };
 
 }  // namespace codegen
