@@ -180,6 +180,8 @@ uint8_t GetBinOpValue(FunctionBuilder::BinOp op) {
       return op_ult;
     case FunctionBuilder::ULE:
       return op_ule;
+    default:
+      throw std::runtime_error("Invalid binary operator");
   }
 }
 
@@ -388,6 +390,9 @@ void FunctionBuilder::AddLoadVarAddr(VarType var_type, std::size_t offset,
     case PARAM:
       accType = OP_PARM;
       break;
+    default:
+      throw std::runtime_error(
+          "Internal error: bad variable type in AddLoadVarAddr()");
   }
 
   if (addAccumIndex) {
@@ -480,6 +485,9 @@ void FunctionBuilder::AddPropAccess(ValueOp value_op, std::size_t offset,
     case DEC:
       op = op_dpToa;
       break;
+    default:
+      throw std::runtime_error(
+          "Internal error: bad variable type in AddPropAccess()");
   }
 
   if (offset < 256) op |= OP_BYTE;
@@ -493,6 +501,7 @@ void FunctionBuilder::AddLoadClassOp(std::string name, std::size_t class_num) {
   auto* node = code_node_->getList()->newNode<ANOpUnsign>(op_class, class_num);
   node->name = std::move(name);
 }
+
 void FunctionBuilder::AddLoadSelfOp() {
   code_node_->getList()->newNode<ANOpCode>(op_selfID);
 }
@@ -509,6 +518,8 @@ void FunctionBuilder::AddUnOp(UnOp op) {
     case BNOT:
       opcode = op_bnot;
       break;
+    default:
+      throw std::runtime_error("Invalid unary operation");
   }
   code_node_->getList()->newNode<ANOpCode>(opcode);
 }
@@ -529,6 +540,8 @@ void FunctionBuilder::AddBranchOp(BranchOp op, LabelRef* target) {
     case JMP:
       opcode = op_jmp;
       break;
+    default:
+      throw std::runtime_error("Invalid branch operation");
   }
   auto* branch = code_node_->getList()->newNode<ANBranch>(opcode);
   target->ref_.RegisterCallback(

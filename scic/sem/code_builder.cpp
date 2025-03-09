@@ -204,7 +204,7 @@ status::Status BuildCode(ModuleEnvironment const* module_env) {
   for (auto const& local_var : module_env->local_table()->vars()) {
     auto initial_value = local_var.initial_value();
     auto base_index = local_var.index().value();
-    for (int i = 0; i < initial_value.size(); ++i) {
+    for (std::size_t i = 0; i < initial_value.size(); ++i) {
       codegen->SetVar(base_index + i, initial_value[i]);
     }
   }

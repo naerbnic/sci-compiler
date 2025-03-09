@@ -570,6 +570,10 @@ ParseResult<Expr> ParseExpr(TreeExprSpan& exprs) {
               return ParseSciListExpr(expr.elements());
             case list_tree::ListExpr::BRACKETS:
               return ParseArrayIndexExpr(expr.elements());
+            default:
+              return RangeFailureOf(
+                  expr.open_token().text_range(),
+                  "Expected either a variable or an array-access expression.");
           }
         });
   })(exprs);
@@ -597,12 +601,13 @@ ParseResult<LValueExpr> ParseLValueExpr(TreeExprSpan& exprs) {
         },
         [](list_tree::ListExpr const& expr) -> ParseResult<LValueExpr> {
           switch (expr.kind()) {
+            case list_tree::ListExpr::BRACKETS:
+              return ParseArrayIndexExpr(expr.elements());
             case list_tree::ListExpr::PARENS:
+            default:
               return RangeFailureOf(
                   expr.open_token().text_range(),
                   "Expected either a variable or an array-access expression.");
-            case list_tree::ListExpr::BRACKETS:
-              return ParseArrayIndexExpr(expr.elements());
           }
         });
   })(exprs);

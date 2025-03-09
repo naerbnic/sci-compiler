@@ -7,6 +7,7 @@
 #include <memory>
 #include <ranges>
 #include <stdexcept>
+#include <utility>
 
 #include "scic/codegen/alist.hpp"
 #include "scic/codegen/anode.hpp"
@@ -16,6 +17,15 @@
 #include "util/types/casts.hpp"
 
 namespace codegen {
+
+template <std::integral T1, std::integral T2>
+bool SafeEq(T1 a, T2 b) {
+  if (!std::in_range<T2>(a)) {
+    return false;
+  }
+
+  return T2(a) == b;
+}
 
 ANOpCode const* FindNextOp(AList<ANOpCode> const* list, ANOpCode const* start) {
   if (!start) {
@@ -39,6 +49,10 @@ ANOpCode const* FindNextOp(AList<ANOpCode> const* list, ANOpCode const* start) {
 
 // Returns true iff the given opcode reads from the accumulator.
 bool OpReadsAccum(ANOpCode const* node) {
+  // OP_LABEL is a pseudo-op, and doesn't use the accumulator.
+  if (node->op == OP_LABEL) {
+    return false;
+  }
   // We don't care about the byte flag here.
   uint8_t op = node->op & ~OP_BYTE;
 
@@ -154,10 +168,6 @@ bool OpReadsAccum(ANOpCode const* node) {
     case op_pushSelf:
       return true;
 
-    // Labels are pseudo-ops, and don't use the accumulator.
-    case OP_LABEL:
-      return false;
-
     default: {
       // This should be a variable access. Everything else should be an invalid
       // opcode.
@@ -175,6 +185,11 @@ bool OpReadsAccum(ANOpCode const* node) {
 
 // Returns true iff the given opcode can modify the accumulator.
 bool OpCanModifyAccum(ANOpCode const* node) {
+  // OP_LABEL is a pseudo-op, and doesn't modify the accumulator.
+  if (node->op == OP_LABEL) {
+    return false;
+  }
+
   // We don't care about the byte flag here.
   uint8_t op = node->op & ~OP_BYTE;
 
@@ -280,10 +295,6 @@ bool OpCanModifyAccum(ANOpCode const* node) {
     case op_pushSelf:
       return false;
 
-    // Labels are pseudo-ops, and don't modify the accumulator.
-    case OP_LABEL:
-      return false;
-
     default: {
       // This should be a variable access. Everything else should be an invalid
       // opcode.
@@ -298,9 +309,12 @@ bool OpCanModifyAccum(ANOpCode const* node) {
   }
 }
 
-// Returns true iff the given opcode can cause end execution of a sequence
+// Returns true iff the given opcode can change the control flow of a sequence
 // of opcodes.
 bool OpChangesControlFlow(ANOpCode const* node) {
+  if (node->op == OP_LABEL) {
+    return false;
+  }
   // We don't care about the byte flag here.
   uint8_t op = node->op & ~OP_BYTE;
 
@@ -360,7 +374,7 @@ enum {
 uint32_t OptimizeProc(AOpList* al) {
   uint32_t accType = UNKNOWN;
   int accVal = 0;
-  int stackVal;
+  int stackVal = 0;
   uint32_t stackType = UNKNOWN;
   uint32_t nOptimizations = 0;
 
@@ -663,7 +677,7 @@ uint32_t OptimizeProc(AOpList* al) {
         }
 
         if (!toStack(op) && !indexed(op) && (op & OP_VAR) == accType &&
-            an->addr == accVal) {
+            SafeEq(an->addr, accVal)) {
           // Then this just loads the acc with its present value.
           // Remove the node.
           it.remove();
@@ -696,7 +710,7 @@ uint32_t OptimizeProc(AOpList* al) {
           // Not a stack operation -- update accumulator's value.
           accType = op & OP_VAR;
           accVal = an->addr;
-        } else if ((op & OP_VAR) == accType && an->addr == accVal) {
+        } else if ((op & OP_VAR) == accType && SafeEq(an->addr, accVal)) {
           // Replace a load to the stack with the acc's current
           // value by a push.
           it.replaceWith(std::make_unique<ANOpCode>(op_push));
@@ -704,7 +718,7 @@ uint32_t OptimizeProc(AOpList* al) {
           stackVal = accVal;
           ++nOptimizations;
 
-        } else if ((op & OP_VAR) == stackType && an->addr == stackVal) {
+        } else if ((op & OP_VAR) == stackType && SafeEq(an->addr, stackVal)) {
           // Replace a load to the stack of its current value
           // with a dup.
           it.replaceWith(std::make_unique<ANOpCode>(op_dup));
