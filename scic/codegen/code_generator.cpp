@@ -399,8 +399,8 @@ void FunctionBuilder::AddLoadVarAddr(VarType var_type, std::size_t offset,
     accType |= OP_INDEX;
   }
 
-  auto* node =
-      code_node_->getList()->newNode<ANEffctAddr>(op_lea, offset, accType);
+  auto* node = code_node_->getList()->newNode<ANEffctAddr>(
+      op_lea, std::uint32_t(offset), accType);
   if (name) {
     node->name = std::move(name).value();
   }
