@@ -5,15 +5,19 @@
 #ifndef ERRORS_ERRORS_HPP
 #define ERRORS_ERRORS_HPP
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <ostream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 
 #include "absl/strings/str_format.h"
 #include "scic/text/text_range.hpp"
 #include "scic/tokens/token_source.hpp"
+#include "util/types/strong_types.hpp"
 
 namespace diag {
 
@@ -43,16 +47,63 @@ enum DiagnosticKind {
   INFO,
 };
 
-class DiagnosticBase {
- public:
-  virtual ~DiagnosticBase() = default;
+struct DiagnosticIdTag {
+  using Value = std::uint64_t;
+  static constexpr bool is_const = true;
+};
+using DiagnosticId = util::StrongValue<DiagnosticIdTag>;
 
+class DiagnosticRegistry {
+ public:
+  static DiagnosticRegistry* Get();
+
+  virtual ~DiagnosticRegistry() = default;
+
+  virtual void RegisterDiagnostic(DiagnosticId id) = 0;
+};
+
+class DiagnosticInterface {
+ public:
+  virtual ~DiagnosticInterface() = default;
+
+  virtual DiagnosticId id() const = 0;
   virtual DiagnosticKind kind() const = 0;
   virtual DiagMessage primary() const = 0;
 };
 
-class DiagnosticImpl : public DiagnosticBase {
+// A CRTP class to define new diagnostics.
+//
+// Subclasses have to define a static constexpr ID field with a
+// DiagnosticId value. This ID will be registered with the
+// DiagnosticRegistry when the subclass is instantiated, checking
+// that each ID is unique.
+template <class Derived>
+class DiagnosticBase : public DiagnosticInterface {
  public:
+  DiagnosticId id() const final {
+    // A hack: Ensure the registerer_ is linked in by using its
+    // value here.
+    if (registerer_ != 0) {
+      throw std::runtime_error("DiagnosticBase::registerer_ is not linked");
+    }
+    return Derived::ID;
+  }
+
+ private:
+  static inline std::size_t registerer_ = ([] {
+    // Register the diagnostic with the registry.
+    auto* registry = DiagnosticRegistry::Get();
+    if (registry) {
+      registry->RegisterDiagnostic(Derived::ID);
+    }
+    return 0;
+  })();
+};
+
+class DiagnosticImpl : public DiagnosticBase<DiagnosticImpl> {
+ public:
+  static constexpr auto ID = DiagnosticId::Create(0);
+
   DiagnosticImpl(DiagnosticKind kind, DiagMessage primary)
       : kind_(kind), primary_(std::move(primary)) {}
 
@@ -71,7 +122,7 @@ class Diagnostic {
   Diagnostic(Kind kind, DiagMessage primary)
       : impl_(std::make_shared<DiagnosticImpl>(kind, std::move(primary))) {}
 
-  template <std::derived_from<DiagnosticBase> T>
+  template <std::derived_from<DiagnosticInterface> T>
   Diagnostic(T&& impl) : impl_(std::make_shared<T>(std::forward(impl))) {}
 
   Kind kind() const { return impl_->kind(); }
@@ -121,7 +172,7 @@ class Diagnostic {
   }
 
  private:
-  std::shared_ptr<DiagnosticBase> impl_;
+  std::shared_ptr<DiagnosticInterface> impl_;
 
   template <class Sink>
   friend void AbslStringify(Sink& sink, Diagnostic const& diag) {

@@ -5,9 +5,11 @@ package(
 cc_library(
     name = "diagnostics",
     hdrs = ["diagnostics.hpp"],
+    srcs = ["diagnostics.cpp"],
     deps = [
         "//scic/text:text_range",
         "//scic/tokens:token_source",
+        "//util/types:strong_types",
         "@abseil-cpp//absl/strings:str_format",
     ],
 )
