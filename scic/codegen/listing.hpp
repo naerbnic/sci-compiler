@@ -56,7 +56,7 @@ class ListingFile {
 template <class... Args>
 void ListingFile::Listing(absl::FormatSpec<Args...> fmt, Args const&... args) {
   ListingImpl([&](absl::FormatRawSink fp) {
-    return absl::Format(fp, fmt, args...) != EOF;
+    return absl::Format(fp, fmt, args...);
   });
 }
 template <class... Args>
@@ -67,14 +67,14 @@ template <class... Args>
 void ListingFile::ListAsCode(std::size_t offset, absl::FormatSpec<Args...> fmt,
                              Args const&... args) {
   ListAsCodeImpl(offset, [&](absl::FormatRawSink fp) {
-    return absl::Format(fp, fmt, args...) != EOF;
+    return absl::Format(fp, fmt, args...);
   });
 }
 template <class... Args>
 void ListingFile::ListingNoCRLF(absl::FormatSpec<Args...> fmt,
                                 Args const&... args) {
   ListingNoCRLFImpl([&](absl::FormatRawSink fp) {
-    return absl::Format(fp, fmt, args...) != EOF;
+    return absl::Format(fp, fmt, args...);
   });
 }
 }  // namespace codegen

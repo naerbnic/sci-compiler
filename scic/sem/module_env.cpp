@@ -360,7 +360,7 @@ AstConstValuesToLiteralValues(codegen::CodeGenerator* codegen,
   if (values.size() == 1) {
     ASSIGN_OR_RETURN(auto literal_value,
                      AstConstValueToLiteralValue(codegen, values[0]));
-    for (int i = 0; i < expected_length; ++i) {
+    for (std::size_t i = 0; i < expected_length; ++i) {
       result.push_back(literal_value);
     }
     return result;
@@ -400,7 +400,7 @@ status::StatusOr<std::unique_ptr<VarTable>> BuildLocalTable(
       auto [name, length] = std::move(result);
       std::vector<codegen::LiteralValue> initial_values;
       if (!entry.initial_value) {
-        for (int i = 0; i < length; ++i) {
+        for (std::size_t i = 0; i < length; ++i) {
           initial_values.push_back(0);
         }
       } else {

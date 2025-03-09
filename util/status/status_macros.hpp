@@ -46,7 +46,7 @@ std::decay_t<T> WithLocationHelper(
   lhs = std::move(statusor).value()
 
 #define ASSIGN_OR_RETURN(lhs, rexpr)                                       \
-  ASSIGN_OR_RETURN_IMPL(STATUS_MACROS_CONCAT_(_status_or_value, __LINE__), \
+  ASSIGN_OR_RETURN_IMPL(STATUS_MACROS_CONCAT_(_status_or_value, __COUNTER__), \
                         lhs, rexpr)
 
 #endif

@@ -120,8 +120,8 @@ status::Status BuildClass(ModuleEnvironment const* module_env,
 
   if (class_def->super()) {
     super_info = ExprEnvironment::SuperInfo{
-        .super_name = class_def->super()->token_name(),
         .species = class_def->super()->species(),
+        .super_name = class_def->super()->token_name(),
     };
   }
 
@@ -164,8 +164,8 @@ status::Status BuildObject(ModuleEnvironment const* module_env,
   }
 
   auto super_info = ExprEnvironment::SuperInfo{
-      .super_name = obj_def->parent()->token_name(),
       .species = obj_def->parent()->species(),
+      .super_name = obj_def->parent()->token_name(),
   };
 
   for (auto const& method : ast_node.methods()) {
@@ -204,7 +204,7 @@ status::Status BuildCode(ModuleEnvironment const* module_env) {
   for (auto const& local_var : module_env->local_table()->vars()) {
     auto initial_value = local_var.initial_value();
     auto base_index = local_var.index().value();
-    for (int i = 0; i < initial_value.size(); ++i) {
+    for (std::size_t i = 0; i < initial_value.size(); ++i) {
       codegen->SetVar(base_index + i, initial_value[i]);
     }
   }
