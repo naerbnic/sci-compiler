@@ -1,15 +1,17 @@
 #include "scic/diagnostics/diagnostics.hpp"
 
 #include <stdexcept>
-#include <unordered_set>
+#include <string_view>
+#include <unordered_map>
 
 namespace diag {
 namespace {
 
 class DiagnosticRegistryImpl : public DiagnosticRegistry {
  public:
-  void RegisterDiagnostic(DiagnosticId id) override {
-    auto const& [it, inserted] = diagnostics_.insert(id);
+  void RegisterDiagnostic(DiagnosticId id,
+                          std::string_view type_name) override {
+    auto const& [it, inserted] = diagnostics_.emplace(id, type_name);
     if (!inserted) {
       throw std::logic_error("Diagnostic ID already registered");
     }
@@ -20,7 +22,7 @@ class DiagnosticRegistryImpl : public DiagnosticRegistry {
   }
 
  private:
-  std::unordered_set<DiagnosticId> diagnostics_;
+  std::unordered_map<DiagnosticId, std::string_view> diagnostics_;
 };
 }  // namespace
 

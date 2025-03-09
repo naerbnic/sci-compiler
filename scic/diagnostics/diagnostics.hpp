@@ -12,11 +12,13 @@
 #include <ostream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 
 #include "absl/strings/str_format.h"
 #include "scic/text/text_range.hpp"
 #include "scic/tokens/token_source.hpp"
+#include "util/types/name.hpp"
 #include "util/types/strong_types.hpp"
 
 namespace diag {
@@ -59,7 +61,8 @@ class DiagnosticRegistry {
 
   virtual ~DiagnosticRegistry() = default;
 
-  virtual void RegisterDiagnostic(DiagnosticId id) = 0;
+  virtual void RegisterDiagnostic(DiagnosticId id,
+                                  std::string_view type_name) = 0;
 };
 
 class DiagnosticInterface {
@@ -94,7 +97,7 @@ class DiagnosticBase : public DiagnosticInterface {
     // Register the diagnostic with the registry.
     auto* registry = DiagnosticRegistry::Get();
     if (registry) {
-      registry->RegisterDiagnostic(Derived::ID);
+      registry->RegisterDiagnostic(Derived::ID, util::TypeName<Derived>());
     }
     return 0;
   })();
