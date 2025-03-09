@@ -13,9 +13,13 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
 
+#include "absl/functional/any_invocable.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_format.h"
+#include "scic/diagnostics/formatter.hpp"
 #include "scic/text/text_range.hpp"
 #include "scic/tokens/token_source.hpp"
 #include "util/types/name.hpp"
@@ -92,6 +96,41 @@ class DiagnosticBase : public DiagnosticInterface {
     return Derived::ID;
   }
 
+  virtual std::unique_ptr<internal::FormatArgs> format_args() const = 0;
+
+ protected:
+  using FieldReadMap = std::unordered_map<
+      std::string_view,
+      absl::AnyInvocable<absl::Status(Derived const&, std::string*) const>>;
+  class FormatArgsImpl : public internal::FormatArgs {
+   public:
+    explicit FormatArgsImpl(Derived const* diag, FieldReadMap const*)
+        : diag_(diag) {}
+
+    absl::Status AppendArgument(std::string* target,
+                                std::string_view arg_name) const override {
+      return field_read_map_->at(arg_name)(*diag_, target);
+    }
+
+   private:
+    Derived const* diag_;
+    FieldReadMap const* field_read_map_;
+  };
+
+  template <class MemPtr, class... Args>
+  static FieldReadMap MakeFieldReadMap(std::string_view field_name,
+                                       MemPtr field_ptr, Args&&... args) {
+    auto read_map = MakeFieldReadMap(std::forward<Args>(args)...);
+    read_map[field_name] = [field_ptr](Derived const& diag,
+                                       std::string* target) {
+      auto const& value = (diag.*field_ptr);
+      absl::Format(target, "%s", value);
+      return absl::OkStatus();
+    };
+  }
+
+  static FieldReadMap MakeFieldReadMap() { return {}; }
+
  private:
   static inline std::size_t registerer_ = ([] {
     // Register the diagnostic with the registry.
@@ -102,6 +141,52 @@ class DiagnosticBase : public DiagnosticInterface {
     return 0;
   })();
 };
+
+#define DEFINE_FORMAT_ARGS_FOR_EACH_0(macro, ty, arg1)
+#define DEFINE_FORMAT_ARGS_FOR_EACH_1(macro, ty, arg1) macro(ty, arg1)
+#define DEFINE_FORMAT_ARGS_FOR_EACH_2(macro, ty, arg1, ...) \
+  macro(ty, arg1), DEFINE_FORMAT_ARGS_FOR_EACH_1(macro, ty, __VA_ARGS__)
+#define DEFINE_FORMAT_ARGS_FOR_EACH_3(macro, ty, arg1, ...) \
+  macro(ty, rg1), DEFINE_FORMAT_ARGS_FOR_EACH_2(macro, ty, __VA_ARGS__)
+#define DEFINE_FORMAT_ARGS_FOR_EACH_4(macro, ty, arg1, ...) \
+  macro(ty, arg1), DEFINE_FORMAT_ARGS_FOR_EACH_3(macro, ty, __VA_ARGS__)
+#define DEFINE_FORMAT_ARGS_FOR_EACH_5(macro, ty, arg1, ...) \
+  macro(ty, arg1), DEFINE_FORMAT_ARGS_FOR_EACH_4(macro, ty, __VA_ARGS__)
+#define DEFINE_FORMAT_ARGS_FOR_EACH_6(macro, ty, arg1, ...) \
+  macro(ty, arg1), DEFINE_FORMAT_ARGS_FOR_EACH_5(macro, ty, __VA_ARGS__)
+#define DEFINE_FORMAT_ARGS_FOR_EACH_7(macro, ty, arg1, ...) \
+  macro(ty, arg1), DEFINE_FORMAT_ARGS_FOR_EACH_6(macro, ty, __VA_ARGS__)
+#define DEFINE_FORMAT_ARGS_FOR_EACH_8(macro, ty, arg1, ...) \
+  macro(ty, arg1), DEFINE_FORMAT_ARGS_FOR_EACH_7(macro, ty, __VA_ARGS__)
+#define DEFINE_FORMAT_ARGS_FOR_EACH_9(macro, ty, arg1, ...) \
+  macro(ty, arg1), DEFINE_FORMAT_ARGS_FOR_EACH_8(macro, ty, __VA_ARGS__)
+#define DEFINE_FORMAT_ARGS_FOR_EACH_10(macro, ty, arg1, ...) \
+  macro(ty, arg1), DEFINE_FORMAT_ARGS_FOR_EACH_9(macro, ty, __VA_ARGS__)
+
+#define DEFINE_FORMAT_ARGS_FOR_EACH_GET_MACRO(_0, _1, _2, _3, _4, _5, _6, _7, \
+                                              _8, _9, _10, N, ...)            \
+  N
+
+#define DEFINE_FORMAT_ARGS_FOR_EACH(macro, ty, ...)                 \
+  DEFINE_FORMAT_ARGS_FOR_EACH_GET_MACRO(                            \
+      __VA_ARGS__, DEFINE_FORMAT_ARGS_FOR_EACH_10,                  \
+      DEFINE_FORMAT_ARGS_FOR_EACH_9, DEFINE_FORMAT_ARGS_FOR_EACH_8, \
+      DEFINE_FORMAT_ARGS_FOR_EACH_7, DEFINE_FORMAT_ARGS_FOR_EACH_6, \
+      DEFINE_FORMAT_ARGS_FOR_EACH_5, DEFINE_FORMAT_ARGS_FOR_EACH_4, \
+      DEFINE_FORMAT_ARGS_FOR_EACH_3, DEFINE_FORMAT_ARGS_FOR_EACH_2, \
+      DEFINE_FORMAT_ARGS_FOR_EACH_1, DEFINE_FORMAT_ARGS_FOR_EACH_0) \
+  (macro, ty, __VA_ARGS__)
+
+#define DEFINE_FORMAT_ARGS_ITEM_HELPER(ty, arg) #arg, ty ::arg
+
+// Use the FOR_EACH pattern for the preprocessor
+#define DEFINE_FORMAT_ARGS(ty, ...)                                          \
+  std::unique_ptr<internal::FormatArgs> format_args() const override {       \
+    static auto args =                                                       \
+        DiagnosticBase::MakeFieldReadMap(DEFINE_FORMAT_ARGS_FOR_EACH(        \
+            DEFINE_FORMAT_ARGS_ITEM_HELPER, ty __VA_OPT__(, ) __VA_ARGS__)); \
+    return std::make_unique<FormatArgsImpl>(this, &args);                    \
+  }
 
 class DiagnosticImpl : public DiagnosticBase<DiagnosticImpl> {
  public:
@@ -114,6 +199,7 @@ class DiagnosticImpl : public DiagnosticBase<DiagnosticImpl> {
   DiagMessage primary() const override { return primary_; }
 
  private:
+  DEFINE_FORMAT_ARGS(DiagnosticImpl);
   DiagnosticKind kind_;
   DiagMessage primary_;
 };

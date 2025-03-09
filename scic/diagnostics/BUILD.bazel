@@ -3,14 +3,29 @@ package(
 )
 
 cc_library(
+    name = "formatter",
+    srcs = ["formatter.cpp"],
+    hdrs = ["formatter.hpp"],
+    visibility = ["//visibility:private"],
+    deps = [
+        "//util/status:status_macros",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cc_library(
     name = "diagnostics",
     srcs = ["diagnostics.cpp"],
     hdrs = ["diagnostics.hpp"],
     deps = [
+        ":formatter",
         "//scic/text:text_range",
         "//scic/tokens:token_source",
         "//util/types:name",
         "//util/types:strong_types",
+        "@abseil-cpp//absl/functional:any_invocable",
+        "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/strings:str_format",
     ],
 )
