@@ -60,7 +60,7 @@ The most popular compiler for SCI Script is part of the impressive [SCICompanion
 
    SCICompiler uses `*.sco` files to keep data needed to compile scripts. While this is not a terrible thing, binary files tend to be much harder to work with within a version control system (such as [Git]), as showing human-readable diffs and merges become significantly harder to work with.
 
-`scinc` attempts to solve all of these problems, enabling easier collaboration for modification projects for classic Sierra games, as well as providing a tool that does one thing well, and can be used by other projects as an self-contained program.
+`scinc` attempts to solve all of these problems, enabling easier collaboration for modification projects for classic Sierra games, as well as providing a tool that does one thing well, and can be used by other projects as a self-contained program.
 
 ## Getting Started
 
