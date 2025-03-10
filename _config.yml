@@ -43,3 +43,9 @@ callouts:
   warning:
     title: Warning
     color: red
+  future-work:
+    title: Future Work
+    color: blue
+  todo:
+    title: TODO
+    color: green
