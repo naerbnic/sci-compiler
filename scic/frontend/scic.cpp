@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <memory>
 #include <ostream>
 #include <sstream>
@@ -171,16 +172,14 @@ std::unique_ptr<codegen::OutputFiles> CreateOutputFilesForScript(
 }
 
 status::Status RunMain(const CompilerFlags& flags) {
-  // Load our files into memory.
-  ASSIGN_OR_RETURN(auto selector_tokens, TokenizeFile(flags.selector_file));
-  ASSIGN_OR_RETURN(auto classdef_tokens, TokenizeFile(flags.classdef_file));
-  ASSIGN_OR_RETURN(auto system_header_tokens,
-                   TokenizeFile(flags.system_header));
-  ASSIGN_OR_RETURN(auto game_header_tokens, TokenizeFile(flags.game_header));
+  std::vector<tokens::Token> global_tokens;
 
-  auto global_tokens = ConcatVectors(
-      std::move(selector_tokens), std::move(classdef_tokens),
-      std::move(system_header_tokens), std::move(game_header_tokens));
+  for (auto const& global_include : flags.global_includes) {
+    ASSIGN_OR_RETURN(auto global_include_tokens, TokenizeFile(global_include));
+    std::ranges::move(std::move(global_include_tokens),
+                      std::back_inserter(global_tokens));
+  }
+  // Load our files into memory.
 
   std::vector<std::vector<tokens::Token>> source_file_tokens;
   for (const auto& file : flags.files) {

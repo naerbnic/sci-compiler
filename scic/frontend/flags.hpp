@@ -19,10 +19,7 @@ class CompilerFlags {
   bool verbose_output = false;
   bool output_words_high_byte_first = false;
   codegen::CodeGenerator::Options codegen_options;
-  std::string selector_file = "selector";
-  std::string classdef_file = "classdef";
-  std::string system_header = "system.sh";
-  std::string game_header = "game.sh";
+  std::vector<std::filesystem::path> global_includes;
   std::vector<std::string> include_paths;
   std::vector<std::string> files;
 };

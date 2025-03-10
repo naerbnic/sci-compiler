@@ -1,7 +1,11 @@
 #include "scic/frontend/flags.hpp"
 
+#include <algorithm>
 #include <exception>
+#include <filesystem>
 #include <iostream>
+#include <iterator>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -84,18 +88,23 @@ CompilerFlags ExtractFlags(int argc, char** argv) {
   program.add_argument("-t")
       .help("Set the target architecture. Valid values are: SCI_1_1, SCI_2")
       .default_value(std::string{"SCI_2"});
+  program.add_argument("-G", "--global_include")
+      .help("List of global include files")
+      .default_value(std::vector<std::string>())
+      .append()
+      .nargs(1);
   program.add_argument("--selector_file")
       .help("The selector file to use during compilation")
-      .default_value(std::string{"selector"});
+      .default_value("");
   program.add_argument("--classdef_file")
       .help("The class definition file to use during compilation")
-      .default_value(std::string{"classdef"});
+      .default_value("");
   program.add_argument("--system_header")
       .help("The system header file to use during compilation")
-      .default_value(std::string{"system.sh"});
+      .default_value("");
   program.add_argument("--game_header")
       .help("The game header file to use during compilation")
-      .default_value(std::string{"game.sh"});
+      .default_value("");
   program.add_argument("-I", "--include_path")
       .help("List of directories to use for include files")
       .default_value(std::vector<std::string>())
@@ -129,10 +138,30 @@ CompilerFlags ExtractFlags(int argc, char** argv) {
         .target = target,
         .opt = codegen_optimization,
     };
-    flags.selector_file = program.get<std::string>("--selector_file");
-    flags.classdef_file = program.get<std::string>("--classdef_file");
-    flags.system_header = program.get<std::string>("--system_header");
-    flags.game_header = program.get<std::string>("--game_header");
+    auto global_includes = program.get<std::vector<std::string>>("-G");
+    auto selector_file = program.get<std::string>("--selector_file");
+    auto classdef_file = program.get<std::string>("--classdef_file");
+    auto system_header = program.get<std::string>("--system_header");
+    auto game_header = program.get<std::string>("--game_header");
+
+    std::ranges::move(
+        global_includes | std::views::transform([](std::string const& include) {
+          return std::filesystem::path(include);
+        }),
+        std::back_inserter(flags.global_includes));
+    if (!selector_file.empty()) {
+      flags.global_includes.push_back(std::filesystem::path(selector_file));
+    }
+    if (!classdef_file.empty()) {
+      flags.global_includes.push_back(std::filesystem::path(classdef_file));
+    }
+    if (!system_header.empty()) {
+      flags.global_includes.push_back(std::filesystem::path(system_header));
+    }
+    if (!game_header.empty()) {
+      flags.global_includes.push_back(std::filesystem::path(game_header));
+    }
+
     flags.include_paths =
         program.get<std::vector<std::string>>("--include_path");
     flags.files = program.get<std::vector<std::string>>("files");
