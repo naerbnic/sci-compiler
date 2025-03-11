@@ -1,0 +1,119 @@
+name: Create Draft Release
+
+on:
+  push:
+    tags:
+      - 'release-v*.*.*'
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: 'draft-release-${{ github.ref }}'
+  cancel-in-progress: true
+jobs:
+    create-windows-archive:
+      runs-on: windows-latest
+      steps:
+        - uses: actions/checkout@v4
+        - uses: bazel-contrib/setup-bazel@0.13.0
+          with:
+            # Avoid downloading Bazel every time.
+            bazelisk-cache: true
+            # Store build cache per workflow.
+            disk-cache: ${{ github.workflow }}
+            # Share repository cache between workflows.
+            repository-cache: true
+        - name: Build for Windows
+          run: bazel build -c opt //packages:scinc_zip
+        - name: Upload Windows Build
+          id: upload-windows
+          uses: actions/upload-artifact@v4
+          with:
+            name: scinc-windows
+            retention-days: 1
+            compression-level: 0
+            path: bazel-bin/packages/scinc.zip
+            if-no-files-found: error
+      outputs:
+        windows-artifact: ${{ steps.upload-windows.outputs.artifact-url }}
+    create-linux-archive:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - uses: bazel-contrib/setup-bazel@0.13.0
+          with:
+            # Avoid downloading Bazel every time.
+            bazelisk-cache: true
+            # Store build cache per workflow.
+            disk-cache: ${{ github.workflow }}
+            # Share repository cache between workflows.
+            repository-cache: true
+        - name: Build for Linux
+          run: bazel build -c opt //packages:scinc_tar
+        - name: Upload Linux Build
+          id: upload-linux
+          uses: actions/upload-artifact@v4
+          with:
+            name: scinc-linux
+            retention-days: 1
+            compression-level: 0
+            path: bazel-bin/packages/scinc.tar.gz
+            if-no-files-found: error
+      outputs:
+        linux-artifact: ${{ steps.upload-linux.outputs.artifact-url }}
+    create-macos-archive:
+      runs-on: macos-latest
+      steps:
+        - uses: actions/checkout@v4
+        - uses: bazel-contrib/setup-bazel@0.13.0
+          with:
+            # Avoid downloading Bazel every time.
+            bazelisk-cache: true
+            # Store build cache per workflow.
+            disk-cache: ${{ github.workflow }}
+            # Share repository cache between workflows.
+            repository-cache: true
+        - name: Build for MacOS
+          run: bazel build -c opt //packages:scinc_tar
+        - name: Upload MacOS Build
+          id: upload-macos
+          uses: actions/upload-artifact@v4
+          with:
+            name: scinc-macos
+            retention-days: 1
+            compression-level: 0
+            path: bazel-bin/packages/scinc.tar.gz
+            if-no-files-found: error
+      outputs:
+        macos-artifact: ${{ steps.upload-macos.outputs.artifact-url }}
+    create-draft-release:
+      runs-on: ubuntu-latest
+      needs:
+        - create-windows-archive
+        - create-linux-archive
+        - create-macos-archive
+      steps:
+        - name: Download Artifacts
+          id: download-artifacts
+          uses: actions/download-artifact@v4
+          with:
+            path: release-artifacts
+            pattern: scinc-*
+        - name: Arrange Artifacts
+          run: |
+            mv release-artifacts/scinc-windows/scinc.zip scinc-windows.zip
+            mv release-artifacts/scinc-linux/scinc.tar.gz scinc-linux.tar.gz
+            mv release-artifacts/scinc-macos/scinc.tar.gz scinc-macos.tar.gz
+        - name: Create Draft Release
+          uses: softprops/action-gh-release@v1
+          with:
+            tag_name: ${{ github.ref }}
+            name: ${{ github.ref }}
+            draft: true
+            files: |
+              scinc-windows.zip
+              scinc-linux.tar.gz
+              scinc-macos.tar.gz
