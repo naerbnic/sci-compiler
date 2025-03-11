@@ -132,14 +132,15 @@ class DiagnosticBase : public DiagnosticInterface {
   static FieldReadMap MakeFieldReadMap() { return {}; }
 
  private:
-  static inline std::size_t registerer_ = ([] {
+  static std::size_t Register() {
     // Register the diagnostic with the registry.
     auto* registry = DiagnosticRegistry::Get();
     if (registry) {
       registry->RegisterDiagnostic(Derived::ID, util::TypeName<Derived>());
     }
     return 0;
-  })();
+  }
+  static inline std::size_t registerer_ = Register();
 };
 
 #define DEFINE_FORMAT_ARGS_FOR_EACH_0(macro, ty, arg1)
