@@ -25,7 +25,7 @@ pkg_filegroup(
 )
 
 pkg_tar(
-    name = "scinc_tar",
+    name = "scinc_tgz",
     srcs = [
         ":bin_files",
         ":inc_files",

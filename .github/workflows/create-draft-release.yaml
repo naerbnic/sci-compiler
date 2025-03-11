@@ -52,7 +52,7 @@ jobs:
             # Share repository cache between workflows.
             repository-cache: true
         - name: Build for Linux
-          run: bazel build -c opt //packaging:scinc_tar
+          run: bazel build -c opt //packaging:scinc_tgz
         - name: Upload Linux Build
           id: upload-linux
           uses: actions/upload-artifact@v4
@@ -60,7 +60,7 @@ jobs:
             name: scinc-linux
             retention-days: 1
             compression-level: 0
-            path: bazel-bin/packaging/scinc.tar.gz
+            path: bazel-bin/packaging/scinc.tgz
             if-no-files-found: error
       outputs:
         linux-artifact: ${{ steps.upload-linux.outputs.artifact-url }}
@@ -77,7 +77,7 @@ jobs:
             # Share repository cache between workflows.
             repository-cache: true
         - name: Build for MacOS
-          run: bazel build -c opt //packaging:scinc_tar
+          run: bazel build -c opt //packaging:scinc_tgz
         - name: Upload MacOS Build
           id: upload-macos
           uses: actions/upload-artifact@v4
@@ -85,7 +85,7 @@ jobs:
             name: scinc-macos
             retention-days: 1
             compression-level: 0
-            path: bazel-bin/packaging/scinc.tar.gz
+            path: bazel-bin/packaging/scinc.tgz
             if-no-files-found: error
       outputs:
         macos-artifact: ${{ steps.upload-macos.outputs.artifact-url }}
@@ -105,8 +105,8 @@ jobs:
         - name: Arrange Artifacts
           run: |
             mv release-artifacts/scinc-windows/scinc.zip scinc-windows.zip
-            mv release-artifacts/scinc-linux/scinc.tar.gz scinc-linux.tar.gz
-            mv release-artifacts/scinc-macos/scinc.tar.gz scinc-macos.tar.gz
+            mv release-artifacts/scinc-linux/scinc.tgz scinc-linux.tgz
+            mv release-artifacts/scinc-macos/scinc.tgz scinc-macos.tgz
         - name: Create Draft Release
           uses: softprops/action-gh-release@v1
           with:
@@ -115,5 +115,5 @@ jobs:
             draft: true
             files: |
               scinc-windows.zip
-              scinc-linux.tar.gz
-              scinc-macos.tar.gz
+              scinc-linux.tgz
+              scinc-macos.tgz
