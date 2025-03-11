@@ -27,7 +27,7 @@ jobs:
             # Share repository cache between workflows.
             repository-cache: true
         - name: Build for Windows
-          run: bazel build -c opt //packages:scinc_zip
+          run: bazel build -c opt //packaging:scinc_zip
         - name: Upload Windows Build
           id: upload-windows
           uses: actions/upload-artifact@v4
@@ -35,7 +35,7 @@ jobs:
             name: scinc-windows
             retention-days: 1
             compression-level: 0
-            path: bazel-bin/packages/scinc.zip
+            path: bazel-bin/packaging/scinc.zip
             if-no-files-found: error
       outputs:
         windows-artifact: ${{ steps.upload-windows.outputs.artifact-url }}
@@ -52,7 +52,7 @@ jobs:
             # Share repository cache between workflows.
             repository-cache: true
         - name: Build for Linux
-          run: bazel build -c opt //packages:scinc_tar
+          run: bazel build -c opt //packaging:scinc_tar
         - name: Upload Linux Build
           id: upload-linux
           uses: actions/upload-artifact@v4
@@ -60,7 +60,7 @@ jobs:
             name: scinc-linux
             retention-days: 1
             compression-level: 0
-            path: bazel-bin/packages/scinc.tar.gz
+            path: bazel-bin/packaging/scinc.tar.gz
             if-no-files-found: error
       outputs:
         linux-artifact: ${{ steps.upload-linux.outputs.artifact-url }}
@@ -77,7 +77,7 @@ jobs:
             # Share repository cache between workflows.
             repository-cache: true
         - name: Build for MacOS
-          run: bazel build -c opt //packages:scinc_tar
+          run: bazel build -c opt //packaging:scinc_tar
         - name: Upload MacOS Build
           id: upload-macos
           uses: actions/upload-artifact@v4
@@ -85,7 +85,7 @@ jobs:
             name: scinc-macos
             retention-days: 1
             compression-level: 0
-            path: bazel-bin/packages/scinc.tar.gz
+            path: bazel-bin/packaging/scinc.tar.gz
             if-no-files-found: error
       outputs:
         macos-artifact: ${{ steps.upload-macos.outputs.artifact-url }}
