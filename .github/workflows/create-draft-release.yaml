@@ -3,7 +3,7 @@ name: Create Draft Release
 on:
   push:
     tags:
-      - 'release-v*.*.*'
+      - 'v*.*.*'
 
   workflow_dispatch:
 
@@ -104,16 +104,16 @@ jobs:
             pattern: scinc-*
         - name: Arrange Artifacts
           run: |
-            mv release-artifacts/scinc-windows/scinc.zip scinc-windows.zip
-            mv release-artifacts/scinc-linux/scinc.tgz scinc-linux.tgz
-            mv release-artifacts/scinc-macos/scinc.tgz scinc-macos.tgz
+            mv release-artifacts/scinc-windows/scinc.zip scinc-windows-${{ github.ref_name }}.zip
+            mv release-artifacts/scinc-linux/scinc.tgz scinc-linux-${{ github.ref_name }}.tgz
+            mv release-artifacts/scinc-macos/scinc.tgz scinc-macos-${{ github.ref_name }}.tgz
         - name: Create Draft Release
           uses: softprops/action-gh-release@v1
           with:
-            tag_name: ${{ github.ref }}
-            name: ${{ github.ref }}
+            tag_name: ${{ github.ref_name }}
+            name: SCINC Release ${{ github.ref_name }}
             draft: true
             files: |
-              scinc-windows.zip
-              scinc-linux.tgz
-              scinc-macos.tgz
+              scinc-windows-${{ github.ref_name }}.zip
+              scinc-linux-${{ github.ref_name }}.tgz
+              scinc-macos-${{ github.ref_name }}.tgz
