@@ -1,3 +1,4 @@
+load("@rules_pkg//pkg:mappings.bzl", "pkg_files")
 load("//rules:sci.bzl", "sci_headers", "sci_system")
 
 sci_headers(
@@ -13,8 +14,20 @@ sci_headers(
 sci_system(
     name = "sci_1_1",
     defines = ["SCI_1_1"],
-    deps = [":system_headers"],
     system_header = "system.sh",
     target_vm = "1.1",
     visibility = ["//visibility:public"],
+    deps = [":system_headers"],
+)
+
+pkg_files(
+    name = "pkg_inc_files",
+    srcs = [
+        "kernel.sh",
+        "keys.sh",
+        "sci.sh",
+        "system.sh",
+    ],
+    prefix = "sci_1_1",
+    visibility = ["//packaging:__subpackages__"],
 )
