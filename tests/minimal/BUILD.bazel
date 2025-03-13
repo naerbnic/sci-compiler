@@ -1,5 +1,5 @@
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
-load("//rules:sci.bzl", "sci_binary", "sci_build_env", "sci_headers", "sci_script")
+load("@rules_sci//sci:sci.bzl", "sci_binary", "sci_build_env", "sci_headers", "sci_script")
 
 sci_build_env(
     name = "base_env",

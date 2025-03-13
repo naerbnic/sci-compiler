@@ -1,6 +1,6 @@
 """Rules for toolchain definiitions."""
 
-load("//rules:sci.bzl", "SciSystemInfo")
+load("@rules_sci//sci:sci.bzl", "SciSystemInfo")
 
 visibility("public")
 

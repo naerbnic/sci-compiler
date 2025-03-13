@@ -1,5 +1,5 @@
 load("@rules_pkg//pkg:mappings.bzl", "pkg_files")
-load("//rules:sci.bzl", "sci_headers", "sci_system")
+load("@rules_sci//sci:sci.bzl", "sci_headers", "sci_system")
 
 sci_headers(
     name = "system_headers",

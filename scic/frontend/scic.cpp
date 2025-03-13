@@ -53,7 +53,8 @@ status::StatusOr<text::TextRange> LoadFile(std::filesystem::path path) {
   std::ifstream file;
   file.open(path, std::ios::in | std::ios::binary);
   if (!file.good()) {
-    return status::NotFoundError("Could not open file");
+    return status::NotFoundError(
+        absl::StrFormat("Could not open file: %s", path));
   }
 
   std::stringstream buffer;
