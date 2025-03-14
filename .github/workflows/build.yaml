@@ -1,5 +1,8 @@
 name: Build For Platforms
-on: [push]
+on:
+  push:
+    paths-ignore:
+      - 'site/**'
 jobs:
     build-macos:
         runs-on: macos-latest
