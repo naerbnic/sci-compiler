@@ -93,7 +93,6 @@ cc_test(
 
 cc_library(
     name = "token_stream",
-    srcs = ["token_stream.cpp"],
     hdrs = ["token_stream.hpp"],
     deps = [
         ":token",
