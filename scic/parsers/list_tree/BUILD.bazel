@@ -1,5 +1,7 @@
 # This is a parser for a list of trees, like an S-expression. This takes the
 # raw S-expression like language of SCI script, and creates a basic parse tree for it.
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
+
 package(
     default_visibility = ["//scic:scic_internal"],
 )
