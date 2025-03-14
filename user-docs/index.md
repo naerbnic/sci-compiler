@@ -94,3 +94,42 @@ In SCICompanion, you can import symbols from another script using the `use` item
 ```
 
 Because `scinc` defines *all* public methods that are used in the global includes files, we do not direclty support `use` items. We recommend adding a global includes file that provides `externs` for all public items from the compiled scripts.
+
+<!-- Notes
+- Differences from SCICompanion
+  - Many differences are temporary, as we intend to improve compatibility with code that targets SCICompanion.
+  - Global Headers
+    - Intended to include all defines and declarations for a program
+    - New top-level items
+      - `extern` items
+        - Declares either public functions in different numbered modules, or
+        SCI Kernel functions.
+        - Public declarations have to match the publics defined in the corresponding module
+      - `globaldecl` items
+        - Declares the global values used for the program.
+        - If module #0 is compiled, it must match the globals declarations in
+        that file.
+        - Globals in module #0 must use the `global` keyword for the block instead of `locals`
+          - This is the behavior of the original DA compiler
+      - `classdef` items
+        - If being used to patch an existing game, needed to declare all of the classes in the base code.
+        - Fields that need to be defined:
+          - class species number
+          - module number the class was declared in
+            - Can be one of the modules we're defining. If so, the class must be
+            redefined in the class
+          - The superclass of this class (if any)
+          - All property names (selectors) of the class
+            - Order dependent (for class property layout)
+          - All methods implemented on the class
+            - Order independent
+      - `selectors` items
+        - Defines mapping from selector names to selector numbers that exist in the original game
+    - Project includes headers for SCI v1.1 standard defines for programs
+    - Have a separate tool to generate global headers for external definitions from existing game resource files
+      - Extern names from modules still need to be specified.
+  - Syntax Differences
+    - `use` statements not supported
+      - Use global `extern` items instead
+      - May be able to support this in the future for additional compatibility
+-->
