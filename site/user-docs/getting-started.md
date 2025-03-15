@@ -59,4 +59,10 @@ flowchart TD;
 
 We'll need a few tools to get started. This guide will use our Bazel tooling to set up the project.
 
-You will need to install Baze
+#### Install Bazel
+
+Install Bazel from the website. As recommended, you may also install Bazelisk.
+
+#### Extract the Template Project
+
+Either download the source or use `git clone` to get a copy of the [GitHub repository](https://github.com/naerbnic/sci-patch-template).
