@@ -93,8 +93,9 @@ ParseResult<ContinueExpr> ParseContIfExpr(TokenNode<std::string_view> keyword,
 ParseResult<WhileExpr> ParseWhileExpr(TokenNode<std::string_view> keyword,
                                       TreeExprSpan& exprs) {
   ASSIGN_OR_RETURN(auto condition, ParseExprPtr(exprs));
-  ASSIGN_OR_RETURN(auto body, ParseExprPtr(exprs));
-  return WhileExpr(std::move(condition), std::move(body));
+  ASSIGN_OR_RETURN(auto body, ParseExprList(exprs));
+  return WhileExpr(std::move(condition),
+                   std::make_unique<Expr>(ExprList(std::move(body))));
 }
 
 ParseResult<WhileExpr> ParseRepeatExpr(TokenNode<std::string_view> keyword,
