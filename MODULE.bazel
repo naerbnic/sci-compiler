@@ -5,30 +5,32 @@ module(
     version = "0.0.1",
 )
 
-bazel_dep(name = "platforms", version = "0.0.11")
+bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "argparse", version = "3.0.0")
-bazel_dep(name = "abseil-cpp", version = "20240116.2")
-bazel_dep(name = "googletest", version = "1.15.2")
-bazel_dep(name = "bazel_skylib", version = "1.7.1")
+bazel_dep(name = "abseil-cpp", version = "20250814.1")
+bazel_dep(name = "googletest", version = "1.17.0.bcr.2")
+bazel_dep(name = "bazel_skylib", version = "1.8.2")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "rules_sci", version = "0.0.1")
-bazel_dep(name = "rules_cc", version = "0.1.1")
+bazel_dep(name = "rules_cc", version = "0.2.17")
 
 cc_configure_extension = use_extension(
     "@rules_cc//cc:extensions.bzl",
     "cc_configure_extension",
     dev_dependency = True,
 )
-
 use_repo(cc_configure_extension, "local_config_cc")
 
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 git_override(
     module_name = "hedron_compile_commands",
+    commit = "f5fbd4cee671d8d908f37c83abaf70fba5928fc7",
     remote = "https://github.com/mikael-s-persson/bazel-compile-commands-extractor",
-    commit = "f5fbd4cee671d8d908f37c83abaf70fba5928fc7"
     # Replace the commit hash (above) with the latest (https://github.com/hedronvision/bazel-compile-commands-extractor/commits/main).
     # Even better, set up Renovate and let it do the work for you (see "Suggestion: Updates" in the README).
 )
 
-register_toolchains("//toolchain:updated_sci_compiler_toolchain", dev_dependency = True)
+register_toolchains(
+    "//toolchain:updated_sci_compiler_toolchain",
+    dev_dependency = True,
+)

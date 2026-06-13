@@ -33,8 +33,8 @@ class SeqImpl {
  public:
   virtual ~SeqImpl() = default;
 
-  virtual std::size_t size(void* data) const = 0;
-  virtual T get_at(void* data, std::size_t index) const = 0;
+  virtual std::size_t size(void* absl_nonnull data) const = 0;
+  virtual T get_at(void* absl_nonnull data, std::size_t index) const = 0;
 };
 
 // An implementation of SeqViewImpl that is based on a base object and a
@@ -51,23 +51,25 @@ class RangeSeqImpl : public SeqImpl<T> {
   using RangeType = std::invoke_result_t<F, C&>;
 
  public:
-  static SeqImpl<T> const* Get() {
+  static SeqImpl<T> const* absl_nonnull Get() {
     static RangeSeqImpl const* instance = new RangeSeqImpl();
     return instance;
   }
 
-  std::size_t size(void* data) const override {
+  std::size_t size(void* absl_nonnull data) const override {
     auto&& view = ToView(data);
     return std::end(view) - std::begin(view);
   }
 
-  T get_at(void* data, std::size_t index) const override {
+  T get_at(void* absl_nonnull data, std::size_t index) const override {
     return *(std::begin(ToView(data)) + index);
   }
 
  private:
   RangeSeqImpl() = default;
-  RangeType ToView(void* data) const { return F()(*static_cast<C*>(data)); }
+  RangeType ToView(void* absl_nonnull data) const {
+    return F()(*static_cast<C*>(data));
+  }
 };
 
 template <class T, class C, class F>
@@ -75,18 +77,18 @@ template <class T, class C, class F>
            IsIndexSequence<T, C, F>
 class IndexableSetViewImpl : public SeqImpl<T> {
  public:
-  static SeqImpl<T> const* Get() {
+  static SeqImpl<T> const* absl_nonnull Get() {
     static IndexableSetViewImpl const* instance = new IndexableSetViewImpl();
     return instance;
   }
 
   IndexableSetViewImpl() = default;
 
-  std::size_t size(void* data) const override {
+  std::size_t size(void* absl_nonnull data) const override {
     return static_cast<C*>(data)->size();
   }
 
-  T get_at(void* data, std::size_t index) const override {
+  T get_at(void* absl_nonnull data, std::size_t index) const override {
     return F()((*static_cast<C*>(data))[index]);
   }
 
@@ -96,14 +98,14 @@ class IndexableSetViewImpl : public SeqImpl<T> {
 template <class T>
 class SingletonSeqViewImpl : public SeqImpl<T> {
  public:
-  static SeqImpl<T> const* Get() {
+  static SeqImpl<T> const* absl_nonnull Get() {
     static SingletonSeqViewImpl const* instance = new SingletonSeqViewImpl();
     return instance;
   }
 
-  std::size_t size(void* data) const override { return 1; }
+  std::size_t size(void* absl_nonnull data) const override { return 1; }
 
-  T get_at(void* data, std::size_t index) const override {
+  T get_at(void* absl_nonnull data, std::size_t index) const override {
     return *static_cast<std::remove_reference_t<T>*>(data);
   }
 };
@@ -201,10 +203,10 @@ class Seq {
    private:
     friend class Seq;
 
-    iterator(Seq const* parent, std::size_t index)
+    iterator(Seq const* absl_nonnull parent, std::size_t index)
         : parent_(parent), index_(index) {}
 
-    Seq const* parent_;
+    Seq const* absl_nonnull parent_;
     std::size_t index_;
   };
 
@@ -232,7 +234,7 @@ class Seq {
                internal::SingletonSeqViewImpl<T>::Get());
   }
 
-  Seq() : data_(nullptr), impl_(nullptr){};
+  Seq() : data_(nullptr), impl_(nullptr) {};
 
   template <class C>
     requires(!std::same_as<C, Seq> && std::ranges::random_access_range<C&>)
@@ -266,11 +268,11 @@ class Seq {
   iterator end() const { return iterator(this, size()); }
 
  private:
-  Seq(void* data, internal::SeqImpl<T> const* impl)
+  Seq(void* absl_nonnull data, internal::SeqImpl<T> const* absl_nonnull impl)
       : data_(data), impl_(impl) {}
   // A pointer to the
-  absl::Nullable<void*> data_;
-  internal::SeqImpl<T> const* impl_;
+  void* absl_nonnull data_;
+  internal::SeqImpl<T> const* absl_nonnull impl_;
 };
 
 // A sequence that is backed by references to the original data.

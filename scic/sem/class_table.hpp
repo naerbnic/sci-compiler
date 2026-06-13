@@ -38,12 +38,12 @@ class Class {
 
   // Returns the class that this class inherits from, or null if it has no
   // superclass.
-  virtual absl::Nullable<Class const*> super() const = 0;
+  virtual Class const* absl_nullable super() const = 0;
 
   // Returns the class that was originally declared (with dependencies
   // resolved based on declarations alone), or nullptr if this class was not
   // previously declared.
-  virtual absl::Nullable<Class const*> prev_decl() const = 0;
+  virtual Class const* absl_nullable prev_decl() const = 0;
 
   // Returns the PtrRef to the class in its module.
   //
@@ -52,7 +52,7 @@ class Class {
   // codegen instances.
   //
   // Returns nullptr if this class was not defined in a module.
-  virtual absl::Nullable<codegen::PtrRef*> class_ref() const = 0;
+  virtual codegen::PtrRef* absl_nullable class_ref() const = 0;
 
   virtual std::size_t prop_size() const = 0;
 
@@ -61,7 +61,8 @@ class Class {
   // The methods for this class.
   virtual util::Seq<Method const&> methods() const = 0;
 
-  virtual Method const* LookupMethByName(std::string_view name) const = 0;
+  virtual Method const* absl_nullable
+  LookupMethByName(std::string_view name) const = 0;
 };
 
 class ClassTable {
@@ -69,18 +70,18 @@ class ClassTable {
   virtual ~ClassTable() = default;
 
   virtual util::Seq<Class const&> classes() const = 0;
-  virtual absl::Nullable<Class const*> LookupBySpecies(
-      ClassSpecies species) const = 0;
-  virtual absl::Nullable<Class const*> LookupByName(
-      std::string_view name) const = 0;
+  virtual Class const* absl_nullable
+  LookupBySpecies(ClassSpecies species) const = 0;
+  virtual Class const* absl_nullable
+  LookupByName(std::string_view name) const = 0;
 
   // Same as above functions, but only performs lookup in the context of the
   // original script declarations.
   virtual util::Seq<Class const&> decl_classes() const = 0;
-  virtual absl::Nullable<Class const*> LookupDeclBySpecies(
-      ClassSpecies species) const = 0;
-  virtual absl::Nullable<Class const*> LookupDeclByName(
-      std::string_view name) const = 0;
+  virtual Class const* absl_nullable
+  LookupDeclBySpecies(ClassSpecies species) const = 0;
+  virtual Class const* absl_nullable
+  LookupDeclByName(std::string_view name) const = 0;
 };
 
 class ClassTableBuilder {
@@ -91,7 +92,7 @@ class ClassTableBuilder {
   };
 
   static std::unique_ptr<ClassTableBuilder> Create(
-      SelectorTable const* sel_table);
+      SelectorTable const* absl_nonnull sel_table);
 
   virtual ~ClassTableBuilder() = default;
 

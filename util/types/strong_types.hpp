@@ -166,20 +166,13 @@ class StrongValue : public internal::strong_types::ViewExtValueBase<Tag> {
   constexpr Value const& value() const& { return value_; }
 
   // These versions of value() are disabled if is_const is true.
-  constexpr Value& value() &
-    requires(!Tag::is_const)
-  {
-    return value_;
-  }
+  constexpr Value& value() & requires(!Tag::is_const) { return value_; }
 
-  constexpr Value&& value() &&
-    requires(!Tag::is_const)
-  {
-    return std::move(value_);
-  }
+          constexpr Value&& value() &&
+      requires(!Tag::is_const) { return std::move(value_); }
 
-  constexpr bool operator==(StrongValue const& other) const
-    requires std::equality_comparable<Value>
+      constexpr bool operator==(StrongValue const& other) const
+        requires std::equality_comparable<Value>
   {
     return value_ == other.value_;
   }
@@ -239,13 +232,13 @@ class StrongView {
   constexpr bool operator==(StrongView<Tag> const& other) const
     requires std::equality_comparable<typename Tag::View>
   {
-    return view_ == other.value_;
+    return view_ == other.view_;
   }
 
   constexpr auto operator<=>(StrongView<Tag> const& other) const
     requires std::three_way_comparable<typename Tag::View>
   {
-    return view_ <=> other.value_;
+    return view_ <=> other.view_;
   }
 
  private:

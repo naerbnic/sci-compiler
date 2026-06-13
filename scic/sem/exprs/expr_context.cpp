@@ -205,7 +205,7 @@ class ExprEnvironmentImpl : public ExprEnvironment {
 
  private:
   ModuleEnvironment const* mod_env_;
-  absl::Nullable<PropertyList const*> prop_list_;
+  PropertyList const* absl_nullable prop_list_;
   std::optional<SuperInfo> super_info_;
   std::map<util::RefStr, ParamSym, std::less<>> proc_local_table_;
   std::map<util::RefStr, TempSym, std::less<>> proc_temp_table_;

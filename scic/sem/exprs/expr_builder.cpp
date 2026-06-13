@@ -181,7 +181,7 @@ status::Status BuildVarStoreExpr(ExprContext* ctx, NameToken const& var_name,
 status::Status BuildVarLoadExpr(ExprContext* ctx,
                                 FunctionBuilder::ValueOp val_op,
                                 NameToken const& var_name,
-                                absl::Nullable<ast::Expr const*> index) {
+                                ast::Expr const* absl_nullable index) {
   if (var_name.value() == "self") {
     ctx->func_builder()->AddLoadSelfOp();
     return status::OkStatus();

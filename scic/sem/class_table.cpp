@@ -57,7 +57,7 @@ class MethodImpl : public Method {
 class ClassImpl : public Class {
  public:
   ClassImpl(NameToken name, ScriptNum script_num, ClassSpecies species,
-            absl::Nullable<Class const*> prev_decl,
+            Class const* absl_nullable prev_decl,
             std::optional<codegen::PtrRef> class_ref,
             std::vector<PropertyDef> property_defs,
             std::vector<MethodImpl> methods)
@@ -73,9 +73,9 @@ class ClassImpl : public Class {
   util::RefStr const& name() const override { return name_.value(); }
   ScriptNum script_num() const override { return script_num_; }
   ClassSpecies species() const override { return species_; }
-  absl::Nullable<Class const*> super() const override { return *super_; }
-  absl::Nullable<Class const*> prev_decl() const override { return prev_decl_; }
-  absl::Nullable<codegen::PtrRef*> class_ref() const override {
+  Class const* absl_nullable super() const override { return *super_; }
+  Class const* absl_nullable prev_decl() const override { return prev_decl_; }
+  codegen::PtrRef* absl_nullable class_ref() const override {
     if (!class_ref_) {
       return nullptr;
     }
@@ -88,7 +88,8 @@ class ClassImpl : public Class {
 
   util::Seq<Method const&> methods() const override { return methods_; }
 
-  Method const* LookupMethByName(std::string_view name) const override {
+  Method const* absl_nullable
+  LookupMethByName(std::string_view name) const override {
     for (auto& method : methods_) {
       if (method.name() == name) {
         return &method;
@@ -168,8 +169,8 @@ class ClassImpl : public Class {
   NameToken name_;
   ScriptNum script_num_;
   ClassSpecies species_;
-  LateBound<absl::Nullable<ClassImpl*>> super_;
-  absl::Nullable<Class const*> prev_decl_;
+  LateBound<ClassImpl * absl_nullable> super_;
+  Class const* absl_nullable prev_decl_;
   mutable std::optional<codegen::PtrRef> class_ref_;
   std::vector<PropertyDef> property_defs_;
   LateBound<PropertyList> property_list_;
@@ -182,7 +183,7 @@ class ClassTableLayer {
  public:
   status::Status AddClass(NameToken name, ScriptNum script_num,
                           ClassSpecies species,
-                          absl::Nullable<Class const*> prev_decl,
+                          Class const* absl_nullable prev_decl,
                           std::optional<codegen::PtrRef> class_ref,
                           std::vector<PropertyDef> property_defs,
                           std::vector<MethodImpl> methods) {
@@ -269,13 +270,13 @@ class ClassTableImpl : public ClassTable {
     return def_layer_.classes();
   }
 
-  absl::Nullable<Class const*> LookupBySpecies(
-      ClassSpecies species) const override {
+  Class const* absl_nullable
+  LookupBySpecies(ClassSpecies species) const override {
     return def_layer_.LookupBySpecies(species);
   }
 
-  absl::Nullable<Class const*> LookupByName(
-      std::string_view name) const override {
+  Class const* absl_nullable
+  LookupByName(std::string_view name) const override {
     return def_layer_.LookupByName(name);
   }
 
@@ -283,13 +284,13 @@ class ClassTableImpl : public ClassTable {
     return decl_layer_.classes();
   }
 
-  absl::Nullable<Class const*> LookupDeclBySpecies(
-      ClassSpecies species) const override {
+  Class const* absl_nullable
+  LookupDeclBySpecies(ClassSpecies species) const override {
     return decl_layer_.LookupBySpecies(species);
   }
 
-  absl::Nullable<Class const*> LookupDeclByName(
-      std::string_view name) const override {
+  Class const* absl_nullable
+  LookupDeclByName(std::string_view name) const override {
     return decl_layer_.LookupByName(name);
   }
 
@@ -474,7 +475,7 @@ class ClassTableBuilderImpl : public ClassTableBuilder {
 
   status::Status WriteBaseToLayer(ClassTableLayer& layer, ClassBase const& base,
                                   ClassSpecies species,
-                                  absl::Nullable<Class const*> prev_decl,
+                                  Class const* absl_nullable prev_decl,
                                   std::optional<codegen::PtrRef> class_ref) {
     auto const& name = base.name;
     std::vector<PropertyDef> properties;
@@ -502,7 +503,7 @@ class ClassTableBuilderImpl : public ClassTableBuilder {
   }
 
   status::Status WriteDeclToLayer(ClassTableLayer& layer, ClassDecl const& decl,
-                                  absl::Nullable<Class const*> prev_decl) {
+                                  Class const* absl_nullable prev_decl) {
     return WriteBaseToLayer(layer, decl.base, decl.species, prev_decl,
                             /*class_ref=*/std::nullopt);
   }

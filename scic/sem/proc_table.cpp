@@ -75,7 +75,7 @@ class ProcTableBuilderImpl : public ProcTableBuilder {
   }
 
  private:
-  absl::Nonnull<codegen::CodeGenerator*> codegen_;
+  codegen::CodeGenerator* absl_nonnull codegen_;
   std::vector<std::unique_ptr<ProcedureImpl>> procedures_;
   std::map<std::string_view, ProcedureImpl*, std::less<>> name_table_;
 };

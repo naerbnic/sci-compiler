@@ -172,9 +172,9 @@ class ObjectTableBuilderImpl : public ObjectTableBuilder {
   }
 
  private:
-  absl::Nonnull<codegen::CodeGenerator*> codegen_;
-  absl::Nonnull<SelectorTable const*> selector_;
-  absl::Nonnull<ClassTable const*> class_table_;
+  codegen::CodeGenerator* absl_nonnull codegen_;
+  SelectorTable const* absl_nonnull selector_;
+  ClassTable const* absl_nonnull class_table_;
   std::vector<std::unique_ptr<ObjectImpl>> objects_;
   std::map<std::string_view, ObjectImpl*, std::less<>> name_table_;
 };
