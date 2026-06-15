@@ -1,19 +1,16 @@
 # Rules for building packaged artifacts, for binary distribution.
 
-load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files", "pkg_filegroup")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_filegroup", "pkg_files")
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("@rules_pkg//pkg:zip.bzl", "pkg_zip")
 
 pkg_files(
     name = "bin_files",
-    srcs = ["//scic/frontend:scic"],
+    srcs = ["//scic/frontend:scinc"],
     attributes = pkg_attributes(
         mode = "0755",
     ),
     prefix = "bin",
-    renames = {
-        '//scic/frontend:scic': 'scinc',
-    },
 )
 
 pkg_filegroup(
@@ -30,8 +27,8 @@ pkg_tar(
         ":bin_files",
         ":inc_files",
     ],
-    extension = "tgz",
     out = "scinc.tgz",
+    extension = "tgz",
 )
 
 pkg_zip(

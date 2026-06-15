@@ -1,7 +1,34 @@
-load("@rules_cc//cc:defs.bzl", "cc_library", "cc_binary")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 
 cc_binary(
     name = "scic",
+    srcs = ["scic.cpp"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":flags",
+        "//scic/codegen:code_generator",
+        "//scic/codegen:output",
+        "//scic/codegen:text_sink",
+        "//scic/parsers:include_context",
+        "//scic/parsers/list_tree:parser",
+        "//scic/parsers/sci:parser",
+        "//scic/sem:code_builder",
+        "//scic/sem:input",
+        "//scic/sem:module_env",
+        "//scic/status",
+        "//scic/text:text_range",
+        "//scic/tokens:token",
+        "//scic/tokens:token_readers",
+        "//util/status:status_macros",
+        "//util/strings:ref_str",
+        "@abseil-cpp//absl/debugging:failure_signal_handler",
+        "@abseil-cpp//absl/debugging:symbolize",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)
+
+cc_binary(
+    name = "scinc",
     srcs = ["scic.cpp"],
     visibility = ["//visibility:public"],
     deps = [
