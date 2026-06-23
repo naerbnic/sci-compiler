@@ -1,0 +1,11 @@
+[package]
+name = "scinc"
+version = "0.0.0"
+edition = "2024"
+
+[dependencies]
+generic-btree = "0.10.7"
+itertools = "0.15.0"
+slab = "0.4.12"
+smallvec = { version = "1.15.2", features = ["const_generics"] }
+thiserror = "2.0.18"

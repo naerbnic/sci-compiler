@@ -394,3 +394,6 @@ build/
 /*.sl
 /*.voc
 /*.scr
+
+# Rust build artifacts
+/target
